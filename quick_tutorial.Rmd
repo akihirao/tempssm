@@ -155,7 +155,7 @@ print(drift_2010s_per_year)
 # 推定結果の各成分（水準、ドリフト、季節周期、定常AR）のプロット
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_comp <- plot_level_trend_season_ar(res)
+plt_comp <- ThermoSSM::plot_level_trend_season_ar(res)
 plot_four_comp <- cowplot::plot_grid(plt_comp[[1]],
                    plt_comp[[2]],
                    plt_comp[[3]],
