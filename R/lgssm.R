@@ -27,7 +27,7 @@ lgssm <- function(ts_data) {
       ),
     data = ts_data
   )
-  
+
   # optimに渡す前にパラメータをexpしたりartransformしたり、変換する
   # ほぼbuild_ssmと同じだが、パラメータだけ変更されている
   update_func <- function(pars, model) {
@@ -49,8 +49,8 @@ lgssm <- function(ts_data) {
       data = ts_data
     )
   }
-  
-  
+
+
   # 最適化その1。まずはNelder-Mead法を用いて暫定的なパラメータを推定
   fit_ssm_bef <- fitSSM(
     build_ssm,
@@ -60,7 +60,7 @@ lgssm <- function(ts_data) {
     method = "Nelder-Mead",
     control = list(maxit = 5000, reltol = 1e-16)
   )
-  
+
   # 最適化その2。先ほどの結果を初期値に使ってもう一度最適化する
   fit_ssm <- fitSSM(
     build_ssm,
@@ -69,15 +69,45 @@ lgssm <- function(ts_data) {
     method = "BFGS",
     control = list(maxit = 5000, reltol = 1e-16)
   )
-  
+
   # フィルタリングとスムージング
   result_ssm <- KFS(
     fit_ssm$model,
     filtering = c("state", "mean"),
     smoothing = c("state", "mean", "disturbance")
   )
-  
+
   # 結果の出力
   return(list(fit_ssm, result_ssm))
-  
+
+}
+
+
+
+#' Function to extract process/observation eroor parameters
+#' @import KFAS
+#'
+#' @param res return of lgssm
+#'
+#' @encoding UTF-8
+#'
+#' @export
+
+extract_pars <- function (res){
+
+  pars <- res[[1]]$optim.out$par #モデルの推定パラメーター
+
+  if (length(pars) != 6) {
+    message("Invalid model: the number of parameters must be 6.")
+    return(NA)
+  }
+
+  pars_comp <- c(Q_trend  = exp(pars[1]), # 年トレンドの大きさ
+                  Q_season = exp(pars[2]), # 季節トレンドの大きさ
+                  AR1      = KFAS::artransform(pars[3:4])[1], # 1次のARの大きさ
+                  AR2      = KFAS::artransform(pars[3:4])[2], # 2次のARの大きさ
+                  Q_ar     = exp(pars[5]), # 短期変動の揺らぎ
+                  H        = exp(pars[6])) # 観察誤差の大きさ
+
+  return(pars_comp)
 }
