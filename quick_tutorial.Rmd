@@ -171,7 +171,7 @@ plot_four_comp
 # Plotting level component with confidence interval
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_level_ci <- plot_level_ci(res,
+plt_level_ci <- ThermoSSM::plot_level_ci(res,
                               ci_range = 0.95)
 
 ggsave("level_plot.png",
@@ -184,7 +184,7 @@ plot(plt_level_ci)
 # Plotting drift component with confidence interval
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_drift_ci <- plot_drift_ci(res,
+plt_drift_ci <- ThermoSSM::plot_drift_ci(res,
                               ci_range = 0.95)
 
 ggsave("drift_plot.png",
