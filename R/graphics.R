@@ -186,7 +186,7 @@ plot_drift_ci <- function(res,ci_range=0.95){
   ci_lab <- paste0("Drift component (grey area: ", round(ci_range*100,0),"% CI")
   sub_lab <- paste0("Average drift rate per year = " ,mean_drift_year)
 
-  level_plot <- ggplot(data=level_tidy,
+  drift_plot <- ggplot(data=drift_tidy,
                          aes(x=time,y=drift)) +
     labs(title=ci_lab,
       subtitle= sub_lab,
