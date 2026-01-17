@@ -173,7 +173,7 @@ plot_drift_ci <- function(res,ci_range=0.95){
 
   drift <- alpha_hat[,"slope"]
 
-  mean_drift_year <- round(mean(drift) * 12,3)
+  mean_drift_year <- round(mean(drift) * 12,4)
   
 
   drift_tidy <- cbind(
