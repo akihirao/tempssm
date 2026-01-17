@@ -1,0 +1,33 @@
+Package: ThermoSSM
+Type: Package
+Title: What the Package Does (Title Case)
+Version: 0.0.0.9000
+Authors@R: c(
+    person(
+      given="Akira", family="Hirao",
+      email = "akihirao@gmail.com",
+      role = c("aut", "cre")
+    )
+  )
+Description: Linear Gaussian state-space analysis of temperature time seriesline).
+    Continuation lines should be indented.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.3
+Imports:
+    KFAS,
+    ggplot2,
+    dplyr,
+    tidyr,
+    readr,
+    purrr,
+    tibble,
+    stringr,
+    forcats,
+    lubridate,
+    forecast
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+
