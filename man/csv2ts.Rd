@@ -8,7 +8,7 @@
 csv2ts(csv)
 }
 \arguments{
-\item{csv}{raw time series csv file}
+\item{csv}{input csv file}
 }
 \description{
 Function to convert from data.csv to time sieries object

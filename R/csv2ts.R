@@ -2,7 +2,7 @@
 #' Function to convert from data.csv to time sieries object
 #' @import readr
 #'
-#' @param csv raw time series csv file
+#' @param csv input csv file
 #'
 #' @encoding UTF-8
 #'

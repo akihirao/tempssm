@@ -2,5 +2,8 @@
 
 export(csv2ts)
 export(lgssm)
+export(plot_temp_dev)
+export(plot_typical_seasonal_cycle)
 import(KFAS)
+import(ggplot2)
 import(readr)
