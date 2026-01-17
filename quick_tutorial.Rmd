@@ -15,6 +15,7 @@ html_document:
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 ## Set libraries
+library(ThermoSSM)
 library(KFAS)
 library(tidyverse)
 library(lubridate)
@@ -46,7 +47,7 @@ time(fuji_temp)  %>% head() # 小数年（1982.000, 1982.083...）
 window(fuji_temp, start = c(2001, 1), end = c(2001, 12))  # 期間抽出
 ```
 
-# Plotting temperature time series data
+# Plotting time series of temperature
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
@@ -58,6 +59,14 @@ plot(fuji_temp_plot)
 #       width=8,height=4)
 ```
 
+# Plotting time series of temperature deviation
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+
+plot_temp_dev_obj <- plot_temp_dev(fuji_temp) 
+#ggsave("Fuji_temp_dev_plot.png",
+#       width=8,height=4)
+```
 # Plotting seasonal pattern of monthly temperature
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
@@ -66,45 +75,52 @@ plot_typical_seasonal_cycle(fuji_temp)
 #       width=8,height=6)
 ```
 
-# Plotting time series of monthly temperature and temperature deviation
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-
-plot_temp_dev_obj <- plot_temp_dev(fuji_temp) 
-#ggsave("Fuji_temp_dev_plot.png",
-#       width=8,height=4)
-```
-
 
 # 線形ガウス状態空間モデルの適用
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 res <- lgssm(fuji_temp)
-fit    <- res[[1]]
-smooth <- res[[2]]
+fit    <- res[[1]] # fit model
+smooth <- res[[2]] # smoothing
 
 # 係数の95%信頼区間
 ci <- confint(smooth, level = 0.95)
 ```
 
-# 推定結果の確認
+# 簡単なモデル診断
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
-# M0モデルの推定結果の確認 ----------------------------
-
-# 収束しているか？ (0が返ってくれば収束している、それ以外では非収束)
+##  推定は収束しているか？
+# 0が返ってくれば収束、それ以外は非収束
 fit$optim.out$convergence
 
-par <- fit$optim.out$par #モデルの推定パラメーター
-par_comp <- c(Q_trend  = exp(par[1]), # 年トレンドの大きさ
-                  Q_season = exp(par[2]), # 季節トレンドの大きさ
-                  AR1      = artransform(par[3:4])[1], # 1次のARの大きさ
-                  AR2      = artransform(par[3:4])[2], # 2次のARの大きさ
-                  Q_ar     = exp(par[5]), # 短期変動の揺らぎ
-                  H        = exp(par[6])) # 観察誤差の大きさ
 
-par_comp
+## モデルの残差の確認
+# 標準化残差
+std_obs_resid <- rstandard(smooth, type = "recursive")
+
+# forecastパッケージのcheckredisuals関数で残差のチェック
+# Ljung–Box検定: P > 0.05で残差に有意な自己相関なしと判断
+checkresiduals(std_obs_resid)
+
+# 図示された残差（上：残差系列；左下：残差コレログラム；右下：残差のヒストグラム）をみて異常に突出した残差がないかなどを確認
+
+
+##正規性の確認
+# P > 0.05で正規分布と有意に異なっていないと判断
+shapiro.test(std_obs_resid)
+
+```
+
+# モデルの推定値
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+
+# 推定パラメーター(過程誤差、観測誤差など)
+pars_comp <- extract_pars(res)
+pars_comp
+
 
 # 平滑化推定量
 alpha_hat <- smooth$alphahat
@@ -120,124 +136,60 @@ drift_ts <- ts(drift, start = start(fuji_temp), frequency = 12)
 mean_drift_year <- mean(drift_ts) * 12
 print(mean_drift_year)
 
+# 1940年代における年あたりの平均昇温率
 drift_1940s_per_year <- window(drift_ts,
                                start=c(1940,1),
                                end=c(1949,12)
-                               ) %>%
-  mean()*12
+                               ) %>%  mean()*12
 print(drift_1940s_per_year)
 
+# 2010年代における年あたりの平均昇温率
 drift_2010s_per_year <- window(drift_ts,
                                start=c(2010,1),
                                end=c(2019,12)
-                               ) %>%
-  mean()*12
+                               ) %>%  mean()*12
 print(drift_2010s_per_year)
-
-
-
-# 成分別にプロット
-model_level_plot <- forecast::autoplot(alpha_hat[,"level"]) +
-  labs(y = "", x = "Time") +
-  ggtitle("Level component")
-
-model_slope_plot <- forecast::autoplot(alpha_hat[,"slope"]) +
-  labs(y = "", x = "Time") +
-  ggtitle("Drift component")
-
-model_season_plot <- forecast::autoplot(alpha_hat[,"sea_dummy1"]) +
-  labs(y = "", x = "Time") +
-  ggtitle("Seasonal component")
-
-model_arima1_plot <- forecast::autoplot(alpha_hat[,"arima1"]) +
-  labs(y = "", x = "Time") +
-  ggtitle("Auto-regression component")
-
-
-model_out_plot <- grid.arrange(model_level_plot,
-                              model_slope_plot,
-                              model_season_plot,
-                              model_arima1_plot,
-                              ncol = 1)
-
-plot(model_out_plot )
 
 ```
 
-# モデルの残差の確認
+# 推定結果の各成分（水準、ドリフト、季節周期、定常AR）のプロット
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-# 標準化残差
-std_obs_resid <- rstandard(smooth, type = "recursive")
+plt_comp <- plot_level_trend_season_ar(res)
+plot_four_comp <- cowplot::plot_grid(plt_comp[[1]],
+                   plt_comp[[2]],
+                   plt_comp[[3]],
+                   plt_comp[[4]],
+                   ncol=1) 
 
-# forecastパッケージのcheckredisuals関数で残差のチェック
-# Ljung–Box検定: P > 0.05で残差に有意な自己相関なしと判断
-checkresiduals(std_obs_resid)
-
-# 図示された残差（上：残差系列；左下：残差コレログラム；右下：残差のヒストグラム）をみて異常に突出した残差がないかなどを確認
-
-
-##正規性の確認
-# P > 0.05で正規分布と有意に異なっていないと判断
-shapiro.test(std_obs_resid)
-
-# qqプロットの確認
-qqnorm(std_obs_resid)
-
+ggsave("plot_level_trend_season_ar.png",
+       plot=plot_four_comp,
+       width=8,height=8)
+plot_four_comp
 ```
 
 # 水準変動の信頼区間の図示
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-level_tidy <- cbind(
-  data.frame(time=time(fuji_temp),
-             Temp=as.numeric(fuji_temp),
-             level=level),
-  as.data.frame(ci$level)
-  ) %>%
-  as_tibble()
-
-level_plot <- ggplot(data=level_tidy,
-                         aes(x=time,y=Temp)) +
-  labs(title="Level component (grey area: 95% CI)",
-       x="Year", y="Temperature") +
-  geom_line(aes(y=level), size = 1.2) +
-  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3)
+plt_level_ci <- plot_level_ci(res)
 
 ggsave("level_plot.png",
        width=6, height=4,
-       plot = level_plot)
+       plot = plt_level_ci)
 
-level_plot
+plot(plt_level_ci)
 ```
 
 # ドリフト成分の図示
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-drift_tidy <- cbind(
-  data.frame(time=time(fuji_temp),
-             Temp=as.numeric(fuji_temp),
-             drift=drift),
-  as.data.frame(ci$slope)
-  ) %>%
-  as_tibble()
-
-
-annual_drift_lab <- paste0("average annual drift = ",round(mean_drift_year,3))
-drift_plot <- ggplot(data=drift_tidy,
-                         aes(x=time,y=drift)) +
-  labs(title ="Drift component (grey area: 95% CI)",
-       subtitle= annual_drift_lab,
-       x="Year", y="Drift") +
-  geom_line(aes(y=drift), size = 1.2) +
-  geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3) +
-  geom_hline(yintercept=0, linetype="dashed") 
+plt_drift_ci <- plot_drift_ci(res)
 
 ggsave("drift_plot.png",
        width=6, height=4,
-       plot = drift_plot)
+       plot = plt_drift_ci)
 
-drift_plot
+plot(plt_drift_ci)
 ```
 
 
