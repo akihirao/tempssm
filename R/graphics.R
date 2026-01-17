@@ -79,7 +79,7 @@ plot_temp_dev <- function(ts){
 
 #' Function to plot estimated components: level, drift, seasonal, and auto-regression
 #' @import ggplot2
-#' @param ts temperature time series object
+#' @param res output of model with using lgssm()
 #'
 #' @encoding UTF-8
 #'
@@ -120,7 +120,7 @@ plot_level_trend_season_ar <- function(res){
 
 #' Function to plot level component with confidence interval
 #' @import ggplot2
-#' @param ts temperature time series object
+#' @param res output of model with using lgssm()
 #'
 #' @encoding UTF-8
 #'
@@ -144,7 +144,7 @@ plot_level_ci <- function(res,ci_range=0.95){
 
   level_plot <- ggplot(data=level_tidy,
                          aes(x=time,y=level)) +
-    labs(title=paste0("Level component (grey area: ",ci_lab),
+    labs(title=paste0("Level component (grey area: ",ci_lab,")"),
        x="Year", y="Temperature") +
     geom_line(aes(y=level), size = 1.2) +
     geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3)
@@ -159,7 +159,7 @@ plot_level_ci <- function(res,ci_range=0.95){
 
 #' Function to plot drift component with confidence interval
 #' @import ggplot2
-#' @param ts temperature time series object
+#' @param res output of model with using lgssm()
 #'
 #' @encoding UTF-8
 #'
@@ -183,7 +183,7 @@ plot_drift_ci <- function(res,ci_range=0.95){
   ) %>%
   as_tibble()
 
-  ci_lab <- paste0("Drift component (grey area: ", round(ci_range*100,0),"% CI")
+  ci_lab <- paste0("Drift component (grey area: ", round(ci_range*100,0),"% CI)")
   sub_lab <- paste0("Average drift rate per year = " ,mean_drift_year)
 
   drift_plot <- ggplot(data=drift_tidy,

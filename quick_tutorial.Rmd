@@ -2,13 +2,15 @@
 title: "Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"
 author: "Akira Hirao"
 date: "`r Sys.Date()`"
+
 output:
+  md_document:
+    variant: markdown_github
+    toc: true
   pdf_document:
     latex_engine: lualatex
-mainfont: "IPAexMincho"
-variant: markdown_github
-html_document:
-  toc: true
+    mainfont: "IPAexMincho"
+    toc: true
 ---
 
 # Set ennvironment
@@ -16,12 +18,10 @@ html_document:
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 ## Set libraries
 library(ThermoSSM)
-library(KFAS)
-library(tidyverse)
-library(lubridate)
-library(forecast)
 
-library(gridExtra)
+library(tidyverse)
+library(forecast)
+library(cowplot)
 
 # initialize
 rm(list=ls(all=TRUE))
@@ -31,7 +31,7 @@ rm(list=ls(all=TRUE))
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
-# loading monthly mean temperature at the summit of Mt. Fuji
+# loading monthly mean air-temperature at the summit of Mt. Fuji in Japan
 data(fuji_temp)
 head(fuji_temp)
 ```
@@ -51,7 +51,7 @@ window(fuji_temp, start = c(2001, 1), end = c(2001, 12))  # 期間抽出
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
-fuji_temp_plot <- autoplot(fuji_temp) +
+fuji_temp_plot <- forecast::autoplot(fuji_temp) +
   labs(y = expression(Temperature~(degree*C)), x = "Time")
 
 plot(fuji_temp_plot)
@@ -67,6 +67,7 @@ plot_temp_dev_obj <- plot_temp_dev(fuji_temp)
 #ggsave("Fuji_temp_dev_plot.png",
 #       width=8,height=4)
 ```
+
 # Plotting seasonal pattern of monthly temperature
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
@@ -76,27 +77,26 @@ plot_typical_seasonal_cycle(fuji_temp)
 ```
 
 
-# 線形ガウス状態空間モデルの適用
+# Applying a Linear Gaussian State-Space Model
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 res <- lgssm(fuji_temp)
 fit    <- res[[1]] # fit model
 smooth <- res[[2]] # smoothing
 
-# 係数の95%信頼区間
-ci <- confint(smooth, level = 0.95)
+ci <- confint(smooth, level = 0.95) # 95% confident interval
 ```
 
-# 簡単なモデル診断
+# Simple Model Diagnostics
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
-##  推定は収束しているか？
-# 0が返ってくれば収束、それ以外は非収束
+##  model convergence
+# OK when return of 0
 fit$optim.out$convergence
 
 
-## モデルの残差の確認
+## normality of residuals
 # 標準化残差
 std_obs_resid <- rstandard(smooth, type = "recursive")
 
@@ -107,13 +107,13 @@ checkresiduals(std_obs_resid)
 # 図示された残差（上：残差系列；左下：残差コレログラム；右下：残差のヒストグラム）をみて異常に突出した残差がないかなどを確認
 
 
-##正規性の確認
+## normality of residuals
 # P > 0.05で正規分布と有意に異なっていないと判断
 shapiro.test(std_obs_resid)
 
 ```
 
-# モデルの推定値
+# Parameter Estimation of the Model
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
@@ -152,7 +152,7 @@ print(drift_2010s_per_year)
 
 ```
 
-# 推定結果の各成分（水準、ドリフト、季節周期、定常AR）のプロット
+# Plotting estimates of the level, drift, seasonal, and auto-regression components
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 plt_comp <- ThermoSSM::plot_level_trend_season_ar(res)
@@ -168,10 +168,11 @@ ggsave("plot_level_trend_season_ar.png",
 plot_four_comp
 ```
 
-# 水準変動の信頼区間の図示
+# Plotting level component with confidence interval
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_level_ci <- plot_level_ci(res)
+plt_level_ci <- plot_level_ci(res,
+                              ci_range = 0.95)
 
 ggsave("level_plot.png",
        width=6, height=4,
@@ -180,10 +181,11 @@ ggsave("level_plot.png",
 plot(plt_level_ci)
 ```
 
-# ドリフト成分の図示
+# Plotting drift component with confidence interval
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_drift_ci <- plot_drift_ci(res)
+plt_drift_ci <- plot_drift_ci(res,
+                              ci_range = 0.95)
 
 ggsave("drift_plot.png",
        width=6, height=4,
