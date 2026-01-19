@@ -27,7 +27,7 @@ library(cowplot)
 rm(list=ls(all=TRUE))
 ```
 
-# Loading test data
+# Loading example data
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
@@ -35,7 +35,7 @@ rm(list=ls(all=TRUE))
 data(ibaraki_sst)
 head(ibaraki_sst)
 ```
-# Check of zoo object
+# Checking example data
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 class(ibaraki_sst) # zoo object

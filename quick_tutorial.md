@@ -1,6 +1,6 @@
 - [Set ennvironment](#set-ennvironment)
-- [Loading test data](#loading-test-data)
-- [Check of zoo object](#check-of-zoo-object)
+- [Loading example data](#loading-example-data)
+- [Checking example data](#checking-example-data)
 - [Plotting daily time series of sea surface
   temperature](#plotting-daily-time-series-of-sea-surface-temperature)
 - [Converting from daily zoo object to monthly ts
@@ -38,7 +38,7 @@ library(cowplot)
 rm(list=ls(all=TRUE))
 ```
 
-# Loading test data
+# Loading example data
 
 ``` r
 # loading example data 1: daily mean sea surface temperature time series off southern Ibaraki Prefecture, Japan
@@ -54,7 +54,7 @@ head(ibaraki_sst)
     ## 1982-01-05 16.22
     ## 1982-01-06 16.04
 
-# Check of zoo object
+# Checking example data
 
 ``` r
 class(ibaraki_sst) # zoo object
