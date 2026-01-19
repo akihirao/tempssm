@@ -47,7 +47,6 @@ monthly_csv2ts <- function(csv) {
 #'
 #' @export
 
-
 zoo_daily2ts_monthly <- function(zoo, var = "Temp", na.rm = TRUE) {
 
   if (!inherits(zoo, "zoo")) {
@@ -107,6 +106,7 @@ zoo_daily2ts_monthly <- function(zoo, var = "Temp", na.rm = TRUE) {
 #' tapply(as.numeric(temp_dev), cycle(temp_dev), mean)
 #'
 #' @export
+
 generate_temp_dev <- function(temp_ts) {
 
   stopifnot(inherits(temp_ts, "ts"))
@@ -126,4 +126,62 @@ generate_temp_dev <- function(temp_ts) {
   )
 }
 
+
+
+#' Retrieve daily mean sea-surface temperature as a zoo object
+#'
+#' This function downloads publicly available daily mean
+#' sea-surface temperature (SST) data for Japanese coastal waters
+#' provided by the Japan Meteorological Agency (JMA),
+#' and returns the data as a \code{zoo} object indexed by date.
+#'
+#' @importFrom readr read_csv
+#' @import dplyr
+#' @import zoo
+#'
+#' @param sea_area_id
+#' Numeric sea area ID.
+#' The default is 138, corresponding to the coastal sea off southern Ibaraki.
+#' A list of sea area IDs and their corresponding regions is available at:
+#' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
+#'
+#' @details
+#' The function retrieves a text-format dataset from the JMA website,
+#' parses daily observations, and constructs a \code{zoo} object
+#' with calendar dates as the index.
+#' Missing values in the original dataset are represented as \code{NA}.
+#'
+#' @return
+#' A \code{zoo} object of daily mean sea-surface temperature
+#' with a single column named \code{Temp}.
+#'
+#' @examples
+#' \dontrun{
+#' sst_138 <- sst_jma2zoo(sea_area_id = 138)
+#' head(sst_138)
+#' }
+#'
+#' @export
+
+sst_jma2zoo <- function(sea_area_id = 138) {
+
+  url_head <- "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area"
+  url <- paste0(url_head, sea_area_id, ".txt")
+
+  sst_tidy <- readr::read_csv(url, show_col_types = FALSE) |>
+    dplyr::slice(-n()) |>
+    dplyr::rename(Temp = "Temp.") |>
+    dplyr::mutate(
+      Temp = as.numeric(Temp),
+      date = as.Date(paste0(yyyy, "-", mm, "-", dd))
+    ) |>
+    dplyr::select(date, Temp, flag)
+
+  sst_zoo <- zoo::zoo(
+    x = data.frame(Temp = sst_tidy$Temp),
+    order.by = sst_tidy$date
+  )
+
+  return(sst_zoo)
+}
 
