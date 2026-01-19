@@ -182,7 +182,7 @@ drift_1990s_per_year <- window(drift_ts,
                                start=c(1990,1),
                                end=c(1999,12)
                                ) %>%  mean()*12
-print(drift_1940s_per_year)
+print(drift_1990s_per_year)
 
 # 2010年代における年あたりの平均昇温率
 drift_2010s_per_year <- window(drift_ts,
