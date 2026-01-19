@@ -84,7 +84,7 @@ lgssm <- function(ts_data) {
 
 
 
-#' Function to extract process/observation eroor parameters
+#' Function to extract process/observation error parameters
 #' @import KFAS
 #'
 #' @param res return of lgssm
@@ -111,3 +111,44 @@ extract_pars <- function (res){
 
   return(pars_comp)
 }
+
+
+
+
+#' Function to extract smoothing estimate of level component as ts object
+#'
+#' @param res return of lgssm
+#'
+#' @encoding UTF-8
+#'
+#' @export
+
+extract_level <- function (res){
+
+  smooth <- res[[2]] # smoothing
+  alpha_hat <- smooth$alphahat
+  level <- alpha_hat[,"level"]
+
+  return(level)
+}
+
+
+
+
+#' Function to extract smoothing estimate of drift component as ts object
+#'
+#' @param res return of lgssm
+#'
+#' @encoding UTF-8
+#'
+#' @export
+
+extract_drift <- function (res){
+
+  smooth <- res[[2]] # smoothing
+  alpha_hat <- smooth$alphahat
+  drift <- alpha_hat[,"slope"]
+
+  return(drift)
+}
+

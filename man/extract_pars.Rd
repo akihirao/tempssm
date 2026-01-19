@@ -3,7 +3,7 @@
 \encoding{UTF-8}
 \name{extract_pars}
 \alias{extract_pars}
-\title{Function to extract process/observation eroor parameters}
+\title{Function to extract process/observation error parameters}
 \usage{
 extract_pars(res)
 }
@@ -11,5 +11,5 @@ extract_pars(res)
 \item{res}{return of lgssm}
 }
 \description{
-Function to extract process/observation eroor parameters
+Function to extract process/observation error parameters
 }

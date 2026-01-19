@@ -31,56 +31,96 @@ rm(list=ls(all=TRUE))
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
-# loading monthly mean air-temperature at the summit of Mt. Fuji in Japan
-data(fuji_temp)
-head(fuji_temp)
+# loading example data 1: daily mean sea surface temperature time series off southern Ibaraki Prefecture, Japan
+data(ibaraki_sst)
+head(ibaraki_sst)
 ```
+# Check of zoo object
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+class(ibaraki_sst) # zoo object
+frequency(ibaraki_sst)   # frequency（1）
+start(ibaraki_sst)       # start time（"1982-01-01"）
+end(ibaraki_sst)         # end time（"2025-12-31"）
+```
+
+# Plotting daily time series of sea surface temperature
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+daily_ibaraki_sst_plot <- forecast::autoplot(ibaraki_sst) +
+  labs(y = expression(Temperature~(degree*C)), 
+       x = "Time") +
+  ggtitle("Daily mean sea-surface temperature off southern Ibaraki Prefecture")
+
+ggsave("Daily_SST_ibaraki_plot.png",
+       plot=daily_ibaraki_sst_plot,
+       width=8,height=6)
+
+plot(daily_ibaraki_sst_plot)
+
+```
+
+# Converting from daily zoo object to monthly ts object
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+monthly_ibaraki_sst <- zoo_daily2ts_monthly(ibaraki_sst)
+```
+
 # Check of ts object
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
+class(monthly_ibaraki_sst) # ts object
+frequency(monthly_ibaraki_sst)   # frequency（12）
+start(monthly_ibaraki_sst)       # start time（1982, 1）
+end(monthly_ibaraki_sst)         # end time（"2025, 12）
+cycle(monthly_ibaraki_sst) %>% head() # 各観測の月番号（1～12）
+time(monthly_ibaraki_sst)  %>% head() # 小数年（1982.000, 1982.083...）
+window(monthly_ibaraki_sst, start = c(2001, 1), end = c(2001, 12))  # 期間抽出
 
-frequency(fuji_temp)   # frequency（12）
-start(fuji_temp)       # start time（1982, 1）
-end(fuji_temp)         # end time（2025, 10）
-cycle(fuji_temp) %>% head() # 各観測の月番号（1～12）
-time(fuji_temp)  %>% head() # 小数年（1982.000, 1982.083...）
-window(fuji_temp, start = c(2001, 1), end = c(2001, 12))  # 期間抽出
 ```
 
-# Plotting time series of temperature
+# Plotting monthly time series of sea surface temperature
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
-fuji_temp_plot <- forecast::autoplot(fuji_temp) +
-  labs(y = expression(Temperature~(degree*C)), x = "Time")
+monthly_ibaraki_sst_plot <- forecast::autoplot(monthly_ibaraki_sst) +
+  labs(y = expression(Temperature~(degree*C)), 
+       x = "Time") +
+  ggtitle("Montly mean sea-surface temperature off southern Ibaraki Prefecture")
 
-plot(fuji_temp_plot)
-#ggsave("Fuji_temp_plot.png",
-#       width=8,height=4)
+ggsave("monthly_SST_ibaraki_plot.png",
+       plot=monthly_ibaraki_sst_plot,
+       width=8,height=6)
+
+plot(monthly_ibaraki_sst_plot)
 ```
 
 # Plotting time series of temperature deviation
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
-plot_temp_dev_obj <- plot_temp_dev(fuji_temp) 
-#ggsave("Fuji_temp_dev_plot.png",
-#       width=8,height=4)
+plot_temp_dev_obj <- ThermoSSM::plot_temp_dev(monthly_ibaraki_sst) 
+ggsave("monthly_SST_dev_ibaraki.png",
+       plot=plot_temp_dev_obj,
+       width=8,height=6)
+plot(plot_temp_dev_obj)
 ```
 
 # Plotting seasonal pattern of monthly temperature
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plot_typical_seasonal_cycle(fuji_temp) 
-#ggsave("Fuji_ave_monthly_temp_plot.png",
-#       width=8,height=6)
+plot_monthly_SST_seasonal_ibaraki <- ThermoSSM::plot_typical_seasonal_cycle(monthly_ibaraki_sst) 
+ggsave("monthly_SST_seasonal_ibaraki.png",
+       plot=plot_monthly_SST_seasonal_ibaraki,
+       width=8,height=6)
+plot(plot_monthly_SST_seasonal_ibaraki)
 ```
 
 
 # Applying a Linear Gaussian State-Space Model
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res <- lgssm(fuji_temp)
+res <- lgssm(monthly_ibaraki_sst)
 fit    <- res[[1]] # fit model
 smooth <- res[[2]] # smoothing
 
@@ -118,7 +158,7 @@ shapiro.test(std_obs_resid)
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
 # 推定パラメーター(過程誤差、観測誤差など)
-pars_comp <- extract_pars(res)
+pars_comp <- ThermoSSM::extract_pars(res)
 pars_comp
 
 
@@ -126,20 +166,21 @@ pars_comp
 alpha_hat <- smooth$alphahat
 head(alpha_hat)
 
-level <- alpha_hat[,"level"]
-drift <- alpha_hat[,"slope"]
 
-level_ts <- ts(level, start = start(fuji_temp), frequency = 12)
-drift_ts <- ts(drift, start = start(fuji_temp), frequency = 12)
+#　水準成分の平滑化推定量
+level_ts <- ThermoSSM::extract_level(res)
+
+#　ドリフト成分の平滑化推定量
+drift_ts <- ThermoSSM::extract_drift(res)
 
 # 年あたりの平均的な昇温率
 mean_drift_year <- mean(drift_ts) * 12
 print(mean_drift_year)
 
-# 1940年代における年あたりの平均昇温率
-drift_1940s_per_year <- window(drift_ts,
-                               start=c(1940,1),
-                               end=c(1949,12)
+# 1990年代における年あたりの平均昇温率
+drift_1990s_per_year <- window(drift_ts,
+                               start=c(1990,1),
+                               end=c(1999,12)
                                ) %>%  mean()*12
 print(drift_1940s_per_year)
 
