@@ -3,13 +3,25 @@
 \encoding{UTF-8}
 \name{monthly_csv2ts}
 \alias{monthly_csv2ts}
-\title{Function to convert from data.csv to monthly time sieries object}
+\title{Convert a monthly temperature CSV file to a monthly time series object}
 \usage{
 monthly_csv2ts(csv)
 }
 \arguments{
-\item{csv}{input csv file}
+\item{csv}{Path to a CSV file containing monthly temperature data.}
 }
 \description{
-Function to convert from data.csv to monthly time sieries object
+Convert a monthly temperature CSV file to a monthly time series object
+}
+\details{
+The input CSV file must have the following format:
+
+\preformatted{
+Year,Month,Temp
+2001,1,10.4
+2001,2,8.2
+2001,3,NA
+2001,4,13.6
+...
+}
 }

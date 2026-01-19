@@ -98,12 +98,18 @@ plot(monthly_ibaraki_sst_plot)
 # Plotting time series of temperature deviation
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
+# Generate temperature anomalies
+monthly_ibaraki_sst_dev <- ThermoSSM::generate_temp_dev(monthly_ibaraki_sst)
 
-plot_temp_dev_obj <- ThermoSSM::plot_temp_dev(monthly_ibaraki_sst) 
+monthly_ibaraki_sst_dev_plot <- forecast::autoplot(monthly_ibaraki_sst_dev) +
+  labs(y = expression(Temperature~(degree*C)), 
+       x = "Time") +
+  ggtitle("Sea-surface temperature anomaliese")
+  
 ggsave("monthly_SST_dev_ibaraki.png",
-       plot=plot_temp_dev_obj,
+       plot=monthly_ibaraki_sst_dev_plot,
        width=8,height=6)
-plot(plot_temp_dev_obj)
+plot(monthly_ibaraki_sst_dev_plot)
 ```
 
 # Plotting seasonal pattern of monthly temperature
@@ -235,4 +241,51 @@ ggsave("drift_plot.png",
 plot(plt_drift_ci)
 ```
 
+# Handling original temperature data
 
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+##========================
+## Example 1
+# Monthly temperature data
+original_data <- data.frame(
+  Year=c(2000,2000,2000,2000,2000,2000,2000,2000,2000,2000,2000,2000),
+  Month=c(1,2,3,4,5,6,7,8,9,10,11,12),
+  Temp=   c(5.2, 6.1, 9.3, 13.5, 17.8, 21.0,24.3, 25.1, 22.0, 17.1, 11.2,7.0))
+
+head(original_data)
+
+# Convert ts object
+original_ts <- ts(
+  matrix(original_data$Temp),
+  start = c(original_data$Year[1],original_data$Month[1]),
+  frequency = 12
+)
+
+# Important!!: Exe colnames() to add "Temp" name to ts object for the model 
+colnames(original_ts) <- c("Temp")
+
+frequency(original_ts)
+start(original_ts)
+end(original_ts)
+time(original_ts)
+original_ts
+
+
+##========================
+## Example 2
+# loading and checking raw csv data
+input_csv <- "./data/test_data.csv"
+raw_csv <- read_csv(input_csv)
+head(raw_csv)
+
+# Load original csv file and then convert to monthly ts object 
+test_ts <- ThermoSSM::monthly_csv2ts(input_csv)
+head(test_ts)
+
+frequency(test_ts)
+start(test_ts)
+end(test_ts)
+time(test_ts)
+
+
+```

@@ -3,13 +3,13 @@
 \encoding{UTF-8}
 \name{zoo_daily2ts_monthly}
 \alias{zoo_daily2ts_monthly}
-\title{Function to convert from dairy zoo object to monthly ts object}
+\title{Convert dairy zoo object to monthly ts object}
 \usage{
 zoo_daily2ts_monthly(zoo, var = "Temp", na.rm = TRUE)
 }
 \arguments{
-\item{csv}{input csv file}
+\item{zoo}{zoo object}
 }
 \description{
-Function to convert from dairy zoo object to monthly ts object
+Convert dairy zoo object to monthly ts object
 }
