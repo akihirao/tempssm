@@ -1,0 +1,18 @@
+citHeader("If you use this package, please cite:")
+
+citEntry(
+  entry = "Article",
+  author = personList(
+    person("Shinya", "Baba"),
+    person("Hiroshi", "Ishii"),
+    person("Taku", "Yoshiyama")
+  ),
+  year = 2024,
+  title = "Estimating sea temperature trends using a linear Gaussian state-space model in Jogashima, Kanagawa, Japan",
+  journal = "Bulletin of the Japanese Society of Fisheries Oceanography",
+  volume = "88",
+  number = "3",
+  pages = "190--199",
+  note = "in Japanese with English abstract, tables, and figures",
+  url = "https://www.jstage.jst.go.jp/article/jsfo/88/3/88_190/_article/-char/en"
+)
