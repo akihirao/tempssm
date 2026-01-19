@@ -1,8 +1,8 @@
 # ThermoSSM
 
-- R package for linear Gaussian state-space analysis of temperature time series.  
-Main Parts of the implementation in this package were adapted from the supplementary Rcode
-provided by Baba (2024), available on GitHub: https://github.com/logics-of-blue/sea-temperature-trend-jogashima
+- R package for state-space analysis of temperature time series.  
+The implementation is based on linear Gaussian state-space models and makes use of Kalman filtering and smoothing.  
+Main parts of the implementation were adapted from the supplementary code provided in Baba et al. (2024), available on GitHub: https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 
 
 

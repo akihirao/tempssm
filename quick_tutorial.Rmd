@@ -285,7 +285,7 @@ head(test_ts)
 frequency(test_ts)
 start(test_ts)
 end(test_ts)
-time(test_ts)
-
+cycle(test_ts) %>% head()
+time(test_ts) %>% head()
 
 ```

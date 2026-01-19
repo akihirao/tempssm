@@ -23,6 +23,8 @@
   interval](#plotting-level-component-with-confidence-interval)
 - [Plotting drift component with confidence
   interval](#plotting-drift-component-with-confidence-interval)
+- [Handling original temperature
+  data](#handling-original-temperature-data)
 
 # Set ennvironment
 
@@ -172,19 +174,21 @@ plot(monthly_ibaraki_sst_plot)
 # Plotting time series of temperature deviation
 
 ``` r
-plot_temp_dev_obj <- ThermoSSM::plot_temp_dev(monthly_ibaraki_sst) 
+# Generate temperature anomalies
+monthly_ibaraki_sst_dev <- ThermoSSM::generate_temp_dev(monthly_ibaraki_sst)
+
+monthly_ibaraki_sst_dev_plot <- forecast::autoplot(monthly_ibaraki_sst_dev) +
+  labs(y = expression(Temperature~(degree*C)), 
+       x = "Time") +
+  ggtitle("Sea-surface temperature anomaliese")
+  
+ggsave("monthly_SST_dev_ibaraki.png",
+       plot=monthly_ibaraki_sst_dev_plot,
+       width=8,height=6)
+plot(monthly_ibaraki_sst_dev_plot)
 ```
 
 ![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-8-1.png)
-
-``` r
-ggsave("monthly_SST_dev_ibaraki.png",
-       plot=plot_temp_dev_obj,
-       width=8,height=6)
-plot(plot_temp_dev_obj)
-```
-
-![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-8-2.png)
 
 # Plotting seasonal pattern of monthly temperature
 
@@ -382,3 +386,129 @@ plot(plt_drift_ci)
 ```
 
 ![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-15-1.png)
+
+# Handling original temperature data
+
+``` r
+##========================
+## Example 1
+# Monthly temperature data
+original_data <- data.frame(
+  Year=c(2000,2000,2000,2000,2000,2000,2000,2000,2000,2000,2000,2000),
+  Month=c(1,2,3,4,5,6,7,8,9,10,11,12),
+  Temp=   c(5.2, 6.1, 9.3, 13.5, 17.8, 21.0,24.3, 25.1, 22.0, 17.1, 11.2,7.0))
+
+head(original_data)
+```
+
+    ##   Year Month Temp
+    ## 1 2000     1  5.2
+    ## 2 2000     2  6.1
+    ## 3 2000     3  9.3
+    ## 4 2000     4 13.5
+    ## 5 2000     5 17.8
+    ## 6 2000     6 21.0
+
+``` r
+# Convert ts object
+original_ts <- ts(
+  matrix(original_data$Temp),
+  start = c(original_data$Year[1],original_data$Month[1]),
+  frequency = 12
+)
+
+# Important!!: Exe colnames() to add "Temp" name to ts object for the model 
+colnames(original_ts) <- c("Temp")
+
+frequency(original_ts)
+```
+
+    ## [1] 12
+
+``` r
+start(original_ts)
+```
+
+    ## [1] 2000    1
+
+``` r
+end(original_ts)
+```
+
+    ## [1] 2000   12
+
+``` r
+time(original_ts)
+```
+
+    ##           Jan      Feb      Mar      Apr      May      Jun      Jul      Aug
+    ## 2000 2000.000 2000.083 2000.167 2000.250 2000.333 2000.417 2000.500 2000.583
+    ##           Sep      Oct      Nov      Dec
+    ## 2000 2000.667 2000.750 2000.833 2000.917
+
+``` r
+original_ts
+```
+
+    ##       Jan  Feb  Mar  Apr  May  Jun  Jul  Aug  Sep  Oct  Nov  Dec
+    ## 2000  5.2  6.1  9.3 13.5 17.8 21.0 24.3 25.1 22.0 17.1 11.2  7.0
+
+``` r
+##========================
+## Example 2
+# loading and checking raw csv data
+input_csv <- "./data/test_data.csv"
+raw_csv <- read_csv(input_csv)
+head(raw_csv)
+```
+
+    ## # A tibble: 6 × 3
+    ##    Year Month  Temp
+    ##   <dbl> <dbl> <dbl>
+    ## 1  2002     1 -15.1
+    ## 2  2002     2 -13.3
+    ## 3  2002     3 -10.6
+    ## 4  2002     4  -0.8
+    ## 5  2002     5   3.5
+    ## 6  2002     6   6.2
+
+``` r
+# Load original csv file and then convert to monthly ts object 
+test_ts <- ThermoSSM::monthly_csv2ts(input_csv)
+head(test_ts)
+```
+
+    ##        Jan   Feb   Mar   Apr   May   Jun
+    ## 2002 -15.1 -13.3 -10.6  -0.8   3.5   6.2
+
+``` r
+frequency(test_ts)
+```
+
+    ## [1] 12
+
+``` r
+start(test_ts)
+```
+
+    ## [1] 2002    1
+
+``` r
+end(test_ts)
+```
+
+    ## [1] 2025   12
+
+``` r
+cycle(test_ts) %>% head()
+```
+
+    ##      Jan Feb Mar Apr May Jun
+    ## 2002   1   2   3   4   5   6
+
+``` r
+time(test_ts) %>% head()
+```
+
+    ##           Jan      Feb      Mar      Apr      May      Jun
+    ## 2002 2002.000 2002.083 2002.167 2002.250 2002.333 2002.417
