@@ -1,39 +1,96 @@
-
-#' Function to estimate a linear Gaussian state-space model without exogenous variables
+#' Fit a linear Gaussian state-space model to temperature time series
+#'
+#' This function estimates a linear Gaussian state-space model (LGSSM)
+#' for monthly temperature time series using Kalman filtering and smoothing.
+#' Both univariate and multivariate \code{ts} objects are supported.
+#' If multivariate, a column named \code{"Temp"} is used.
+#'
+#' @param ts_data A monthly \code{ts} object. May be univariate or multivariate.
+#' @param inits Optional numeric vector of initial parameter values.
+#'   If \code{NULL}, default values are used.
+#'
+#' @return An object of class \code{"ThermoSSM"}, a named list containing:
+#' \describe{
+#'   \item{model}{Fitted \code{SSModel} object.}
+#'   \item{fit}{Result of \code{fitSSM}.}
+#'   \item{kfs}{Kalman filtering and smoothing results from \code{KFS}.}
+#'   \item{data}{Temperature time series used for estimation.}
+#'   \item{call}{Matched function call.}
+#' }
+#'
 #' @import KFAS
-#'
-#' @param ts_data time series data
-#'
-#' @encoding UTF-8
-#'
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' fit <- lgssm(fuji_temp)
+#' plot(fit$data)
+#' }
+lgssm <- function(ts_data, inits = NULL) {
 
-lgssm <- function(ts_data) {
-  # モデルの構造を決める
+  ## ---- Input checks ---------------------------------------------------
+  if (!inherits(ts_data, "ts")) {
+    stop("ts_data must be a 'ts' object.")
+  }
+
+  if (frequency(ts_data) != 12) {
+    stop("ts_data must be a monthly time series (frequency = 12).")
+  }
+
+  ## Handle univariate / multivariate ts
+  if (is.null(dim(ts_data))) {
+    y <- ts_data
+  } else {
+    if (!"Temp" %in% colnames(ts_data)) {
+      stop("For multivariate ts objects, a column named 'Temp' is required.")
+    }
+    y <- ts_data[, "Temp"]
+  }
+
+  #browser()
+  #colnames(y) <- "Temp"
+
+  ## ---- Default initial values -----------------------------------------
+  if (is.null(inits)) {
+    # log-variances and AR parameters (on unconstrained scale)
+    inits <- c(
+      -13,  # trend variance (log)
+      -7,   # seasonal variance (log)
+      0.9,  # AR(1)
+      -0.1, # AR(2)
+      -0.3, # AR noise variance (log)
+      -5    # observation variance (log)
+    )
+  }
+
+  if (!is.numeric(inits) || length(inits) != 6) {
+    stop("inits must be a numeric vector of length 6.")
+  }
+
+  ## ---- Model definition -----------------------------------------------
   build_ssm <- SSModel(
-    H = NA,
-    Temp ~
-      SSMtrend(degree = 2,                  # 平滑化トレンドモデル
-               Q = c(list(0), list(NA))) +
+    y ~
+      SSMtrend(
+        degree = 2,
+        Q = c(list(0), list(NA))
+      ) +
       SSMseasonal(
-        sea.type = "dummy", # ダミー変数を利用した季節成分
-        period = 12,        # 周期は12とする
+        sea.type = "dummy",
+        period = 12,
         Q = NA
       ) +
       SSMarima(
-        ar = c(0, 0),       # 2次のAR成分
+        ar = c(0, 0),
         d = 0,
         Q = 0
       ),
-    data = ts_data
+    H = NA
   )
 
-  # optimに渡す前にパラメータをexpしたりartransformしたり、変換する
-  # ほぼbuild_ssmと同じだが、パラメータだけ変更されている
+  ## ---- Parameter update function --------------------------------------
   update_func <- function(pars, model) {
     model <- SSModel(
-      H = exp(pars[6]),
-      Temp ~
+      y ~
         SSMtrend(degree = 2,
                  Q = c(list(0), list(exp(pars[1])))) +
         SSMseasonal(
@@ -46,41 +103,48 @@ lgssm <- function(ts_data) {
           d = 0,
           Q = exp(pars[5])
         ),
-      data = ts_data
+      H = exp(pars[6])
     )
   }
 
 
-  # 最適化その1。まずはNelder-Mead法を用いて暫定的なパラメータを推定
-  fit_ssm_bef <- fitSSM(
+  ## ---- Optimization (two-step) ----------------------------------------
+  fit1 <- fitSSM(
     build_ssm,
-    #inits = c(-17,-30, 0.5, 0, -1, -3), # パラメータの初期値(任意)
-    inits = c(-13,-7, 0.9, -0.1, -0.3, -5), # パラメータの初期値(任意)
-    update_func,
+    inits  = inits,
+    updatefn = update_func,
     method = "Nelder-Mead",
     control = list(maxit = 5000, reltol = 1e-16)
   )
 
-  # 最適化その2。先ほどの結果を初期値に使ってもう一度最適化する
-  fit_ssm <- fitSSM(
+  fit2 <- fitSSM(
     build_ssm,
-    inits = fit_ssm_bef$optim.out$par,
-    update_func,
+    inits  = fit1$optim.out$par,
+    updatefn = update_func,
     method = "BFGS",
     control = list(maxit = 5000, reltol = 1e-16)
   )
 
-  # フィルタリングとスムージング
-  result_ssm <- KFS(
-    fit_ssm$model,
+  ## ---- Kalman filtering & smoothing -----------------------------------
+  kfs <- KFS(
+    fit2$model,
     filtering = c("state", "mean"),
     smoothing = c("state", "mean", "disturbance")
   )
 
-  # 結果の出力
-  return(list(fit_ssm, result_ssm))
+  ## ---- Output ---------------------------------------------------------
+  out <- list(
+    model = fit2$model,
+    fit   = fit2,
+    kfs   = kfs,
+    data  = y,
+    call  = match.call()
+  )
 
+  class(out) <- "ThermoSSM"
+  return(out)
 }
+
 
 
 
@@ -92,22 +156,24 @@ lgssm <- function(ts_data) {
 #' @encoding UTF-8
 #'
 #' @export
-
 extract_pars <- function (res){
 
-  pars <- res[[1]]$optim.out$par #モデルの推定パラメーター
+  model <- res$fit$model
 
-  if (length(pars) != 6) {
-    message("Invalid model: the number of parameters must be 6.")
-    return(NA)
-  }
+  pars_comp <- c(H = model$H,
+                Q = model$Q,
+                ar = if (!is.null(model$ar)) model$ar else NULL
+  )
 
-  pars_comp <- c(Q_trend  = exp(pars[1]), # 年トレンドの大きさ
-                  Q_season = exp(pars[2]), # 季節トレンドの大きさ
-                  AR1      = KFAS::artransform(pars[3:4])[1], # 1次のARの大きさ
-                  AR2      = KFAS::artransform(pars[3:4])[2], # 2次のARの大きさ
-                  Q_ar     = exp(pars[5]), # 短期変動の揺らぎ
-                  H        = exp(pars[6])) # 観察誤差の大きさ
+
+  #pars <- res[[1]]$optim.out$par #モデルの推定パラメーター
+
+  #pars_comp <- c(Q_trend  = exp(pars[1]), # 年トレンドの大きさ
+  #                Q_season = exp(pars[2]), # 季節トレンドの大きさ
+  #                AR1      = KFAS::artransform(pars[3:4])[1], # 1次のARの大きさ
+  #                AR2      = KFAS::artransform(pars[3:4])[2], # 2次のARの大きさ
+  #                Q_ar     = exp(pars[5]), # 短期変動の揺らぎ
+  #                H        = exp(pars[6])) # 観察誤差の大きさ
 
   return(pars_comp)
 }
@@ -115,40 +181,47 @@ extract_pars <- function (res){
 
 
 
-#' Function to extract smoothing estimate of level component as ts object
+#' Extract smoothed level component as a time series
 #'
-#' @param res return of lgssm
+#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
 #'
-#' @encoding UTF-8
+#' @return A \code{ts} object of the smoothed level component.
 #'
 #' @export
+extract_level_ts <- function(res) {
 
-extract_level <- function (res){
+  if (!inherits(res, "ThermoSSM")) {
+    stop("Input must be a ThermoSSM object.")
+  }
 
-  smooth <- res[[2]] # smoothing
-  alpha_hat <- smooth$alphahat
-  level <- alpha_hat[,"level"]
+  if (is.null(res$kfs$alphahat) || !"level" %in% colnames(res$kfs$alphahat)) {
+    stop("Level component not found in the smoothing results.")
+  }
 
-  return(level)
+  res$kfs$alphahat[, "level"]
 }
 
 
 
 
-#' Function to extract smoothing estimate of drift component as ts object
+
+#' Extract smoothed drift (slope) component as a time series
 #'
-#' @param res return of lgssm
+#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
 #'
-#' @encoding UTF-8
+#' @return A \code{ts} object of the smoothed drift component.
 #'
 #' @export
+extract_drift_ts <- function(res) {
 
-extract_drift <- function (res){
+  if (!inherits(res, "ThermoSSM")) {
+    stop("Input must be a ThermoSSM object.")
+  }
 
-  smooth <- res[[2]] # smoothing
-  alpha_hat <- smooth$alphahat
-  drift <- alpha_hat[,"slope"]
+  if (is.null(res$kfs$alphahat) || !"slope" %in% colnames(res$kfs$alphahat)) {
+    stop("Drift (slope) component not found in the smoothing results.")
+  }
 
-  return(drift)
+  res$kfs$alphahat[, "slope"]
 }
 

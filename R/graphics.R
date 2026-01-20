@@ -87,7 +87,7 @@ plot_temp_dev <- function(ts){
 #'
 plot_level_trend_season_ar <- function(res){
 
-  alpha_hat <- res[[2]]$alphahat
+  alpha_hat <- res$kfs$alphahat
 
   model_level_plot <- forecast::autoplot(alpha_hat[,"level"]) + 
     labs(y = "", x = "Time") + 
@@ -128,12 +128,11 @@ plot_level_trend_season_ar <- function(res){
 #'
 plot_level_ci <- function(res,ci_range=0.95){
 
-  smooth <- res[[2]] # smoothing
-  alpha_hat <- smooth$alphahat
+  alpha_hat <- res$kfs$alphahat
 
   ci_lab <- paste0(round(ci_range*100,0),"% CI")
   level <- alpha_hat[,"level"]
-  ci <- confint(res[[2]], level = ci_range)
+  ci <- confint(res$kfs, level = ci_range)
 
   level_tidy <- cbind(
     data.frame(time=time(level),
@@ -167,14 +166,13 @@ plot_level_ci <- function(res,ci_range=0.95){
 #'
 plot_drift_ci <- function(res,ci_range=0.95){
 
-  ci <- confint(res[[2]], level = ci_range)
-  smooth <- res[[2]] # smoothing
-  alpha_hat <- smooth$alphahat
+  alpha_hat <- res$kfs$alphahat
 
+  ci_lab <- paste0(round(ci_range*100,0),"% CI")
   drift <- alpha_hat[,"slope"]
+  ci <- confint(res$kfs, level = ci_range)
 
   mean_drift_year <- round(mean(drift) * 12,4)
-  
 
   drift_tidy <- cbind(
     data.frame(time=time(drift),
