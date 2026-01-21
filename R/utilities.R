@@ -81,16 +81,53 @@ zoo_daily2ts_monthly <- function(zoo, var = "Temp", na.rm = TRUE) {
 
 
 
-#' Generate a monthly temperature anomaly time series
+#' Estimate monthly climatology (mean seasonal cycle)
 #'
-#' Temperature anomalies are calculated by subtracting the long-term
-#' monthly mean (climatology) from each observation.
+#' @param temp_ts Monthly temperature time series of class \code{ts}.
+#'   The time series must have a frequency of 12 (monthly data).
 #'
-#' @param temp_ts A monthly temperature time series object of class \code{ts}.
+#' @return A tibble with one row per month (January–December) containing
+#'   the climatological mean temperature.
+#'
+#' @importFrom tibble tibble
+#'
+#' @encoding UTF-8
+#'
+#' @export
+mean_seasonal_cycle <- function(temp_ts){
+
+  if (!inherits(temp_ts, "ts")) {
+    stop("Input must be a 'ts' object.", call. = FALSE)
+  }
+
+  if (frequency(temp_ts) != 12) {
+    stop("Time series must be monthly (frequency = 12).", call. = FALSE)
+  }
+
+  temp  <- as.numeric(temp_ts)
+  month <- factor(cycle(temp_ts), levels = 1:12)
+
+  monthly_mean <- tapply(temp, month, mean, na.rm = TRUE)
+
+  tibble(
+    Month = 1:12,
+    Temperature = as.numeric(monthly_mean)
+  )
+}
+
+
+
+#' Calculate monthly temperature anomalies
+#'
+#' Monthly temperature anomalies are calculated by subtracting the
+#' long-term monthly climatology from each observation.
+#'
+#' @param temp_ts Monthly temperature time series of class \code{ts}.
+#'   The time series must have a frequency of 12 (monthly data).
 #'
 #' @details
-#' Monthly climatology is calculated as the mean temperature for each calendar
-#' month. Missing values are ignored.
+#' Monthly climatology is computed using \code{mean_seasonal_cycle()}.
+#' Missing values are ignored when calculating climatological means.
 #'
 #' @return A \code{ts} object of monthly temperature anomalies.
 #'
@@ -102,29 +139,33 @@ zoo_daily2ts_monthly <- function(zoo, var = "Temp", na.rm = TRUE) {
 #'   frequency = 12
 #' )
 #'
-#' temp_dev <- generate_temp_dev(temp_ts)
-#' tapply(as.numeric(temp_dev), cycle(temp_dev), mean)
+#' temp_anom <- monthly_anomaly(temp_ts)
+#' tapply(as.numeric(temp_anom), cycle(temp_anom), mean)
 #'
 #' @export
+monthly_anomaly <- function(temp_ts) {
 
-generate_temp_dev <- function(temp_ts) {
+  if (!inherits(temp_ts, "ts")) {
+    stop("Input must be a 'ts' object.", call. = FALSE)
+  }
 
-  stopifnot(inherits(temp_ts, "ts"))
-  stopifnot(frequency(temp_ts) == 12)
+  if (frequency(temp_ts) != 12) {
+    stop("Time series must be monthly (frequency = 12).", call. = FALSE)
+  }
 
-  temp <- as.numeric(temp_ts)
-  mnum <- cycle(temp_ts)
-  mfac <- factor(mnum, levels = 1:12)
+  clim_tbl <- mean_seasonal_cycle(temp_ts)
+  clim_vec <- clim_tbl$Temperature
 
-  monthly_ave_temp <- tapply(temp, mfac, mean, na.rm = TRUE)
-  clim <- monthly_ave_temp[as.integer(mfac)]
+  clim <- clim_vec[cycle(temp_ts)]
 
   ts(
-    temp - clim,
+    as.numeric(temp_ts) - clim,
     start = start(temp_ts),
     frequency = frequency(temp_ts)
   )
 }
+
+
 
 
 

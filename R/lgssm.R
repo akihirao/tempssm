@@ -5,7 +5,10 @@
 #' Both univariate and multivariate \code{ts} objects are supported.
 #' If multivariate, a column named \code{"Temp"} is used.
 #'
-#' @param ts_data A monthly \code{ts} object. May be univariate or multivariate.
+#' @param ts_data Monthly temperature time series of class \code{ts}.
+#'   The time series must have a frequency of 12 (monthly data).
+#'   May be univariate or multivariate.
+#'
 #' @param inits Optional numeric vector of initial parameter values.
 #'   If \code{NULL}, default values are used.
 #'
@@ -223,5 +226,29 @@ extract_drift_ts <- function(res) {
   }
 
   res$kfs$alphahat[, "slope"]
+}
+
+
+
+
+#' Extract estimated parameters in the fitted models
+#'
+#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#'
+#' @return A \code{list} object of the estimated parameters.
+#'
+#' @export
+
+extract_param <- function(res){
+  pars <- res$fit$optim.out$par
+
+  params <- c(Q_trend  = exp(pars[1]), # 年トレンドの大きさ
+              Q_season = exp(pars[2]), # 季節トレンドの大きさ
+              AR1      = KFAS::artransform(pars[3:4])[1], # 1次のARの大きさ
+              AR2      = KFAS::artransform(pars[3:4])[2], # 2次のARの大きさ
+              Q_ar     = exp(pars[5]), # 短期変動の揺らぎ
+              H        = exp(pars[6]) # 観察誤差の大きさ
+              )
+  return(params)
 }
 
