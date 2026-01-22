@@ -209,13 +209,13 @@ sst_jma2zoo <- function(sea_area_id = 138) {
   url_head <- "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area"
   url <- paste0(url_head, sea_area_id, ".txt")
 
-  sst_tidy <- readr::read_csv(url, show_col_types = FALSE) |>
-    dplyr::slice(-n()) |>
-    dplyr::rename(Temp = "Temp.") |>
+  sst_tidy <- readr::read_csv(url, show_col_types = FALSE) %>%
+    dplyr::slice(-n()) %>%
+    dplyr::rename(Temp = "Temp.") %>%
     dplyr::mutate(
       Temp = as.numeric(Temp),
       date = as.Date(paste0(yyyy, "-", mm, "-", dd))
-    ) |>
+    ) %>%
     dplyr::select(date, Temp, flag)
 
   sst_zoo <- zoo::zoo(
