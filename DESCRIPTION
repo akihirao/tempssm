@@ -34,4 +34,4 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Depends: 
-    R (R >= 3.5)
+    R (>= 3.5)
