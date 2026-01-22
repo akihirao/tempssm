@@ -1,44 +1,4 @@
 
-#' Function to plot seasonal trend of monthly temperature
-#' @import ggplot2
-#' @param ts temperature time series object
-#'
-#' @encoding UTF-8
-#'
-#' @export
-#'
-
-plot_typical_seasonal_cycle <- function(ts){
-
-  stopifnot(frequency(ts) == 12)  # check for monthly time series
-
-  temp <- as.numeric(ts)
-  mnum <- cycle(ts)
-  mfac <- factor(mnum, levels = 1:12)
-  monthly_ave_temp <- tapply(temp, mfac, function(v) mean(v, na.rm = TRUE))
-
-  monthly_ave_temp_tidy = tibble(Month=seq(1:12),
-                                 Temperature=monthly_ave_temp
-                                 )
-
-  plot_monthly_ave_temp <- ggplot2::ggplot(data=monthly_ave_temp_tidy,
-                                  aes(x=Month,y=Temperature)
-                                  ) +
-    geom_point(size = 2) +
-    geom_line(linetype= "dashed") +
-    labs(title="Seasonal trend of monthly average temperature",
-      y = expression(Temperature~(degree*C))) +
-    scale_x_discrete(
-      labels = function(x) sprintf("%02d", as.integer(x))
-    )
-
-
-  plot(plot_monthly_ave_temp )
-
-}
-
-
-
 #' Function to plot time series of monthly temperature and temperature deviation
 #' @import ggplot2
 #' @param ts temperature time series object
@@ -76,45 +36,6 @@ plot_temp_dev <- function(ts){
   
 }
 
-
-#' Function to plot estimated components: level, drift, seasonal, and auto-regression
-#' @import ggplot2
-#' @param res output of model with using lgssm()
-#'
-#' @encoding UTF-8
-#'
-#' @export
-#'
-plot_level_trend_season_ar <- function(res){
-
-  alpha_hat <- res$kfs$alphahat
-
-  model_level_plot <- forecast::autoplot(alpha_hat[,"level"]) + 
-    labs(y = "", x = "Time") + 
-    ggtitle("Level component")
-
-  model_slope_plot <- forecast::autoplot(alpha_hat[,"slope"]) +
-    labs(y = "", x = "Time") +
-    ggtitle("Drift component")
-
-  model_season_plot <- forecast::autoplot(alpha_hat[,"sea_dummy1"]) +
-    labs(y = "", x = "Time") +
-    ggtitle("Seasonal component")
-
-  model_arima1_plot <- forecast::autoplot(alpha_hat[,"arima1"]) +
-    labs(y = "", x = "Time") +
-    ggtitle("Auto-regression component")
-
-   level_drift_seaon_ar_plots <- list(
-    model_level_plot,
-    model_slope_plot,
-    model_season_plot,
-    model_arima1_plot
-    )
-
-   return(level_drift_seaon_ar_plots)
-
-}
 
 
 

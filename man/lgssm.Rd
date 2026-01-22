@@ -7,7 +7,9 @@
 lgssm(ts_data, inits = NULL)
 }
 \arguments{
-\item{ts_data}{A monthly \code{ts} object. May be univariate or multivariate.}
+\item{ts_data}{Monthly temperature time series of class \code{ts}.
+The time series must have a frequency of 12 (monthly data).
+May be univariate or multivariate.}
 
 \item{inits}{Optional numeric vector of initial parameter values.
 If \code{NULL}, default values are used.}
