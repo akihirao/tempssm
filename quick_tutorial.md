@@ -24,6 +24,10 @@
   Interval](#plotting-drift-component-with-95-confidence-interval)
 - [Appendix: Handling Raw Temperature
   Data](#appendix-handling-raw-temperature-data)
+  - [未完成　This appendix describes how the original temperature time
+    series data are prepared prior to the state-space analysis presented
+    in the main text. We outline the procedures for handling raw
+    observations.](#未完成-this-appendix-describes-how-the-original-temperature-time-series-data-are-prepared-prior-to-the-state-space-analysis-presented-in-the-main-text.-we-outline-the-procedures-for-handling-raw-observations.)
 
 # Set Ennvironment
 
@@ -206,15 +210,22 @@ summary(monthly_seasonal_cycle_SST_ibaraki)
     ##  Max.   :12.00   Max.   :24.93
 
 ``` r
-plt_monthly_seasonal_cycle_SST_ibaraki <- ggplot(data=monthly_seasonal_cycle_SST_ibaraki,
-                                                 aes(x=Month,y=Temperature)) +
-    geom_point(size = 2) +
-    geom_line(linetype= "dashed") +
-    labs(title="Monthly seasonal cycle of SST",
-      y = expression(Temperature~(degree*C))) +
-    scale_x_discrete(
-      labels = function(x) sprintf("%02d", as.integer(x))
-    )
+plt_monthly_seasonal_cycle_SST_ibaraki <- ggplot(
+  data = monthly_seasonal_cycle_SST_ibaraki,
+  aes(x = Month, y = Temperature)
+) +
+  geom_point(size = 2) +
+  geom_line(linetype = "dashed") +
+  labs(
+    title = "Monthly seasonal cycle of SST",
+    x = "Month",
+    y = expression(Temperature~(degree*C))
+  ) +
+  scale_x_continuous(
+    breaks = 1:12,
+    labels = sprintf("%02d", 1:12)
+  )
+
 
 #ggsave("monthly_SST_seasonal_ibaraki.png",
 #       plot=plt_monthly_seasonal_cycle_SST_ibaraki,
@@ -431,6 +442,8 @@ plot(plt_drift_ci)
 
 # Appendix: Handling Raw Temperature Data
 
+## 未完成　This appendix describes how the original temperature time series data are prepared prior to the state-space analysis presented in the main text. We outline the procedures for handling raw observations.
+
 ``` r
 ##========================
 ## Example 1
@@ -515,7 +528,8 @@ head(raw_csv)
     ## 6  2002     6   6.2
 
 ``` r
-# Load original csv file and then convert to monthly ts object 
+# Load original csv file and then convert to monthly ts object
+# help(ThermoSSM::monthly_csv2ts)
 test_ts <- ThermoSSM::monthly_csv2ts(input_csv)
 head(test_ts)
 ```
