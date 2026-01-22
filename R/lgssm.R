@@ -151,39 +151,6 @@ lgssm <- function(ts_data, inits = NULL) {
 
 
 
-#' Function to extract process/observation error parameters
-#' @import KFAS
-#'
-#' @param res return of lgssm
-#'
-#' @encoding UTF-8
-#'
-#' @export
-extract_pars <- function (res){
-
-  model <- res$fit$model
-
-  pars_comp <- c(H = model$H,
-                Q = model$Q,
-                ar = if (!is.null(model$ar)) model$ar else NULL
-  )
-
-
-  #pars <- res[[1]]$optim.out$par #モデルの推定パラメーター
-
-  #pars_comp <- c(Q_trend  = exp(pars[1]), # 年トレンドの大きさ
-  #                Q_season = exp(pars[2]), # 季節トレンドの大きさ
-  #                AR1      = KFAS::artransform(pars[3:4])[1], # 1次のARの大きさ
-  #                AR2      = KFAS::artransform(pars[3:4])[2], # 2次のARの大きさ
-  #                Q_ar     = exp(pars[5]), # 短期変動の揺らぎ
-  #                H        = exp(pars[6])) # 観察誤差の大きさ
-
-  return(pars_comp)
-}
-
-
-
-
 #' Extract smoothed level component as a time series
 #'
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.

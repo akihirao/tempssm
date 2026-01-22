@@ -11,7 +11,8 @@ https://github.com/akihirao/ThermoSSM/blob/main/quick_tutorial.md
 
 # How to install
 ```
-install.packages("devtools")
+if(!require("devtools"))
+	install.packages("devtools")
 devtools::install_github("akihirao/ThermoSSM")
 ```
 
