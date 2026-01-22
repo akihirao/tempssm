@@ -12,7 +12,7 @@ output:
     toc: true
 ---
 
-# Set ennvironment
+# Set Ennvironment
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 ## Set libraries
@@ -26,7 +26,7 @@ library(cowplot)
 rm(list=ls(all=TRUE))
 ```
 
-# Loading example data
+# Loading Example Data
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
@@ -34,7 +34,7 @@ rm(list=ls(all=TRUE))
 data(ibaraki_sst)
 head(ibaraki_sst)
 ```
-# Checking example data
+# Checking Example Data
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 class(ibaraki_sst) # zoo object
@@ -43,7 +43,7 @@ start(ibaraki_sst)       # start time（"1982-01-01"）
 end(ibaraki_sst)         # end time（"2025-12-31"）
 ```
 
-# Plotting daily time series of sea surface temperature
+# Plotting Daily Time Series of Sea Surface Temperature
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 daily_ibaraki_sst_plot <- forecast::autoplot(ibaraki_sst) +
@@ -51,15 +51,15 @@ daily_ibaraki_sst_plot <- forecast::autoplot(ibaraki_sst) +
        x = "Time") +
   ggtitle("Daily mean sea-surface temperature off southern Ibaraki Prefecture")
 
-ggsave("Daily_SST_ibaraki_plot.png",
-       plot=daily_ibaraki_sst_plot,
-       width=8,height=6)
+#ggsave("Daily_SST_ibaraki_plot.png",
+#       plot=daily_ibaraki_sst_plot,
+#       width=8,height=6)
 
 plot(daily_ibaraki_sst_plot)
 
 ```
 
-# Converting from daily zoo object to monthly ts object
+# Converting from Daily zoo bject to Monthly ts object
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 monthly_ibaraki_sst <- zoo_daily2ts_monthly(ibaraki_sst)
@@ -78,7 +78,7 @@ window(monthly_ibaraki_sst, start = c(2001, 1), end = c(2001, 12))  # 期間抽�
 
 ```
 
-# Plotting monthly time series of sea surface temperature
+# Plotting Monthly Time Series of Sea Surface Temperature
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
@@ -87,63 +87,77 @@ monthly_ibaraki_sst_plot <- forecast::autoplot(monthly_ibaraki_sst) +
        x = "Time") +
   ggtitle("Montly mean sea-surface temperature off southern Ibaraki Prefecture")
 
-ggsave("monthly_SST_ibaraki_plot.png",
-       plot=monthly_ibaraki_sst_plot,
-       width=8,height=6)
+#ggsave("monthly_SST_ibaraki_plot.png",
+#       plot=monthly_ibaraki_sst_plot,
+#       width=8,height=6)
 
 plot(monthly_ibaraki_sst_plot)
 ```
 
-# Plotting time series of temperature deviation
+# Plotting Time Series of Temperature Anomalies
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Generate temperature anomalies
-monthly_ibaraki_sst_dev <- ThermoSSM::generate_temp_dev(monthly_ibaraki_sst)
+monthly_ibaraki_sst_anomaly <- ThermoSSM::monthly_anomaly(monthly_ibaraki_sst)
 
-monthly_ibaraki_sst_dev_plot <- forecast::autoplot(monthly_ibaraki_sst_dev) +
+monthly_ibaraki_sst_anomaly_plot <- forecast::autoplot(monthly_ibaraki_sst_anomaly) +
   labs(y = expression(Temperature~(degree*C)), 
        x = "Time") +
   ggtitle("Sea-surface temperature anomaliese")
   
-ggsave("monthly_SST_dev_ibaraki.png",
-       plot=monthly_ibaraki_sst_dev_plot,
-       width=8,height=6)
-plot(monthly_ibaraki_sst_dev_plot)
+#ggsave("monthly_SST_dev_ibaraki.png",
+#       plot=monthly_ibaraki_sst_anomaly_plot,
+#       width=8,height=6)
+
+plot(monthly_ibaraki_sst_anomaly_plot)
 ```
 
-# Plotting seasonal pattern of monthly temperature
+# Plotting Monthly Seasonal Cycle
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plot_monthly_SST_seasonal_ibaraki <- ThermoSSM::plot_typical_seasonal_cycle(monthly_ibaraki_sst) 
-ggsave("monthly_SST_seasonal_ibaraki.png",
-       plot=plot_monthly_SST_seasonal_ibaraki,
-       width=8,height=6)
-plot(plot_monthly_SST_seasonal_ibaraki)
-```
+monthly_seasonal_cycle_SST_ibaraki <- ThermoSSM::mean_seasonal_cycle(monthly_ibaraki_sst) 
+summary(monthly_seasonal_cycle_SST_ibaraki)
 
+plt_monthly_seasonal_cycle_SST_ibaraki <- ggplot(data=monthly_seasonal_cycle_SST_ibaraki,
+                                                 aes(x=Month,y=Temperature)) +
+    geom_point(size = 2) +
+    geom_line(linetype= "dashed") +
+    labs(title="Monthly seasonal cycle of SST",
+      y = expression(Temperature~(degree*C))) +
+    scale_x_discrete(
+      labels = function(x) sprintf("%02d", as.integer(x))
+    )
+
+#ggsave("monthly_SST_seasonal_ibaraki.png",
+#       plot=plt_monthly_seasonal_cycle_SST_ibaraki,
+#       width=8,height=6)
+
+plot(plt_monthly_seasonal_cycle_SST_ibaraki)
+```
 
 # Applying a Linear Gaussian State-Space Model
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 res <- lgssm(monthly_ibaraki_sst)
-fit    <- res[[1]] # fit model
-smooth <- res[[2]] # smoothing
 
-ci <- confint(smooth, level = 0.95) # 95% confident interval
+print(res)
+summary(res)
+```
+
+# Plotting Level, Drift, Seasonal, and Auto-Regressive Components
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# 全成分を一挙にプロット
+plot(res)
 ```
 
 # Simple Model Diagnostics
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
-##  model convergence
-# OK when return of 0
-fit$optim.out$convergence
-
-
 ## normality of residuals
 # 標準化残差
-std_obs_resid <- rstandard(smooth, type = "recursive")
+std_obs_resid <- rstandard(res$kfs, type = "recursive")
 
 # forecastパッケージのcheckredisuals関数で残差のチェック
 # Ljung–Box検定: P > 0.05で残差に有意な自己相関なしと判断
@@ -158,25 +172,24 @@ shapiro.test(std_obs_resid)
 
 ```
 
-# Parameter Estimation of the Model
+# Estimated Parameters and Components
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-
-# 推定パラメーター(過程誤差、観測誤差など)
-pars_comp <- ThermoSSM::extract_pars(res)
-pars_comp
+#過程誤差、観測誤差などのパラメーター
+params <- ThermoSSM::extract_param(res)
+params
 
 
 # 平滑化推定量
-alpha_hat <- smooth$alphahat
+alpha_hat <- res$kfs$alphahat
 head(alpha_hat)
 
 
 #　水準成分の平滑化推定量
-level_ts <- ThermoSSM::extract_level(res)
+level_ts <- ThermoSSM::extract_level_ts(res)
 
 #　ドリフト成分の平滑化推定量
-drift_ts <- ThermoSSM::extract_drift(res)
+drift_ts <- ThermoSSM::extract_drift_ts(res)
 
 # 年あたりの平均的な昇温率
 mean_drift_year <- mean(drift_ts) * 12
@@ -198,49 +211,39 @@ print(drift_2010s_per_year)
 
 ```
 
-# Plotting estimates of the level, drift, seasonal, and auto-regression components
+# Plotting Level Component with 95% Confidence Interval
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_comp <- ThermoSSM::plot_level_trend_season_ar(res)
-plot_four_comp <- cowplot::plot_grid(plt_comp[[1]],
-                   plt_comp[[2]],
-                   plt_comp[[3]],
-                   plt_comp[[4]],
-                   ncol=1) 
+plt_level_ci <- plot(res,
+                     components = "level",
+                     ci = TRUE,
+                     ci_level = 0.95
+                     )
 
-ggsave("plot_level_trend_season_ar.png",
-       plot=plot_four_comp,
-       width=8,height=8)
-plot_four_comp
-```
-
-# Plotting level component with confidence interval
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_level_ci <- ThermoSSM::plot_level_ci(res,
-                              ci_range = 0.95)
-
-ggsave("level_plot.png",
-       width=6, height=4,
-       plot = plt_level_ci)
+#ggsave("level_plot.png",
+#       width=6, height=4,
+#       plot = plt_level_ci)
 
 plot(plt_level_ci)
 ```
 
-# Plotting drift component with confidence interval
+# Plotting Drift Component with 95% Confidence Interval
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_drift_ci <- ThermoSSM::plot_drift_ci(res,
-                              ci_range = 0.95)
+plt_drift_ci <- plot(res,
+                     components = "drift",
+                     ci = TRUE,
+                     ci_level = 0.95
+                     )
 
-ggsave("drift_plot.png",
-       width=6, height=4,
-       plot = plt_drift_ci)
+#ggsave("drift_plot.png",
+#       width=6, height=4,
+#       plot = plt_drift_ci)
 
 plot(plt_drift_ci)
 ```
 
-# Handling original temperature data
+# Appendix: Handling Raw Temperature Data
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 ##========================

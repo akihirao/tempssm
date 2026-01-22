@@ -1,32 +1,31 @@
-- [Set ennvironment](#set-ennvironment)
-- [Loading example data](#loading-example-data)
-- [Checking example data](#checking-example-data)
-- [Plotting daily time series of sea surface
-  temperature](#plotting-daily-time-series-of-sea-surface-temperature)
-- [Converting from daily zoo object to monthly ts
-  object](#converting-from-daily-zoo-object-to-monthly-ts-object)
+- [Set Ennvironment](#set-ennvironment)
+- [Loading Example Data](#loading-example-data)
+- [Checking Example Data](#checking-example-data)
+- [Plotting Daily Time Series of Sea Surface
+  Temperature](#plotting-daily-time-series-of-sea-surface-temperature)
+- [Converting from Daily zoo bject to Monthly ts
+  object](#converting-from-daily-zoo-bject-to-monthly-ts-object)
 - [Check of ts object](#check-of-ts-object)
-- [Plotting monthly time series of sea surface
-  temperature](#plotting-monthly-time-series-of-sea-surface-temperature)
-- [Plotting time series of temperature
-  deviation](#plotting-time-series-of-temperature-deviation)
-- [Plotting seasonal pattern of monthly
-  temperature](#plotting-seasonal-pattern-of-monthly-temperature)
+- [Plotting Monthly Time Series of Sea Surface
+  Temperature](#plotting-monthly-time-series-of-sea-surface-temperature)
+- [Plotting Time Series of Temperature
+  Anomalies](#plotting-time-series-of-temperature-anomalies)
+- [Plotting Monthly Seasonal Cycle](#plotting-monthly-seasonal-cycle)
 - [Applying a Linear Gaussian State-Space
   Model](#applying-a-linear-gaussian-state-space-model)
+- [Plotting Level, Drift, Seasonal, and Auto-Regressive
+  Components](#plotting-level-drift-seasonal-and-auto-regressive-components)
 - [Simple Model Diagnostics](#simple-model-diagnostics)
-- [Parameter Estimation of the
-  Model](#parameter-estimation-of-the-model)
-- [Plotting estimates of the level, drift, seasonal, and auto-regression
-  components](#plotting-estimates-of-the-level-drift-seasonal-and-auto-regression-components)
-- [Plotting level component with confidence
-  interval](#plotting-level-component-with-confidence-interval)
-- [Plotting drift component with confidence
-  interval](#plotting-drift-component-with-confidence-interval)
-- [Handling original temperature
-  data](#handling-original-temperature-data)
+- [Estimated Parameters and
+  Components](#estimated-parameters-and-components)
+- [Plotting Level Component with 95% Confidence
+  Interval](#plotting-level-component-with-95-confidence-interval)
+- [Plotting Drift Component with 95% Confidence
+  Interval](#plotting-drift-component-with-95-confidence-interval)
+- [Appendix: Handling Raw Temperature
+  Data](#appendix-handling-raw-temperature-data)
 
-# Set ennvironment
+# Set Ennvironment
 
 ``` r
 ## Set libraries
@@ -40,7 +39,7 @@ library(cowplot)
 rm(list=ls(all=TRUE))
 ```
 
-# Loading example data
+# Loading Example Data
 
 ``` r
 # loading example data 1: daily mean sea surface temperature time series off southern Ibaraki Prefecture, Japan
@@ -56,7 +55,7 @@ head(ibaraki_sst)
     ## 1982-01-05 16.22
     ## 1982-01-06 16.04
 
-# Checking example data
+# Checking Example Data
 
 ``` r
 class(ibaraki_sst) # zoo object
@@ -82,7 +81,7 @@ end(ibaraki_sst)         # end time（"2025-12-31"）
 
     ## [1] "2025-12-31"
 
-# Plotting daily time series of sea surface temperature
+# Plotting Daily Time Series of Sea Surface Temperature
 
 ``` r
 daily_ibaraki_sst_plot <- forecast::autoplot(ibaraki_sst) +
@@ -90,16 +89,16 @@ daily_ibaraki_sst_plot <- forecast::autoplot(ibaraki_sst) +
        x = "Time") +
   ggtitle("Daily mean sea-surface temperature off southern Ibaraki Prefecture")
 
-ggsave("Daily_SST_ibaraki_plot.png",
-       plot=daily_ibaraki_sst_plot,
-       width=8,height=6)
+#ggsave("Daily_SST_ibaraki_plot.png",
+#       plot=daily_ibaraki_sst_plot,
+#       width=8,height=6)
 
 plot(daily_ibaraki_sst_plot)
 ```
 
 ![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-4-1.png)
 
-# Converting from daily zoo object to monthly ts object
+# Converting from Daily zoo bject to Monthly ts object
 
 ``` r
 monthly_ibaraki_sst <- zoo_daily2ts_monthly(ibaraki_sst)
@@ -154,7 +153,7 @@ window(monthly_ibaraki_sst, start = c(2001, 1), end = c(2001, 12))  # 期間抽�
     ##           Sep      Oct      Nov      Dec
     ## 2001 24.32400 22.53935 20.68533 18.92161
 
-# Plotting monthly time series of sea surface temperature
+# Plotting Monthly Time Series of Sea Surface Temperature
 
 ``` r
 monthly_ibaraki_sst_plot <- forecast::autoplot(monthly_ibaraki_sst) +
@@ -162,82 +161,137 @@ monthly_ibaraki_sst_plot <- forecast::autoplot(monthly_ibaraki_sst) +
        x = "Time") +
   ggtitle("Montly mean sea-surface temperature off southern Ibaraki Prefecture")
 
-ggsave("monthly_SST_ibaraki_plot.png",
-       plot=monthly_ibaraki_sst_plot,
-       width=8,height=6)
+#ggsave("monthly_SST_ibaraki_plot.png",
+#       plot=monthly_ibaraki_sst_plot,
+#       width=8,height=6)
 
 plot(monthly_ibaraki_sst_plot)
 ```
 
 ![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-7-1.png)
 
-# Plotting time series of temperature deviation
+# Plotting Time Series of Temperature Anomalies
 
 ``` r
 # Generate temperature anomalies
-monthly_ibaraki_sst_dev <- ThermoSSM::generate_temp_dev(monthly_ibaraki_sst)
+monthly_ibaraki_sst_anomaly <- ThermoSSM::monthly_anomaly(monthly_ibaraki_sst)
 
-monthly_ibaraki_sst_dev_plot <- forecast::autoplot(monthly_ibaraki_sst_dev) +
+monthly_ibaraki_sst_anomaly_plot <- forecast::autoplot(monthly_ibaraki_sst_anomaly) +
   labs(y = expression(Temperature~(degree*C)), 
        x = "Time") +
   ggtitle("Sea-surface temperature anomaliese")
   
-ggsave("monthly_SST_dev_ibaraki.png",
-       plot=monthly_ibaraki_sst_dev_plot,
-       width=8,height=6)
-plot(monthly_ibaraki_sst_dev_plot)
+#ggsave("monthly_SST_dev_ibaraki.png",
+#       plot=monthly_ibaraki_sst_anomaly_plot,
+#       width=8,height=6)
+
+plot(monthly_ibaraki_sst_anomaly_plot)
 ```
 
 ![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-8-1.png)
 
-# Plotting seasonal pattern of monthly temperature
+# Plotting Monthly Seasonal Cycle
 
 ``` r
-plot_monthly_SST_seasonal_ibaraki <- ThermoSSM::plot_typical_seasonal_cycle(monthly_ibaraki_sst) 
+monthly_seasonal_cycle_SST_ibaraki <- ThermoSSM::mean_seasonal_cycle(monthly_ibaraki_sst) 
+summary(monthly_seasonal_cycle_SST_ibaraki)
+```
+
+    ##      Month        Temperature   
+    ##  Min.   : 1.00   Min.   :13.90  
+    ##  1st Qu.: 3.75   1st Qu.:15.47  
+    ##  Median : 6.50   Median :18.42  
+    ##  Mean   : 6.50   Mean   :18.82  
+    ##  3rd Qu.: 9.25   3rd Qu.:21.87  
+    ##  Max.   :12.00   Max.   :24.93
+
+``` r
+plt_monthly_seasonal_cycle_SST_ibaraki <- ggplot(data=monthly_seasonal_cycle_SST_ibaraki,
+                                                 aes(x=Month,y=Temperature)) +
+    geom_point(size = 2) +
+    geom_line(linetype= "dashed") +
+    labs(title="Monthly seasonal cycle of SST",
+      y = expression(Temperature~(degree*C))) +
+    scale_x_discrete(
+      labels = function(x) sprintf("%02d", as.integer(x))
+    )
+
+#ggsave("monthly_SST_seasonal_ibaraki.png",
+#       plot=plt_monthly_seasonal_cycle_SST_ibaraki,
+#       width=8,height=6)
+
+plot(plt_monthly_seasonal_cycle_SST_ibaraki)
 ```
 
 ![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-9-1.png)
-
-``` r
-ggsave("monthly_SST_seasonal_ibaraki.png",
-       plot=plot_monthly_SST_seasonal_ibaraki,
-       width=8,height=6)
-plot(plot_monthly_SST_seasonal_ibaraki)
-```
-
-![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-9-2.png)
 
 # Applying a Linear Gaussian State-Space Model
 
 ``` r
 res <- lgssm(monthly_ibaraki_sst)
-fit    <- res[[1]] # fit model
-smooth <- res[[2]] # smoothing
 
-ci <- confint(smooth, level = 0.95) # 95% confident interval
+print(res)
 ```
+
+    ## ThermoSSM model fit
+    ## ------------------
+    ## Data:
+    ##   Length      : 528 
+    ##   Frequency   : 12 
+    ##   Start / End : 1982-1  /  2025-12 
+    ## 
+    ## Optimization:
+    ##   Converged   : TRUE 
+    ##   LogLik      : -603 
+    ## 
+    ## Use summary() for detailed results.
+
+``` r
+summary(res)
+```
+
+    ## ThermoSSM summary
+    ## -----------------
+    ## Call:
+    ## lgssm(ts_data = monthly_ibaraki_sst)
+    ## 
+    ## Model fit:
+    ##   Log-likelihood : -603 
+    ##   k              : 6 
+    ##   AIC            : 1218 
+    ##   Converged      : TRUE 
+    ## 
+    ## Variance parameters:
+    ##   Observation (H): 1.72128e-43 
+    ##   State (Q trend): 5.008495e-06 
+    ##   State (Q season): 0.0001880851 
+    ##   State (Q ar): 0.5141963 
+    ## Coefficient of auto-regression parameters:
+    ##   AR1: 0.6923188 
+    ##   AR2: -0.1245904
+
+# Plotting Level, Drift, Seasonal, and Auto-Regressive Components
+
+``` r
+# 全成分を一挙にプロット
+plot(res)
+```
+
+![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-11-1.png)
 
 # Simple Model Diagnostics
 
 ``` r
-##  model convergence
-# OK when return of 0
-fit$optim.out$convergence
-```
-
-    ## [1] 0
-
-``` r
 ## normality of residuals
 # 標準化残差
-std_obs_resid <- rstandard(smooth, type = "recursive")
+std_obs_resid <- rstandard(res$kfs, type = "recursive")
 
 # forecastパッケージのcheckredisuals関数で残差のチェック
 # Ljung–Box検定: P > 0.05で残差に有意な自己相関なしと判断
 checkresiduals(std_obs_resid)
 ```
 
-![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-11-1.png)
+![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-12-1.png)
 
     ## 
     ##  Ljung-Box test
@@ -262,12 +316,12 @@ shapiro.test(std_obs_resid)
     ## data:  std_obs_resid
     ## W = 0.99552, p-value = 0.1467
 
-# Parameter Estimation of the Model
+# Estimated Parameters and Components
 
 ``` r
-# 推定パラメーター(過程誤差、観測誤差など)
-pars_comp <- ThermoSSM::extract_pars(res)
-pars_comp
+#過程誤差、観測誤差などのパラメーター
+params <- ThermoSSM::extract_param(res)
+params
 ```
 
     ##       Q_trend      Q_season           AR1           AR2          Q_ar 
@@ -277,7 +331,7 @@ pars_comp
 
 ``` r
 # 平滑化推定量
-alpha_hat <- smooth$alphahat
+alpha_hat <- res$kfs$alphahat
 head(alpha_hat)
 ```
 
@@ -305,10 +359,10 @@ head(alpha_hat)
 
 ``` r
 #　水準成分の平滑化推定量
-level_ts <- ThermoSSM::extract_level(res)
+level_ts <- ThermoSSM::extract_level_ts(res)
 
 #　ドリフト成分の平滑化推定量
-drift_ts <- ThermoSSM::extract_drift(res)
+drift_ts <- ThermoSSM::extract_drift_ts(res)
 
 # 年あたりの平均的な昇温率
 mean_drift_year <- mean(drift_ts) * 12
@@ -339,55 +393,43 @@ print(drift_2010s_per_year)
 
     ## [1] 0.1152325
 
-# Plotting estimates of the level, drift, seasonal, and auto-regression components
+# Plotting Level Component with 95% Confidence Interval
 
 ``` r
-plt_comp <- ThermoSSM::plot_level_trend_season_ar(res)
-plot_four_comp <- cowplot::plot_grid(plt_comp[[1]],
-                   plt_comp[[2]],
-                   plt_comp[[3]],
-                   plt_comp[[4]],
-                   ncol=1) 
+plt_level_ci <- plot(res,
+                     components = "level",
+                     ci = TRUE,
+                     ci_level = 0.95
+                     )
 
-ggsave("plot_level_trend_season_ar.png",
-       plot=plot_four_comp,
-       width=8,height=8)
-plot_four_comp
-```
-
-![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-13-1.png)
-
-# Plotting level component with confidence interval
-
-``` r
-plt_level_ci <- ThermoSSM::plot_level_ci(res,
-                              ci_range = 0.95)
-
-ggsave("level_plot.png",
-       width=6, height=4,
-       plot = plt_level_ci)
+#ggsave("level_plot.png",
+#       width=6, height=4,
+#       plot = plt_level_ci)
 
 plot(plt_level_ci)
 ```
 
 ![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-14-1.png)
 
-# Plotting drift component with confidence interval
+# Plotting Drift Component with 95% Confidence Interval
 
 ``` r
-plt_drift_ci <- ThermoSSM::plot_drift_ci(res,
-                              ci_range = 0.95)
+plt_drift_ci <- plot(res,
+                     components = "drift",
+                     ci = TRUE,
+                     ci_level = 0.95
+                     )
 
-ggsave("drift_plot.png",
-       width=6, height=4,
-       plot = plt_drift_ci)
+#ggsave("drift_plot.png",
+#       width=6, height=4,
+#       plot = plt_drift_ci)
 
 plot(plt_drift_ci)
 ```
 
 ![](quick_tutorial_files/figure-markdown_github/unnamed-chunk-15-1.png)
 
-# Handling original temperature data
+# Appendix: Handling Raw Temperature Data
 
 ``` r
 ##========================
