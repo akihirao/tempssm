@@ -1,22 +1,25 @@
-## Summary and printing methods for ThermoSSM objects
-
+#' Summary method for ThermoSSM objects
+#'
+#' Provides a concise summary of a fitted linear Gaussian
+#' state-space model estimated by \code{lgssm()}.
+#'
+#' @param res An object of class \code{ThermoSSM}.
+#' @param ... Additional arguments (currently not used).
+#'
+#' @return A list containing model diagnostics and summaries.
+#'
+#' @method summary ThermoSSM
 #' @export
-summary.ThermoSSM <- function(object, ...) {
+summary.ThermoSSM <- function(res, ...) {
 
-  model <- object$fit$model
-  kfs   <- object$kfs
-  opt   <- object$fit$optim.out
+  model <- res$fit$model
+  kfs   <- res$kfs
+  opt   <- res$fit$optim.out
   pars <- res$fit$optim.out$par
 
-  #params <- c(Q_trend  = exp(pars[1]), # 年トレンドの大きさ
-  #            Q_season = exp(pars[2]), # 季節トレンドの大きさ
-  #            AR1      = KFAS::artransform(pars[3:4])[1], # 1次のARの大きさ
-  #            AR2      = KFAS::artransform(pars[3:4])[2], # 2次のARの大きさ
-  #            Q_ar     = exp(pars[5]), # 短期変動の揺らぎ
-  #)
 
   res <- list(
-    call        = object$call,
+    call        = res$call,
     logLik      = logLik(model),
     k           = length(opt$par),
     AIC         = -2 * as.numeric(logLik(model)) + 2 * length(opt$par),
@@ -40,7 +43,21 @@ summary.ThermoSSM <- function(object, ...) {
 
 
 
-
+#' Print method for summary of ThermoSSM objects
+#'
+#' Prints a human-readable summary of a fitted
+#' linear Gaussian state-space model estimated by
+#' \code{lgssm()}.
+#'
+#' This method is automatically called when a
+#' \code{summary.ThermoSSM} object is printed.
+#'
+#' @param x An object of class \code{summary.ThermoSSM}.
+#' @param ... Additional arguments (currently not used).
+#'
+#' @return The input object \code{x}, invisibly.
+#'
+#' @method print summary.ThermoSSM
 #' @export
 print.summary.ThermoSSM <- function(x, ...) {
 

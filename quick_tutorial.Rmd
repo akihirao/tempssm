@@ -59,7 +59,7 @@ plot(daily_ibaraki_sst_plot)
 
 ```
 
-# Converting from Daily zoo bject to Monthly ts object
+# Converting from Daily zoo object to Monthly ts object
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 monthly_ibaraki_sst <- zoo_daily2ts_monthly(ibaraki_sst)

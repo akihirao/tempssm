@@ -4,7 +4,7 @@
 \alias{lgssm}
 \title{Fit a linear Gaussian state-space model to temperature time series}
 \usage{
-lgssm(ts_data, inits = NULL)
+lgssm(ts_data, inits = NULL, exogenous = FALSE)
 }
 \arguments{
 \item{ts_data}{Monthly temperature time series of class \code{ts}.
@@ -32,7 +32,7 @@ If multivariate, a column named \code{"Temp"} is used.
 }
 \examples{
 \dontrun{
-fit <- lgssm(fuji_temp)
-plot(fit$data)
+res <- lgssm(fuji_temp)
+plot(res$data)
 }
 }

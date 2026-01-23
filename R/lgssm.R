@@ -26,10 +26,12 @@
 #'
 #' @examples
 #' \dontrun{
-#' fit <- lgssm(fuji_temp)
-#' plot(fit$data)
+#' res <- lgssm(fuji_temp)
+#' plot(res$data)
 #' }
-lgssm <- function(ts_data, inits = NULL) {
+lgssm <- function(ts_data, 
+                  inits = NULL,
+                  exogenous = FALSE) {
 
   ## ---- Input checks ---------------------------------------------------
   if (!inherits(ts_data, "ts")) {
@@ -40,19 +42,8 @@ lgssm <- function(ts_data, inits = NULL) {
     stop("ts_data must be a monthly time series (frequency = 12).")
   }
 
-  ## Handle univariate / multivariate ts
-  if (is.null(dim(ts_data))) {
-    y <- ts_data
-  } else {
-    if (!"Temp" %in% colnames(ts_data)) {
-      stop("For multivariate ts objects, a column named 'Temp' is required.")
-    }
-    y <- ts_data[, "Temp"]
-  }
-
-  #browser()
-  #colnames(y) <- "Temp"
-
+  data_df <- as.data.frame(ts_data)
+  
   ## ---- Default initial values -----------------------------------------
   if (is.null(inits)) {
     # log-variances and AR parameters (on unconstrained scale)
@@ -65,82 +56,204 @@ lgssm <- function(ts_data, inits = NULL) {
       -5    # observation variance (log)
     )
   }
-
+  
   if (!is.numeric(inits) || length(inits) != 6) {
     stop("inits must be a numeric vector of length 6.")
   }
-
-  ## ---- Model definition -----------------------------------------------
-  build_ssm <- SSModel(
-    y ~
-      SSMtrend(
-        degree = 2,
-        Q = c(list(0), list(NA))
-      ) +
-      SSMseasonal(
-        sea.type = "dummy",
-        period = 12,
-        Q = NA
-      ) +
-      SSMarima(
-        ar = c(0, 0),
-        d = 0,
-        Q = 0
-      ),
-    H = NA
-  )
-
-  ## ---- Parameter update function --------------------------------------
-  update_func <- function(pars, model) {
-    model <- SSModel(
+  
+  
+  ## Handle univariate / multivariate ts
+  # model without exogenous variables
+  if(!(exogenous)){ 
+    #if (nrow(data_df)==1) {
+    #  y <- data_df
+    if (is.null(dim(ts_data))) {
+      y <- ts_data
+    } else {
+      if (!"Temp" %in% colnames(ts_data)) {
+        stop("For multivariate ts objects, a column named 'Temp' is required.")
+      }
+        y <- ts_data[, "Temp"]
+    }
+    
+    
+    ## ---- Model definition -----------------------------------------------
+    build_ssm <- SSModel(
       y ~
-        SSMtrend(degree = 2,
-                 Q = c(list(0), list(exp(pars[1])))) +
+        SSMtrend(
+          degree = 2,
+          Q = c(list(0), list(NA))
+        ) +
         SSMseasonal(
           sea.type = "dummy",
           period = 12,
-          Q = exp(pars[2])
+          Q = NA
         ) +
         SSMarima(
-          ar = artransform(pars[3:4]),
+          ar = c(0, 0),
           d = 0,
-          Q = exp(pars[5])
+          Q = 0
         ),
-      H = exp(pars[6])
+      H = NA
     )
-  }
+    
+    ## ---- Parameter update function --------------------------------------
+    update_func <- function(pars, model) {
+      model <- SSModel(
+        y ~
+          SSMtrend(degree = 2,
+                   Q = c(list(0), list(exp(pars[1])))) +
+          SSMseasonal(
+            sea.type = "dummy",
+            period = 12,
+            Q = exp(pars[2])
+          ) +
+          SSMarima(
+            ar = artransform(pars[3:4]),
+            d = 0,
+            Q = exp(pars[5])
+          ),
+        H = exp(pars[6])
+      )
+    }
+    
+    
+    ## ---- Optimization (two-step) ----------------------------------------
+    fit1 <- fitSSM(
+      build_ssm,
+      inits  = inits,
+      updatefn = update_func,
+      method = "Nelder-Mead",
+      control = list(maxit = 5000, reltol = 1e-16)
+    )
+    
+    fit2 <- fitSSM(
+      build_ssm,
+      inits  = fit1$optim.out$par,
+      updatefn = update_func,
+      method = "BFGS",
+      control = list(maxit = 5000, reltol = 1e-16)
+    )
+    
+    ## ---- Kalman filtering & smoothing -----------------------------------
+    kfs <- KFS(
+      fit2$model,
+      filtering = c("state", "mean"),
+      smoothing = c("state", "mean", "disturbance")
+    )
+    
+  
+  #========================================================   
+  #======================================================== 
+  # model with an exogenous variable
+  } else { # 
+    variables_lab <- colnames(ts_data)
+    if (!"Temp" %in% variables_lab) {
+      stop("For multivariate ts objects, a column named 'Temp' is required.")
+    }
+    num_exo_variable <- length(variables_lab) - 1
+    #print(num_exo_variable)
+    
+    if (num_exo_variable >= 2){
+      stop("Sorry. More than two exogenous variables can not be conducted in this packge")
+    }
+    y <- ts_data[, "Temp"]
+    exo_lab <- variables_lab[variables_lab != "Temp"]
+    
+    exo1 <- ts_data[, exo_lab]
+    
+    reg_formula <- as.formula(
+      paste("~ ", paste(exo_lab, collapse = " + "))
+    )
+    
+    #browser()
+    #print(reg_formula)
+    
+    ## ---- Model definition -----------------------------------------------
+    build_ssm <- SSModel(
+      H = NA,
+      y ~
+        SSMtrend(
+          degree = 2,
+          Q = c(list(0), list(NA))
+        ) +
+        SSMseasonal(
+          sea.type = "dummy",
+          period = 12,
+          Q = NA
+        ) +
+        SSMarima(
+          ar = c(0, 0),
+          d = 0,
+          Q = 0
+        ) +
+        SSMregression( #exogenous variable
+          ~ exo1,
+          Q = 0
+        )#,
+      #data = data_df
+    )
+    
+    ## ---- Parameter update function --------------------------------------
+    update_func <- function(pars, model) {
+      return(
+        SSModel(
+          H = exp(pars[6]),
+          y ~
+            SSMtrend(degree = 2,
+                     Q = c(list(0), list(exp(pars[1])))) +
+            SSMseasonal(
+              sea.type = "dummy",
+              period = 12,
+              Q = exp(pars[2])) +
+            SSMarima(
+              ar = artransform(pars[3:4]),
+              d = 0,
+              Q = exp(pars[5])) +
+            SSMregression( #exogenous variable
+              ~ exo1,
+              Q = 0)#,
+        #data = data_df
+        )
+      )
+    }
+    
+    
+    ## ---- Optimization (two-step) ----------------------------------------
+    fit1 <- fitSSM(
+      build_ssm,
+      inits  = inits,
+      updatefn = update_func,
+      method = "Nelder-Mead",
+      control = list(maxit = 5000, reltol = 1e-16)
+    )
+    
+    fit2 <- fitSSM(
+      build_ssm,
+      inits  = fit1$optim.out$par,
+      updatefn = update_func,
+      method = "BFGS",
+      control = list(maxit = 5000, reltol = 1e-16)
+    )
+    
+    ## ---- Kalman filtering & smoothing -----------------------------------
+    kfs <- KFS(
+      fit2$model,
+      filtering = c("state", "mean"),
+      smoothing = c("state", "mean", "disturbance")
+    )
+    
+      
+    
+  }  
 
-
-  ## ---- Optimization (two-step) ----------------------------------------
-  fit1 <- fitSSM(
-    build_ssm,
-    inits  = inits,
-    updatefn = update_func,
-    method = "Nelder-Mead",
-    control = list(maxit = 5000, reltol = 1e-16)
-  )
-
-  fit2 <- fitSSM(
-    build_ssm,
-    inits  = fit1$optim.out$par,
-    updatefn = update_func,
-    method = "BFGS",
-    control = list(maxit = 5000, reltol = 1e-16)
-  )
-
-  ## ---- Kalman filtering & smoothing -----------------------------------
-  kfs <- KFS(
-    fit2$model,
-    filtering = c("state", "mean"),
-    smoothing = c("state", "mean", "disturbance")
-  )
 
   ## ---- Output ---------------------------------------------------------
   out <- list(
     model = fit2$model,
     fit   = fit2,
     kfs   = kfs,
-    data  = y,
+    data  = ts_data,
     call  = match.call()
   )
 
@@ -217,5 +330,55 @@ extract_param <- function(res){
               H        = exp(pars[6]) # 観察誤差の大きさ
               )
   return(params)
+}
+
+
+
+
+#' Extract CI of coefficient for exogenous variable(s)
+#'
+#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#'
+#' @return A \code{data.frame} object of CI for exogenous variable(s).
+#'
+#' @export
+
+extract_regression_ci <- function(res, level = 0.95) {
+  
+  if (!inherits(res, "ThermoSSM")) {
+    stop("Input must be a 'ThermoSSM' object.")
+  }
+  
+  model <- res$model
+  kfs   <- res$kfs
+  
+  # 外生変数名（Temp 以外）
+  exo_names <- setdiff(colnames(res$data), "Temp")
+  
+  if (length(exo_names) == 0) {
+    stop("No exogenous variables found in the model.")
+  }
+  
+  p <- length(exo_names)
+  Tt <- ncol(kfs$alphahat)
+  
+  # 回帰係数は状態ベクトルの末尾
+  idx <- (nrow(kfs$alphahat) - p + 1):nrow(kfs$alphahat)
+  
+  beta_hat <- kfs$alphahat[idx, Tt]
+  beta_var <- diag(kfs$V[idx, idx, Tt])
+  
+  alpha <- 1 - level
+  z <- qnorm(1 - alpha / 2)
+  
+  out <- data.frame(
+    variable = exo_names,
+    estimate = beta_hat,
+    std_error = sqrt(beta_var),
+    lower = beta_hat - z * sqrt(beta_var),
+    upper = beta_hat + z * sqrt(beta_var)
+  )
+  
+  return(out)
 }
 
