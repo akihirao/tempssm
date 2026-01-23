@@ -5,7 +5,7 @@ The implementation is based on linear Gaussian state-space models and makes use 
 Main parts of the implementation were adapted from the supplementary code provided in Baba et al. (2024), available on GitHub: https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 
 
-# How to install
+# How to Install
 ```
 if(!require("devtools"))
 	install.packages("devtools")
