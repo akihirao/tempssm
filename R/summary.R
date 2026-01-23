@@ -16,8 +16,10 @@ summary.ThermoSSM <- function(res, ...) {
   kfs   <- res$kfs
   opt   <- res$fit$optim.out
   pars <- res$fit$optim.out$par
+  exogenous_variable <- res$exogenous
 
-
+  exogenous_coef_ci <- extract_exo_coef_ci(res)
+  
   res <- list(
     call        = res$call,
     logLik      = logLik(model),
@@ -33,8 +35,9 @@ summary.ThermoSSM <- function(res, ...) {
     coef_ar = list(
       AR1 = KFAS::artransform(pars[3:4])[1],
       AR2 = KFAS::artransform(pars[3:4])[2]
-    )
-
+    ),
+    exogenous = exogenous_variable,
+    exogenous_coef = exogenous_coef_ci
   )
 
   class(res) <- "summary.ThermoSSM"
@@ -87,14 +90,22 @@ print.summary.ThermoSSM <- function(x, ...) {
   if (!is.null(x$variances$Q_ar)) {
     cat("  State (Q ar):", x$variances$Q_ar, "\n")
   }
+  cat("\n")
   cat("Coefficient of auto-regression parameters:\n")
   if (!is.null(x$coef_ar$AR1)) {
     cat("  AR1:", x$coef_ar$AR1, "\n")
   }
   if (!is.null(x$coef_ar$AR2)) {
-    cat("  AR2:", x$coef_ar$AR2, "\n")
+    cat("  AR2:", x$coef_ar$AR2, "\n\n")
   }
 
+  if (!is.null(x$exogenous_coef)) {
+  cat("Exogenous variable\t",x$exogenous_coef$Variable, "\n")
+  cat("Estimated coefficient\t", x$exogenous_coef$Coefficient, "\n")
+  cat("Lower CI\t", x$exogenous_coef$lwr, "\n")
+  cat("Upper CI\t", x$exogenous_coef$upr, "\n\n")
+  }
+  
   invisible(x)
 }
 

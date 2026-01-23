@@ -4,7 +4,7 @@ test_that("ThermoSSM object structure is consistent", {
 
   res <- lgssm(temp_ts_test)
 
-  expect_named(res, c("model", "fit", "kfs", "data","call"), ignore.order = TRUE)
+  expect_named(res, c("model", "fit", "kfs", "data","exogenous","call"), ignore.order = TRUE)
 
   expect_s3_class(res$model, "SSModel")
   expect_s3_class(res$kfs, "KFS")

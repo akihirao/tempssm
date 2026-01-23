@@ -12,6 +12,14 @@
 #' @param inits Optional numeric vector of initial parameter values.
 #'   If \code{NULL}, default values are used.
 #'
+#' @param exo logical(1). If TRUE, fit a model that incorporates 
+#'  exogenous variables, The default is FALSE.
+#'  
+#'  
+#' @param exo_name Optional characteristic vector of names of  
+#'   exogenous variables. If \code{NULL}, column names of ts_data of 
+#'   class \code{ts}, excluding a column named \code{"Temp"}, are used. 
+#'
 #' @return An object of class \code{"ThermoSSM"}, a named list containing:
 #' \describe{
 #'   \item{model}{Fitted \code{SSModel} object.}
@@ -31,7 +39,8 @@
 #' }
 lgssm <- function(ts_data, 
                   inits = NULL,
-                  exogenous = FALSE) {
+                  exo = FALSE,
+                  exo_name = NULL) {
 
   ## ---- Input checks ---------------------------------------------------
   if (!inherits(ts_data, "ts")) {
@@ -49,11 +58,11 @@ lgssm <- function(ts_data,
     # log-variances and AR parameters (on unconstrained scale)
     inits <- c(
       -13,  # trend variance (log)
-      -7,   # seasonal variance (log)
+       -7,  # seasonal variance (log)
       0.9,  # AR(1)
-      -0.1, # AR(2)
-      -0.3, # AR noise variance (log)
-      -5    # observation variance (log)
+     -0.1,  # AR(2)
+     -0.3,  # AR noise variance (log)
+       -5   # observation variance (log)
     )
   }
   
@@ -62,11 +71,13 @@ lgssm <- function(ts_data,
   }
   
   
-  ## Handle univariate / multivariate ts
+  #========================================================
+  # Handle univariate / multivariate ts
+  
+  # ------------------------------------------------------------------------
+  # ------------------------------------------------------------------------
   # model without exogenous variables
-  if(!(exogenous)){ 
-    #if (nrow(data_df)==1) {
-    #  y <- data_df
+  if(!(exo)){ 
     if (is.null(dim(ts_data))) {
       y <- ts_data
     } else {
@@ -76,6 +87,7 @@ lgssm <- function(ts_data,
         y <- ts_data[, "Temp"]
     }
     
+    exogenous_lab <- exo_name
     
     ## ---- Model definition -----------------------------------------------
     build_ssm <- SSModel(
@@ -142,37 +154,46 @@ lgssm <- function(ts_data,
       smoothing = c("state", "mean", "disturbance")
     )
     
-  
-  #========================================================   
-  #======================================================== 
+   
+  # ------------------------------------------------------------------------
+  # ------------------------------------------------------------------------
   # model with an exogenous variable
   } else { # 
     variables_lab <- colnames(ts_data)
     if (!"Temp" %in% variables_lab) {
       stop("For multivariate ts objects, a column named 'Temp' is required.")
     }
-    num_exo_variable <- length(variables_lab) - 1
-    #print(num_exo_variable)
     
-    if (num_exo_variable >= 2){
-      stop("Sorry. More than two exogenous variables can not be conducted in this packge")
-    }
     y <- ts_data[, "Temp"]
-    exo_lab <- variables_lab[variables_lab != "Temp"]
     
-    exo1 <- ts_data[, exo_lab]
+    if(is.null(exo_name)){ # case_when exo_name = NULL
+      num_exo_variable <- length(variables_lab) - 1
+      
+      if (num_exo_variable == 0){
+        stop("At least one exogenous variable(s) should be included in ts object")
+      }
+      
+      exogenous_lab <- variables_lab[variables_lab != "Temp"]
+      
+      exogenous_ts <- ts_data[, exogenous_lab]
+      exogenous_mat <- as.matrix(exogenous_ts)
     
-    reg_formula <- as.formula(
-      paste("~ ", paste(exo_lab, collapse = " + "))
-    )
+    }else{ # case_when exo_name(s) is/are given
+      
+      if (!exo_name %in% variables_lab) {
+        stop(paste0("Multivariate ts object should be included ",exo_name," as exogenous variables."))
+      }
+      
+      exogenous_lab <- exo_name
+      exogenous_ts <- ts_data[, exogenous_lab]
+      exogenous_mat <- as.matrix(exogenous_ts)
+    }
     
-    #browser()
-    #print(reg_formula)
     
     ## ---- Model definition -----------------------------------------------
     build_ssm <- SSModel(
       H = NA,
-      y ~
+      y ~ exogenous_mat +
         SSMtrend(
           degree = 2,
           Q = c(list(0), list(NA))
@@ -186,12 +207,7 @@ lgssm <- function(ts_data,
           ar = c(0, 0),
           d = 0,
           Q = 0
-        ) +
-        SSMregression( #exogenous variable
-          ~ exo1,
-          Q = 0
-        )#,
-      #data = data_df
+        )
     )
     
     ## ---- Parameter update function --------------------------------------
@@ -199,7 +215,7 @@ lgssm <- function(ts_data,
       return(
         SSModel(
           H = exp(pars[6]),
-          y ~
+          y ~ exogenous_mat + 
             SSMtrend(degree = 2,
                      Q = c(list(0), list(exp(pars[1])))) +
             SSMseasonal(
@@ -209,11 +225,7 @@ lgssm <- function(ts_data,
             SSMarima(
               ar = artransform(pars[3:4]),
               d = 0,
-              Q = exp(pars[5])) +
-            SSMregression( #exogenous variable
-              ~ exo1,
-              Q = 0)#,
-        #data = data_df
+              Q = exp(pars[5]))
         )
       )
     }
@@ -242,10 +254,8 @@ lgssm <- function(ts_data,
       filtering = c("state", "mean"),
       smoothing = c("state", "mean", "disturbance")
     )
-    
-      
-    
-  }  
+
+  } # close of model with exogenous variable(s)  
 
 
   ## ---- Output ---------------------------------------------------------
@@ -254,6 +264,7 @@ lgssm <- function(ts_data,
     fit   = fit2,
     kfs   = kfs,
     data  = ts_data,
+    exogenous = exogenous_lab,
     call  = match.call()
   )
 
@@ -283,8 +294,6 @@ extract_level_ts <- function(res) {
 
   res$kfs$alphahat[, "level"]
 }
-
-
 
 
 
@@ -335,15 +344,18 @@ extract_param <- function(res){
 
 
 
-#' Extract CI of coefficient for exogenous variable(s)
+#' Extract coefficient of exogenous variables with confidence interval
 #'
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#'
+#' @param level Percentage of confidence interval. The default value of 0.95.
 #'
 #' @return A \code{data.frame} object of CI for exogenous variable(s).
 #'
 #' @export
 
-extract_regression_ci <- function(res, level = 0.95) {
+extract_exo_coef_ci <- function(res, 
+                                level = 0.95) {
   
   if (!inherits(res, "ThermoSSM")) {
     stop("Input must be a 'ThermoSSM' object.")
@@ -351,34 +363,52 @@ extract_regression_ci <- function(res, level = 0.95) {
   
   model <- res$model
   kfs   <- res$kfs
+  exo_variable <- res$exogenous
   
-  # 外生変数名（Temp 以外）
-  exo_names <- setdiff(colnames(res$data), "Temp")
+  if(is.null(exo_variable)){ # case when model without exogenous variable(s)
   
-  if (length(exo_names) == 0) {
-    stop("No exogenous variables found in the model.")
+      beta_coef_ci <- NULL
+      
+  }else{ # case when model with exogenous variable(s)
+  
+    num_exo_variable <- length(exo_variable)
+  
+    alpha_hat <- kfs$alphahat
+    colnames(alpha_hat) <- c(exo_variable,
+                           "level",
+                           "slope",
+                           "sea_dummy1",
+                           "sea_dummy2",
+                           "sea_dummy3",
+                           "sea_dummy4",
+                           "sea_dummy5",
+                           "sea_dummy6",
+                           "sea_dummy7",
+                           "sea_dummy8",
+                           "sea_dummy9",
+                           "sea_dummy10",
+                           "sea_dummy11",
+                           "arima1",
+                           "arima2"
+                           )
+    if(num_exo_variable >=2){
+      beta_coef <- alpha_hat[,exo_variable][1,1:num_exo_variable]
+    }else{
+      beta_coef <- alpha_hat[,exo_variable][1]
+    }
+    
+    ci_general <- confint(kfs, level = 0.95)[1:num_exo_variable] %>% 
+      lapply(head, n = 1) %>% 
+      as.data.frame
+  
+    beta_coef_ci = data.frame(Variable=exo_variable,
+                              Coefficient= beta_coef,
+                              lwr = as.numeric(ci_general[seq(1, by=2, length.out = num_exo_variable)]),
+                              upr = as.numeric(ci_general[seq(2, by=2, length.out = num_exo_variable)])
+                              )
   }
   
-  p <- length(exo_names)
-  Tt <- ncol(kfs$alphahat)
+  return(beta_coef_ci)
   
-  # 回帰係数は状態ベクトルの末尾
-  idx <- (nrow(kfs$alphahat) - p + 1):nrow(kfs$alphahat)
-  
-  beta_hat <- kfs$alphahat[idx, Tt]
-  beta_var <- diag(kfs$V[idx, idx, Tt])
-  
-  alpha <- 1 - level
-  z <- qnorm(1 - alpha / 2)
-  
-  out <- data.frame(
-    variable = exo_names,
-    estimate = beta_hat,
-    std_error = sqrt(beta_var),
-    lower = beta_hat - z * sqrt(beta_var),
-    upper = beta_hat + z * sqrt(beta_var)
-  )
-  
-  return(out)
 }
 
