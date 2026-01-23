@@ -5,16 +5,19 @@ The implementation is based on linear Gaussian state-space models and makes use 
 Main parts of the implementation were adapted from the supplementary code provided in Baba et al. (2024), available on GitHub: https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 
 
-
-# Quick tutorial
-https://github.com/akihirao/ThermoSSM/blob/main/quick_tutorial.md
-
 # How to install
 ```
 if(!require("devtools"))
 	install.packages("devtools")
 devtools::install_github("akihirao/ThermoSSM")
 ```
+
+# Quick Tutorial
+https://github.com/akihirao/ThermoSSM/blob/main/quick_tutorial.md
+
+
+# Future Development Considerations
+* Time Series Cross-Validation
 
 # References
 Baba, S., Ishii, H., and Yoshiyama, T. (2024).  
