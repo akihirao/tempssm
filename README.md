@@ -13,7 +13,7 @@ devtools::install_github("akihirao/ThermoSSM")
 ```
 
 # Quick Tutorial
-https://github.com/akihirao/ThermoSSM/blob/main/quick_tutorial.md
+https://github.com/akihirao/ThermoSSM/blob/main/vignettes/quick_tutorial.md
 
 
 # Future Development Considerations
