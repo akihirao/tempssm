@@ -3,9 +3,12 @@ title: "Quick tutorial for linear Gaussian state-space analysis of temperature t
 author: "Akira Hirao"
 date: "`r Sys.Date()`"
 output:
+#  pdf_document:
+#    latex_engine: lualatex
+#    toc: true
   rmarkdown::html_vignette: default
-  md_document:
-    variant: gfm
+#  md_document:
+#    variant: gfm
 vignette: >
   %\VignetteIndexEntry{"Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"}
   %\VignetteEngine{knitr::rmarkdown}
@@ -263,7 +266,7 @@ summary(res_original)
 # It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan
 # The data originated from: https://www.biodic.go.jp/moni1000/findings/data/index.html
 # example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
-example_csv_path <- ("../inst/extdata/example_monthly_temp.csv")
+example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
 example_temp <- readr::read_csv(example_csv_path)
 head(example_temp)
 

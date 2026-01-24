@@ -698,7 +698,7 @@ main text. We outline the procedures for handling raw observations.</h2>
 <span id="cb68-2"><a href="#cb68-2" tabindex="-1"></a><span class="co"># It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan</span></span>
 <span id="cb68-3"><a href="#cb68-3" tabindex="-1"></a><span class="co"># The data originated from: https://www.biodic.go.jp/moni1000/findings/data/index.html</span></span>
 <span id="cb68-4"><a href="#cb68-4" tabindex="-1"></a><span class="co"># example_csv_path &lt;- system.file(&quot;extdata&quot;, &quot;example_monthly_temp.csv&quot;, package = &quot;ThermoSSM&quot;)</span></span>
-<span id="cb68-5"><a href="#cb68-5" tabindex="-1"></a>example_csv_path <span class="ot">&lt;-</span> (<span class="st">&quot;../inst/extdata/example_monthly_temp.csv&quot;</span>)</span>
+<span id="cb68-5"><a href="#cb68-5" tabindex="-1"></a>example_csv_path <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="st">&quot;example_monthly_temp.csv&quot;</span>, <span class="at">package =</span> <span class="st">&quot;ThermoSSM&quot;</span>)</span>
 <span id="cb68-6"><a href="#cb68-6" tabindex="-1"></a>example_temp <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(example_csv_path)</span>
 <span id="cb68-7"><a href="#cb68-7" tabindex="-1"></a><span class="fu">head</span>(example_temp)</span></code></pre></div>
 <pre><code>## # A tibble: 6 × 3
