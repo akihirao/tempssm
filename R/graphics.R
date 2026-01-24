@@ -1,13 +1,14 @@
 
 #' Function to plot time series of monthly temperature and temperature deviation
+#'
 #' @import ggplot2
+#'
 #' @param ts temperature time series object
 #'
 #' @encoding UTF-8
 #'
 #' @export
 #'
-
 plot_temp_dev <- function(ts){
 
   stopifnot(frequency(ts) == 12)  # check for monthly time series
@@ -40,7 +41,10 @@ plot_temp_dev <- function(ts){
 
 
 #' Function to plot level component with confidence interval
+#'
 #' @import ggplot2
+#' @importFrom stats confint
+#'
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
 #' @param ci_level Confidence level for the interval estimation.
 #'   Must be a numeric value between 0 and 1.
@@ -56,7 +60,7 @@ plot_level_ci <- function(res, ci_level=0.95){
 
   ci_lab <- paste0(round(ci_level*100,0),"% CI")
   level <- alpha_hat[,"level"]
-  ci <- confint(res$kfs, level = ci_level)
+  ci <- stats::confint(res$kfs, level = ci_level)
 
   level_tidy <- cbind(
     data.frame(time=time(level),
@@ -81,7 +85,10 @@ plot_level_ci <- function(res, ci_level=0.95){
 
 
 #' Function to plot drift component with confidence interval
+#'
 #' @import ggplot2
+#' @importFrom stats confint
+#'
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
 #' @param ci_level Confidence level for the interval estimation.
 #'   Must be a numeric value between 0 and 1.
@@ -96,7 +103,7 @@ plot_drift_ci <- function(res, ci_level=0.95){
   alpha_hat <- res$kfs$alphahat
 
   drift <- alpha_hat[,"slope"]
-  ci <- confint(res$kfs, level = ci_level)
+  ci <- stats::confint(res$kfs, level = ci_level)
 
   mean_drift_year <- round(mean(drift) * 12,4)
 

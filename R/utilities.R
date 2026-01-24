@@ -132,6 +132,9 @@ mean_seasonal_cycle <- function(temp_ts){
 #' Monthly temperature anomalies are calculated by subtracting the
 #' long-term monthly climatology from each observation.
 #'
+#'
+#' @importFrom ThermoSSM mean_seasonal_cycle
+#'
 #' @param temp_ts Monthly temperature time series of class \code{ts}.
 #'   The time series must have a frequency of 12 (monthly data).
 #'
@@ -163,7 +166,7 @@ monthly_anomaly <- function(temp_ts) {
     stop("Time series must be monthly (frequency = 12).", call. = FALSE)
   }
 
-  clim_tbl <- mean_seasonal_cycle(temp_ts)
+  clim_tbl <- ThermoSSM::mean_seasonal_cycle(temp_ts)
   clim_vec <- clim_tbl$Temperature
 
   clim <- clim_vec[cycle(temp_ts)]

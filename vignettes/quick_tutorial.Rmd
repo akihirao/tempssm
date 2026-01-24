@@ -2,17 +2,14 @@
 title: "Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"
 author: "Akira Hirao"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output:
+  rmarkdown::html_vignette: default
+  md_document:
+    variant: gfm
 vignette: >
   %\VignetteIndexEntry{"Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-#  md_document:
-#    variant: markdown_github
-#    toc: true
-#  pdf_document:
-#    latex_engine: lualatex
-#    toc: true
 ---
 
 # Set Ennvironment
