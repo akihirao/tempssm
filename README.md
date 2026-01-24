@@ -1,8 +1,21 @@
 # ThermoSSM
 
-- R package for state-space analysis of temperature time series.  
-The implementation is based on linear Gaussian state-space models and makes use of Kalman filtering and smoothing.  
-Main parts of the implementation were adapted from the supplementary code provided in Baba et al. (2024), available on GitHub: https://github.com/logics-of-blue/sea-temperature-trend-jogashima
+**ThermoSSM** is an R package for state-space analysis of temperature time series.
+It implements linear Gaussian state-space models and performs inference using
+Kalman filtering and smoothing.
+
+The core implementation is adapted from the supplementary code provided in
+Baba et al. (2024), which is publicly available on GitHub:
+https://github.com/logics-of-blue/sea-temperature-trend-jogashima
+
+### Key features
+
+- Designed for **monthly temperature time series data**
+- Applies **linear Gaussian state-space models** to estimate latent states
+  using Kalman filtering and smoothing
+- Represents temperature dynamics as a sum of latent state components:
+  long-term trend, seasonal cycle, autoregressive structure,
+  and optional exogenous effects
 
 
 # How to Install
@@ -14,10 +27,6 @@ devtools::install_github("akihirao/ThermoSSM")
 
 # Quick Tutorial
 https://github.com/akihirao/ThermoSSM/blob/main/vignettes/quick_tutorial.md
-
-
-# Future Development Considerations
-* Time Series Cross-Validation
 
 
 # Example Data
@@ -44,3 +53,8 @@ Baba, S. (2024).
 Supplementary code for estimating sea temperature trends using a linear Gaussian state-space model.
 GitHub repository:  
 https://github.com/logics-of-blue/sea-temperature-trend-jogashima
+
+
+# Future Development Considerations
+* Time Series Cross-Validation
+

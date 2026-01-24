@@ -33,7 +33,7 @@ monthly_csv2ts <- function(csv) {
   )
 
   colnames(Temp_ts) <- "Temp"
-  Temp_ts
+  return(Temp_ts)
 }
 
 
@@ -78,7 +78,7 @@ zoo_daily2ts_monthly <- function(zoo_obj, var = "Temp", na.rm = TRUE) {
     na.rm = na.rm
   )
 
-  ts(
+  ts_monthly <- ts(
     zoo::coredata(zoo_monthly),
     start = c(
       as.integer(format(as.Date(start(zoo_monthly)), "%Y")),
@@ -86,6 +86,10 @@ zoo_daily2ts_monthly <- function(zoo_obj, var = "Temp", na.rm = TRUE) {
     ),
     frequency = 12
   )
+  
+  colnames(ts_monthly) <- "Temp"
+  return(ts_monthly)
+  
 }
 
 
@@ -228,7 +232,10 @@ sst_jma2zoo <- function(sea_area_id = NULL) {
       Temp = as.numeric(Temp),
       date = as.Date(paste0(yyyy, "-", mm, "-", dd))
     ) %>%
-    dplyr::select(date, Temp, flag)
+    dplyr::select(date, Temp, flag) %>%
+    mutate(
+      Temp = if_else(Temp <= -999, NA_real_, Temp)
+    )
 
   sst_zoo <- zoo::zoo(
     x = data.frame(Temp = sst_tidy$Temp),
