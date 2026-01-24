@@ -2,14 +2,17 @@
 title: "Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"
 author: "Akira Hirao"
 date: "`r Sys.Date()`"
-
-output:
-  md_document:
-    variant: markdown_github
-    toc: true
-  pdf_document:
-    latex_engine: lualatex
-    toc: true
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{"Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+#  md_document:
+#    variant: markdown_github
+#    toc: true
+#  pdf_document:
+#    latex_engine: lualatex
+#    toc: true
 ---
 
 # Set Ennvironment
@@ -17,20 +20,16 @@ output:
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 ## Set libraries
 library(ThermoSSM)
-
-library(tidyverse)
 library(forecast)
-library(cowplot)
-
-# initialize
-rm(list=ls(all=TRUE))
+library(tidyverse)
 ```
 
 # Loading Example Data
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
-# loading example data 1: daily mean sea surface temperature time series off southern Ibaraki Prefecture, Japan
+# loading example data 1
+# Daily mean sea surface temperature time series off southern Ibaraki Prefecture, Japan
 data(ibaraki_sst)
 head(ibaraki_sst)
 ```
@@ -51,18 +50,14 @@ daily_ibaraki_sst_plot <- forecast::autoplot(ibaraki_sst) +
        x = "Time") +
   ggtitle("Daily mean sea-surface temperature off southern Ibaraki Prefecture")
 
-#ggsave("Daily_SST_ibaraki_plot.png",
-#       plot=daily_ibaraki_sst_plot,
-#       width=8,height=6)
-
 plot(daily_ibaraki_sst_plot)
-
 ```
 
 # Converting from Daily zoo object to Monthly ts object
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 monthly_ibaraki_sst <- zoo_daily2ts_monthly(ibaraki_sst)
+colnames(monthly_ibaraki_sst) <- "Temp"
 ```
 
 # Check of ts object
@@ -87,10 +82,6 @@ monthly_ibaraki_sst_plot <- forecast::autoplot(monthly_ibaraki_sst) +
        x = "Time") +
   ggtitle("Montly mean sea-surface temperature off southern Ibaraki Prefecture")
 
-#ggsave("monthly_SST_ibaraki_plot.png",
-#       plot=monthly_ibaraki_sst_plot,
-#       width=8,height=6)
-
 plot(monthly_ibaraki_sst_plot)
 ```
 
@@ -105,10 +96,6 @@ monthly_ibaraki_sst_anomaly_plot <- forecast::autoplot(monthly_ibaraki_sst_anoma
        x = "Time") +
   ggtitle("Sea-surface temperature anomaliese")
   
-#ggsave("monthly_SST_dev_ibaraki.png",
-#       plot=monthly_ibaraki_sst_anomaly_plot,
-#       width=8,height=6)
-
 plot(monthly_ibaraki_sst_anomaly_plot)
 ```
 
@@ -135,10 +122,6 @@ plt_monthly_seasonal_cycle_SST_ibaraki <- ggplot(
   )
 
 
-#ggsave("monthly_SST_seasonal_ibaraki.png",
-#       plot=plt_monthly_seasonal_cycle_SST_ibaraki,
-#       width=8,height=6)
-
 plot(plt_monthly_seasonal_cycle_SST_ibaraki)
 ```
 
@@ -154,7 +137,7 @@ summary(res)
 # Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-# 全成分を一挙にプロット
+# plot each of components at once
 plot(res)
 ```
 
@@ -227,10 +210,6 @@ plt_level_ci <- plot(res,
                      ci_level = 0.95
                      )
 
-#ggsave("level_plot.png",
-#       width=6, height=4,
-#       plot = plt_level_ci)
-
 plot(plt_level_ci)
 ```
 
@@ -243,18 +222,15 @@ plt_drift_ci <- plot(res,
                      ci_level = 0.95
                      )
 
-#ggsave("drift_plot.png",
-#       width=6, height=4,
-#       plot = plt_drift_ci)
-
 plot(plt_drift_ci)
 ```
 
 # Appendix: Handling Raw Temperature Data
-## 未完成　This appendix describes how the original temperature time series data are prepared prior to the state-space analysis presented in the main text. We outline the procedures for handling raw observations.
+## This appendix describes how the original temperature time series data are prepared prior to the state-space analysis presented in the main text. We outline the procedures for handling raw observations.
+
+### Example 1
+
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-##========================
-## Example 1
 # Monthly temperature data
 original_data <- data.frame(
   Year=c(2000,2000,2000,2000,2000,2000,2000,2000,2000,2000,2000,2000),
@@ -279,23 +255,35 @@ end(original_ts)
 time(original_ts)
 original_ts
 
+res_original <- lgssm(original_ts)
+summary(res_original)
+```
 
-##========================
-## Example 2
-# loading and checking raw csv data
-input_csv <- "./data/test_data.csv"
-raw_csv <- read_csv(input_csv)
-head(raw_csv)
+### Example 2
 
-# Load original csv file and then convert to monthly ts object
-# help(ThermoSSM::monthly_csv2ts)
-test_ts <- ThermoSSM::monthly_csv2ts(input_csv)
-head(test_ts)
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# loading example csv
+# It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan
+# The data originated from: https://www.biodic.go.jp/moni1000/findings/data/index.html
+# example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
+example_csv_path <- ("../inst/extdata/example_monthly_temp.csv")
+example_temp <- readr::read_csv(example_csv_path)
+head(example_temp)
 
-frequency(test_ts)
-start(test_ts)
-end(test_ts)
-cycle(test_ts) %>% head()
-time(test_ts) %>% head()
+# Converting tidy object to ts object
+example_ts <- ts(matrix(example_temp$Temp),
+  start = c(example_temp$Year[1],example_temp$Month[1]),
+  frequency = 12
+)
+colnames(example_ts) <- "Temp"
+head(example_ts)
 
+frequency(example_ts)
+start(example_ts)
+end(example_ts)
+
+res_example <- lgssm(example_ts)
+summary(res_example)
+
+plot(res_example)
 ```

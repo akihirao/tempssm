@@ -4,10 +4,10 @@
 \alias{summary.ThermoSSM}
 \title{Summary method for ThermoSSM objects}
 \usage{
-\method{summary}{ThermoSSM}(res, ...)
+\method{summary}{ThermoSSM}(object, ...)
 }
 \arguments{
-\item{res}{An object of class \code{ThermoSSM}.}
+\item{object}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
 
 \item{...}{Additional arguments (currently not used).}
 }

@@ -1,7 +1,7 @@
 
 #' Plot estimated components of a ThermoSSM object
 #'
-#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param x An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
 #' @param components Components to plot. Any of \code{"level"}, \code{"drift"},
 #'   \code{"seasonal"}, \code{"ar"}.
 #' @param ci Logical; if TRUE, confidence intervals are shown for
@@ -19,6 +19,7 @@
 #' Note that these confidence intervals quantify uncertainty in the latent
 #' state estimates conditional on the observed data, and should not be
 #' interpreted as prediction intervals for future observations.
+#' 
 #' @param ci_level Confidence level for intervals (default 0.95).
 #' @param layout Layout of plots: \code{"grid"} or \code{"list"}.
 #' @param ... Further arguments (currently unused).
@@ -27,7 +28,7 @@
 #'
 #' @export
 plot.ThermoSSM <- function(
-  res,
+  x,
   components = c("level", "drift", "seasonal", "ar"),
   ci = FALSE,
   ci_level = 0.95,
@@ -37,15 +38,15 @@ plot.ThermoSSM <- function(
 
   layout <- match.arg(layout)
 
-  if (!inherits(res, "ThermoSSM")) {
+  if (!inherits(x, "ThermoSSM")) {
     stop("Object must be of class 'ThermoSSM'.", call. = FALSE)
   }
 
-  alpha_hat <- res$kfs$alphahat
+  alpha_hat <- x$kfs$alphahat
   time_index <- time(alpha_hat)
 
   if (ci) {
-    ci_obj <- confint(res$kfs, level = ci_level)
+    ci_obj <- confint(x$kfs, level = ci_level)
   }
 
   plots <- list()

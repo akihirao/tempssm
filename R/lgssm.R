@@ -344,71 +344,73 @@ extract_param <- function(res){
 
 
 
-#' Extract coefficient of exogenous variables with confidence interval
+#' Extract coefficients of exogenous variables with confidence intervals
+#'
+#' Extracts estimated regression coefficients for exogenous variable(s)
+#' included in a \code{ThermoSSM} model, together with confidence intervals
+#' based on Kalman smoothing results.
+#'
+#' If the fitted model does not include exogenous variables,
+#' the function returns \code{NULL}.
 #'
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
 #'
-#' @param level Percentage of confidence interval. The default value of 0.95.
+#' @param level Confidence level for the interval estimation.
+#'   Must be a numeric value between 0 and 1.
+#'   The default is \code{0.95}, corresponding to a 95\% confidence interval.
 #'
-#' @return A \code{data.frame} object of CI for exogenous variable(s).
+#' @return
+#' A \code{data.frame} with the following columns:
+#' \describe{
+#'   \item{Variable}{Name of the exogenous variable}
+#'   \item{Coefficient}{Estimated regression coefficient}
+#'   \item{lwr}{Lower bound of the confidence interval}
+#'   \item{upr}{Upper bound of the confidence interval}
+#' }
+#' Returns \code{NULL} if no exogenous variables are included in the model.
+#'
+#' @examples
+#' \dontrun{
+#' res <- lgssm(temp_ts, exogenous = c("kuroshio")
+#' extract_exo_coef_ci(res)
+#' }
 #'
 #' @export
-
-extract_exo_coef_ci <- function(res, 
-                                level = 0.95) {
+extract_exo_coef_ci <- function(res, level = 0.95) {
   
   if (!inherits(res, "ThermoSSM")) {
-    stop("Input must be a 'ThermoSSM' object.")
+    stop("Input must be a 'ThermoSSM' object.", call. = FALSE)
   }
   
-  model <- res$model
-  kfs   <- res$kfs
-  exo_variable <- res$exogenous
-  
-  if(is.null(exo_variable)){ # case when model without exogenous variable(s)
-  
-      beta_coef_ci <- NULL
-      
-  }else{ # case when model with exogenous variable(s)
-  
-    num_exo_variable <- length(exo_variable)
-  
-    alpha_hat <- kfs$alphahat
-    colnames(alpha_hat) <- c(exo_variable,
-                           "level",
-                           "slope",
-                           "sea_dummy1",
-                           "sea_dummy2",
-                           "sea_dummy3",
-                           "sea_dummy4",
-                           "sea_dummy5",
-                           "sea_dummy6",
-                           "sea_dummy7",
-                           "sea_dummy8",
-                           "sea_dummy9",
-                           "sea_dummy10",
-                           "sea_dummy11",
-                           "arima1",
-                           "arima2"
-                           )
-    if(num_exo_variable >=2){
-      beta_coef <- alpha_hat[,exo_variable][1,1:num_exo_variable]
-    }else{
-      beta_coef <- alpha_hat[,exo_variable][1]
-    }
-    
-    ci_general <- confint(kfs, level = 0.95)[1:num_exo_variable] %>% 
-      lapply(head, n = 1) %>% 
-      as.data.frame
-  
-    beta_coef_ci = data.frame(Variable=exo_variable,
-                              Coefficient= beta_coef,
-                              lwr = as.numeric(ci_general[seq(1, by=2, length.out = num_exo_variable)]),
-                              upr = as.numeric(ci_general[seq(2, by=2, length.out = num_exo_variable)])
-                              )
+  if (!is.numeric(level) || level <= 0 || level >= 1) {
+    stop("'level' must be a numeric value between 0 and 1.", call. = FALSE)
   }
   
-  return(beta_coef_ci)
+  exo_vars <- res$exogenous
+  kfs      <- res$kfs
   
+  # No exogenous variables
+  if (is.null(exo_vars)) {
+    return(NULL)
+  }
+  
+  n_exo <- length(exo_vars)
+  
+  # Extract smoothed state estimates
+  alpha_hat <- kfs$alphahat
+  
+  # Exogenous coefficients are assumed to be the first states
+  beta_hat <- alpha_hat[1, seq_len(n_exo), drop = FALSE]
+  
+  # Confidence intervals
+  ci_obj <- confint(kfs, level = level)[seq_len(n_exo)]
+  ci_mat <- do.call(rbind, lapply(ci_obj, head, n = 1))
+  
+  data.frame(
+    Variable    = exo_vars,
+    Coefficient = as.numeric(beta_hat),
+    lwr         = ci_mat[, "lwr"],
+    upr         = ci_mat[, "upr"],
+    row.names   = NULL
+  )
 }
-

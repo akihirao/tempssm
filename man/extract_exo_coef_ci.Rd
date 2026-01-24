@@ -2,18 +2,40 @@
 % Please edit documentation in R/lgssm.R
 \name{extract_exo_coef_ci}
 \alias{extract_exo_coef_ci}
-\title{Extract coefficient of exogenous variables with confidence interval}
+\title{Extract coefficients of exogenous variables with confidence intervals}
 \usage{
 extract_exo_coef_ci(res, level = 0.95)
 }
 \arguments{
 \item{res}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
 
-\item{level}{Percentage of confidence interval. The default value of 0.95.}
+\item{level}{Confidence level for the interval estimation.
+Must be a numeric value between 0 and 1.
+The default is \code{0.95}, corresponding to a 95\% confidence interval.}
 }
 \value{
-A \code{data.frame} object of CI for exogenous variable(s).
+A \code{data.frame} with the following columns:
+\describe{
+  \item{Variable}{Name of the exogenous variable}
+  \item{Coefficient}{Estimated regression coefficient}
+  \item{lwr}{Lower bound of the confidence interval}
+  \item{upr}{Upper bound of the confidence interval}
+}
+Returns \code{NULL} if no exogenous variables are included in the model.
 }
 \description{
-Extract coefficient of exogenous variables with confidence interval
+Extracts estimated regression coefficients for exogenous variable(s)
+included in a \code{ThermoSSM} model, together with confidence intervals
+based on Kalman smoothing results.
+}
+\details{
+If the fitted model does not include exogenous variables,
+the function returns \code{NULL}.
+}
+\examples{
+\dontrun{
+res <- lgssm(temp_ts, exogenous = c("kuroshio")
+extract_exo_coef_ci(res)
+}
+
 }

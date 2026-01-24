@@ -3,28 +3,29 @@
 #' Provides a concise summary of a fitted linear Gaussian
 #' state-space model estimated by \code{lgssm()}.
 #'
-#' @param res An object of class \code{ThermoSSM}.
+#' @param object An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
 #' @param ... Additional arguments (currently not used).
 #'
 #' @return A list containing model diagnostics and summaries.
 #'
 #' @method summary ThermoSSM
 #' @export
-summary.ThermoSSM <- function(res, ...) {
+summary.ThermoSSM <- function(object, ...) {
 
-  model <- res$fit$model
-  kfs   <- res$kfs
-  opt   <- res$fit$optim.out
-  pars <- res$fit$optim.out$par
-  exogenous_variable <- res$exogenous
+  model <- object$fit$model
+  kfs   <- object$kfs
+  opt   <- object$fit$optim.out
+  pars <- object$fit$optim.out$par
+  exogenous_variable <- object$exogenous
 
-  exogenous_coef_ci <- extract_exo_coef_ci(res)
+  exogenous_coef_ci <- extract_exo_coef_ci(object)
+  k = length(opt$par) + length(exogenous_variable)
   
   res <- list(
-    call        = res$call,
+    call        = object$call,
     logLik      = logLik(model),
-    k           = length(opt$par),
-    AIC         = -2 * as.numeric(logLik(model)) + 2 * length(opt$par),
+    k           = k,
+    AIC         = -2 * as.numeric(logLik(model)) + 2 * k,
     convergence = opt$convergence == 0,
     variances   = list(
       H = model$H,

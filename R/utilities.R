@@ -1,6 +1,7 @@
 
 #' Convert a monthly temperature CSV file to a monthly time series object
 #'
+#' @importFrom stats ts
 #' @details
 #' The input CSV file must have the following format:
 #'
@@ -37,47 +38,56 @@ monthly_csv2ts <- function(csv) {
 
 
 
-#' Convert dairy zoo object to monthly ts object
+#' Convert daily zoo object to monthly ts object
 #'
 #' @import zoo
+#' @importFrom stats ts aggregate
 #'
-#' @param zoo zoo object
+#' @param zoo_obj A \code{zoo} object with daily observations.
+#'   The index must be of class \code{Date} or \code{POSIXt}.
+#' @param var Name of the variable to be aggregated (default: \code{"Temp"}).
+#' @param na.rm Logical; should missing values be removed before averaging?
 #'
-#' @encoding UTF-8
+#' @return A monthly \code{ts} object with frequency = 12.
+#'
+#' @examples
+#' data(ibaraki_sst)
+#' ts_monthly <- zoo_daily2ts_monthly(ibaraki_sst)
+#' head(ts_monthly)
 #'
 #' @export
+zoo_daily2ts_monthly <- function(zoo_obj, var = "Temp", na.rm = TRUE) {
 
-zoo_daily2ts_monthly <- function(zoo, var = "Temp", na.rm = TRUE) {
-
-  if (!inherits(zoo, "zoo")) {
-    stop("Input must be a zoo object.")
+  if (!inherits(zoo_obj, "zoo")) {
+    stop("Input must be a zoo object.", call. = FALSE)
   }
 
-  if (!var %in% colnames(zoo)) {
-    stop(paste0("Variable '", var, "' not found in zoo object."))
+  if (!var %in% colnames(zoo_obj)) {
+    stop(paste0("Variable '", var, "' not found in zoo object."), call. = FALSE)
+  }
+
+  idx <- zoo::index(zoo_obj)
+  if (!inherits(idx, c("Date", "POSIXt"))) {
+    stop("Index of zoo object must be Date or POSIXt.", call. = FALSE)
   }
 
   zoo_monthly <- aggregate(
-    zoo[, var, drop = FALSE],
+    zoo_obj[, var, drop = FALSE],
     as.yearmon,
     mean,
     na.rm = na.rm
   )
-  colnames(zoo_monthly) <- var
 
-  start_ym <- start(zoo_monthly)
-  start_year  <- floor(start_ym)
-  start_month <- round((start_ym %% 1) * 12 + 1)
-
-  ts_monthly <- ts(
-    coredata(zoo_monthly),
-    start = c(start_year, start_month),
+  ts(
+    zoo::coredata(zoo_monthly),
+    start = c(
+      as.integer(format(as.Date(start(zoo_monthly)), "%Y")),
+      as.integer(format(as.Date(start(zoo_monthly)), "%m"))
+    ),
     frequency = 12
   )
-
-  return(ts_monthly)
-
 }
+
 
 
 
@@ -181,8 +191,8 @@ monthly_anomaly <- function(temp_ts) {
 #' @import zoo
 #'
 #' @param sea_area_id
-#' Numeric sea area ID.
-#' The default is 138, corresponding to the coastal sea off southern Ibaraki.
+#' Numeric sea area ID. The default is NULL
+#' For example, 138 corresponding to the coastal sea off southern Ibaraki.
 #' A list of sea area IDs and their corresponding regions is available at:
 #' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
 #'
@@ -203,8 +213,7 @@ monthly_anomaly <- function(temp_ts) {
 #' }
 #'
 #' @export
-
-sst_jma2zoo <- function(sea_area_id = 138) {
+sst_jma2zoo <- function(sea_area_id = NULL) {
 
   url_head <- "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area"
   url <- paste0(url_head, sea_area_id, ".txt")

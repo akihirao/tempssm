@@ -5,10 +5,14 @@
 \alias{plot_drift_ci}
 \title{Function to plot drift component with confidence interval}
 \usage{
-plot_drift_ci(res, ci_range = 0.95)
+plot_drift_ci(res, ci_level = 0.95)
 }
 \arguments{
-\item{res}{output of model with using lgssm()}
+\item{res}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
+
+\item{ci_level}{Confidence level for the interval estimation.
+Must be a numeric value between 0 and 1.
+The default is \code{0.95}, corresponding to a 95\% confidence interval.}
 }
 \description{
 Function to plot drift component with confidence interval

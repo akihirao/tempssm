@@ -4,11 +4,11 @@
 \alias{sst_jma2zoo}
 \title{Retrieve daily mean sea-surface temperature as a zoo object}
 \usage{
-sst_jma2zoo(sea_area_id = 138)
+sst_jma2zoo(sea_area_id = NULL)
 }
 \arguments{
-\item{sea_area_id}{Numeric sea area ID.
-The default is 138, corresponding to the coastal sea off southern Ibaraki.
+\item{sea_area_id}{Numeric sea area ID. The default is NULL
+For example, 138 corresponding to the coastal sea off southern Ibaraki.
 A list of sea area IDs and their corresponding regions is available at:
 \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}}
 }

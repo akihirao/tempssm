@@ -5,7 +5,7 @@
 \title{Plot estimated components of a ThermoSSM object}
 \usage{
 \method{plot}{ThermoSSM}(
-  res,
+  x,
   components = c("level", "drift", "seasonal", "ar"),
   ci = FALSE,
   ci_level = 0.95,
@@ -14,7 +14,7 @@
 )
 }
 \arguments{
-\item{res}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
+\item{x}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
 
 \item{components}{Components to plot. Any of \code{"level"}, \code{"drift"},
 \code{"seasonal"}, \code{"ar"}.}
