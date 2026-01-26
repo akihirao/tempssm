@@ -5,7 +5,8 @@
 \title{Generate rolling-origin train/test splits for time series cross-validation}
 \usage{
 ts_cv_folds(
-  x,
+  temp_data,
+  exo_data = NULL,
   initial = 60,
   horizon = 12,
   step = 12,
@@ -14,7 +15,10 @@ ts_cv_folds(
 )
 }
 \arguments{
-\item{x}{Monthly temperature time series of class \code{ts}.
+\item{temp_data}{Monthly temperature time series of class \code{ts}.
+The time series must have a frequency of 12.}
+
+\item{exo_data}{Monthly temperature time series of class \code{ts}.
 The time series must have a frequency of 12.}
 
 \item{initial}{Initial length of the training set (number of observations;

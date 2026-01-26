@@ -4,7 +4,9 @@
 #' into training and test sets using a rolling-origin (also known as
 #' walk-forward) cross-validation scheme.
 #'
-#' @param x Monthly temperature time series of class \code{ts}.
+#' @param temp_data Monthly temperature time series of class \code{ts}.
+#'   The time series must have a frequency of 12.
+#' @param exo_data Monthly temperature time series of class \code{ts}.
 #'   The time series must have a frequency of 12.
 #' @param initial Initial length of the training set (number of observations;
 #'   e.g., 60). Default is 60.
@@ -49,37 +51,44 @@
 #'
 #' @importFrom stats start end frequency time window
 #' @export
-ts_cv_folds <- function(x,
+ts_cv_folds <- function(temp_data,
+                        exo_data = NULL,
                         initial = 60,
                         horizon = 12,
                         step = 12,
                         fixed_window = FALSE,
                         allow_partial = FALSE) {
   
-  if (!inherits(x, "ts")) {
-    stop("x must be a 'ts' object.", call. = FALSE)
+  if (!inherits(temp_data, "ts")) {
+    stop("The object of temp_data must be a 'ts' object.", call. = FALSE)
   }
   
-  if (frequency(x) != 12) {
-    stop("x must be a monthly time series (frequency = 12).", call. = FALSE)
+  if (frequency(temp_data) != 12) {
+    stop("The object of temp_data must be a monthly time series (frequency = 12).", call. = FALSE)
   }
   
   if (initial < 1 || horizon < 1 || step < 1) {
     stop("initial, horizon, and step must be positive integers.", call. = FALSE)
   }
   
-  n <- length(x)
+  n <- length(temp_data)
   if (initial >= n) {
     stop("initial must be smaller than the length of the time series.", call. = FALSE)
   }
   
   # Utility to slice a ts object using position-based indices
   ts_slice <- function(x, i_start, i_end) {
-    window(x,
-           start = stats::time(x)[i_start],
-           end   = stats::time(x)[i_end])
+    if(!is.null(x)){
+      sliced_ts <- window(x,
+             start = stats::time(temp_data)[i_start],
+             end   = stats::time(temp_data)[i_end]
+      )
+    }else{
+      sliced_ts <- NULL
+    }
+    return(sliced_ts)  
   }
-  
+    
   folds <- list()
   k <- 1
   train_end <- initial
@@ -106,14 +115,16 @@ ts_cv_folds <- function(x,
     
     folds[[k]] <- list(
       fold = k,
-      train_ts = ts_slice(x, train_start, train_end),
-      test_ts  = ts_slice(x, test_start, test_end),
+      train_ts = ts_slice(temp_data, train_start, train_end),
+      test_ts  = ts_slice(temp_data, test_start, test_end),
+      exo_train_ts = ts_slice(exo_data, train_start, train_end),
+      exo_test_ts = ts_slice(exo_data, test_start, test_end),
       train_idx = c(train_start, train_end),
       test_idx  = c(test_start, test_end),
-      train_range = c(stats::time(x)[train_start],
-                      stats::time(x)[train_end]),
-      test_range  = c(stats::time(x)[test_start],
-                      stats::time(x)[test_end])
+      train_range = c(stats::time(temp_data)[train_start],
+                      stats::time(temp_data)[train_end]),
+      test_range  = c(stats::time(temp_data)[test_start],
+                      stats::time(temp_data)[test_end])
     )
     
     train_end <- train_end + step
@@ -124,3 +135,103 @@ ts_cv_folds <- function(x,
   return(folds)
 }
 
+
+
+
+#' Prediction based on fitted model for time series cross-validation
+#'
+#' This function predict with using test data for in ts cross-validation.
+#'
+#' @param folds A \code{list} of folds object returned by \code{ts_cv_folds()}.
+#' @param fold_ids A \code{vector} of sequential IDs of folds for ts cross-validation.
+#' 
+#' @return A \code{list} object of ts cross-validation output
+#' 
+#' @export
+tsCV <- function(folds,fold_ids = 1){
+  
+  exo_judge <- unlist(lapply(folds, `[[`, "exo_train_ts"))
+  ts_CV_list <- list()
+  
+  num_fold <- length(folds)
+
+  for(i in fold_ids){
+      
+    target_fold <- folds[[i]]
+    target_test_data <- target_fold$test_ts
+
+    if(is.null(exo_judge)){ # if data-set excludes exogenous variables
+      
+      res_train<- lgssm(temp_data = target_fold$train_ts,
+                        exo_data = NULL)
+
+      convergence <- res_train$fit$optim.out$convergence
+      train_model <- res_train$model
+      train_pars <- res_train$fit$optim.out$par
+      
+      predict_temp_ts <- predict(
+        train_model,
+        newdata = SSModel(
+          H = exp(train_pars[6]),
+          rep(NA, nrow(target_test_data)) ~ 
+            SSMtrend(degree = 2,
+                     Q = c(list(0), list(exp(train_pars[1])))) + 
+            SSMseasonal(sea.type = "dummy",
+                        period = 12,
+                        Q = exp(train_pars[2])) +
+            SSMarima(ar = artransform(train_pars[3:4]),
+                     d = 0,
+                     Q = exp(train_pars[5])
+            ), data = target_test_data
+          )
+      )
+    }else{ # if data-set includes exogenous variables
+      
+      exo_train <- target_fold$exo_train_ts
+      exo_test <- target_fold$exo_test_ts
+      num_exo <- dim(exo_train)[2]
+
+      temp_exo_test <- cbind(target_test_data,
+                             exo_test)
+      colnames(temp_exo_test) <- c("Temp",colnames(exo_test))
+      
+      res_train<- lgssm(temp_data = target_fold$train_ts,
+                        exo_data = target_fold$exo_train_ts)
+      
+      convergence <- res_train$fit$optim.out$convergence
+      train_model <- res_train$model
+      train_pars <- res_train$fit$optim.out$par
+      
+      
+      exogenous_mat <- as.matrix(exo_test)
+      
+      #browser()
+      
+      predict_temp_ts <- predict(
+        train_model,
+        newdata = SSModel(
+          H = exp(train_pars[6]),
+          rep(NA, nrow(temp_exo_test)) ~ exogenous_mat + 
+            SSMtrend(degree = 2,
+                     Q = c(list(0), list(exp(train_pars[1])))) + 
+            SSMseasonal(sea.type = "dummy",
+                        period = 12,
+                        Q = exp(train_pars[2])) +
+            SSMarima(ar = artransform(train_pars[3:4]),
+                     d = 0,
+                     Q = exp(train_pars[5])
+            ), data = temp_exo_test
+        )
+      )
+    }
+    
+    CV_output <- forecast::accuracy(predict_temp_ts, target_test_data) 
+  
+    ts_CV_list[[i]] <- list(folds[[i]],
+                            convergence=convergence,
+                            CV = CV_output)
+  
+  }
+  
+  return(ts_CV_list)
+}
