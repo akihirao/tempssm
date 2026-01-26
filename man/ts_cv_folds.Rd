@@ -2,7 +2,7 @@
 % Please edit documentation in R/ts_cross_validation.R
 \name{ts_cv_folds}
 \alias{ts_cv_folds}
-\title{Generate train/test data of ts object for time series cross-validation}
+\title{Generate rolling-origin train/test splits for time series cross-validation}
 \usage{
 ts_cv_folds(
   x,
@@ -15,41 +15,56 @@ ts_cv_folds(
 }
 \arguments{
 \item{x}{Monthly temperature time series of class \code{ts}.
-The time series must have a frequency of 12 (monthly data).}
+The time series must have a frequency of 12.}
 
-\item{initial}{学習データの初期長（観測数、例: 60）. Default value = 60}
+\item{initial}{Initial length of the training set (number of observations;
+e.g., 60). Default is 60.}
 
-\item{horizon}{テストの先読み長（観測数、例: 12）Default value = 12}
+\item{horizon}{Forecast horizon for the test set (number of observations;
+e.g., 12). Default is 12.}
 
-\item{step}{フォールド間のスライド幅（観測数、例: 1 または 12）Default value = 12}
+\item{step}{Step size between successive folds (number of observations;
+e.g., 1 or 12). Default is 12.}
 
-\item{fixed_window}{TRUE なら固定窓（学習期間は常に initial）、FALSE なら拡張窓. Default = FALSE}
+\item{fixed_window}{Logical; if \code{TRUE}, a fixed-length training window
+of size \code{initial} is used. If \code{FALSE}, an expanding window
+is used. Default is \code{FALSE}.}
 
-\item{allow_partial}{TRUE なら最後のテストが horizon に満たなくても採用. Default = FALSE}
+\item{allow_partial}{Logical; if \code{TRUE}, the final fold is included
+even when the remaining test period is shorter than \code{horizon}.
+Default is \code{FALSE}.}
 }
 \value{
-各フォールドの list。各要素は
+A list of folds. Each element is a list containing:
 \describe{
-  \item{fold}{フォールド番号}
-  \item{train_ts}{学習 ts}
-  \item{test_ts}{テスト ts}
-  \item{train_idx}{学習のインデックス範囲（位置ベース）}
-  \item{test_idx}{テストのインデックス範囲（位置ベース）}
-  \item{train_range}{c(start_time, end_time)}
-  \item{test_range}{c(start_time, end_time)}
+  \item{fold}{Fold index.}
+  \item{train_ts}{Training time series (\code{ts}).}
+  \item{test_ts}{Test time series (\code{ts}).}
+  \item{train_idx}{Index range of the training set (position-based).}
+  \item{test_idx}{Index range of the test set (position-based).}
+  \item{train_range}{Time range of the training set
+    (\code{c(start_time, end_time)}).}
+  \item{test_range}{Time range of the test set
+    (\code{c(start_time, end_time)}).}
 }
 }
 \description{
-月次 ts（frequency = 12）を rolling-origin で学習・テストに分割します。
+This function splits a monthly time series (\code{frequency = 12})
+into training and test sets using a rolling-origin (also known as
+walk-forward) cross-validation scheme.
 }
 \examples{
-# 例: AirPassengers（月次、1949–1960）
-data(AirPassengers)
+# Example: Air temperature (monthly data, 1932Jul-2025Dec)
+data(fuji_temp)
 folds <- ts_cv_folds(
-  AirPassengers, initial = 60, horizon = 12, step = 12, fixed_window = FALSE
+  fuji_temp,
+  initial = 60,
+  horizon = 12,
+  step = 12,
+  fixed_window = FALSE
 )
-length(folds)   # フォールド数
-folds[[1]]$train_ts
-folds[[1]]$test_ts
+length(folds)        # number of folds
+folds[[1]]$train_ts  # training data of the first fold
+folds[[1]]$test_ts   # test data of the first fold
 
 }

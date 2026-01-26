@@ -5,21 +5,15 @@
 #' Both univariate and multivariate \code{ts} objects are supported.
 #' If multivariate, a column named \code{"Temp"} is used.
 #'
-#' @param ts_data Monthly temperature time series of class \code{ts}.
+#' @param temp_data Monthly temperature time series of class \code{ts}.
 #'   The time series must have a frequency of 12 (monthly data).
-#'   May be univariate or multivariate.
 #'
 #' @param inits Optional numeric vector of initial parameter values.
 #'   If \code{NULL}, default values are used.
 #'
-#' @param exo logical(1). If TRUE, fit a model that incorporates 
-#'  exogenous variables, The default is FALSE.
+#' @param exo_data Data-set of exogenous variables of class \code{ts}. 
+#'  The default is NULL when model without exogenous variables.
 #'  
-#'  
-#' @param exo_name Optional characteristic vector of names of  
-#'   exogenous variables. If \code{NULL}, column names of ts_data of 
-#'   class \code{ts}, excluding a column named \code{"Temp"}, are used. 
-#'
 #' @return An object of class \code{"ThermoSSM"}, a named list containing:
 #' \describe{
 #'   \item{model}{Fitted \code{SSModel} object.}
@@ -37,21 +31,29 @@
 #' res <- lgssm(fuji_temp)
 #' plot(res$data)
 #' }
-lgssm <- function(ts_data, 
+lgssm <- function(temp_data, 
                   inits = NULL,
-                  exo = FALSE,
-                  exo_name = NULL) {
+                  exo_data = NULL) {
 
   ## ---- Input checks ---------------------------------------------------
-  if (!inherits(ts_data, "ts")) {
-    stop("ts_data must be a 'ts' object.")
+  if (!inherits(temp_data, "ts")) {
+    stop("temp_data must be a 'ts' object.")
   }
 
-  if (frequency(ts_data) != 12) {
-    stop("ts_data must be a monthly time series (frequency = 12).")
+  if (frequency(temp_data) != 12) {
+    stop("temp_data must be a monthly time series (frequency = 12).")
   }
 
-  data_df <- as.data.frame(ts_data)
+  if(inherits(temp_data, "mts")){
+    stop("temp_data must be univariant")
+  }
+  
+  if(is.null(dim(temp_data))) {
+    y <- temp_data
+  }else{
+    temp_data_lab <- colnames(temp_data)
+    y <- temp_data[, temp_data_lab]
+  }
   
   ## ---- Default initial values -----------------------------------------
   if (is.null(inits)) {
@@ -77,17 +79,9 @@ lgssm <- function(ts_data,
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
   # model without exogenous variables
-  if(!(exo)){ 
-    if (is.null(dim(ts_data))) {
-      y <- ts_data
-    } else {
-      if (!"Temp" %in% colnames(ts_data)) {
-        stop("For multivariate ts objects, a column named 'Temp' is required.")
-      }
-        y <- ts_data[, "Temp"]
-    }
+  if(is.null(exo_data)){ 
     
-    exogenous_lab <- exo_name
+    exogenous_lab <- NULL
     
     ## ---- Model definition -----------------------------------------------
     build_ssm <- SSModel(
@@ -159,37 +153,33 @@ lgssm <- function(ts_data,
   # ------------------------------------------------------------------------
   # model with an exogenous variable
   } else { # 
-    variables_lab <- colnames(ts_data)
-    if (!"Temp" %in% variables_lab) {
-      stop("For multivariate ts objects, a column named 'Temp' is required.")
+    
+    if (!inherits(exo_data, "ts")) {
+      stop("temp_data must be a 'ts' object.")
     }
     
-    y <- ts_data[, "Temp"]
-    
-    if(is.null(exo_name)){ # case_when exo_name = NULL
-      num_exo_variable <- length(variables_lab) - 1
-      
-      if (num_exo_variable == 0){
-        stop("At least one exogenous variable(s) should be included in ts object")
-      }
-      
-      exogenous_lab <- variables_lab[variables_lab != "Temp"]
-      
-      exogenous_ts <- ts_data[, exogenous_lab]
-      exogenous_mat <- as.matrix(exogenous_ts)
-    
-    }else{ # case_when exo_name(s) is/are given
-      
-      if (!exo_name %in% variables_lab) {
-        stop(paste0("Multivariate ts object should be included ",exo_name," as exogenous variables."))
-      }
-      
-      exogenous_lab <- exo_name
-      exogenous_ts <- ts_data[, exogenous_lab]
-      exogenous_mat <- as.matrix(exogenous_ts)
+    if (frequency(exo_data) != 12) {
+      stop("temp_data must be a monthly time series (frequency = 12).")
     }
     
+    if (is.null(colnames(exo_data))) {
+      stop("exo_data must have column name(s).")
+    }
+    exogenous_lab <- colnames(exo_data)
+        
+    start_temp <- start(temp_data)
+    end_temp <- start(temp_data)
+    start_exo <- start(exo_data)
+    end_exo <- start(exo_data)
     
+    if(sum((start_temp==start_exo) & (end_temp==end_exo))!=2){
+      stop("temp_data and exo_data must have same time series (frequency = 12).")
+    }
+
+    exogenous_mat <- as.matrix(exo_data)
+    
+
+
     ## ---- Model definition -----------------------------------------------
     build_ssm <- SSModel(
       H = NA,
@@ -263,7 +253,7 @@ lgssm <- function(ts_data,
     model = fit2$model,
     fit   = fit2,
     kfs   = kfs,
-    data  = ts_data,
+    data  = temp_data,
     exogenous = exogenous_lab,
     call  = match.call()
   )
