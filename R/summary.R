@@ -9,10 +9,11 @@
 #' @return A list containing model diagnostics and summaries.
 #'
 #' @method summary ThermoSSM
+#' @importFrom stats logLik
 #' @export
 summary.ThermoSSM <- function(object, ...) {
 
-  model <- object$fit$model
+  model <- object$model
   kfs   <- object$kfs
   opt   <- object$fit$optim.out
   pars <- object$fit$optim.out$par

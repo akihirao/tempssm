@@ -103,6 +103,7 @@ zoo_daily2ts_monthly <- function(zoo_obj, var = "Temp", na.rm = TRUE) {
 #' @return A tibble with one row per month (January–December) containing
 #'   the climatological mean temperature.
 #'
+#' @importFrom stats cycle
 #' @importFrom tibble tibble
 #'
 #' @encoding UTF-8
@@ -136,7 +137,7 @@ mean_seasonal_cycle <- function(temp_ts){
 #' Monthly temperature anomalies are calculated by subtracting the
 #' long-term monthly climatology from each observation.
 #'
-#'
+#' @importFrom stats cycle
 #' @importFrom ThermoSSM mean_seasonal_cycle
 #'
 #' @param temp_ts Monthly temperature time series of class \code{ts}.

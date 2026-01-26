@@ -37,22 +37,19 @@ lgssm <- function(temp_data,
 
   ## ---- Input checks ---------------------------------------------------
   if (!inherits(temp_data, "ts")) {
-    stop("temp_data must be a 'ts' object.")
+    stop("The object of temp_data must be a 'ts' object.")
   }
 
   if (frequency(temp_data) != 12) {
-    stop("temp_data must be a monthly time series (frequency = 12).")
+    stop("The object of temp_data must be a monthly time series (frequency = 12).")
   }
 
-  if(inherits(temp_data, "mts")){
-    stop("temp_data must be univariant")
-  }
-  
   if(is.null(dim(temp_data))) {
     y <- temp_data
+  }else if(dim(temp_data)[2]!=1){ # if 'temp_data' has more than two variables
+    stop("The object of temp_data must be univariant.")
   }else{
-    temp_data_lab <- colnames(temp_data)
-    y <- temp_data[, temp_data_lab]
+    y <- temp_data
   }
   
   ## ---- Default initial values -----------------------------------------
@@ -365,6 +362,7 @@ extract_param <- function(res){
 #' extract_exo_coef_ci(res)
 #' }
 #'
+#' @importFrom utils head
 #' @export
 extract_exo_coef_ci <- function(res, level = 0.95) {
   
