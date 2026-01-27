@@ -303,6 +303,7 @@ summary(res_baba_with)
 # plot each of components at once
 plot(res_baba_with)
 ```
+
 ## time series Cross-Validation
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
@@ -334,43 +335,55 @@ cv_out_with <- tsCV(folds_6years_with, fold_ids=seq(1:6))
 
 ```
 ## =============================================================================================
-# Appendix: Example Data and sst_jma2ts function
 
-## Example Data 1: Monthly air temperature at the submit of Mt. Fuji, Japan 
-### Duration: from 1937-Jul to 2025-Dec
-### The dataset is publicly available temperature data released by the Japan Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
+# Appendix: Example Data and the `sst_jma2ts()` Function
+
+## Example Data 1: Monthly air temperature at the summit of Mt. Fuji, Japan
+### Duration: July 1937 to December 2025
+### This dataset consists of publicly available monthly air temperature data released by the Japan 
+### Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-data(fuji_temp) # ts object of monthly air temperature at the summit of Mt. Fuji, Japan
+data(fuji_temp) 
+# A ts object of monthly air temperature at the summit of Mt. Fuji, Japan
 head(fuji_temp)
+
 ```
 
 ## Example Data 2: Daily sea-surface temperature off the southern coast of Ibaraki Prefecture, Japan
-### Duration: from 1982-Jan to 2025-Dec
-### The dataset is publicly available temperature data released by the Japan Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
+### Duration: January 1982 to December 2025
+### This dataset consists of publicly available daily sea-surface temperature data released by the Japan
+### Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-# zoo object of daily sea surface temperature (SST) off the southern coast of Ibaraki Prefecture, Japan
+# A zoo object of daily sea-surface temperature (SST)
+# off the southern coast of Ibaraki Prefecture, Japan
 data(ibaraki_sst) 
 head(ibaraki_sst)
+
+# Convert the daily zoo object to a monthly ts object
+monthly_ibaraki_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(ibaraki_sst)
+head(monthly_ibaraki_sst_ts)
 
 # Converting from daily zoo object to monthly ts object
 monthly_ibaraki_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(ibaraki_sst)
 head(monthly_ibaraki_sst_ts)
 ```
 
-## Utility function of jma_sst2ts()
-
-## This function downloads publicly available daily mean sea-surface temperature (SST) data for Japanese coastal waters
-## provided by the Japan Meteorological Agency (JMA),and returns the monthly average data as a \code{ts} object.
-
-#' @param sea_area_id
-#' Numeric sea area ID. The default is NULL
-#' For example, 138 corresponding to the coastal sea off southern Ibaraki, Japan.
-#' A list of sea area IDs and their corresponding regions is available at:
-#' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
+## Utility Function: sst_jma2ts()
+### This function downloads publicly available daily mean sea-surface temperature (SST) data
+### for Japanese coastal waters provided by the Japan Meteorological Agency (JMA),
+### and returns the corresponding monthly mean time series as an object of class ts.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-# DL of SST off sourthern coastal waters of Ibaraki Prefecture, Japan
+#' @param sea_area_id
+#' Numeric sea area ID. The default is NULL.
+#' For example, 138 corresponds to the coastal waters off southern Ibaraki, Japan.
+#' A list of sea area IDs and their corresponding regions is available at:
+#' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
+```
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# Download SST data for the southern coastal waters of Ibaraki Prefecture, Japan
 sst_138_ts <- ThermoSSM::sst_jma2ts(sea_area_id = 138) 
 head(sst_138_ts)
 
