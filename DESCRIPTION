@@ -20,20 +20,18 @@ Imports:
     KFAS,
     zoo,
     ggplot2,
+    rlang (>= 1.0.0),
     dplyr,
-    tidyr,
     readr,
-    purrr,
-    tibble,
-    stringr,
-    forcats,
     lubridate,
+    tibble,
     forecast,
     patchwork
 Suggests:
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    cowplot,
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Depends: 

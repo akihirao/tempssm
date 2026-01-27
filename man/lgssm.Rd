@@ -4,17 +4,23 @@
 \alias{lgssm}
 \title{Fit a linear Gaussian state-space model to temperature time series}
 \usage{
-lgssm(temp_data, inits = NULL, exo_data = NULL)
+lgssm(temp_data, exo_data = NULL, inits = NULL, maxit = NULL, reltol = NULL)
 }
 \arguments{
 \item{temp_data}{Monthly temperature time series of class \code{ts}.
 The time series must have a frequency of 12 (monthly data).}
 
+\item{exo_data}{Data-set of exogenous variables of class \code{ts}.
+The default is NULL when model without exogenous variables.}
+
 \item{inits}{Optional numeric vector of initial parameter values.
 If \code{NULL}, default values are used.}
 
-\item{exo_data}{Data-set of exogenous variables of class \code{ts}. 
-The default is NULL when model without exogenous variables.}
+\item{maxit}{Optional numeric of maximum iteration.
+If \code{NULL}, default value of 5000 is used.}
+
+\item{reltol}{Optional numeric of reltol.
+If \code{NULL}, default value of 1e-16 is used.}
 }
 \value{
 An object of class \code{"ThermoSSM"}, a named list containing:

@@ -195,8 +195,10 @@ monthly_anomaly <- function(temp_ts) {
 #' and returns the data as a \code{zoo} object indexed by date.
 #'
 #' @importFrom readr read_csv
+#' @importFrom rlang .data
 #' @import dplyr
 #' @import zoo
+#' @import lubridate
 #'
 #' @param sea_area_id
 #' Numeric sea area ID. The default is NULL
@@ -221,28 +223,37 @@ monthly_anomaly <- function(temp_ts) {
 #' }
 #'
 #' @export
-sst_jma2zoo <- function(sea_area_id = NULL) {
 
+sst_jma2zoo <- function(sea_area_id = NULL) {
   url_head <- "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area"
   url <- paste0(url_head, sea_area_id, ".txt")
-
+  
   sst_tidy <- readr::read_csv(url, show_col_types = FALSE) %>%
-    dplyr::slice(-n()) %>%
-    dplyr::rename(Temp = "Temp.") %>%
+    dplyr::slice(-dplyr::n()) # filtering out the last line of fudder
+  
+  colnames(sst_tidy) <- c("Year", "Month", "Day", "areaNo", "flag", "Temp")
+  
+  # Use '.data' to explicitly reference data-frame columns and avoid R CMD check notes”
+  sst_tidy <- sst_tidy %>%
     dplyr::mutate(
-      Temp = as.numeric(Temp),
-      date = as.Date(paste0(yyyy, "-", mm, "-", dd))
+      Temp = as.numeric(.data$Temp),
+      date = lubridate::make_date(
+        year  = as.integer(.data$Year),
+        month = as.integer(.data$Month),
+        day   = as.integer(.data$Day)
+      )
     ) %>%
-    dplyr::select(date, Temp, flag) %>%
-    mutate(
-      Temp = if_else(Temp <= -999, NA_real_, Temp)
+    dplyr::select(.data$date, .data$Temp, .data$flag) %>%
+    dplyr::mutate(
+      Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
     )
-
+  
+  # convert tidy object to zoo object
   sst_zoo <- zoo::zoo(
-    x = data.frame(Temp = sst_tidy$Temp),
-    order.by = sst_tidy$date
+    x = data.frame(Temp = sst_tidy[["Temp"]]),
+    order.by = sst_tidy[["date"]]
   )
-
+  
   return(sst_zoo)
 }
 
@@ -254,10 +265,7 @@ sst_jma2zoo <- function(sea_area_id = NULL) {
 #' provided by the Japan Meteorological Agency (JMA),
 #' and returns the monthly average data as a \code{ts} object.
 #'
-#' @importFrom readr read_csv
-#' @importFrom ThermoSSM zoo_daily2ts_monthly
-#' @import dplyr
-#' @import zoo
+#' @importFrom ThermoSSM zoo_daily2ts_monthly sst_jma2zoo
 #'
 #' @param sea_area_id
 #' Numeric sea area ID. The default is NULL
@@ -284,27 +292,8 @@ sst_jma2zoo <- function(sea_area_id = NULL) {
 #' @export
 sst_jma2ts <- function(sea_area_id = NULL) {
   
-  url_head <- "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area"
-  url <- paste0(url_head, sea_area_id, ".txt")
-  
-  sst_tidy <- readr::read_csv(url, show_col_types = FALSE) %>%
-    dplyr::slice(-n()) %>%
-    dplyr::rename(Temp = "Temp.") %>%
-    dplyr::mutate(
-      Temp = as.numeric(Temp),
-      date = as.Date(paste0(yyyy, "-", mm, "-", dd))
-    ) %>%
-    dplyr::select(date, Temp, flag) %>%
-    mutate(
-      Temp = if_else(Temp <= -999, NA_real_, Temp)
-    )
-  
-  sst_zoo <- zoo::zoo(
-    x = data.frame(Temp = sst_tidy$Temp),
-    order.by = sst_tidy$date
-  )
-  
-  monthly_sst_ts <- zoo_daily2ts_monthly(sst_zoo)
+  sst_zoo <- ThermoSSM::sst_jma2zoo(sea_area_id)
+  monthly_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(sst_zoo)
   
   return(monthly_sst_ts)
 }

@@ -56,7 +56,7 @@ Estimating sea temperature trends using a linear Gaussian state-space model in J
 https://doi.org/10.34423/jsfo.88.3_190
 
 Baba, S. (2024).  
-Supplementary code for estimating sea temperature trends using a linear Gaussian state-space model.
+Supplementary code and test data for estimating sea temperature trends using a linear Gaussian state-space model.
 GitHub repository:  
 https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 

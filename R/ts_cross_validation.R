@@ -113,12 +113,20 @@ ts_cv_folds <- function(temp_data,
       test_end <- n
     }
     
+    if(is.null(exo_data)){
+      exo_train_ts <- NULL
+      exo_test_ts <- NULL
+    }else{
+      exo_train_ts <- ts_slice(exo_data, train_start, train_end)
+      exo_test_ts <- ts_slice(exo_data, test_start, test_end)
+    }
+    
     folds[[k]] <- list(
       fold = k,
       train_ts = ts_slice(temp_data, train_start, train_end),
       test_ts  = ts_slice(temp_data, test_start, test_end),
-      exo_train_ts = ts_slice(exo_data, train_start, train_end),
-      exo_test_ts = ts_slice(exo_data, test_start, test_end),
+      exo_train_ts = exo_train_ts,
+      exo_test_ts = exo_test_ts,
       train_idx = c(train_start, train_end),
       test_idx  = c(test_start, test_end),
       train_range = c(stats::time(temp_data)[train_start],
@@ -158,22 +166,38 @@ tsCV <- function(folds,fold_ids = 1){
   for(i in fold_ids){
       
     target_fold <- folds[[i]]
-    target_test_data <- target_fold$test_ts
+    temp_train_ts <- target_fold$train_ts
+    temp_train_mts <- ts(
+      as.matrix(temp_train_ts),
+      start = start(temp_train_ts),
+      frequency = 12
+    )
+    colnames(temp_train_mts) <- "Temp" 
+    
+    temp_test_ts <- target_fold$test_ts
+    temp_test_mts <- ts(
+      as.matrix(temp_test_ts),
+      start = start(temp_test_ts),
+      frequency = 12
+    )
+    colnames(temp_train_mts) <- "Temp" 
 
     if(is.null(exo_judge)){ # if data-set excludes exogenous variables
       
-      res_train<- lgssm(temp_data = target_fold$train_ts,
+      res_train <- lgssm(temp_data = temp_train_mts,
                         exo_data = NULL)
 
       convergence <- res_train$fit$optim.out$convergence
       train_model <- res_train$model
       train_pars <- res_train$fit$optim.out$par
+ 
+      #browser()
       
       predict_temp_ts <- predict(
         train_model,
         newdata = SSModel(
           H = exp(train_pars[6]),
-          rep(NA, nrow(target_test_data)) ~ 
+          rep(NA, nrow(temp_test_mts)) ~ #nrow(ts_object) 
             SSMtrend(degree = 2,
                      Q = c(list(0), list(exp(train_pars[1])))) + 
             SSMseasonal(sea.type = "dummy",
@@ -182,7 +206,7 @@ tsCV <- function(folds,fold_ids = 1){
             SSMarima(ar = artransform(train_pars[3:4]),
                      d = 0,
                      Q = exp(train_pars[5])
-            ), data = target_test_data
+            ), data = temp_test_mts
           )
       )
     }else{ # if data-set includes exogenous variables
@@ -191,12 +215,12 @@ tsCV <- function(folds,fold_ids = 1){
       exo_test <- target_fold$exo_test_ts
       num_exo <- dim(exo_train)[2]
 
-      temp_exo_test <- cbind(target_test_data,
+      temp_exo_test <- cbind(temp_test_mts,
                              exo_test)
       colnames(temp_exo_test) <- c("Temp",colnames(exo_test))
       
-      res_train<- lgssm(temp_data = target_fold$train_ts,
-                        exo_data = target_fold$exo_train_ts)
+      res_train<- lgssm(temp_data = temp_train_mts,
+                        exo_data = exo_train)
       
       convergence <- res_train$fit$optim.out$convergence
       train_model <- res_train$model
@@ -225,7 +249,7 @@ tsCV <- function(folds,fold_ids = 1){
       )
     }
     
-    CV_output <- forecast::accuracy(predict_temp_ts, target_test_data) 
+    CV_output <- forecast::accuracy(predict_temp_ts, temp_test_ts) 
   
     ts_CV_list[[i]] <- list(folds[[i]],
                             convergence=convergence,

@@ -21,7 +21,11 @@ vignette: >
 ## Set libraries
 library(ThermoSSM)
 library(forecast)
-library(tidyverse)
+
+library(readr)
+library(dplyr)
+library(ggplot2)
+
 ```
 
 # Practice I: Analysis of Monthly Air Temperature
@@ -122,7 +126,7 @@ plot(res_MtAkadake)
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Normality of standardized residuals
-std_obs_resid <- rstandard(res_MtAkadake$kfs, type = "recursive")
+std_obs_resid <- stats::rstandard(res_MtAkadake$kfs, type = "recursive")
 
 # Residual diagnostics
 forecast::checkresiduals(std_obs_resid)
@@ -197,21 +201,19 @@ plot(plt_drift_ci)
 
 # Practice II: Analysis of Monthly Sea-Surface Temperature with Exogenous Variables
 
-## Dataset is originated from Baba et al. (2024) and Baba (2024)
+## Dataset is originated from Baba et al. (2024)
+
 ## Baba, S., Ishii, H., and Yoshiyama, T. (2024).  
 ## Estimating sea temperature trends using a linear Gaussian state-space model in Jogashima, Kanagawa, Japan.
-## Bulletin of the Japanese Society of Fisheries Oceanography, 88(3), 190–199 (in Japanese with English abstruct)
+## Bulletin of the Japanese Society of Fisheries Oceanography, 88, 190–199 (in Japanese with English abstruct)
 ## https://doi.org/10.34423/jsfo.88.3_190
-##
-## Baba, S. (2024).  
-## Supplementary code and test data for estimating sea temperature trends using a linear Gaussian state-space model.
-## GitHub repository:  
+## Supplementary code and test data are available on GitHub repository:  
 ## https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 
 ## loading dataset and converting ts object
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-baba_data <- read_csv("https://raw.githubusercontent.com/logics-of-blue/sea-temperature-trend-jogashima/refs/heads/main/src/ssm-sample-data.csv")
+baba_data <- readr::read_csv("https://raw.githubusercontent.com/logics-of-blue/sea-temperature-trend-jogashima/refs/heads/main/src/ssm-sample-data.csv")
 
 # time　　　：日付(論文では0.5か月だが、本サンプルコードでは月単位データとした)
 # temp　　　：水温
@@ -222,7 +224,7 @@ head(baba_data)
 # 秋冬の黒潮Aフラグの追加
 baba_data <- 
   baba_data %>% 
-  mutate(winter = as.numeric(month(as.Date(time)) %in% c(11, 12, 1, 2, 3)),
+  mutate(winter = as.numeric(lubridate::month(as.Date(time)) %in% c(11, 12, 1, 2, 3)),
          winter_a = winter * kuroshio_a)
 
 # winter　：秋冬に1をとるフラグ
@@ -233,7 +235,7 @@ head(baba_data)
 # 0.5か月単位データの場合はfrequency = 24と指定する
 baba_data_ts <- 
   baba_data %>% 
-  select(-time, -winter) %>%             # 日付列と秋冬フラグを削除
+  dplyr::select(-time, -winter) %>%             # 日付列と秋冬フラグを削除
   ts(start = c(1998, 1), frequency = 12) # ts型に変換(1998年1月開始。12か月1周期)
 head(baba_data_ts)
 ```
@@ -301,10 +303,40 @@ summary(res_baba_with)
 # plot each of components at once
 plot(res_baba_with)
 ```
+## time series Cross-Validation
 
-# Appendix: Example Dataset and sst_jma2ts function
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# ts CV of the model without exogenous variables
+folds_6years_without <- ts_cv_folds(temp_data=baba_temp_ts,
+                                 exo_data = NULL,
+                                 initial = 228, # 228 monthly units from 1998-Jan to 2016-Dec 
+                                 horizon = 12,
+                                 step = 12,
+                                 fixed_window = FALSE,
+                                 allow_partial = FALSE) 
 
-## Example 1: Monthly air temperature at the submit of Mt. Fuji, Japan 
+cv_out_without <- tsCV(folds_6years_without, fold_ids=seq(1:6))
+# Wait a few minits
+
+
+
+folds_6years_with <- ts_cv_folds(temp_data=baba_temp_ts,
+                     exo_data = baba_exo_ts,
+                        initial = 228, # 228 monthly units from 1998-Jan to 2016-Dec 
+                        horizon = 12,
+                        step = 12,
+                        fixed_window = FALSE,
+                        allow_partial = FALSE) 
+
+cv_out_with <- tsCV(folds_6years_with, fold_ids=seq(1:6))
+# Wait a few minits
+
+
+```
+## =============================================================================================
+# Appendix: Example Data and sst_jma2ts function
+
+## Example Data 1: Monthly air temperature at the submit of Mt. Fuji, Japan 
 ### Duration: from 1937-Jul to 2025-Dec
 ### The dataset is publicly available temperature data released by the Japan Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
@@ -312,25 +344,13 @@ data(fuji_temp) # ts object of monthly air temperature at the summit of Mt. Fuji
 head(fuji_temp)
 ```
 
-## Example 2: Daily sea-surface temperature off the southern coast of Ibaraki Prefecture, Japan
+## Example Data 2: Daily sea-surface temperature off the southern coast of Ibaraki Prefecture, Japan
 ### Duration: from 1982-Jan to 2025-Dec
 ### The dataset is publicly available temperature data released by the Japan Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-data(ibaraki_sst) # zoo object of daily sea surface temperature (SST) off the southern coast of Ibaraki Prefecture, Japan
-head(ibaraki_sst)
-
-# Converting from daily zoo object to monthly ts object
-monthly_ibaraki_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(ibaraki_sst)
-head(monthly_ibaraki_sst_ts)
-```
-
-## Example 2: Daily sea-surface temperature off the southern coast of Ibaraki Prefecture, Japan
-### Duration: from 1982-Jan to 2025-Dec
-### The dataset is publicly available temperature data released by the Japan Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-data(ibaraki_sst) # zoo object of daily sea surface temperature (SST) off the southern coast of Ibaraki Prefecture, Japan
+# zoo object of daily sea surface temperature (SST) off the southern coast of Ibaraki Prefecture, Japan
+data(ibaraki_sst) 
 head(ibaraki_sst)
 
 # Converting from daily zoo object to monthly ts object
@@ -350,7 +370,8 @@ head(monthly_ibaraki_sst_ts)
 #' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-sst_138_ts <- sst_jma2ts(sea_area_id = 138) # DL of SST off sourthern coastal waters of Ibaraki Prefecture, Japan
+# DL of SST off sourthern coastal waters of Ibaraki Prefecture, Japan
+sst_138_ts <- ThermoSSM::sst_jma2ts(sea_area_id = 138) 
 head(sst_138_ts)
 
 ```

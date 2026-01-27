@@ -8,11 +8,17 @@
 #' @param temp_data Monthly temperature time series of class \code{ts}.
 #'   The time series must have a frequency of 12 (monthly data).
 #'
-#' @param inits Optional numeric vector of initial parameter values.
-#'   If \code{NULL}, default values are used.
-#'
-#' @param exo_data Data-set of exogenous variables of class \code{ts}. 
+#' @param exo_data Data-set of exogenous variables of class \code{ts}.
 #'  The default is NULL when model without exogenous variables.
+#'
+#' @param inits Optional numeric vector of initial parameter values.
+#'  If \code{NULL}, default values are used.
+#'  
+#' @param maxit Optional numeric of maximum iteration.
+#'  If \code{NULL}, default value of 5000 is used.
+#'
+#' @param reltol Optional numeric of reltol.
+#'  If \code{NULL}, default value of 1e-16 is used.
 #'  
 #' @return An object of class \code{"ThermoSSM"}, a named list containing:
 #' \describe{
@@ -32,8 +38,10 @@
 #' plot(res$data)
 #' }
 lgssm <- function(temp_data, 
+                  exo_data = NULL,
                   inits = NULL,
-                  exo_data = NULL) {
+                  maxit = NULL,
+                  reltol = NULL) {
 
   ## ---- Input checks ---------------------------------------------------
   if (!inherits(temp_data, "ts")) {
@@ -52,6 +60,8 @@ lgssm <- function(temp_data,
     y <- temp_data
   }
   
+  
+  
   ## ---- Default initial values -----------------------------------------
   if (is.null(inits)) {
     # log-variances and AR parameters (on unconstrained scale)
@@ -67,6 +77,16 @@ lgssm <- function(temp_data,
   
   if (!is.numeric(inits) || length(inits) != 6) {
     stop("inits must be a numeric vector of length 6.")
+  }
+  
+  ## ---- Default maxit value -----------------------------------------  
+  if (is.null(maxit)) {
+    maxit <- 5000
+  }
+  
+  ## ---- Default reltol value -----------------------------------------  
+  if (is.null(reltol)) {
+    reltol <- 1e-16
   }
   
   
@@ -127,7 +147,7 @@ lgssm <- function(temp_data,
       inits  = inits,
       updatefn = update_func,
       method = "Nelder-Mead",
-      control = list(maxit = 5000, reltol = 1e-16)
+      control = list(maxit = maxit, reltol = reltol)
     )
     
     fit2 <- fitSSM(
@@ -135,7 +155,7 @@ lgssm <- function(temp_data,
       inits  = fit1$optim.out$par,
       updatefn = update_func,
       method = "BFGS",
-      control = list(maxit = 5000, reltol = 1e-16)
+      control = list(maxit = maxit, reltol = reltol)
     )
     
     ## ---- Kalman filtering & smoothing -----------------------------------
@@ -224,7 +244,7 @@ lgssm <- function(temp_data,
       inits  = inits,
       updatefn = update_func,
       method = "Nelder-Mead",
-      control = list(maxit = 5000, reltol = 1e-16)
+      control = list(maxit = maxit, reltol = reltol)
     )
     
     fit2 <- fitSSM(
@@ -232,7 +252,7 @@ lgssm <- function(temp_data,
       inits  = fit1$optim.out$par,
       updatefn = update_func,
       method = "BFGS",
-      control = list(maxit = 5000, reltol = 1e-16)
+      control = list(maxit = maxit, reltol = reltol)
     )
     
     ## ---- Kalman filtering & smoothing -----------------------------------
@@ -318,12 +338,12 @@ extract_drift_ts <- function(res) {
 extract_param <- function(res){
   pars <- res$fit$optim.out$par
 
-  params <- c(Q_trend  = exp(pars[1]), # 年トレンドの大きさ
-              Q_season = exp(pars[2]), # 季節トレンドの大きさ
-              AR1      = KFAS::artransform(pars[3:4])[1], # 1次のARの大きさ
-              AR2      = KFAS::artransform(pars[3:4])[2], # 2次のARの大きさ
-              Q_ar     = exp(pars[5]), # 短期変動の揺らぎ
-              H        = exp(pars[6]) # 観察誤差の大きさ
+  params <- c(Q_trend  = exp(pars[1]), # process error for level component
+              Q_season = exp(pars[2]), # process error for seasonal component
+              AR1      = KFAS::artransform(pars[3:4])[1], # the AR(1) coefficient
+              AR2      = KFAS::artransform(pars[3:4])[2], # the AR(2) coefficient
+              Q_ar     = exp(pars[5]), # process error for AR
+              H        = exp(pars[6]) # observed error
               )
   return(params)
 }
