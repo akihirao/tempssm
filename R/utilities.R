@@ -277,7 +277,7 @@ sst_jma2zoo <- function(sea_area_id = NULL) {
 #'
 #' @examples
 #' \dontrun{
-#' sst_138_ts <- sst_jma2zoo(sea_area_id = 138)
+#' sst_138_ts <- sst_jma2ts(sea_area_id = 138)
 #' head(sst_138_ts)
 #' }
 #'

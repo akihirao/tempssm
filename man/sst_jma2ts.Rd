@@ -30,7 +30,7 @@ Missing values in the original dataset are represented as \code{NA}.
 }
 \examples{
 \dontrun{
-sst_138_ts <- sst_jma2zoo(sea_area_id = 138)
+sst_138_ts <- sst_jma2ts(sea_area_id = 138)
 head(sst_138_ts)
 }
 

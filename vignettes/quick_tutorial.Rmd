@@ -24,95 +24,74 @@ library(forecast)
 library(tidyverse)
 ```
 
-# Loading Example Data
+# Practice I: Analysis of Monthly Air Temperature
+
+## Data set
+## The ThermoSSM package provides an example dataset with csv format. It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan. The data originated from: https://www.biodic.go.jp/moni1000/findings/data/index.html. Contents of the csv file as follows:
+## Year, Month, Temp
+## 2010,8,13.6
+## 2010,9,6.8
+## 2010,10,0.2
+## ...
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
+example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
+example_temp <- readr::read_csv(example_csv_path)
+head(example_temp)
 
-# loading example data 1
-# Daily mean sea surface temperature time series off southern Ibaraki Prefecture, Japan
-data(ibaraki_sst)
-head(ibaraki_sst)
+
+# Converting tidy object to ts object
+MtAkadake_ts <- ts(matrix(example_temp$Temp),
+  start = c(example_temp$Year[1],example_temp$Month[1]),
+  frequency = 12
+)
+
+colnames(MtAkadake_ts) <- "Temp"
+head(MtAkadake_ts)
+
+frequency(MtAkadake_ts)
+start(MtAkadake_ts)
+end(MtAkadake_ts)
 ```
-# Checking Example Data
+## Plotting Monthly Time Series of Air Temperature
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-class(ibaraki_sst) # zoo object
-frequency(ibaraki_sst)   # frequency（1）
-start(ibaraki_sst)       # start time（"1982-01-01"）
-end(ibaraki_sst)         # end time（"2025-12-31"）
-```
-
-# Plotting Daily Time Series of Sea Surface Temperature
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-daily_ibaraki_sst_plot <- forecast::autoplot(ibaraki_sst) +
+plot_temp_MtAkadake <- forecast::autoplot(MtAkadake_ts) +
   labs(y = expression(Temperature~(degree*C)), 
        x = "Time") +
-  ggtitle("Daily mean sea-surface temperature off southern Ibaraki Prefecture")
+  ggtitle("Monthly mean air temperature at Mt. Akadake, Hokkaido, Japan")
 
-plot(daily_ibaraki_sst_plot)
+plot(plot_temp_MtAkadake)
+# The example data includes missing observation values
 ```
-
-# Converting from Daily zoo object to Monthly ts object
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-monthly_ibaraki_sst <- zoo_daily2ts_monthly(ibaraki_sst)
-colnames(monthly_ibaraki_sst) <- "Temp"
-```
-
-# Check of ts object
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-class(monthly_ibaraki_sst) # ts object
-frequency(monthly_ibaraki_sst)   # frequency（12）
-start(monthly_ibaraki_sst)       # start time（1982, 1）
-end(monthly_ibaraki_sst)         # end time（"2025, 12）
-cycle(monthly_ibaraki_sst) %>% head() # 各観測の月番号（1～12）
-time(monthly_ibaraki_sst)  %>% head() # 小数年（1982.000, 1982.083...）
-window(monthly_ibaraki_sst, start = c(2001, 1), end = c(2001, 12))  # 期間抽出
-
-```
-
-# Plotting Monthly Time Series of Sea Surface Temperature
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-
-monthly_ibaraki_sst_plot <- forecast::autoplot(monthly_ibaraki_sst) +
-  labs(y = expression(Temperature~(degree*C)), 
-       x = "Time") +
-  ggtitle("Montly mean sea-surface temperature off southern Ibaraki Prefecture")
-
-plot(monthly_ibaraki_sst_plot)
-```
-
-# Plotting Time Series of Temperature Anomalies
+## Plotting Time Series of Temperature Anomalies
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Generate temperature anomalies
-monthly_ibaraki_sst_anomaly <- ThermoSSM::monthly_anomaly(monthly_ibaraki_sst)
+example_anomaly <- ThermoSSM::monthly_anomaly(MtAkadake_ts)
 
-monthly_ibaraki_sst_anomaly_plot <- forecast::autoplot(monthly_ibaraki_sst_anomaly) +
+monthly_example_anomaly_plot <- forecast::autoplot(example_anomaly) +
   labs(y = expression(Temperature~(degree*C)), 
        x = "Time") +
-  ggtitle("Sea-surface temperature anomaliese")
+  ggtitle("Temperature anomaliese")
   
-plot(monthly_ibaraki_sst_anomaly_plot)
+plot(monthly_example_anomaly_plot)
 ```
 
-# Plotting Monthly Seasonal Cycle
+## Plotting Monthly Seasonal Cycle
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-monthly_seasonal_cycle_SST_ibaraki <- ThermoSSM::mean_seasonal_cycle(monthly_ibaraki_sst) 
-summary(monthly_seasonal_cycle_SST_ibaraki)
+monthly_seasonal_cycle_MtAkadake <- ThermoSSM::mean_seasonal_cycle(MtAkadake_ts) 
+summary(monthly_seasonal_cycle_MtAkadake)
 
-plt_monthly_seasonal_cycle_SST_ibaraki <- ggplot(
-  data = monthly_seasonal_cycle_SST_ibaraki,
+plt_monthly_seasonal_cycle_MtAkadake <- ggplot(
+  data = monthly_seasonal_cycle_MtAkadake,
   aes(x = Month, y = Temperature)
 ) +
   geom_point(size = 2) +
   geom_line(linetype = "dashed") +
   labs(
-    title = "Monthly seasonal cycle of SST",
+    title = "Monthly seasonal cycle of temperature",
     x = "Month",
     y = expression(Temperature~(degree*C))
   ) +
@@ -122,89 +101,80 @@ plt_monthly_seasonal_cycle_SST_ibaraki <- ggplot(
   )
 
 
-plot(plt_monthly_seasonal_cycle_SST_ibaraki)
+plot(plt_monthly_seasonal_cycle_MtAkadake)
 ```
 
-# Applying a Linear Gaussian State-Space Model
+## Applying a Linear Gaussian State-Space Model
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res <- lgssm(monthly_ibaraki_sst)
-
-print(res)
-summary(res)
+res_MtAkadake <- lgssm(MtAkadake_ts) 
+summary(res_MtAkadake)
 ```
 
-# Plotting Level, Drift, Seasonal, and Auto-Regressive Components
+## Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # plot each of components at once
-plot(res)
+plot(res_MtAkadake)
 ```
 
-# Simple Model Diagnostics
+## Simple Model Diagnostics
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
+# Normality of standardized residuals
+std_obs_resid <- rstandard(res_MtAkadake$kfs, type = "recursive")
 
-## normality of residuals
-# 標準化残差
-std_obs_resid <- rstandard(res$kfs, type = "recursive")
-
-# forecastパッケージのcheckredisuals関数で残差のチェック
-# Ljung–Box検定: P > 0.05で残差に有意な自己相関なしと判断
-checkresiduals(std_obs_resid)
-
-# 図示された残差（上：残差系列；左下：残差コレログラム；右下：残差のヒストグラム）をみて異常に突出した残差がないかなどを確認
-
-
-## normality of residuals
-# P > 0.05で正規分布と有意に異なっていないと判断
-shapiro.test(std_obs_resid)
-
+# Residual diagnostics
+forecast::checkresiduals(std_obs_resid)
+# Ljung–Box test: if P > 0.05, there is no evidence of significant autocorrelation in the residuals
+# Inspect the diagnostic plots 
+# top: residual time series;
+# bottom left: residual autocorrelation;
+# bottom right: histogram of residuals to check for outliers or other anomalies
 ```
 
-# Estimated Parameters and Components
+## Estimated Parameters and Components
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-#過程誤差、観測誤差などのパラメーター
-params <- ThermoSSM::extract_param(res)
+# Parameters including process errors and observation error
+params <- ThermoSSM::extract_param(res_MtAkadake)
 params
 
-
-# 平滑化推定量
-alpha_hat <- res$kfs$alphahat
+# Smoothing estimates
+alpha_hat <- res_MtAkadake$kfs$alphahat
 head(alpha_hat)
 
 
-#　水準成分の平滑化推定量
-level_ts <- ThermoSSM::extract_level_ts(res)
+#　Smoothing estimate of level component
+level_ts <- ThermoSSM::extract_level_ts(res_MtAkadake)
 
-#　ドリフト成分の平滑化推定量
-drift_ts <- ThermoSSM::extract_drift_ts(res)
+#　Smoothing estimate of drift component
+drift_ts <- ThermoSSM::extract_drift_ts(res_MtAkadake)
 
-# 年あたりの平均的な昇温率
+# Average drift rate per year
 mean_drift_year <- mean(drift_ts) * 12
 print(mean_drift_year)
 
-# 1990年代における年あたりの平均昇温率
-drift_1990s_per_year <- window(drift_ts,
-                               start=c(1990,1),
-                               end=c(1999,12)
+# Average drift rate per year from 2015 to 2018
+drift_per_year_2015_2017 <- window(drift_ts,
+                               start=c(2015,1),
+                               end=c(2017,12)
                                ) %>%  mean()*12
-print(drift_1990s_per_year)
+print(drift_per_year_2015_2017)
 
-# 2010年代における年あたりの平均昇温率
-drift_2010s_per_year <- window(drift_ts,
-                               start=c(2010,1),
-                               end=c(2019,12)
+# Average drift rate per year from 2015 to 2018
+drift_per_year_2020_2022 <- window(drift_ts,
+                               start=c(2020,1),
+                               end=c(2022,12)
                                ) %>%  mean()*12
-print(drift_2010s_per_year)
+print(drift_per_year_2020_2022)
 
 ```
 
-# Plotting Level Component with 95% Confidence Interval
+## Plotting Level Component with 95% Confidence Interval
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_level_ci <- plot(res,
+plt_level_ci <- plot(res_MtAkadake,
                      components = "level",
                      ci = TRUE,
                      ci_level = 0.95
@@ -213,10 +183,10 @@ plt_level_ci <- plot(res,
 plot(plt_level_ci)
 ```
 
-# Plotting Drift Component with 95% Confidence Interval
+## Plotting Drift Component with 95% Confidence Interval
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_drift_ci <- plot(res,
+plt_drift_ci <- plot(res_MtAkadake,
                      components = "drift",
                      ci = TRUE,
                      ci_level = 0.95
@@ -225,65 +195,163 @@ plt_drift_ci <- plot(res,
 plot(plt_drift_ci)
 ```
 
-# Appendix: Handling Raw Temperature Data
-## This appendix describes how the original temperature time series data are prepared prior to the state-space analysis presented in the main text. We outline the procedures for handling raw observations.
+# Practice II: Analysis of Monthly Sea-Surface Temperature with Exogenous Variables
 
-### Example 1
+## Dataset is originated from Baba et al. (2024) and Baba (2024)
+## Baba, S., Ishii, H., and Yoshiyama, T. (2024).  
+## Estimating sea temperature trends using a linear Gaussian state-space model in Jogashima, Kanagawa, Japan.
+## Bulletin of the Japanese Society of Fisheries Oceanography, 88(3), 190–199 (in Japanese with English abstruct)
+## https://doi.org/10.34423/jsfo.88.3_190
+##
+## Baba, S. (2024).  
+## Supplementary code and test data for estimating sea temperature trends using a linear Gaussian state-space model.
+## GitHub repository:  
+## https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-# Monthly temperature data
-original_data <- data.frame(
-  Year=c(2000,2000,2000,2000,2000,2000,2000,2000,2000,2000,2000,2000),
-  Month=c(1,2,3,4,5,6,7,8,9,10,11,12),
-  Temp=   c(5.2, 6.1, 9.3, 13.5, 17.8, 21.0,24.3, 25.1, 22.0, 17.1, 11.2,7.0))
-
-head(original_data)
-
-# Convert ts object
-original_ts <- ts(
-  matrix(original_data$Temp),
-  start = c(original_data$Year[1],original_data$Month[1]),
-  frequency = 12
-)
-
-# Important!!: Exe colnames() to add "Temp" name to ts object for the model 
-colnames(original_ts) <- c("Temp")
-
-frequency(original_ts)
-start(original_ts)
-end(original_ts)
-time(original_ts)
-original_ts
-
-res_original <- lgssm(original_ts)
-summary(res_original)
-```
-
-### Example 2
+## loading dataset and converting ts object
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-# loading example csv
-# It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan
-# The data originated from: https://www.biodic.go.jp/moni1000/findings/data/index.html
-# example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
-example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
-example_temp <- readr::read_csv(example_csv_path)
-head(example_temp)
+baba_data <- read_csv("https://raw.githubusercontent.com/logics-of-blue/sea-temperature-trend-jogashima/refs/heads/main/src/ssm-sample-data.csv")
 
-# Converting tidy object to ts object
-example_ts <- ts(matrix(example_temp$Temp),
-  start = c(example_temp$Year[1],example_temp$Month[1]),
-  frequency = 12
-)
-colnames(example_ts) <- "Temp"
-head(example_ts)
+# time　　　：日付(論文では0.5か月だが、本サンプルコードでは月単位データとした)
+# temp　　　：水温
+# distance　：黒潮流軸までの距離
+# kuroshio_a：黒潮流路がA型のときに1をとるフラグ
+head(baba_data)
 
-frequency(example_ts)
-start(example_ts)
-end(example_ts)
+# 秋冬の黒潮Aフラグの追加
+baba_data <- 
+  baba_data %>% 
+  mutate(winter = as.numeric(month(as.Date(time)) %in% c(11, 12, 1, 2, 3)),
+         winter_a = winter * kuroshio_a)
 
-res_example <- lgssm(example_ts)
-summary(res_example)
+# winter　：秋冬に1をとるフラグ
+# winter_a：秋冬かつ、黒潮がAであるときに1をとるフラグ
+head(baba_data)
 
-plot(res_example)
+# ts型に変換
+# 0.5か月単位データの場合はfrequency = 24と指定する
+baba_data_ts <- 
+  baba_data %>% 
+  select(-time, -winter) %>%             # 日付列と秋冬フラグを削除
+  ts(start = c(1998, 1), frequency = 12) # ts型に変換(1998年1月開始。12か月1周期)
+head(baba_data_ts)
 ```
+
+## Splitting temperature data and exogenous variables
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# ts object of temperature time series
+baba_temp_ts <- baba_data_ts[,"temp"]
+
+# ts object of exogenous variables
+baba_exo_ts <- baba_data_ts[,c("distance","kuroshio_a", "winter_a")]
+
+```
+
+## Plotting Time Series of Temperature 
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+plt_baba_temp <- forecast::autoplot(baba_temp_ts) +
+  labs(y = expression(Temperature~(degree*C)), 
+       x = "Time") +
+  ggtitle("Monthly mean sea-surface temperature")
+
+plot(plt_baba_temp)
+```
+
+## Plotting Time Series of Exogenous variables
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+plt_baba_exo_distance <- forecast::autoplot(baba_exo_ts[,"distance"]) +
+  labs(x = "Time", y = "Distance") +
+  ggtitle("Distance")
+
+plt_baba_exo_kuroshio_a <- forecast::autoplot(baba_exo_ts[,"kuroshio_a"]) +
+  labs(x = "Time", y = "Category") +
+  ggtitle("kuroshio_a")
+
+plt_baba_exo_winter_a <- forecast::autoplot(baba_exo_ts[,"winter_a"]) +
+  labs(x = "Time",y = "Category") +
+  ggtitle("winter_a")
+
+cowplot::plot_grid(plt_baba_exo_distance,
+                   plt_baba_exo_kuroshio_a,
+                   plt_baba_exo_winter_a,
+                   ncol=1)
+
+```
+
+## Applying a Linear Gaussian State-Space Model without exogenous variables
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+res_baba_without <- lgssm(baba_temp_ts) 
+summary(res_baba_without)
+
+# plot each of components at once
+plot(res_baba_without)
+```
+
+## Applying a Linear Gaussian State-Space Model with exogenous variables
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+res_baba_with <- lgssm(temp_data=baba_temp_ts,
+                          exo_data=baba_exo_ts) 
+summary(res_baba_with)
+# plot each of components at once
+plot(res_baba_with)
+```
+
+# Appendix: Example Dataset and sst_jma2ts function
+
+## Example 1: Monthly air temperature at the submit of Mt. Fuji, Japan 
+### Duration: from 1937-Jul to 2025-Dec
+### The dataset is publicly available temperature data released by the Japan Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+data(fuji_temp) # ts object of monthly air temperature at the summit of Mt. Fuji, Japan
+head(fuji_temp)
+```
+
+## Example 2: Daily sea-surface temperature off the southern coast of Ibaraki Prefecture, Japan
+### Duration: from 1982-Jan to 2025-Dec
+### The dataset is publicly available temperature data released by the Japan Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+data(ibaraki_sst) # zoo object of daily sea surface temperature (SST) off the southern coast of Ibaraki Prefecture, Japan
+head(ibaraki_sst)
+
+# Converting from daily zoo object to monthly ts object
+monthly_ibaraki_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(ibaraki_sst)
+head(monthly_ibaraki_sst_ts)
+```
+
+## Example 2: Daily sea-surface temperature off the southern coast of Ibaraki Prefecture, Japan
+### Duration: from 1982-Jan to 2025-Dec
+### The dataset is publicly available temperature data released by the Japan Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+data(ibaraki_sst) # zoo object of daily sea surface temperature (SST) off the southern coast of Ibaraki Prefecture, Japan
+head(ibaraki_sst)
+
+# Converting from daily zoo object to monthly ts object
+monthly_ibaraki_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(ibaraki_sst)
+head(monthly_ibaraki_sst_ts)
+```
+
+## Utility function of jma_sst2ts()
+
+## This function downloads publicly available daily mean sea-surface temperature (SST) data for Japanese coastal waters
+## provided by the Japan Meteorological Agency (JMA),and returns the monthly average data as a \code{ts} object.
+
+#' @param sea_area_id
+#' Numeric sea area ID. The default is NULL
+#' For example, 138 corresponding to the coastal sea off southern Ibaraki, Japan.
+#' A list of sea area IDs and their corresponding regions is available at:
+#' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+sst_138_ts <- sst_jma2ts(sea_area_id = 138) # DL of SST off sourthern coastal waters of Ibaraki Prefecture, Japan
+head(sst_138_ts)
+
+```
+
