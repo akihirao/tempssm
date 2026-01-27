@@ -16,16 +16,22 @@ https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 - Represents temperature dynamics as a sum of latent state components:
   long-term trend, seasonal cycle, autoregressive structure,
   and optional exogenous effects
-
+- Implement of time series cross-validation (under development)
 
 # How to Install
-```
+```r
 if(!require("devtools"))
 	install.packages("devtools")
 devtools::install_github("akihirao/ThermoSSM")
+
+# install with vignettes
+devtools::install_github("akihirao/ThermoSSM", build_vignettes=TRUE)
 ```
 
 # Quick Tutorial
+```r
+browseVignettes("ThermoSSM")
+```
 https://github.com/akihirao/ThermoSSM/blob/main/vignettes/quick_tutorial.md
 
 
@@ -53,8 +59,4 @@ Baba, S. (2024).
 Supplementary code for estimating sea temperature trends using a linear Gaussian state-space model.
 GitHub repository:  
 https://github.com/logics-of-blue/sea-temperature-trend-jogashima
-
-
-# Future Development Considerations
-* Time Series Cross-Validation
 

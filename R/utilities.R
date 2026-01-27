@@ -187,7 +187,7 @@ monthly_anomaly <- function(temp_ts) {
 
 
 
-#' Retrieve daily mean sea-surface temperature as a zoo object
+#' Retrieve daily mean sea-surface temperature as a zoo object from JMA 
 #'
 #' This function downloads publicly available daily mean
 #' sea-surface temperature (SST) data for Japanese coastal waters
@@ -216,8 +216,8 @@ monthly_anomaly <- function(temp_ts) {
 #'
 #' @examples
 #' \dontrun{
-#' sst_138 <- sst_jma2zoo(sea_area_id = 138)
-#' head(sst_138)
+#' sst_138_zoo <- sst_jma2zoo(sea_area_id = 138)
+#' head(sst_138_zoo)
 #' }
 #'
 #' @export
@@ -246,3 +246,65 @@ sst_jma2zoo <- function(sea_area_id = NULL) {
   return(sst_zoo)
 }
 
+
+#' Retrieve daily mean sea-surface temperature as a monthly ts object from JMA 
+#'
+#' This function downloads publicly available daily mean
+#' sea-surface temperature (SST) data for Japanese coastal waters
+#' provided by the Japan Meteorological Agency (JMA),
+#' and returns the monthly average data as a \code{ts} object.
+#'
+#' @importFrom readr read_csv
+#' @importFrom ThermoSSM zoo_daily2ts_monthly
+#' @import dplyr
+#' @import zoo
+#'
+#' @param sea_area_id
+#' Numeric sea area ID. The default is NULL
+#' For example, 138 corresponding to the coastal sea off southern Ibaraki.
+#' A list of sea area IDs and their corresponding regions is available at:
+#' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
+#'
+#' @details
+#' The function retrieves a text-format dataset from the JMA website,
+#' parses daily observations, and constructs a \code{zoo} object
+#' with calendar dates as the index.
+#' Missing values in the original dataset are represented as \code{NA}.
+#'
+#' @return
+#' A \code{ts} object of monthly mean sea-surface temperature
+#' with a single column named \code{Temp}.
+#'
+#' @examples
+#' \dontrun{
+#' sst_138_ts <- sst_jma2zoo(sea_area_id = 138)
+#' head(sst_138_ts)
+#' }
+#'
+#' @export
+sst_jma2ts <- function(sea_area_id = NULL) {
+  
+  url_head <- "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area"
+  url <- paste0(url_head, sea_area_id, ".txt")
+  
+  sst_tidy <- readr::read_csv(url, show_col_types = FALSE) %>%
+    dplyr::slice(-n()) %>%
+    dplyr::rename(Temp = "Temp.") %>%
+    dplyr::mutate(
+      Temp = as.numeric(Temp),
+      date = as.Date(paste0(yyyy, "-", mm, "-", dd))
+    ) %>%
+    dplyr::select(date, Temp, flag) %>%
+    mutate(
+      Temp = if_else(Temp <= -999, NA_real_, Temp)
+    )
+  
+  sst_zoo <- zoo::zoo(
+    x = data.frame(Temp = sst_tidy$Temp),
+    order.by = sst_tidy$date
+  )
+  
+  monthly_sst_ts <- zoo_daily2ts_monthly(sst_zoo)
+  
+  return(monthly_sst_ts)
+}
