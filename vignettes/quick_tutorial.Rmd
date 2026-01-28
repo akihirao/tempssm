@@ -371,7 +371,8 @@ plot_MASE_snaive <- ggplot(data=cv_tidy,
 
 cowplot::plot_grid(plot_MAE,plot_MAPE,plot_MASE_naive,plot_MASE_snaive,nrow=1)
 ```
-## =============================================================================================
+
+## ==============================================
 
 # Appendix: Example Data and the `sst_jma2ts()` Function
 
