@@ -22,57 +22,42 @@ vignette: >
 library(ThermoSSM)
 library(forecast)
 
+library(purrr)   # list_rbind
+library(tibble)
 library(readr)
 library(dplyr)
 library(ggplot2)
-
 ```
 
 # Practice I: Analysis of Monthly Air Temperature
 
-## Data set
-## The ThermoSSM package provides an example dataset with csv format. It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan. The data originated from: https://www.biodic.go.jp/moni1000/findings/data/index.html. Contents of the csv file as follows:
-## Year, Month, Temp
-## 2010,8,13.6
-## 2010,9,6.8
-## 2010,10,0.2
-## ...
+## Example Data 1: Monthly air temperature at the summit of Mt. Fuji, Japan
+### Duration: July 1937 to December 2025
+### This dataset consists of publicly available monthly air temperature data released by the Japan 
+### Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
-example_temp <- readr::read_csv(example_csv_path)
-head(example_temp)
-
-
-# Converting tidy object to ts object
-MtAkadake_ts <- ts(matrix(example_temp$Temp),
-  start = c(example_temp$Year[1],example_temp$Month[1]),
-  frequency = 12
-)
-
-colnames(MtAkadake_ts) <- "Temp"
-head(MtAkadake_ts)
-
-frequency(MtAkadake_ts)
-start(MtAkadake_ts)
-end(MtAkadake_ts)
+data(fuji_temp) 
+# A ts object of monthly air temperature at the summit of Mt. Fuji, Japan
+head(fuji_temp)
 ```
+
 ## Plotting Monthly Time Series of Air Temperature
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plot_temp_MtAkadake <- forecast::autoplot(MtAkadake_ts) +
+plot_temp_fuji <- forecast::autoplot(fuji_temp) +
   labs(y = expression(Temperature~(degree*C)), 
        x = "Time") +
-  ggtitle("Monthly mean air temperature at Mt. Akadake, Hokkaido, Japan")
+  ggtitle("Monthly mean air temperature at the summit of Mt. Fuji, Japan")
 
-plot(plot_temp_MtAkadake)
+plot(plot_temp_fuji)
 # The example data includes missing observation values
 ```
 ## Plotting Time Series of Temperature Anomalies
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Generate temperature anomalies
-example_anomaly <- ThermoSSM::monthly_anomaly(MtAkadake_ts)
+example_anomaly <- ThermoSSM::monthly_anomaly(fuji_temp)
 
 monthly_example_anomaly_plot <- forecast::autoplot(example_anomaly) +
   labs(y = expression(Temperature~(degree*C)), 
@@ -85,11 +70,11 @@ plot(monthly_example_anomaly_plot)
 ## Plotting Monthly Seasonal Cycle
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-monthly_seasonal_cycle_MtAkadake <- ThermoSSM::mean_seasonal_cycle(MtAkadake_ts) 
-summary(monthly_seasonal_cycle_MtAkadake)
+monthly_seasonal_cycle_fuji <- ThermoSSM::mean_seasonal_cycle(fuji_temp) 
+summary(monthly_seasonal_cycle_fuji)
 
-plt_monthly_seasonal_cycle_MtAkadake <- ggplot(
-  data = monthly_seasonal_cycle_MtAkadake,
+plt_monthly_seasonal_cycle_fuji <- ggplot(
+  data = monthly_seasonal_cycle_fuji,
   aes(x = Month, y = Temperature)
 ) +
   geom_point(size = 2) +
@@ -105,28 +90,28 @@ plt_monthly_seasonal_cycle_MtAkadake <- ggplot(
   )
 
 
-plot(plt_monthly_seasonal_cycle_MtAkadake)
+plot(plt_monthly_seasonal_cycle_fuji)
 ```
 
 ## Applying a Linear Gaussian State-Space Model
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res_MtAkadake <- lgssm(MtAkadake_ts) 
-summary(res_MtAkadake)
+res <- lgssm(fuji_temp) 
+summary(res)
 ```
 
 ## Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # plot each of components at once
-plot(res_MtAkadake)
+plot(res)
 ```
 
 ## Simple Model Diagnostics
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Normality of standardized residuals
-std_obs_resid <- stats::rstandard(res_MtAkadake$kfs, type = "recursive")
+std_obs_resid <- stats::rstandard(res$kfs, type = "recursive")
 
 # Residual diagnostics
 forecast::checkresiduals(std_obs_resid)
@@ -141,44 +126,44 @@ forecast::checkresiduals(std_obs_resid)
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Parameters including process errors and observation error
-params <- ThermoSSM::extract_param(res_MtAkadake)
+params <- ThermoSSM::extract_param(res)
 params
 
 # Smoothing estimates
-alpha_hat <- res_MtAkadake$kfs$alphahat
+alpha_hat <- res$kfs$alphahat
 head(alpha_hat)
 
 
 #　Smoothing estimate of level component
-level_ts <- ThermoSSM::extract_level_ts(res_MtAkadake)
+level_ts <- ThermoSSM::extract_level_ts(res)
 
 #　Smoothing estimate of drift component
-drift_ts <- ThermoSSM::extract_drift_ts(res_MtAkadake)
+drift_ts <- ThermoSSM::extract_drift_ts(res)
 
 # Average drift rate per year
 mean_drift_year <- mean(drift_ts) * 12
 print(mean_drift_year)
 
-# Average drift rate per year from 2015 to 2018
-drift_per_year_2015_2017 <- window(drift_ts,
-                               start=c(2015,1),
-                               end=c(2017,12)
+# Average drift rate per year during 1950s
+drift_per_year_1950s <- window(drift_ts,
+                               start=c(1950,1),
+                               end=c(1959,12)
                                ) %>%  mean()*12
-print(drift_per_year_2015_2017)
+print(drift_per_year_1950s)
 
-# Average drift rate per year from 2015 to 2018
-drift_per_year_2020_2022 <- window(drift_ts,
-                               start=c(2020,1),
-                               end=c(2022,12)
+# Average drift rate per year during 2010s
+drift_per_year_2010s <- window(drift_ts,
+                               start=c(2010,1),
+                               end=c(2019,12)
                                ) %>%  mean()*12
-print(drift_per_year_2020_2022)
+print(drift_per_year_2010s)
 
 ```
 
 ## Plotting Level Component with 95% Confidence Interval
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_level_ci <- plot(res_MtAkadake,
+plt_level_ci <- plot(res,
                      components = "level",
                      ci = TRUE,
                      ci_level = 0.95
@@ -190,7 +175,7 @@ plot(plt_level_ci)
 ## Plotting Drift Component with 95% Confidence Interval
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_drift_ci <- plot(res_MtAkadake,
+plt_drift_ci <- plot(res,
                      components = "drift",
                      ci = TRUE,
                      ci_level = 0.95
@@ -308,6 +293,14 @@ plot(res_baba_with)
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # ts CV of the model without exogenous variables
+
+## Generate list of train/test data and their indexes
+# 年単位のtsCV用の訓練/テストデータの作成方法
+# 1) 1998年1月から2016年12月までを訓練データ、2017年１月からの1年分をテストデータ
+# 2) 1998年1月から2017年12月までを訓練データ、2018年１月からの1年分をテストデータ
+# ...
+# 6) 1998年1月から2017年12月までを訓練データ、2022年１月からの1年分をテストデータ
+# 以上の処理をts_cv_folds()関数で自動作成
 folds_6years_without <- ts_cv_folds(temp_data=baba_temp_ts,
                                  exo_data = NULL,
                                  initial = 228, # 228 monthly units from 1998-Jan to 2016-Dec 
@@ -316,11 +309,24 @@ folds_6years_without <- ts_cv_folds(temp_data=baba_temp_ts,
                                  fixed_window = FALSE,
                                  allow_partial = FALSE) 
 
-cv_out_without <- tsCV(folds_6years_without, fold_ids=seq(1:6))
-# Wait a few minits
+## Performe tsCV
+cv_meta_without <- rolling_origin_tsCV(folds_6years_without, fold_ids=seq(1:6)) # Hold on a few minutes
+#cv_meta_without <- rolling_origin_tsCV(folds_6years_without, fold_ids=1) # Hold on a few minutes
+
+cv_without <- map(cv_meta_without, pluck, "CV", .default = NULL)
+
+cv_without_tidy <- cv_without %>%
+  map(~ as.data.frame(.x) %>%tibble::rownames_to_column(var = "set")) %>%
+  purrr::list_rbind(names_to = "cv_id") %>%
+  mutate(Model="Without") %>%
+  dplyr::relocate(Model,cv_id, set)  # 識別列を先頭に
+
+print(cv_without_tidy)
 
 
-
+#----------------------------------------------------------
+# ts CV of the model with exogenous variables
+## Generate list of train/test data and their indexes
 folds_6years_with <- ts_cv_folds(temp_data=baba_temp_ts,
                      exo_data = baba_exo_ts,
                         initial = 228, # 228 monthly units from 1998-Jan to 2016-Dec 
@@ -329,27 +335,84 @@ folds_6years_with <- ts_cv_folds(temp_data=baba_temp_ts,
                         fixed_window = FALSE,
                         allow_partial = FALSE) 
 
-cv_out_with <- tsCV(folds_6years_with, fold_ids=seq(1:6))
-# Wait a few minits
+## Performe tsCV
+cv_meta_with <- rolling_origin_tsCV(folds_6years_with, fold_ids=seq(1:6)) # Hold on a few minutes
 
+cv_with <- map(cv_meta_with, pluck, "CV", .default = NULL)
+#cv_with <- base::lapply(cv_meta_with, `[[`, "CV")
 
+cv_with_tidy <- cv_with %>%
+  map(~ as.data.frame(.x) %>%tibble::rownames_to_column(var = "set")) %>%
+  purrr::list_rbind(names_to = "cv_id") %>%
+  mutate(Model="With") %>%
+  dplyr::relocate(Model,cv_id, set)  # 識別列を先頭に
+
+print(cv_with_tidy)
+
+cv_tidy <- bind_rows(cv_without_tidy,cv_with_tidy)
+cv_tidy$Model <- factor(cv_tidy$Model,
+                        levels=c("Without","With"))
+
+plot_MAE <- ggplot(data=cv_tidy,
+                   aes(x=Model,y=MAE)) +
+  geom_boxplot()
+
+plot_MAPE <- ggplot(data=cv_tidy,
+                   aes(x=Model,y=MAPE)) +
+  geom_boxplot()
+
+plot_MASE_naive <- ggplot(data=cv_tidy,
+                   aes(x=Model,y=MASE_naive)) +
+  geom_boxplot()
+
+plot_MASE_snaive <- ggplot(data=cv_tidy,
+                   aes(x=Model,y=MASE_snaive)) +
+  geom_boxplot()
+
+cowplot::plot_grid(plot_MAE,plot_MAPE,plot_MASE_naive,plot_MASE_snaive,nrow=1)
 ```
 ## =============================================================================================
 
 # Appendix: Example Data and the `sst_jma2ts()` Function
 
-## Example Data 1: Monthly air temperature at the summit of Mt. Fuji, Japan
-### Duration: July 1937 to December 2025
-### This dataset consists of publicly available monthly air temperature data released by the Japan 
-### Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-data(fuji_temp) 
-# A ts object of monthly air temperature at the summit of Mt. Fuji, Japan
-head(fuji_temp)
+## Example Data 2: Monthly air temperature at Mt. Akadake, Hokkaido, Japant
+## Duration: August 2010 to August 2023
+## The data originated from: https://www.biodic.go.jp/moni1000/findings/data/index.html. 
+## The ThermoSSM package provides the file "example_monthly_temp.csv", containging example data.
+## Format of the csv file is as follows: 
+## 
+## Year, Month, Temp
+## 2010,8,13.6
+## 2010,9,6.8
+## 2010,10,0.2
+## ...
 
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
+example_temp <- readr::read_csv(example_csv_path)
+head(example_temp)
+
+
+# Converting tidy object to ts object
+MtAkadake_ts <- ts(matrix(example_temp$Temp),
+  start = c(example_temp$Year[1],example_temp$Month[1]),
+  frequency = 12
+)
+
+colnames(MtAkadake_ts) <- "Temp"
+head(MtAkadake_ts)
+
+frequency(MtAkadake_ts)
+start(MtAkadake_ts)
+end(MtAkadake_ts)
+
+# Perform linear Gaussian state-space modelling
+res_MtAkadake <- lgssm(MtAkadake_ts)
+summary(res_MtAkadake)
+plot(res_MtAkadake)
 ```
 
-## Example Data 2: Daily sea-surface temperature off the southern coast of Ibaraki Prefecture, Japan
+## Example Data 3: Daily sea-surface temperature off the southern coast of Ibaraki Prefecture, Japan
 ### Duration: January 1982 to December 2025
 ### This dataset consists of publicly available daily sea-surface temperature data released by the Japan
 ### Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
@@ -367,9 +430,15 @@ head(monthly_ibaraki_sst_ts)
 # Converting from daily zoo object to monthly ts object
 monthly_ibaraki_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(ibaraki_sst)
 head(monthly_ibaraki_sst_ts)
+
+# Perform linear Gaussian state-space modelling
+res_ibaraki_sst <- lgssm(monthly_ibaraki_sst_ts)
+summary(res_ibaraki_sst)
+plot(res_ibaraki_sst)
 ```
 
 ## Utility Function: sst_jma2ts()
+
 ### This function downloads publicly available daily mean sea-surface temperature (SST) data
 ### for Japanese coastal waters provided by the Japan Meteorological Agency (JMA),
 ### and returns the corresponding monthly mean time series as an object of class ts.

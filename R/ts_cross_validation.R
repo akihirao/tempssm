@@ -146,6 +146,81 @@ ts_cv_folds <- function(temp_data,
 
 
 
+
+#' Calculate scale coefficient Q for MASE
+#'
+#' This function computes the scale coefficient \eqn{Q} used in the
+#' Mean Absolute Scaled Error (MASE). The scale is based on in-sample
+#' naive or seasonal naive forecasts.
+#'
+#' For the naive method, \eqn{Q} is defined as the mean absolute
+#' first difference:
+#' \deqn{Q = \frac{1}{n-1} \sum_{t=2}^{n} |y_t - y_{t-1}|}
+#'
+#' For the seasonal method, \eqn{Q} is defined as the mean absolute
+#' seasonal difference with period \eqn{m = frequency(train_ts)}:
+#' \deqn{Q = \frac{1}{n-m} \sum_{t=m+1}^{n} |y_t - y_{t-m}|}
+#'
+#' @param train_ts A \code{ts} object containing the training time series.
+#' @param method Character string specifying the scaling method.
+#'   Either \code{"naive"} or \code{"seasonal"}.
+#'
+#' @return A numeric scalar representing the scale coefficient \eqn{Q}.
+#'
+#' @references
+#' Hyndman, R. J., & Koehler, A. B. (2006).
+#' Another look at measures of forecast accuracy.
+#' \emph{International Journal of Forecasting}, 22(4), 679–688.
+#'
+#' @examples
+#' ts_data <- ts(rnorm(120), frequency = 12)
+#' scale_Q(ts_data, method = "naive")
+#' scale_Q(ts_data, method = "seasonal")
+#'
+#' @export
+scale_Q <- function(train_ts, method = c("naive", "seasonal")) {
+
+  method <- match.arg(method)
+
+  if (!inherits(train_ts, "ts")) {
+    stop("train_ts must be a 'ts' object.", call. = FALSE)
+  }
+
+  y <- as.numeric(train_ts)
+  n <- length(y)
+
+  if (method == "naive") {
+
+    if (n < 2) {
+      stop("At least two observations are required for naive scaling.",
+           call. = FALSE)
+    }
+
+    Q <- mean(abs(diff(y)), na.rm = TRUE)
+
+  } else {  # seasonal
+
+    m <- frequency(train_ts)
+
+    if (m <= 1) {
+      stop("Seasonal scaling requires a ts object with frequency > 1.",
+           call. = FALSE)
+    }
+
+    if (n <= m) {
+      stop("Time series is too short for seasonal scaling.",
+           call. = FALSE)
+    }
+
+    Q <- mean(abs(y[(m + 1):n] - y[1:(n - m)]), na.rm = TRUE)
+  }
+
+  return(Q)
+}
+
+
+
+
 #' Prediction based on fitted model for time series cross-validation
 #'
 #' This function predict with using test data for in ts cross-validation.
@@ -156,7 +231,7 @@ ts_cv_folds <- function(temp_data,
 #' @return A \code{list} object of ts cross-validation output
 #' 
 #' @export
-tsCV <- function(folds,fold_ids = 1){
+rolling_origin_tsCV <- function(folds,fold_ids = 1){
   
   exo_judge <- unlist(lapply(folds, `[[`, "exo_train_ts"))
   ts_CV_list <- list()
@@ -250,7 +325,19 @@ tsCV <- function(folds,fold_ids = 1){
     }
     
     CV_output <- forecast::accuracy(predict_temp_ts, temp_test_ts) 
-  
+    
+    Q_naive <- scale_Q(temp_train_ts, method="naive")
+    Q_seasonal <- scale_Q(temp_train_ts, method="seasonal")
+    
+    MASE_naive <- CV_output[,"MAE"]/Q_naive
+    
+    MASE_snaive <- CV_output[,"MAE"]/Q_seasonal
+    
+    MASE_matrix <- matrix(c(MASE_naive,MASE_snaive), nrow=1)
+    colnames(MASE_matrix) <- c("MASE_naive","MASE_snaive")
+    
+    CV_output <- cbind(CV_output,MASE_matrix)
+
     ts_CV_list[[i]] <- list(folds[[i]],
                             convergence=convergence,
                             CV = CV_output)
@@ -259,3 +346,7 @@ tsCV <- function(folds,fold_ids = 1){
   
   return(ts_CV_list)
 }
+
+
+
+
