@@ -8,11 +8,11 @@ test_that("ThermoSSM object structure is consistent", {
 
   expect_s3_class(res$model, "SSModel")
   expect_s3_class(res$kfs, "KFS")
-  expect_s3_class(res$data, "ts")
+  expect_s3_class(res$data_temp, "ts")
 
   alpha <- res$kfs$alphahat
   expect_true(is.matrix(alpha))
-  expect_equal(nrow(alpha), length(res$data))
+  expect_equal(nrow(alpha), length(res$data_temp))
 
   state_names <- colnames(alpha)
   expect_true("level" %in% state_names)
