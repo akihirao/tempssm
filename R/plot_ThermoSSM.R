@@ -42,6 +42,13 @@ plot.ThermoSSM <- function(
     stop("Object must be of class 'ThermoSSM'.", call. = FALSE)
   }
 
+  freq <- frequency(x$data_temp)
+  if(freq==12){
+    drift_plot_y_lab <- "Temperature (\u00B0C/month)"
+  }else{
+    drift_plot_y_lab <- "Temperature (\u00B0C/unit)"
+  }
+
   alpha_hat <- x$kfs$alphahat
   time_index <- time(alpha_hat)
 
@@ -66,7 +73,7 @@ plot.ThermoSSM <- function(
 
     p <- ggplot2::ggplot(df, ggplot2::aes(x = time, y = value)) +
       ggplot2::geom_line(linewidth = 1.1) +
-      ggplot2::labs(title = "Level component", x = "Time", y = "")
+      ggplot2::labs(title = "Level component", x = "Time", y = "Temperature (\u00B0C)")
 
     if (ci) {
       p <- p +
@@ -94,7 +101,7 @@ plot.ThermoSSM <- function(
 
     p <- ggplot2::ggplot(df, ggplot2::aes(x = time, y = value)) +
       ggplot2::geom_line(linewidth = 1.1) +
-      ggplot2::labs(title = "Drift (slope) component", x = "Time", y = "")
+      ggplot2::labs(title = "Drift (slope) component", x = "Time", y = drift_plot_y_lab)
 
     if (ci) {
       p <- p +
@@ -111,14 +118,14 @@ plot.ThermoSSM <- function(
   if ("seasonal" %in% components) {
     plots$seasonal <-
       forecast::autoplot(alpha_hat[, "sea_dummy1"]) +
-      ggplot2::labs(title = "Seasonal component", x = "Time", y = "")
+      ggplot2::labs(title = "Seasonal component", x = "Time", y = "Temperature (\u00B0C)")
   }
 
   ## ---- AR ----
   if ("ar" %in% components) {
     plots$ar <-
       forecast::autoplot(alpha_hat[, "arima1"]) +
-      ggplot2::labs(title = "Autoregressive component", x = "Time", y = "")
+      ggplot2::labs(title = "Autoregressive component", x = "Time", y = "Temperature (\u00B0C)")
   }
 
   if (layout == "list") {

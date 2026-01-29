@@ -17,7 +17,14 @@ summary.ThermoSSM <- function(object, ...) {
   kfs   <- object$kfs
   opt   <- object$fit$optim.out
   pars <- object$fit$optim.out$par
-  exogenous_variable <- object$exogenous
+
+  exo_data <- object$data_exogenous
+
+  if(is.null(exo_data)){
+    exogenous_variable <- NULL
+  }else{
+    exogenous_variable <- colnames(exo_data)
+  }
 
   exogenous_coef_ci <- extract_exo_coef_ci(object)
   k = length(opt$par) + length(exogenous_variable)

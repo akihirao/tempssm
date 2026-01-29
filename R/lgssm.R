@@ -48,7 +48,8 @@ lgssm <- function(temp_data,
     stop("The object of temp_data must be a 'ts' object.")
   }
 
-  if (frequency(temp_data) != 12) {
+  freq = frequency(temp_data)
+  if (freq != 12) {
     stop("The object of temp_data must be a monthly time series (frequency = 12).")
   }
 
@@ -99,7 +100,7 @@ lgssm <- function(temp_data,
   if(is.null(exo_data)){ 
     
     exogenous_lab <- NULL
-    
+
     ## ---- Model definition -----------------------------------------------
     build_ssm <- SSModel(
       y ~
@@ -165,7 +166,7 @@ lgssm <- function(temp_data,
       smoothing = c("state", "mean", "disturbance")
     )
     
-   
+
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
   # model with an exogenous variable
@@ -182,6 +183,7 @@ lgssm <- function(temp_data,
     if (is.null(colnames(exo_data))) {
       stop("exo_data must have column name(s).")
     }
+    
     exogenous_lab <- colnames(exo_data)
         
     start_temp <- start(temp_data)
@@ -262,16 +264,16 @@ lgssm <- function(temp_data,
       smoothing = c("state", "mean", "disturbance")
     )
 
-  } # close of model with exogenous variable(s)  
+  } # close of model with exogenous variable(s)
 
-
+  #browser()
   ## ---- Output ---------------------------------------------------------
   out <- list(
     model = fit2$model,
     fit   = fit2,
     kfs   = kfs,
-    data  = temp_data,
-    exogenous = exogenous_lab,
+    data_temp  = temp_data,
+    data_exogenous = exo_data,
     call  = match.call()
   )
 
@@ -394,7 +396,7 @@ extract_exo_coef_ci <- function(res, level = 0.95) {
     stop("'level' must be a numeric value between 0 and 1.", call. = FALSE)
   }
   
-  exo_vars <- res$exogenous
+  exo_vars <- colnames(res$data_exogenous)
   kfs      <- res$kfs
   
   # No exogenous variables
