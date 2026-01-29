@@ -4,10 +4,12 @@
 #' into training and test sets using a rolling-origin (also known as
 #' walk-forward) cross-validation scheme.
 #'
-#' @param temp_data Monthly temperature time series of class \code{ts}.
-#'   The time series must have a frequency of 12.
-#' @param exo_data Monthly temperature time series of class \code{ts}.
-#'   The time series must have a frequency of 12.
+#' @param temp_data A temperature time series of class \code{ts}.
+#'   The series can have any arbitrary frequency of 2 or higher.
+#'   For example, a frequency of 12 represents a monthly \code{ts} object.
+#' @param exo_data Exogenous time series variable(s) of class \code{ts}.
+#'   The series may have any arbitrary frequency of 2 or higher.. 
+#'   But it must be the same as that of \code{temp_data}.
 #' @param initial Initial length of the training set (number of observations;
 #'   e.g., 60). Default is 60.
 #' @param horizon Forecast horizon for the test set (number of observations;
@@ -38,6 +40,7 @@
 #' @examples
 #' # Example: Air temperature (monthly data, 1932Jul-2025Dec)
 #' data(fuji_temp)
+#' frequency(fuji_temp) # 12: monthly ts object
 #' folds <- ts_cv_folds(
 #'   fuji_temp,
 #'   initial = 60,
@@ -63,8 +66,10 @@ ts_cv_folds <- function(temp_data,
     stop("The object of temp_data must be a 'ts' object.", call. = FALSE)
   }
   
-  if (frequency(temp_data) != 12) {
-    stop("The object of temp_data must be a monthly time series (frequency = 12).", call. = FALSE)
+  freq = frequency(temp_data)
+  if (freq == 1) {
+    stop("The procedure requires a ts object with frequency > 1.",
+         call. = FALSE)
   }
   
   if (initial < 1 || horizon < 1 || step < 1) {
@@ -242,10 +247,12 @@ rolling_origin_tsCV <- function(folds,fold_ids = 1){
       
     target_fold <- folds[[i]]
     temp_train_ts <- target_fold$train_ts
+    freq = frequency(temp_train_ts)
+    
     temp_train_mts <- ts(
       as.matrix(temp_train_ts),
       start = start(temp_train_ts),
-      frequency = 12
+      frequency = freq
     )
     colnames(temp_train_mts) <- "Temp" 
     
@@ -253,7 +260,7 @@ rolling_origin_tsCV <- function(folds,fold_ids = 1){
     temp_test_mts <- ts(
       as.matrix(temp_test_ts),
       start = start(temp_test_ts),
-      frequency = 12
+      frequency = freq
     )
     colnames(temp_train_mts) <- "Temp" 
 
@@ -276,7 +283,7 @@ rolling_origin_tsCV <- function(folds,fold_ids = 1){
             SSMtrend(degree = 2,
                      Q = c(list(0), list(exp(train_pars[1])))) + 
             SSMseasonal(sea.type = "dummy",
-                        period = 12,
+                        period = freq,
                         Q = exp(train_pars[2])) +
             SSMarima(ar = artransform(train_pars[3:4]),
                      d = 0,
@@ -314,7 +321,7 @@ rolling_origin_tsCV <- function(folds,fold_ids = 1){
             SSMtrend(degree = 2,
                      Q = c(list(0), list(exp(train_pars[1])))) + 
             SSMseasonal(sea.type = "dummy",
-                        period = 12,
+                        period = freq,
                         Q = exp(train_pars[2])) +
             SSMarima(ar = artransform(train_pars[3:4]),
                      d = 0,

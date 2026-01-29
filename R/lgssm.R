@@ -5,11 +5,14 @@
 #' Both univariate and multivariate \code{ts} objects are supported.
 #' If multivariate, a column named \code{"Temp"} is used.
 #'
-#' @param temp_data Monthly temperature time series of class \code{ts}.
-#'   The time series must have a frequency of 12 (monthly data).
+#' @param temp_data A temperature time series of class \code{ts}.
+#'   The series can have any arbitrary frequency of 2 or higher.
+#'   For example, a frequency of 12 represents a monthly \code{ts} object.
 #'
-#' @param exo_data Data-set of exogenous variables of class \code{ts}.
-#'  The default is NULL when model without exogenous variables.
+#' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
+#'   The series may have any arbitrary frequency of 2 or higher,
+#'   but it must be the same as that of \code{temp_data}.
+#'   The default is \code{NULL} when fitting a model without exogenous variables.
 #'
 #' @param inits Optional numeric vector of initial parameter values.
 #'  If \code{NULL}, default values are used.
@@ -49,10 +52,12 @@ lgssm <- function(temp_data,
   }
 
   freq = frequency(temp_data)
-  if (freq != 12) {
-    stop("The object of temp_data must be a monthly time series (frequency = 12).")
+  if (freq == 1) {
+    stop("The procedure requires a ts object with frequency > 1.",
+         call. = FALSE)
   }
-
+  
+  
   if(is.null(dim(temp_data))) {
     y <- temp_data
   }else if(dim(temp_data)[2]!=1){ # if 'temp_data' has more than two variables
@@ -110,7 +115,7 @@ lgssm <- function(temp_data,
         ) +
         SSMseasonal(
           sea.type = "dummy",
-          period = 12,
+          period = freq,
           Q = NA
         ) +
         SSMarima(
@@ -129,7 +134,7 @@ lgssm <- function(temp_data,
                    Q = c(list(0), list(exp(pars[1])))) +
           SSMseasonal(
             sea.type = "dummy",
-            period = 12,
+            period = freq,
             Q = exp(pars[2])
           ) +
           SSMarima(
@@ -176,8 +181,8 @@ lgssm <- function(temp_data,
       stop("temp_data must be a 'ts' object.")
     }
     
-    if (frequency(exo_data) != 12) {
-      stop("temp_data must be a monthly time series (frequency = 12).")
+    if (frequency(exo_data) != freq) {
+      stop("frequency of exo_data must be same that of temp_data.")
     }
     
     if (is.null(colnames(exo_data))) {
@@ -209,7 +214,7 @@ lgssm <- function(temp_data,
         ) +
         SSMseasonal(
           sea.type = "dummy",
-          period = 12,
+          period = freq,
           Q = NA
         ) +
         SSMarima(
@@ -229,7 +234,7 @@ lgssm <- function(temp_data,
                      Q = c(list(0), list(exp(pars[1])))) +
             SSMseasonal(
               sea.type = "dummy",
-              period = 12,
+              period = freq,
               Q = exp(pars[2])) +
             SSMarima(
               ar = artransform(pars[3:4]),

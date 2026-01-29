@@ -7,11 +7,14 @@
 lgssm(temp_data, exo_data = NULL, inits = NULL, maxit = NULL, reltol = NULL)
 }
 \arguments{
-\item{temp_data}{Monthly temperature time series of class \code{ts}.
-The time series must have a frequency of 12 (monthly data).}
+\item{temp_data}{A temperature time series of class \code{ts}.
+The series can have any arbitrary frequency of 2 or higher.
+For example, a frequency of 12 represents a monthly \code{ts} object.}
 
-\item{exo_data}{Data-set of exogenous variables of class \code{ts}.
-The default is NULL when model without exogenous variables.}
+\item{exo_data}{A data set of exogenous variable(s) of class \code{ts}.
+The series may have any arbitrary frequency of 2 or higher,
+but it must be the same as that of \code{temp_data}.
+The default is \code{NULL} when fitting a model without exogenous variables.}
 
 \item{inits}{Optional numeric vector of initial parameter values.
 If \code{NULL}, default values are used.}

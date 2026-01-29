@@ -15,11 +15,13 @@ ts_cv_folds(
 )
 }
 \arguments{
-\item{temp_data}{Monthly temperature time series of class \code{ts}.
-The time series must have a frequency of 12.}
+\item{temp_data}{A temperature time series of class \code{ts}.
+The series can have any arbitrary frequency of 2 or higher.
+For example, a frequency of 12 represents a monthly \code{ts} object.}
 
-\item{exo_data}{Monthly temperature time series of class \code{ts}.
-The time series must have a frequency of 12.}
+\item{exo_data}{Exogenous time series variable(s) of class \code{ts}.
+The series may have any arbitrary frequency of 2 or higher.. 
+But it must be the same as that of \code{temp_data}.}
 
 \item{initial}{Initial length of the training set (number of observations;
 e.g., 60). Default is 60.}
@@ -60,6 +62,7 @@ walk-forward) cross-validation scheme.
 \examples{
 # Example: Air temperature (monthly data, 1932Jul-2025Dec)
 data(fuji_temp)
+frequency(fuji_temp) # 12: monthly ts object
 folds <- ts_cv_folds(
   fuji_temp,
   initial = 60,
