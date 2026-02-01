@@ -121,7 +121,7 @@ lgssm <- function(temp_data,
         SSMarima(
           ar = c(0, 0),
           d = 0,
-          Q = 0
+          Q = NA
         ),
       H = NA
     )
@@ -220,7 +220,7 @@ lgssm <- function(temp_data,
         SSMarima(
           ar = c(0, 0),
           d = 0,
-          Q = 0
+          Q = NA
         )
     )
     
