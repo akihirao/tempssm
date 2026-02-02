@@ -134,34 +134,46 @@ mean_seasonal_cycle <- function(temp_ts){
 
 #' Calculate monthly temperature anomalies
 #'
-#' Monthly temperature anomalies are calculated by subtracting the
-#' long-term monthly climatology from each observation.
+#' Monthly temperature anomalies are calculated by subtracting a
+#' monthly climatology from each observation. The climatology can be
+#' computed either from the full time series or from a user-defined
+#' baseline period.
 #'
-#' @importFrom stats cycle
+#' @importFrom stats cycle window frequency start
 #' @importFrom ThermoSSM mean_seasonal_cycle
 #'
 #' @param temp_ts Monthly temperature time series of class \code{ts}.
 #'   The time series must have a frequency of 12 (monthly data).
 #'
+#' @param baseline Optional numeric vector of length 2 specifying
+#'   the reference period for climatology in years
+#'   (e.g., \code{c(1981, 2010)}). If \code{NULL}, the full period
+#'   is used.
+#'
 #' @details
-#' Monthly climatology is computed using \code{mean_seasonal_cycle()}.
+#' Monthly climatology is computed using
+#' \code{mean_seasonal_cycle()}.
+#' If \code{baseline} is provided, climatology is estimated using
+#' only data within the specified reference period.
 #' Missing values are ignored when calculating climatological means.
 #'
 #' @return A \code{ts} object of monthly temperature anomalies.
 #'
 #' @examples
 #' temp_ts <- ts(
-#'   c(5.2, 6.1, 9.3, 13.5, 17.8, 21.0,
-#'     24.3, 25.1, 22.0, 17.1, 11.2, 7.0),
-#'   start = c(2000, 1),
+#'   rnorm(12 * 30, mean = 10),
+#'   start = c(1981, 1),
 #'   frequency = 12
 #' )
 #'
-#' temp_anom <- monthly_anomaly(temp_ts)
-#' tapply(as.numeric(temp_anom), cycle(temp_anom), mean)
+#' # Full-period climatology
+#' anom_all <- monthly_anomaly(temp_ts)
+#'
+#' # Baseline climatology (1981–2010)
+#' anom_base <- monthly_anomaly(temp_ts, baseline = c(1981, 2010))
 #'
 #' @export
-monthly_anomaly <- function(temp_ts) {
+monthly_anomaly <- function(temp_ts, baseline = NULL) {
 
   if (!inherits(temp_ts, "ts")) {
     stop("Input must be a 'ts' object.", call. = FALSE)
@@ -171,11 +183,37 @@ monthly_anomaly <- function(temp_ts) {
     stop("Time series must be monthly (frequency = 12).", call. = FALSE)
   }
 
-  clim_tbl <- ThermoSSM::mean_seasonal_cycle(temp_ts)
+  ## ---- Select baseline period --------------------------------------------
+  if (is.null(baseline)) {
+
+    ts_base <- temp_ts
+
+  } else {
+
+    if (!is.numeric(baseline) || length(baseline) != 2) {
+      stop("baseline must be a numeric vector of length 2 (start_year, end_year).",
+           call. = FALSE)
+    }
+
+    ts_base <- window(
+      temp_ts,
+      start = c(baseline[1], 1),
+      end   = c(baseline[2], 12)
+    )
+
+    if (length(ts_base) == 0) {
+      stop("No data available in the specified baseline period.",
+           call. = FALSE)
+    }
+  }
+
+  ## ---- Monthly climatology -----------------------------------------------
+  clim_tbl <- ThermoSSM::mean_seasonal_cycle(ts_base)
   clim_vec <- clim_tbl$Temperature
 
   clim <- clim_vec[cycle(temp_ts)]
 
+  ## ---- Anomaly -----------------------------------------------------------
   ts(
     as.numeric(temp_ts) - clim,
     start = start(temp_ts),

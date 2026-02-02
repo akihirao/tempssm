@@ -4,32 +4,44 @@
 \alias{monthly_anomaly}
 \title{Calculate monthly temperature anomalies}
 \usage{
-monthly_anomaly(temp_ts)
+monthly_anomaly(temp_ts, baseline = NULL)
 }
 \arguments{
 \item{temp_ts}{Monthly temperature time series of class \code{ts}.
 The time series must have a frequency of 12 (monthly data).}
+
+\item{baseline}{Optional numeric vector of length 2 specifying
+the reference period for climatology in years
+(e.g., \code{c(1981, 2010)}). If \code{NULL}, the full period
+is used.}
 }
 \value{
 A \code{ts} object of monthly temperature anomalies.
 }
 \description{
-Monthly temperature anomalies are calculated by subtracting the
-long-term monthly climatology from each observation.
+Monthly temperature anomalies are calculated by subtracting a
+monthly climatology from each observation. The climatology can be
+computed either from the full time series or from a user-defined
+baseline period.
 }
 \details{
-Monthly climatology is computed using \code{mean_seasonal_cycle()}.
+Monthly climatology is computed using
+\code{mean_seasonal_cycle()}.
+If \code{baseline} is provided, climatology is estimated using
+only data within the specified reference period.
 Missing values are ignored when calculating climatological means.
 }
 \examples{
 temp_ts <- ts(
-  c(5.2, 6.1, 9.3, 13.5, 17.8, 21.0,
-    24.3, 25.1, 22.0, 17.1, 11.2, 7.0),
-  start = c(2000, 1),
+  rnorm(12 * 30, mean = 10),
+  start = c(1981, 1),
   frequency = 12
 )
 
-temp_anom <- monthly_anomaly(temp_ts)
-tapply(as.numeric(temp_anom), cycle(temp_anom), mean)
+# Full-period climatology
+anom_all <- monthly_anomaly(temp_ts)
+
+# Baseline climatology (1981–2010)
+anom_base <- monthly_anomaly(temp_ts, baseline = c(1981, 2010))
 
 }
