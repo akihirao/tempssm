@@ -8,8 +8,9 @@ lgssm(temp_data, exo_data = NULL, inits = NULL, maxit = NULL, reltol = NULL)
 }
 \arguments{
 \item{temp_data}{A temperature time series of class \code{ts}.
-The series can have any arbitrary frequency of 2 or higher.
-For example, a frequency of 12 represents a monthly \code{ts} object.}
+　　The \code{ts} object must be univariant.
+  The series can have any arbitrary frequency of 2 or higher.
+  For example, a frequency of 12 represents a monthly \code{ts} object.}
 
 \item{exo_data}{A data set of exogenous variable(s) of class \code{ts}.
 The series may have any arbitrary frequency of 2 or higher,

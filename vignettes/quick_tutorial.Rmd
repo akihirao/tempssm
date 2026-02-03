@@ -379,14 +379,14 @@ cowplot::plot_grid(plot_MAE,plot_MAPE,plot_MASE_naive,plot_MASE_snaive,nrow=1)
 ## Example Data 2: Monthly air temperature at Mt. Akadake, Hokkaido, Japant
 ## Duration: August 2010 to August 2023
 ## The data originated from: https://www.biodic.go.jp/moni1000/findings/data/index.html. 
-## The ThermoSSM package provides the file "example_monthly_temp.csv", containging example data.
-## Format of the csv file is as follows: 
-## 
-## Year, Month, Temp
-## 2010,8,13.6
-## 2010,9,6.8
-## 2010,10,0.2
-## ...
+## The ThermoSSM package provides the file "example_monthly_temp.csv", containging example data. Format of the csv file is as follows: 
+
+```text
+2010,8,13.6
+2010,9,6.8
+2010,10,0.2
+...
+```
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")

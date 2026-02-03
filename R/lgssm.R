@@ -6,6 +6,7 @@
 #' If multivariate, a column named \code{"Temp"} is used.
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
+#'　　The \code{ts} object must be univariant.
 #'   The series can have any arbitrary frequency of 2 or higher.
 #'   For example, a frequency of 12 represents a monthly \code{ts} object.
 #'
@@ -47,27 +48,9 @@ lgssm <- function(temp_data,
                   reltol = NULL) {
 
   ## ---- Input checks ---------------------------------------------------
-  if (!inherits(temp_data, "ts")) {
-    stop("The object of temp_data must be a 'ts' object.")
-  }
+  y <- ThermoSSM::check_ts_lgssm(temp_data)
+  freq <- frequency(y)
 
-  freq = frequency(temp_data)
-  if (freq == 1) {
-    stop("The procedure requires a ts object with frequency > 1.",
-         call. = FALSE)
-  }
-  
-  
-  if(is.null(dim(temp_data))) {
-    y <- temp_data
-  }else if(dim(temp_data)[2]!=1){ # if 'temp_data' has more than two variables
-    stop("The object of temp_data must be univariant.")
-  }else{
-    y <- temp_data
-  }
-  
-  
-  
   ## ---- Default initial values -----------------------------------------
   if (is.null(inits)) {
     # log-variances and AR parameters (on unconstrained scale)
@@ -289,6 +272,42 @@ lgssm <- function(temp_data,
 
 
 
+#' Check ts object for applying \code{lgssm()}
+#'
+#' @param temp_data A temperature time series of class \code{ts}.
+#'   The series can have any arbitrary frequency of 2 or higher.
+#'   For example, a frequency of 12 represents a monthly \code{ts} object.
+#'
+#' @return A univariate \code{ts} object.
+#'
+#' @export
+check_ts_lgssm <- function(temp_data) {
+
+  if (!inherits(temp_data, "ts")) {
+    stop("The object 'temp_data' must be a 'ts' object.",
+         call. = FALSE)
+  }
+
+  freq <- frequency(temp_data)
+  if (freq <= 1) {
+    stop("The procedure requires a ts object with frequency > 1.",
+         call. = FALSE)
+  }
+
+  if (!is.null(dim(temp_data)) && NCOL(temp_data) != 1) {
+    stop("The object 'temp_data' must be univariate.",
+         call. = FALSE)
+  }
+
+  message("The ts object is univariate with frequency ", freq, ".")
+
+  temp_data
+}
+
+
+
+
+
 #' Extract smoothed level component as a time series
 #'
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
@@ -308,6 +327,7 @@ extract_level_ts <- function(res) {
 
   res$kfs$alphahat[, "level"]
 }
+
 
 
 
