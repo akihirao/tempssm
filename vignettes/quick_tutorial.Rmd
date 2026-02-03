@@ -6,9 +6,9 @@ output:
 #  pdf_document:
 #    latex_engine: lualatex
 #    toc: true
-  rmarkdown::html_vignette: default
-#  md_document:
-#    variant: gfm
+#  rmarkdown::html_vignette: default
+  md_document:
+    variant: gfm
 vignette: >
   %\VignetteIndexEntry{"Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"}
   %\VignetteEngine{knitr::rmarkdown}
@@ -394,18 +394,18 @@ example_temp <- readr::read_csv(example_csv_path)
 head(example_temp)
 
 
-# Converting tidy object to ts object
-MtAkadake_ts <- ts(matrix(example_temp$Temp),
-  start = c(example_temp$Year[1],example_temp$Month[1]),
-  frequency = 12
-)
-
-colnames(MtAkadake_ts) <- "Temp"
+# Read and convert a monthly temperature CSV file to a ts object
+MtAkadake_ts <- monthly_temp_csv2ts(example_csv_path)
 head(MtAkadake_ts)
 
 frequency(MtAkadake_ts)
 start(MtAkadake_ts)
 end(MtAkadake_ts)
+
+# Months at the beginning and end of the observation period with insufficient observation days are filtered out.”
+MtAkadake_ts　<- window(MtAkadake_ts,
+                       start=c(2010,9),
+                       end=c(2023,7))
 
 # Perform linear Gaussian state-space modelling
 res_MtAkadake <- lgssm(MtAkadake_ts)

@@ -600,21 +600,14 @@ cowplot::plot_grid(plot_MAE,plot_MAPE,plot_MASE_naive,plot_MASE_snaive,nrow=1)
 
 ## The data originated from: <https://www.biodic.go.jp/moni1000/findings/data/index.html>.
 
-## The ThermoSSM package provides the file “example_monthly_temp.csv”, containging example data.
+## The ThermoSSM package provides the file “example_monthly_temp.csv”, containging example data. Format of the csv file is as follows:
 
-## Format of the csv file is as follows:
-
-## 
-
-## Year, Month, Temp
-
-## 2010,8,13.6
-
-## 2010,9,6.8
-
-## 2010,10,0.2
-
-## …
+``` text
+2010,8,13.6
+2010,9,6.8
+2010,10,0.2
+...
+```
 
 ``` r
 example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
@@ -633,13 +626,8 @@ head(example_temp)
     ## 6  2011     1 -18.8
 
 ``` r
-# Converting tidy object to ts object
-MtAkadake_ts <- ts(matrix(example_temp$Temp),
-  start = c(example_temp$Year[1],example_temp$Month[1]),
-  frequency = 12
-)
-
-colnames(MtAkadake_ts) <- "Temp"
+# Read and convert a monthly temperature CSV file to a ts object
+MtAkadake_ts <- monthly_temp_csv2ts(example_csv_path)
 head(MtAkadake_ts)
 ```
 
@@ -666,6 +654,11 @@ end(MtAkadake_ts)
     ## [1] 2023    8
 
 ``` r
+# Months at the beginning and end of the observation period with insufficient observation days are filtered out.”
+MtAkadake_ts　<- window(MtAkadake_ts,
+                       start=c(2010,9),
+                       end=c(2023,7))
+
 # Perform linear Gaussian state-space modelling
 res_MtAkadake <- lgssm(MtAkadake_ts)
 summary(res_MtAkadake)
@@ -677,20 +670,20 @@ summary(res_MtAkadake)
     ## lgssm(temp_data = MtAkadake_ts)
     ## 
     ## Model fit:
-    ##   Log-likelihood : -275.2 
+    ##   Log-likelihood : -268.11 
     ##   k              : 6 
-    ##   AIC            : 562.39 
+    ##   AIC            : 548.23 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
-    ##   Observation (H): 1.178218 
-    ##   State (Q trend): 1.49781e-06 
-    ##   State (Q season): 0.03304002 
-    ##   State (Q ar): 0.6614562 
+    ##   Observation (H): 0.9907183 
+    ##   State (Q trend): 1.559585e-13 
+    ##   State (Q season): 0.04127714 
+    ##   State (Q ar): 0.7376096 
     ## 
     ## Coefficient of auto-regression parameters:
-    ##   AR1: 0.4869715 
-    ##   AR2: -0.2836264
+    ##   AR1: 0.4673504 
+    ##   AR2: -0.2598106
 
 ``` r
 plot(res_MtAkadake)
