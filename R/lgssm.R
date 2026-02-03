@@ -48,7 +48,7 @@ lgssm <- function(temp_data,
                   reltol = NULL) {
 
   ## ---- Input checks ---------------------------------------------------
-  y <- ThermoSSM::check_ts_lgssm(temp_data)
+  y <- ThermoSSM::check_temp_ts_lgssm(temp_data)
   freq <- frequency(y)
 
   ## ---- Default initial values -----------------------------------------
@@ -128,37 +128,15 @@ lgssm <- function(temp_data,
         H = exp(pars[6])
       )
     }
-    
-    
-    ## ---- Optimization (two-step) ----------------------------------------
-    fit1 <- fitSSM(
-      build_ssm,
-      inits  = inits,
-      updatefn = update_func,
-      method = "Nelder-Mead",
-      control = list(maxit = maxit, reltol = reltol)
-    )
-    
-    fit2 <- fitSSM(
-      build_ssm,
-      inits  = fit1$optim.out$par,
-      updatefn = update_func,
-      method = "BFGS",
-      control = list(maxit = maxit, reltol = reltol)
-    )
-    
-    ## ---- Kalman filtering & smoothing -----------------------------------
-    kfs <- KFS(
-      fit2$model,
-      filtering = c("state", "mean"),
-      smoothing = c("state", "mean", "disturbance")
-    )
-    
+
 
   # ------------------------------------------------------------------------
   # ------------------------------------------------------------------------
   # model with an exogenous variable
   } else { # 
+
+    exo_data_checked <- check_exo_ts_lgssm(temp_data = temp_data,
+                                           exo_data = exo_data)
     
     if (!inherits(exo_data, "ts")) {
       stop("temp_data must be a 'ts' object.")
@@ -172,19 +150,8 @@ lgssm <- function(temp_data,
       stop("exo_data must have column name(s).")
     }
     
-    exogenous_lab <- colnames(exo_data)
-        
-    start_temp <- start(temp_data)
-    end_temp <- start(temp_data)
-    start_exo <- start(exo_data)
-    end_exo <- start(exo_data)
-    
-    if(sum((start_temp==start_exo) & (end_temp==end_exo))!=2){
-      stop("temp_data and exo_data must have same time series (frequency = 12).")
-    }
-
-    exogenous_mat <- as.matrix(exo_data)
-    
+    exogenous_lab <- colnames(exo_data_checked)
+    exogenous_mat <- as.matrix(exo_data_checked)
 
 
     ## ---- Model definition -----------------------------------------------
@@ -206,8 +173,9 @@ lgssm <- function(temp_data,
           Q = NA
         )
     )
-    
-    ## ---- Parameter update function --------------------------------------
+  
+
+  ## ---- Parameter update function --------------------------------------
     update_func <- function(pars, model) {
       return(
         SSModel(
@@ -226,35 +194,34 @@ lgssm <- function(temp_data,
         )
       )
     }
-    
-    
-    ## ---- Optimization (two-step) ----------------------------------------
-    fit1 <- fitSSM(
-      build_ssm,
-      inits  = inits,
-      updatefn = update_func,
-      method = "Nelder-Mead",
-      control = list(maxit = maxit, reltol = reltol)
-    )
-    
-    fit2 <- fitSSM(
-      build_ssm,
-      inits  = fit1$optim.out$par,
-      updatefn = update_func,
-      method = "BFGS",
-      control = list(maxit = maxit, reltol = reltol)
-    )
-    
-    ## ---- Kalman filtering & smoothing -----------------------------------
-    kfs <- KFS(
-      fit2$model,
-      filtering = c("state", "mean"),
-      smoothing = c("state", "mean", "disturbance")
-    )
+  }# close case when model with exogenous variable(s)
 
-  } # close of model with exogenous variable(s)
+    
+  ## ---- Optimization (two-step) ----------------------------------------
+  fit1 <- fitSSM(
+    build_ssm,
+    inits  = inits,
+    updatefn = update_func,
+    method = "Nelder-Mead",
+    control = list(maxit = maxit, reltol = reltol)
+  )
+    
+  fit2 <- fitSSM(
+    build_ssm,
+    inits  = fit1$optim.out$par,
+    updatefn = update_func,
+    method = "BFGS",
+    control = list(maxit = maxit, reltol = reltol)
+  )
+    
+  ## ---- Kalman filtering & smoothing -----------------------------------
+  kfs <- KFS(
+    fit2$model,
+    filtering = c("state", "mean"),
+    smoothing = c("state", "mean", "disturbance")
+  )
 
-  #browser()
+
   ## ---- Output ---------------------------------------------------------
   out <- list(
     model = fit2$model,
@@ -272,7 +239,7 @@ lgssm <- function(temp_data,
 
 
 
-#' Check ts object for applying \code{lgssm()}
+#' Check ts object of temperature time series for applying \code{lgssm()}
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
 #'   The series can have any arbitrary frequency of 2 or higher.
@@ -281,29 +248,83 @@ lgssm <- function(temp_data,
 #' @return A univariate \code{ts} object.
 #'
 #' @export
-check_ts_lgssm <- function(temp_data) {
-
+check_temp_ts_lgssm <- function(temp_data) {
+  
   if (!inherits(temp_data, "ts")) {
     stop("The object 'temp_data' must be a 'ts' object.",
          call. = FALSE)
   }
-
+  
   freq <- frequency(temp_data)
   if (freq <= 1) {
     stop("The procedure requires a ts object with frequency > 1.",
          call. = FALSE)
   }
-
+  
   if (!is.null(dim(temp_data)) && NCOL(temp_data) != 1) {
     stop("The object 'temp_data' must be univariate.",
          call. = FALSE)
   }
-
+  
   message("The ts object is univariate with frequency ", freq, ".")
-
-  temp_data
+  
+  return(temp_data)
 }
 
+
+
+
+#' Check ts object of exogenous variable(s) for applying \code{lgssm()}
+#'
+#' @param temp_data A temperature time series of class \code{ts}.
+#'   The series can have any arbitrary frequency of 2 or higher.
+#'   For example, a frequency of 12 represents a monthly \code{ts} object.
+#'
+#' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
+#'   The series may have any arbitrary frequency of 2 or higher,
+#'   but it must be the same as that of \code{temp_data}.
+#'   The default is \code{NULL} when fitting a model without exogenous variables.
+#'
+#' @return A univariate or multivairate \code{ts} object.
+#'
+#' @export
+check_exo_ts_lgssm <- function(temp_data, exo_data) {
+
+  temp_data_checked <- ThermoSSM::check_temp_ts_lgssm(temp_data)
+
+  temp_freq <- frequency(temp_data_checked)
+
+  if (!inherits(exo_data, "ts")) {
+    stop("The object 'exo_data' must be a 'ts' object.",
+         call. = FALSE)
+  }
+
+  exo_freq <- frequency(exo_data)
+  if (!(exo_freq == temp_freq)) {
+    stop("Frequency of 'exo_data' must be same that of 'temp_data'.",
+         call. = FALSE)
+  }
+
+  if (!(time(exo_freq) == time(temp_freq))) {
+    stop("Time series of 'exo_data' must be same that of 'temp_data'.",
+         call. = FALSE)
+  }
+
+  if (is.null(colnames(exo_data))) {
+      stop("The object 'exo_data' must have column name(s).",
+         call. = FALSE)
+  }
+
+  if ((dim(exo_data)[2]) > 1) {
+    uni_multi <- "multivariate"
+  }else{
+    uni_multi <- "univariate"
+  }
+  
+  message(paste0("The object 'exo_data' is ", uni_multi, " with frequency ", exo_freq, "."))
+
+  return(exo_data)
+}
 
 
 

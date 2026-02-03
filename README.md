@@ -10,13 +10,15 @@ https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 
 ### Key features
 
-- Designed for **monthly temperature time series data**
+- Designed for temperature time series data with **arbitrary seasonal frequency**;
+  currently **validated mainly on monthly data**
 - Applies **linear Gaussian state-space models** to estimate latent states
   using Kalman filtering and smoothing
-- Represents temperature dynamics as a sum of latent state components:
+- Represents temperature dynamics as a sum of interpretable latent components:
   long-term trend, seasonal cycle, autoregressive structure,
   and optional exogenous effects
-- Implement of time series cross-validation (under development)
+- Implements **time-series cross-validation** for model evaluation
+
 
 # How to Install
 ```r
