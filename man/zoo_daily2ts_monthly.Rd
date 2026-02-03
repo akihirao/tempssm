@@ -2,7 +2,7 @@
 % Please edit documentation in R/utilities.R
 \name{zoo_daily2ts_monthly}
 \alias{zoo_daily2ts_monthly}
-\title{Convert daily zoo object to monthly ts object}
+\title{Convert a daily zoo object to a monthly \code{ts} object}
 \usage{
 zoo_daily2ts_monthly(zoo_obj, var = "Temp", na.rm = TRUE)
 }
@@ -10,7 +10,8 @@ zoo_daily2ts_monthly(zoo_obj, var = "Temp", na.rm = TRUE)
 \item{zoo_obj}{A \code{zoo} object with daily observations.
 The index must be of class \code{Date} or \code{POSIXt}.}
 
-\item{var}{Name of the variable to be aggregated (default: \code{"Temp"}).}
+\item{var}{A character string specifying the name of the variable
+to be aggregated (default: \code{"Temp"}).}
 
 \item{na.rm}{Logical; should missing values be removed before averaging?}
 }
@@ -18,7 +19,7 @@ The index must be of class \code{Date} or \code{POSIXt}.}
 A monthly \code{ts} object with frequency = 12.
 }
 \description{
-Convert daily zoo object to monthly ts object
+Convert a daily zoo object to a monthly \code{ts} object
 }
 \examples{
 data(ibaraki_sst)

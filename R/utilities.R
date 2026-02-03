@@ -1,9 +1,10 @@
 
-#' Convert a monthly temperature CSV file to a monthly time series object
+#' Read and convert a monthly temperature CSV file to a \code{ts} object
 #'
-#' @importFrom stats ts
 #' @details
-#' The input CSV file must have the following format:
+#' The input CSV file must contain monthly temperature data with
+#' three columns: \code{Year}, \code{Month}, and \code{Temp}.
+#' The expected format is:
 #'
 #' \preformatted{
 #' Year,Month,Temp
@@ -14,38 +15,50 @@
 #' ...
 #' }
 #'
-#' @param csv Path to a CSV file containing monthly temperature data.
+#' @param csv A character string specifying the path to a CSV file
+#'   containing monthly temperature data.
 #'
 #' @importFrom readr read_csv
+#' @importFrom stats ts
 #'
 #' @encoding UTF-8
 #'
 #' @export
-monthly_csv2ts <- function(csv) {
+monthly_temp_csv2ts <- function(csv) {
 
   raw_data <- readr::read_csv(csv)
-  message("Columns in a loading file: ", paste(names(raw_data), collapse=", "))
 
-  Temp_ts <- ts(
-    as.matrix(raw_data["Temp"]),
+  message(
+    "Columns in the input file: ",
+    paste(names(raw_data), collapse = ", ")
+  )
+
+  required_cols <- c("Year", "Month", "Temp")
+  if (!all(required_cols %in% names(raw_data))) {
+    stop(
+      "The CSV file must contain columns: ",
+      paste(required_cols, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  ts(
+    as.matrix(raw_data$Temp),
     start = c(raw_data$Year[1], raw_data$Month[1]),
     frequency = 12
   )
 
-  colnames(Temp_ts) <- "Temp"
-  return(Temp_ts)
 }
 
 
 
-#' Convert daily zoo object to monthly ts object
-#'
-#' @import zoo
-#' @importFrom stats ts aggregate
+
+#' Convert a daily zoo object to a monthly \code{ts} object
 #'
 #' @param zoo_obj A \code{zoo} object with daily observations.
 #'   The index must be of class \code{Date} or \code{POSIXt}.
-#' @param var Name of the variable to be aggregated (default: \code{"Temp"}).
+#' @param var A character string specifying the name of the variable
+#'   to be aggregated (default: \code{"Temp"}).
 #' @param na.rm Logical; should missing values be removed before averaging?
 #'
 #' @return A monthly \code{ts} object with frequency = 12.
@@ -55,6 +68,9 @@ monthly_csv2ts <- function(csv) {
 #' ts_monthly <- zoo_daily2ts_monthly(ibaraki_sst)
 #' head(ts_monthly)
 #'
+#' @importFrom zoo index coredata as.yearmon
+#' @importFrom stats ts start aggregate
+#'
 #' @export
 zoo_daily2ts_monthly <- function(zoo_obj, var = "Temp", na.rm = TRUE) {
 
@@ -63,34 +79,39 @@ zoo_daily2ts_monthly <- function(zoo_obj, var = "Temp", na.rm = TRUE) {
   }
 
   if (!var %in% colnames(zoo_obj)) {
-    stop(paste0("Variable '", var, "' not found in zoo object."), call. = FALSE)
+    stop(
+      paste0("Variable '", var, "' not found in the zoo object."),
+      call. = FALSE
+    )
   }
 
   idx <- zoo::index(zoo_obj)
   if (!inherits(idx, c("Date", "POSIXt"))) {
-    stop("Index of zoo object must be Date or POSIXt.", call. = FALSE)
+    stop("Index of the zoo object must be Date or POSIXt.", call. = FALSE)
   }
 
-  zoo_monthly <- aggregate(
+  zoo_monthly <- stats::aggregate(
     zoo_obj[, var, drop = FALSE],
-    as.yearmon,
+    zoo::as.yearmon,
     mean,
     na.rm = na.rm
   )
 
+  ym_start <- stats::start(zoo_monthly)
+
   ts_monthly <- ts(
     zoo::coredata(zoo_monthly),
     start = c(
-      as.integer(format(as.Date(start(zoo_monthly)), "%Y")),
-      as.integer(format(as.Date(start(zoo_monthly)), "%m"))
+      as.integer(format(ym_start, "%Y")),
+      as.integer(format(ym_start, "%m"))
     ),
     frequency = 12
   )
-  
-  colnames(ts_monthly) <- "Temp"
-  return(ts_monthly)
-  
+
+  colnames(ts_monthly) <- var
+  ts_monthly
 }
+
 
 
 
