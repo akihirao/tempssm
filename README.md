@@ -30,6 +30,47 @@ devtools::install_github("akihirao/ThermoSSM")
 devtools::install_github("akihirao/ThermoSSM", build_vignettes=TRUE)
 ```
 
+# Simple usage
+
+### 1. Prepare a CSV file  
+
+For monthly temperature data, prepare a CSV file with a header row.
+By default, the column names should be `Year`, `Month`, and `Temp`.
+
+```text
+Year,Month,Temp
+2010,8,13.6
+2010,9,6.8
+2010,10,NA
+2010,11,-1.4
+...
+```
+* Use NA for missing temperature values, and always keep the corresponding Year and Month entries.
+* The CSV file must be comma-separated and UTF-8 encoded.
+
+### 2. Load the CSV file into R and covert it to a time series oject     
+
+If the CSV file is named `hogehoge.csv`, load the data and convert it to a time series object using the following commands:
+
+```r
+library(ThermoSSM)
+
+hogehoge_ts <- ThermoSSM::monthly_temp_csv2ts("hogehoge.csv")
+```
+
+### 3. Execute the state-space modelling    
+The function `lgsmm()` fits a state-space model to the monthly temperature
+time series using a Gaussian structural model.
+
+```r
+res <- lgsmm(hogehoge_ts)
+
+summary(res)  # summarise results
+plot(res) # plot results
+```
+The returned object `res` is an S3 object of class `'ThermoSSM`, which contains the fitted state-space model results. The object `res` can be analyzed using methods such as `summary()` and `plot()`.
+``
+
 # Quick Tutorial
 ```r
 browseVignettes("ThermoSSM")
