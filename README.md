@@ -59,11 +59,11 @@ hogehoge_ts <- ThermoSSM::monthly_temp_csv2ts("hogehoge.csv")
 ```
 
 ### 3. Execute the state-space modelling    
-The function `lgsmm()` fits a state-space model to the monthly temperature
+The function `lgssm()` fits a state-space model to the monthly temperature
 time series using a Gaussian structural model.
 
 ```r
-res <- lgsmm(hogehoge_ts)
+res <- lgssm(hogehoge_ts)
 
 summary(res)  # summarise results
 plot(res) # plot results
@@ -89,7 +89,8 @@ data(fuji_temp)    # ts object of monthly air temperature at the summit of Mt. F
 The third dataset is provided in .csv format and included in inst/extdata. It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan (elevation 1,840 m; 43.6766°N, 142.9423°E). The data originate from the Monitoring Sites 1000 Project conducted by the Ministry of the Environment of Japan (KOZ01.zip, downladed from https://www.biodic.go.jp/moni1000/findings/data/index.html).
 ```r
 path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
-readr::read_csv(path)
+example_3_data <- readr::read_csv(path)
+head(example_3_data)
 ```
 
 # References
