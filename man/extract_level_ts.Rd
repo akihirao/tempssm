@@ -2,16 +2,22 @@
 % Please edit documentation in R/lgssm.R
 \name{extract_level_ts}
 \alias{extract_level_ts}
-\title{Extract smoothed level component as a time series}
+\title{Extract the smoothed level component as a time series}
 \usage{
-extract_level_ts(res)
+extract_level_ts(res, ci = FALSE, ci_level = 0.95)
 }
 \arguments{
 \item{res}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
+
+\item{ci}{Logical; should confidence intervals be returned? (default: FALSE)}
+
+\item{ci_level}{Confidence level for intervals (default: 0.95).}
 }
 \value{
-A \code{ts} object of the smoothed level component.
+A univariate \code{ts} object of the smoothed level component.
+If \code{ci = TRUE}, a multivariate \code{ts} object with columns
+\code{level}, \code{lwr}, and \code{upr} is returned.
 }
 \description{
-Extract smoothed level component as a time series
+Extract the smoothed level component as a time series
 }

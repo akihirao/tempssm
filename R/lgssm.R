@@ -6,7 +6,7 @@
 #' If multivariate, a column named \code{"Temp"} is used.
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
-#'　　The \code{ts} object must be univariant.
+#'   The \code{ts} object must be univariant.
 #'   The series can have any arbitrary frequency of 2 or higher.
 #'   For example, a frequency of 12 represents a monthly \code{ts} object.
 #'
@@ -329,47 +329,79 @@ check_exo_ts_lgssm <- function(temp_data, exo_data) {
 
 
 
-#' Extract smoothed level component as a time series
+#' Extract the smoothed level component as a time series
 #'
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param ci Logical; should confidence intervals be returned? (default: FALSE)
+#' @param ci_level Confidence level for intervals (default: 0.95).
 #'
-#' @return A \code{ts} object of the smoothed level component.
+#' @return
+#' A univariate \code{ts} object of the smoothed level component.
+#' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
+#' \code{level}, \code{lwr}, and \code{upr} is returned.
 #'
 #' @export
-extract_level_ts <- function(res) {
+extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   if (!inherits(res, "ThermoSSM")) {
-    stop("Input must be a ThermoSSM object.")
+    stop("Input must be a ThermoSSM object.", call. = FALSE)
   }
 
   if (is.null(res$kfs$alphahat) || !"level" %in% colnames(res$kfs$alphahat)) {
-    stop("Level component not found in the smoothing results.")
+    stop("Level component not found in the smoothing results.", call. = FALSE)
   }
 
-  res$kfs$alphahat[, "level"]
+  level_ts <- res$kfs$alphahat[, "level"]
+  
+  if(ci){
+    ci_obj <- confint(res$kfs, level = ci_level)
+
+    level_ts <- cbind(
+      level = level_ts,
+      lwr=lci_obj$level[,"lwr"],
+      upr=ci_obj$level[,"upr"]
+      )
+  }
+  return(level_ts)
 }
 
 
 
 
-#' Extract smoothed drift (slope) component as a time series
+#' Extract the smoothed drift (slope) component as a time series
 #'
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param ci Logical; should confidence intervals be returned? (default: FALSE)
+#' @param ci_level Confidence level for intervals (default: 0.95).
 #'
-#' @return A \code{ts} object of the smoothed drift component.
+#' @return
+#' A univariate \code{ts} object of the smoothed drift component.
+#' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
+#' \code{level}, \code{lwr}, and \code{upr} is returned.
 #'
 #' @export
-extract_drift_ts <- function(res) {
+extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   if (!inherits(res, "ThermoSSM")) {
-    stop("Input must be a ThermoSSM object.")
+    stop("Input must be a ThermoSSM object.", call. = FALSE)
   }
 
   if (is.null(res$kfs$alphahat) || !"slope" %in% colnames(res$kfs$alphahat)) {
-    stop("Drift (slope) component not found in the smoothing results.")
+    stop("Drift (slope) component not found in the smoothing results.", call. = FALSE)
   }
 
-  res$kfs$alphahat[, "slope"]
+  drift_ts <- res$kfs$alphahat[, "slope"]
+
+  if(ci){
+  ci_obj <- confint(res$kfs, level = ci_level)
+
+  drift_ts <- cbind(
+    level = drift_ts,
+    lwr=lci_obj$slope[,"lwr"],
+    upr=ci_obj$slope[,"upr"]
+    )
+  }
+  return(level_ts)
 }
 
 
