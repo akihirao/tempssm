@@ -401,7 +401,7 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     upr=ci_obj$slope[,"upr"]
     )
   }
-  return(level_ts)
+  return(drift_ts)
 }
 
 
