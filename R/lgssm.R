@@ -358,7 +358,7 @@ extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
     level_ts <- cbind(
       level = level_ts,
-      lwr=lci_obj$level[,"lwr"],
+      lwr=ci_obj$level[,"lwr"],
       upr=ci_obj$level[,"upr"]
       )
   }
@@ -397,7 +397,7 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   drift_ts <- cbind(
     level = drift_ts,
-    lwr=lci_obj$slope[,"lwr"],
+    lwr=ci_obj$slope[,"lwr"],
     upr=ci_obj$slope[,"upr"]
     )
   }
