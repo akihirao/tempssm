@@ -27,6 +27,22 @@ library(tibble)
 library(readr)
 library(dplyr)
 library(ggplot2)
+
+library(future)
+library(parallelly)
+
+if (future::nbrOfWorkers() == 1) {
+  workers <- max(1, future::availableCores() - 1)
+
+  if (parallelly::supportsMulticore()) {
+    plan(multicore, workers = workers)
+  } else {
+    plan(multisession, workers = workers)
+  }
+}
+
+
+
 ```
 
 # Practice I: Analysis of Monthly Air Temperature
@@ -110,16 +126,9 @@ plot(res)
 ## Simple Model Diagnostics
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-# Normality of standardized residuals
-std_obs_resid <- stats::rstandard(res$kfs, type = "recursive")
+resid_test_output <- ThermoSSM::wrapper_checkresiduals(res)
 
-# Residual diagnostics
-forecast::checkresiduals(std_obs_resid)
-# Ljung–Box test: if P > 0.05, there is no evidence of significant autocorrelation in the residuals
-# Inspect the diagnostic plots 
-# top: residual time series;
-# bottom left: residual autocorrelation;
-# bottom right: histogram of residuals to check for outliers or other anomalies
+print(resid_test_output)
 ```
 
 ## Estimated Parameters and Components

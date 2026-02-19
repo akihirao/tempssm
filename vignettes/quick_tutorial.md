@@ -10,6 +10,19 @@ library(tibble)
 library(readr)
 library(dplyr)
 library(ggplot2)
+
+library(future)
+library(parallelly)
+
+if (future::nbrOfWorkers() == 1) {
+  workers <- max(1, future::availableCores() - 1)
+
+  if (parallelly::supportsMulticore()) {
+    plan(multicore, workers = workers)
+  } else {
+    plan(multisession, workers = workers)
+  }
+}
 ```
 
 # Practice I: Analysis of Monthly Air Temperature
@@ -142,30 +155,33 @@ plot(res)
 ## Simple Model Diagnostics
 
 ``` r
-# Normality of standardized residuals
-std_obs_resid <- stats::rstandard(res$kfs, type = "recursive")
-
-# Residual diagnostics
-forecast::checkresiduals(std_obs_resid)
+resid_test_output <- ThermoSSM::wrapper_checkresiduals(res)
 ```
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
-    ## 
-    ##  Ljung-Box test
-    ## 
-    ## data:  Residuals
-    ## Q* = 17.591, df = 24, p-value = 0.8224
-    ## 
-    ## Model df: 0.   Total lags used: 24
-
 ``` r
-# Ljung–Box test: if P > 0.05, there is no evidence of significant autocorrelation in the residuals
-# Inspect the diagnostic plots 
-# top: residual time series;
-# bottom left: residual autocorrelation;
-# bottom right: histogram of residuals to check for outliers or other anomalies
+print(resid_test_output)
 ```
+
+    ## $Ljung_Box
+    ## 
+    ##  Box-Ljung test
+    ## 
+    ## data:  std_obs_resid
+    ## X-squared = 18.478, df = 24, p-value = 0.7792
+    ## 
+    ## 
+    ## $Jarque_Bera
+    ## 
+    ##  Jarque Bera Test
+    ## 
+    ## data:  std_obs_resid
+    ## X-squared = 110.33, df = 2, p-value < 2.2e-16
+    ## 
+    ## 
+    ## $kurtosi
+    ## [1] 4.545271
 
 ## Estimated Parameters and Components
 
@@ -517,12 +533,12 @@ print(cv_without_tidy)
 ```
 
     ##     Model cv_id      set         ME      RMSE       MAE        MPE     MAPE
-    ## 1 Without     1 Test set  0.1840780 0.4007181 0.3021636  0.7756497 1.596606
-    ## 2 Without     2 Test set -0.2512263 0.6065959 0.5782862 -1.1540092 3.060408
-    ## 3 Without     3 Test set -0.4457947 0.8557703 0.7790297 -2.1009569 3.992982
-    ## 4 Without     4 Test set  0.2496385 0.7477649 0.6446000  1.2783092 3.422325
-    ## 5 Without     5 Test set  0.8037154 0.8995830 0.8037154  3.8389907 3.838991
-    ## 6 Without     6 Test set -0.4508430 0.6042668 0.5082331 -2.1696072 2.473141
+    ## 1 Without fold1 Test set  0.1840780 0.4007181 0.3021636  0.7756497 1.596606
+    ## 2 Without fold2 Test set -0.2512263 0.6065959 0.5782862 -1.1540092 3.060408
+    ## 3 Without fold3 Test set -0.4457947 0.8557703 0.7790297 -2.1009569 3.992982
+    ## 4 Without fold4 Test set  0.2496385 0.7477649 0.6446000  1.2783092 3.422325
+    ## 5 Without fold5 Test set  0.8037154 0.8995830 0.8037154  3.8389907 3.838991
+    ## 6 Without fold6 Test set -0.4508430 0.6042668 0.5082331 -2.1696072 2.473141
     ##         ACF1 Theil's U MASE_naive MASE_snaive
     ## 1  0.3203994 0.1814806  0.1770779   0.4250559
     ## 2  0.5288184 0.2908381  0.3386929   0.8351761
@@ -559,12 +575,12 @@ print(cv_with_tidy)
 ```
 
     ##   Model cv_id      set         ME      RMSE       MAE        MPE     MAPE
-    ## 1  With     1 Test set -0.0313825 0.4558111 0.3579344 -0.2668966 1.859228
-    ## 2  With     2 Test set -0.4882979 0.6901558 0.5796116 -2.4776204 2.978092
-    ## 3  With     3 Test set -0.3151896 0.6595790 0.5492322 -1.4907984 2.802321
-    ## 4  With     4 Test set  0.4982363 0.8373174 0.7631218  2.4099787 3.902438
-    ## 5  With     5 Test set  1.0247984 1.0784292 1.0247984  4.8807398 4.880740
-    ## 6  With     6 Test set -0.3037580 0.3982281 0.3145223 -1.4765876 1.529745
+    ## 1  With fold1 Test set -0.0313825 0.4558111 0.3579344 -0.2668966 1.859228
+    ## 2  With fold2 Test set -0.4882979 0.6901558 0.5796116 -2.4776204 2.978092
+    ## 3  With fold3 Test set -0.3151896 0.6595790 0.5492322 -1.4907984 2.802321
+    ## 4  With fold4 Test set  0.4982363 0.8373174 0.7631218  2.4099787 3.902438
+    ## 5  With fold5 Test set  1.0247984 1.0784292 1.0247984  4.8807398 4.880740
+    ## 6  With fold6 Test set -0.3037580 0.3982281 0.3145223 -1.4765876 1.529745
     ##         ACF1 Theil's U MASE_naive MASE_snaive
     ## 1  0.5069573 0.2056400  0.2097615   0.5035091
     ## 2  0.4334518 0.3309232  0.3394691   0.8370903
