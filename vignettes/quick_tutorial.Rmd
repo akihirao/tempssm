@@ -31,17 +31,24 @@ library(ggplot2)
 library(future)
 library(parallelly)
 
-if (future::nbrOfWorkers() == 1) {
-  workers <- max(1, future::availableCores() - 1)
+has_future <- requireNamespace("future", quietly = TRUE)
 
-  if (parallelly::supportsMulticore()) {
-    plan(multicore, workers = workers)
-  } else {
-    plan(multisession, workers = workers)
+if (has_future) {
+  if (future::nbrOfWorkers() == 1) {
+
+    # vignetteでは控えめに
+    workers <- min(2, future::availableCores())
+
+    if (future::supportsMulticore()) {
+      future::plan(future::multicore, workers = workers)
+    } else {
+      future::plan(future::multisession, workers = workers)
+    }
+
   }
+} else {
+  message("future not available; running sequentially")
 }
-
-
 
 ```
 

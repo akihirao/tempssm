@@ -361,15 +361,24 @@ state-space analysis of temperature time series with ThermoSST</h1>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="fu">library</span>(future)</span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="fu">library</span>(parallelly)</span>
 <span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a></span>
-<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="cf">if</span> (future<span class="sc">::</span><span class="fu">nbrOfWorkers</span>() <span class="sc">==</span> <span class="dv">1</span>) {</span>
-<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>  workers <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">1</span>, future<span class="sc">::</span><span class="fu">availableCores</span>() <span class="sc">-</span> <span class="dv">1</span>)</span>
-<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a></span>
-<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>  <span class="cf">if</span> (parallelly<span class="sc">::</span><span class="fu">supportsMulticore</span>()) {</span>
-<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>    <span class="fu">plan</span>(multicore, <span class="at">workers =</span> workers)</span>
-<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>    <span class="fu">plan</span>(multisession, <span class="at">workers =</span> workers)</span>
-<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>  }</span>
-<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>has_future <span class="ot">&lt;-</span> <span class="fu">requireNamespace</span>(<span class="st">&quot;future&quot;</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="cf">if</span> (has_future) {</span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>  <span class="cf">if</span> (future<span class="sc">::</span><span class="fu">nbrOfWorkers</span>() <span class="sc">==</span> <span class="dv">1</span>) {</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>    <span class="co"># vignetteでは控えめに</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>    workers <span class="ot">&lt;-</span> <span class="fu">min</span>(<span class="dv">2</span>, future<span class="sc">::</span><span class="fu">availableCores</span>())</span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a>    <span class="cf">if</span> (future<span class="sc">::</span><span class="fu">supportsMulticore</span>()) {</span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a>      future<span class="sc">::</span><span class="fu">plan</span>(future<span class="sc">::</span>multicore, <span class="at">workers =</span> workers)</span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a>      future<span class="sc">::</span><span class="fu">plan</span>(future<span class="sc">::</span>multisession, <span class="at">workers =</span> workers)</span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a>    }</span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a></span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a>  }</span>
+<span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb1-30"><a href="#cb1-30" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">&quot;future not available; running sequentially&quot;</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" tabindex="-1"></a>}</span></code></pre></div>
 </div>
 <div id="practice-i-analysis-of-monthly-air-temperature" class="section level1">
 <h1>Practice I: Analysis of Monthly Air Temperature</h1>

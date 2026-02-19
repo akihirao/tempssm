@@ -30,13 +30,16 @@ Imports:
     forecast,
     tseries,
     moments,
-    patchwork
+    patchwork,
+    future.apply
 Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
     purrr,
     cowplot,
+    Future,
+    parallel
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Depends: 
