@@ -4,16 +4,17 @@
 \alias{rolling_origin_tsCV}
 \title{Prediction based on fitted model for time series cross-validation}
 \usage{
-rolling_origin_tsCV(folds, fold_ids = 1)
+rolling_origin_tsCV(folds, fold_ids = NULL)
 }
 \arguments{
-\item{folds}{A \code{list} of folds object returned by \code{ts_cv_folds()}.}
+\item{folds}{A \code{list} of fold objects returned by \code{ts_cv_folds()}.}
 
-\item{fold_ids}{A \code{vector} of sequential IDs of folds for ts cross-validation.}
+\item{fold_ids}{An integer vector specifying which folds to run.
+Default is all folds.}
 }
 \value{
-A \code{list} object of ts cross-validation output
+A \code{list} object of ts cross-validation output.
 }
 \description{
-This function predict with using test data for in ts cross-validation.
+This function performs prediction using test data in time series cross-validation.
 }

@@ -225,131 +225,163 @@ scale_Q <- function(train_ts, method = c("naive", "seasonal")) {
 
 
 
-
-#' Prediction based on fitted model for time series cross-validation
+#' Execute cross-validation of each of rolling-origin train/test data
 #'
 #' This function predict with using test data for in ts cross-validation.
-#'
 #' @param folds A \code{list} of folds object returned by \code{ts_cv_folds()}.
-#' @param fold_ids A \code{vector} of sequential IDs of folds for ts cross-validation.
+#' @param idx A \code{vector} of sequential IDs of folds for ts cross-validation.
 #' 
 #' @return A \code{list} object of ts cross-validation output
 #' 
 #' @export
-rolling_origin_tsCV <- function(folds,fold_ids = 1){
+exec_tsCV <- function(folds,idx=1){
   
   exo_judge <- unlist(lapply(folds, `[[`, "exo_train_ts"))
-  ts_CV_list <- list()
+  
+  target_fold <- folds[[idx]]
+  temp_train_ts <- target_fold$train_ts
+  freq = frequency(temp_train_ts)
+  
+  temp_train_mts <- ts(
+    as.matrix(temp_train_ts),
+    start = start(temp_train_ts),
+    frequency = freq
+  )
+  colnames(temp_train_mts) <- "Temp" 
+  
+  temp_test_ts <- target_fold$test_ts
+  temp_test_mts <- ts(
+    as.matrix(temp_test_ts),
+    start = start(temp_test_ts),
+    frequency = freq
+  )
+  colnames(temp_train_mts) <- "Temp" 
+  
+  if(is.null(exo_judge)){ # if data-set excludes exogenous variables
+    
+    res_train <- lgssm(temp_data = temp_train_mts,
+                       exo_data = NULL)
+    
+    train_model <- res_train$model
+    train_pars <- res_train$fit$optim.out$par
+    
+    predict_temp_ts <- predict(
+      train_model,
+      newdata = SSModel(
+        H = exp(train_pars[6]),
+        rep(NA, nrow(temp_test_mts)) ~ #nrow(ts_object) 
+          SSMtrend(degree = 2,
+                   Q = c(list(0), list(exp(train_pars[1])))) + 
+          SSMseasonal(sea.type = "dummy",
+                      period = freq,
+                      Q = exp(train_pars[2])) +
+          SSMarima(ar = artransform(train_pars[3:4]),
+                   d = 0,
+                   Q = exp(train_pars[5])
+          ), data = temp_test_mts
+      )
+    )
+  }else{ # if data-set includes exogenous variables
+    
+    exo_train <- target_fold$exo_train_ts
+    exo_test <- target_fold$exo_test_ts
+    num_exo <- dim(exo_train)[2]
+    
+    temp_exo_test <- cbind(temp_test_mts,
+                           exo_test)
+    colnames(temp_exo_test) <- c("Temp",colnames(exo_test))
+    
+    res_train<- lgssm(temp_data = temp_train_mts,
+                      exo_data = exo_train)
+    
+    train_model <- res_train$model
+    train_pars <- res_train$fit$optim.out$par
+    
+    exogenous_mat <- as.matrix(exo_test)
+    
+    predict_temp_ts <- predict(
+      train_model,
+      newdata = SSModel(
+        H = exp(train_pars[6]),
+        rep(NA, nrow(temp_exo_test)) ~ exogenous_mat + 
+          SSMtrend(degree = 2,
+                   Q = c(list(0), list(exp(train_pars[1])))) + 
+          SSMseasonal(sea.type = "dummy",
+                      period = freq,
+                      Q = exp(train_pars[2])) +
+          SSMarima(ar = artransform(train_pars[3:4]),
+                   d = 0,
+                   Q = exp(train_pars[5])
+          ), data = temp_exo_test
+      )
+    )
+  }
+  
+  convergence_status <- res_train$fit$optim.out$convergence
+  if(convergence_status==0){
+    convergence <- TRUE
+  }else{
+    convergence <- FALSE
+  }
+  
+  CV_output <- forecast::accuracy(predict_temp_ts, temp_test_ts) 
+  
+  Q_naive <- scale_Q(temp_train_ts, method="naive")
+  Q_seasonal <- scale_Q(temp_train_ts, method="seasonal")
+  
+  MASE_naive <- CV_output[,"MAE"]/Q_naive
+  
+  MASE_snaive <- CV_output[,"MAE"]/Q_seasonal
+  
+  MASE_matrix <- matrix(c(MASE_naive,MASE_snaive), nrow=1)
+  colnames(MASE_matrix) <- c("MASE_naive","MASE_snaive")
+  
+  CV_output <- cbind(CV_output,MASE_matrix)
+  
+  CV_output_info <- list(folds[[idx]],
+                         convergence=convergence,
+                         CV = CV_output)
+  
+  return(CV_output_info)
+}
+
+
+
+#' Prediction based on fitted model for time series cross-validation
+#'
+#' This function performs prediction using test data in time series cross-validation.
+#'
+#' @importFrom ThermoSSM exec_tsCV
+#' @param folds A \code{list} of fold objects returned by \code{ts_cv_folds()}.
+#' @param fold_ids An integer vector specifying which folds to run.
+#'   Default is all folds.
+#'
+#' @return A \code{list} object of ts cross-validation output.
+#' @export
+rolling_origin_tsCV <- function(folds, fold_ids = NULL){
   
   num_fold <- length(folds)
-
-  for(i in fold_ids){
-      
-    target_fold <- folds[[i]]
-    temp_train_ts <- target_fold$train_ts
-    freq = frequency(temp_train_ts)
-    
-    temp_train_mts <- ts(
-      as.matrix(temp_train_ts),
-      start = start(temp_train_ts),
-      frequency = freq
-    )
-    colnames(temp_train_mts) <- "Temp" 
-    
-    temp_test_ts <- target_fold$test_ts
-    temp_test_mts <- ts(
-      as.matrix(temp_test_ts),
-      start = start(temp_test_ts),
-      frequency = freq
-    )
-    colnames(temp_train_mts) <- "Temp" 
-
-    if(is.null(exo_judge)){ # if data-set excludes exogenous variables
-      
-      res_train <- lgssm(temp_data = temp_train_mts,
-                        exo_data = NULL)
-
-      convergence <- res_train$fit$optim.out$convergence
-      train_model <- res_train$model
-      train_pars <- res_train$fit$optim.out$par
- 
-      #browser()
-      
-      predict_temp_ts <- predict(
-        train_model,
-        newdata = SSModel(
-          H = exp(train_pars[6]),
-          rep(NA, nrow(temp_test_mts)) ~ #nrow(ts_object) 
-            SSMtrend(degree = 2,
-                     Q = c(list(0), list(exp(train_pars[1])))) + 
-            SSMseasonal(sea.type = "dummy",
-                        period = freq,
-                        Q = exp(train_pars[2])) +
-            SSMarima(ar = artransform(train_pars[3:4]),
-                     d = 0,
-                     Q = exp(train_pars[5])
-            ), data = temp_test_mts
-          )
-      )
-    }else{ # if data-set includes exogenous variables
-      
-      exo_train <- target_fold$exo_train_ts
-      exo_test <- target_fold$exo_test_ts
-      num_exo <- dim(exo_train)[2]
-
-      temp_exo_test <- cbind(temp_test_mts,
-                             exo_test)
-      colnames(temp_exo_test) <- c("Temp",colnames(exo_test))
-      
-      res_train<- lgssm(temp_data = temp_train_mts,
-                        exo_data = exo_train)
-      
-      convergence <- res_train$fit$optim.out$convergence
-      train_model <- res_train$model
-      train_pars <- res_train$fit$optim.out$par
-      
-      
-      exogenous_mat <- as.matrix(exo_test)
-      
-      #browser()
-      
-      predict_temp_ts <- predict(
-        train_model,
-        newdata = SSModel(
-          H = exp(train_pars[6]),
-          rep(NA, nrow(temp_exo_test)) ~ exogenous_mat + 
-            SSMtrend(degree = 2,
-                     Q = c(list(0), list(exp(train_pars[1])))) + 
-            SSMseasonal(sea.type = "dummy",
-                        period = freq,
-                        Q = exp(train_pars[2])) +
-            SSMarima(ar = artransform(train_pars[3:4]),
-                     d = 0,
-                     Q = exp(train_pars[5])
-            ), data = temp_exo_test
-        )
-      )
-    }
-    
-    CV_output <- forecast::accuracy(predict_temp_ts, temp_test_ts) 
-    
-    Q_naive <- scale_Q(temp_train_ts, method="naive")
-    Q_seasonal <- scale_Q(temp_train_ts, method="seasonal")
-    
-    MASE_naive <- CV_output[,"MAE"]/Q_naive
-    
-    MASE_snaive <- CV_output[,"MAE"]/Q_seasonal
-    
-    MASE_matrix <- matrix(c(MASE_naive,MASE_snaive), nrow=1)
-    colnames(MASE_matrix) <- c("MASE_naive","MASE_snaive")
-    
-    CV_output <- cbind(CV_output,MASE_matrix)
-
-    ts_CV_list[[i]] <- list(folds[[i]],
-                            convergence=convergence,
-                            CV = CV_output)
   
+  if (is.null(fold_ids)) {
+    fold_ids <- seq_len(num_fold)
   }
+  
+  exec_fun <- ThermoSSM:::exec_tsCV  # Importance!
+  
+  # ---- safety check ----
+  if (!is.numeric(fold_ids) || any(fold_ids < 1) || any(fold_ids > num_fold)) {
+    stop("fold_ids must be valid fold indices.")
+  }
+  
+  ts_CV_list <- future.apply::future_lapply(
+    setNames(fold_ids, paste0("fold", fold_ids)),
+    function(i){
+      exec_fun(folds, idx = i)
+    },
+    future.seed = TRUE,
+    future.packages = c("ThermoSSM","KFAS"),
+    future.globals = c("folds","exec_fun") # Note globals
+  )
   
   return(ts_CV_list)
 }
