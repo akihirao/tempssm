@@ -5,13 +5,28 @@ print.ThermoSSM <- function(x, ...) {
   cat("------------------\n")
 
   # Observed time series
-  ts_data <- x$data
+  temp_data <- x$data_temp
   cat("Data:\n")
-  cat("  Length      :", length(ts_data), "\n")
-  cat("  Frequency   :", frequency(ts_data), "\n")
-  cat("  Start / End :", 
-      paste(start(ts_data), collapse = "-"), " / ",
-      paste(end(ts_data), collapse = "-"), "\n\n")
+  cat("  Temperature time series data\n")
+  cat("  Length       :", length(temp_data), "\n")
+  cat("  Frequency    :", frequency(temp_data), "\n")
+  cat("  Start / End  :", 
+      paste(start(temp_data), collapse = "-"), " / ",
+      paste(end(temp_data), collapse = "-"), "\n\n")
+
+  exo_data <- x$data_exogenous
+  if(is.null(exo_data)){
+    cat("  Exogenous variables: NULL\n")
+    cat("\n\n")
+  }else{
+  cat("  Exogenous variable(s)\n")
+  cat("  No. variables:", length(colnames(exo_data)), "\n")
+  cat("  Length       :", length(exo_data), "\n")
+  cat("  Frequency    :", frequency(exo_data), "\n")
+  cat("  Start / End  :", 
+      paste(start(exo_data), collapse = "-"), " / ",
+      paste(end(exo_data), collapse = "-"), "\n\n")
+  }
 
   # Convergence information
   opt <- x$fit$optim.out

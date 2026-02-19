@@ -1,7 +1,7 @@
 Package: ThermoSSM
 Type: Package
 Title: Linear Gaussian State-Space Analysis of Temperature Time Series
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(
     person(
       given="Akira", family="Hirao",
@@ -28,6 +28,8 @@ Imports:
     lubridate,
     tibble,
     forecast,
+    tseries,
+    moments,
     patchwork
 Suggests:
     testthat (>= 3.0.0),
