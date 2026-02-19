@@ -28,7 +28,8 @@ wrapper_checkresiduals <- function(res,
   std_obs_resid <- std_obs_resid[is.finite(std_obs_resid)]
   
   # ---- Residual diagnostics plot ----
-  forecast::checkresiduals(std_obs_resid)
+  forecast::checkresiduals(std_obs_resid,
+                           test=FALSE)
   
   p <- recordPlot()
   
