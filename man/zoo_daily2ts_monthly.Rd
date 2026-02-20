@@ -4,7 +4,7 @@
 \alias{zoo_daily2ts_monthly}
 \title{Convert a daily zoo object to a monthly \code{ts} object}
 \usage{
-zoo_daily2ts_monthly(zoo_obj, var = "Temp", na.rm = TRUE)
+zoo_daily2ts_monthly(zoo_obj, var = "Temp", na.rm = TRUE, na_prop_max = 1)
 }
 \arguments{
 \item{zoo_obj}{A \code{zoo} object with daily observations.
@@ -14,6 +14,10 @@ The index must be of class \code{Date} or \code{POSIXt}.}
 to be aggregated (default: \code{"Temp"}).}
 
 \item{na.rm}{Logical; should missing values be removed before averaging?}
+
+\item{na_prop_max}{Maximum allowed proportion of NA values within a month.
+If the proportion of missing values exceeds this threshold, the monthly
+mean is set to NA. Default is \code{1} (no additional filtering).}
 }
 \value{
 A monthly \code{ts} object with frequency = 12.
@@ -23,7 +27,7 @@ Convert a daily zoo object to a monthly \code{ts} object
 }
 \examples{
 data(ibaraki_sst)
-ts_monthly <- zoo_daily2ts_monthly(ibaraki_sst)
+ts_monthly <- zoo_daily2ts_monthly(ibaraki_sst, na_prop_max = 0.3)
 head(ts_monthly)
 
 }

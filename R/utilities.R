@@ -52,7 +52,6 @@ monthly_temp_csv2ts <- function(csv) {
 
 
 
-
 #' Convert a daily zoo object to a monthly \code{ts} object
 #'
 #' @param zoo_obj A \code{zoo} object with daily observations.
@@ -60,45 +59,71 @@ monthly_temp_csv2ts <- function(csv) {
 #' @param var A character string specifying the name of the variable
 #'   to be aggregated (default: \code{"Temp"}).
 #' @param na.rm Logical; should missing values be removed before averaging?
+#' @param na_prop_max Maximum allowed proportion of NA values within a month.
+#'   If the proportion of missing values exceeds this threshold, the monthly
+#'   mean is set to NA. Default is \code{1} (no additional filtering).
 #'
 #' @return A monthly \code{ts} object with frequency = 12.
 #'
 #' @examples
 #' data(ibaraki_sst)
-#' ts_monthly <- zoo_daily2ts_monthly(ibaraki_sst)
+#' ts_monthly <- zoo_daily2ts_monthly(ibaraki_sst, na_prop_max = 0.3)
 #' head(ts_monthly)
 #'
 #' @importFrom zoo index coredata as.yearmon
 #' @importFrom stats ts start aggregate
 #'
 #' @export
-zoo_daily2ts_monthly <- function(zoo_obj, var = "Temp", na.rm = TRUE) {
-
+zoo_daily2ts_monthly <- function(zoo_obj,
+                                 var = "Temp",
+                                 na.rm = TRUE,
+                                 na_prop_max = 1) {
+  
   if (!inherits(zoo_obj, "zoo")) {
     stop("Input must be a zoo object.", call. = FALSE)
   }
-
+  
   if (!var %in% colnames(zoo_obj)) {
     stop(
       paste0("Variable '", var, "' not found in the zoo object."),
       call. = FALSE
     )
   }
-
+  
+  if (!is.numeric(na_prop_max) || na_prop_max < 0 || na_prop_max > 1) {
+    stop("na_prop_max must be between 0 and 1.", call. = FALSE)
+  }
+  
   idx <- zoo::index(zoo_obj)
   if (!inherits(idx, c("Date", "POSIXt"))) {
     stop("Index of the zoo object must be Date or POSIXt.", call. = FALSE)
   }
-
+  
+  # --- custom monthly summary ---
+  monthly_fun <- function(x) {
+    
+    # Check for all of NA in a month
+    if (all(is.na(x))) {
+      return(NA_real_)
+    }
+    
+    na_prop <- mean(is.na(x))
+    
+    if (na_prop > na_prop_max) {
+      return(NA_real_)
+    }
+    
+    mean(x, na.rm = na.rm)
+  }
+  
   zoo_monthly <- stats::aggregate(
     zoo_obj[, var, drop = FALSE],
     zoo::as.yearmon,
-    mean,
-    na.rm = na.rm
+    monthly_fun
   )
-
+  
   ym_start <- stats::start(zoo_monthly)
-
+  
   ts_monthly <- ts(
     zoo::coredata(zoo_monthly),
     start = c(
@@ -107,12 +132,10 @@ zoo_daily2ts_monthly <- function(zoo_obj, var = "Temp", na.rm = TRUE) {
     ),
     frequency = 12
   )
-
+  
   colnames(ts_monthly) <- var
   ts_monthly
 }
-
-
 
 
 
