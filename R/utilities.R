@@ -354,7 +354,10 @@ sst_jma2zoo <- function(sea_area_id = NULL) {
 #' For example, 138 corresponding to the coastal sea off southern Ibaraki.
 #' A list of sea area IDs and their corresponding regions is available at:
 #' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
-#'
+#' @param na_prop_max Maximum allowed proportion of NA values within a month.
+#'   If the proportion of missing values exceeds this threshold, the monthly
+#'   mean is set to NA. Default is \code{1} (no additional filtering).
+#' 
 #' @details
 #' The function retrieves a text-format dataset from the JMA website,
 #' parses daily observations, and constructs a \code{zoo} object
@@ -372,10 +375,12 @@ sst_jma2zoo <- function(sea_area_id = NULL) {
 #' }
 #'
 #' @export
-sst_jma2ts <- function(sea_area_id = NULL) {
+sst_jma2ts <- function(sea_area_id = NULL,
+                       na_prop_max = 1) {
   
   sst_zoo <- ThermoSSM::sst_jma2zoo(sea_area_id)
-  monthly_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(sst_zoo)
+  monthly_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(sst_zoo,
+                                                    na_prop_max = na_prop_max)
   
   return(monthly_sst_ts)
 }

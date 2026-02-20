@@ -4,13 +4,17 @@
 \alias{sst_jma2ts}
 \title{Retrieve daily mean sea-surface temperature as a monthly ts object from JMA}
 \usage{
-sst_jma2ts(sea_area_id = NULL)
+sst_jma2ts(sea_area_id = NULL, na_prop_max = 1)
 }
 \arguments{
 \item{sea_area_id}{Numeric sea area ID. The default is NULL
 For example, 138 corresponding to the coastal sea off southern Ibaraki.
 A list of sea area IDs and their corresponding regions is available at:
 \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}}
+
+\item{na_prop_max}{Maximum allowed proportion of NA values within a month.
+If the proportion of missing values exceeds this threshold, the monthly
+mean is set to NA. Default is \code{1} (no additional filtering).}
 }
 \value{
 A \code{ts} object of monthly mean sea-surface temperature
