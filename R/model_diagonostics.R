@@ -6,6 +6,7 @@
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
 #' @param plot_resid_save Logical; if TRUE, the residual diagnostic plot is saved.
 #' @param resid_file_name Character; file name for saving the residual diagnostic plot (default: "checkresiduals.png").
+#' @param JB_test Logical; if TRUE, Jarque–Bera test is optionally execute.
 #' @param plot_qq_save Logical; if TRUE, the Q-Q plot of residuals is saved.
 #' @param qq_file_name Character; file name for saving the Q-Q plot (default: "qqplot.png").
 #' 
@@ -15,6 +16,7 @@
 wrapper_checkresiduals <- function(res,
                                    plot_resid_save = FALSE,
                                    resid_file_name = "checkresiduals.png",
+                                   JB_test = FALSE,
                                    plot_qq_save = FALSE,
                                    qq_file_name = "qqplot.png"
                                    ) {
@@ -51,18 +53,24 @@ wrapper_checkresiduals <- function(res,
   Ljung_Box_test <- Box.test(std_obs_resid,
                              type = "Ljung-Box",
                              lag = min(2*freq, n_ts/5))
-  
-  # Jarque–Bera test
-  Jarque_Bera_test <- tseries::jarque.bera.test(std_obs_resid)
-  
   # 
-  kurtosi <- moments::kurtosis(std_obs_resid)
+  kurtosis <- moments::kurtosis(std_obs_resid)
   
-  residuals_test_list <- list(
-    Ljung_Box = Ljung_Box_test,
-    Jarque_Bera = Jarque_Bera_test,
-    kurtosi = kurtosi
-  )
-  
+
+  if(JB_test){
+    Jarque_Bera_test <- tseries::jarque.bera.test(std_obs_resid)
+
+    residuals_test_list <- list(
+      Ljung_Box = Ljung_Box_test,
+      Jarque_Bera = Jarque_Bera_test,
+      kurtosis = kurtosis
+      )
+
+  }else{
+    residuals_test_list <- list(
+      Ljung_Box = Ljung_Box_test,
+      kurtosis = kurtosis
+      )
+  }
   return(residuals_test_list)
 }
