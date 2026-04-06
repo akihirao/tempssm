@@ -502,3 +502,43 @@ extract_exo_coef_ci <- function(res, level = 0.95) {
     row.names   = NULL
   )
 }
+
+
+
+#' Assign a column label to a univariate \code{ts} object
+#'
+#' This function assigns a column name to a univariate time series object
+#' of class \code{ts}. It is useful when downstream functions require
+#' a labeled series.
+#'
+#' @param ts A univariate time series object of class \code{ts}.
+#' @param label A character string specifying the column name to assign
+#'   (default: \code{"var"}).
+#'
+#' @return A \code{ts} object with a single column labeled by \code{label}.
+#'
+#' @examples
+#' ts_labeled <- label_ts_mono(ts, label = "var1")
+#' colnames(ts_labeled)
+#'
+#' @export
+label_ts_mono <- function(ts, label = "var") {
+
+  if (!inherits(ts, "ts")) {
+    stop("Input must be a ts object.", call. = FALSE)
+  }
+
+  # ts がベクトルでも matrix でも安全に処理
+  if (!is.null(dim(ts)) && ncol(ts) != 1) {
+    warning("A univariate ts object is expected.", call. = FALSE)
+  }
+
+  ts_labeled <- ts(
+    matrix(as.numeric(ts), ncol = 1,
+           dimnames = list(NULL, label)),
+    start = start(ts),
+    frequency = frequency(ts)
+  )
+
+  return(ts_labeled)
+}
