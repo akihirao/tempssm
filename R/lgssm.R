@@ -511,33 +511,38 @@ extract_exo_coef_ci <- function(res, level = 0.95) {
 #' of class \code{ts}. It is useful when downstream functions require
 #' a labeled series.
 #'
-#' @param ts A univariate time series object of class \code{ts}.
+#' @param ts_in A univariate time series object of class \code{ts}.
 #' @param label A character string specifying the column name to assign
 #'   (default: \code{"var"}).
 #'
 #' @return A \code{ts} object with a single column labeled by \code{label}.
 #'
 #' @examples
-#' ts_labeled <- label_ts_mono(ts, label = "var1")
-#' colnames(ts_labeled)
+#' ts_in <- ts(
+#'   rnorm(12 * 30, mean = 10),
+#'   start = c(1981, 1),
+#'   frequency = 12
+#' )
+#'
+#' ts_labeled <- label_ts_mono(ts_in, label = "var")
 #'
 #' @export
-label_ts_mono <- function(ts, label = "var") {
+label_ts_mono <- function(ts_in, label = "var") {
 
-  if (!inherits(ts, "ts")) {
+  if (!inherits(ts_in, "ts")) {
     stop("Input must be a ts object.", call. = FALSE)
   }
 
   # ts がベクトルでも matrix でも安全に処理
-  if (!is.null(dim(ts)) && ncol(ts) != 1) {
+  if (!is.null(dim(ts_in)) && ncol(ts_in) != 1) {
     warning("A univariate ts object is expected.", call. = FALSE)
   }
 
   ts_labeled <- ts(
-    matrix(as.numeric(ts), ncol = 1,
+    matrix(as.numeric(ts_in), ncol = 1,
            dimnames = list(NULL, label)),
-    start = start(ts),
-    frequency = frequency(ts)
+    start = start(ts_in),
+    frequency = frequency(ts_in)
   )
 
   return(ts_labeled)

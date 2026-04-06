@@ -8,6 +8,7 @@ wrapper_checkresiduals(
   res,
   plot_resid_save = FALSE,
   resid_file_name = "checkresiduals.png",
+  JB_test = FALSE,
   plot_qq_save = FALSE,
   qq_file_name = "qqplot.png"
 )
@@ -18,6 +19,8 @@ wrapper_checkresiduals(
 \item{plot_resid_save}{Logical; if TRUE, the residual diagnostic plot is saved.}
 
 \item{resid_file_name}{Character; file name for saving the residual diagnostic plot (default: "checkresiduals.png").}
+
+\item{JB_test}{Logical; if TRUE, Jarque–Bera test is optionally execute.}
 
 \item{plot_qq_save}{Logical; if TRUE, the Q-Q plot of residuals is saved.}
 
