@@ -52,6 +52,8 @@ lgssm <- function(temp_data,
                   maxit = NULL,
                   reltol = NULL) {
 
+  tryCatch(
+    {
   ## ---- Input checks ---------------------------------------------------
   y <- ThermoSSM::check_temp_ts_lgssm(temp_data)
   freq <- frequency(y)
@@ -247,8 +249,13 @@ lgssm <- function(temp_data,
 
   class(out) <- "ThermoSSM"
   return(out)
+#}
+},
+error = function(e) {
+  NA
 }
-
+)
+}
 
 
 
@@ -285,8 +292,7 @@ check_temp_ts_lgssm <- function(temp_data) {
 }
 
 
-
-
+  
 #' Check ts object of exogenous variable(s) for applying \code{lgssm()}
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
