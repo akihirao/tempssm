@@ -15,6 +15,10 @@
 #'   but it must be the same as that of \code{temp_data}.
 #'   The default is \code{NULL} when fitting a model without exogenous variables.
 #'
+#' @param ar_order Integer specifying the order of the autoregressive (AR) 
+#' component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
+#' Defaults to 2.
+#'
 #' @param inits Optional numeric vector of initial parameter values.
 #'  If \code{NULL}, default values are used.
 #'  
@@ -43,6 +47,7 @@
 #' }
 lgssm <- function(temp_data, 
                   exo_data = NULL,
+                  ar_order = 2,
                   inits = NULL,
                   maxit = NULL,
                   reltol = NULL) {
@@ -54,19 +59,26 @@ lgssm <- function(temp_data,
   ## ---- Default initial values -----------------------------------------
   if (is.null(inits)) {
     # log-variances and AR parameters (on unconstrained scale)
+    ar_rep_length_minus_one <- ar_order -1
+    ar_inits <- c(0.5,rep(0,ar_rep_length_minus_one))
+    
     inits <- c(
       -13,  # trend variance (log)
-       -7,  # seasonal variance (log)
-      0.9,  # AR(1)
-     -0.1,  # AR(2)
-     -0.3,  # AR noise variance (log)
-       -5   # observation variance (log)
+      -7,  # seasonal variance (log)
+      ar_inits,  # AR coefficients     
+      -0.3,  # AR noise variance (log)
+      -5   # observation variance (log)
     )
   }
   
-  if (!is.numeric(inits) || length(inits) != 6) {
-    stop("inits must be a numeric vector of length 6.")
+  expected_len <- 2 + ar_order + 2
+  if (!is.numeric(inits) != expected_len) {
+    stop(paste("inits must be length ", expected_len))
   }
+  
+  ar_idx <- 3:(2 + ar_order)
+  var_idx <- 3 + ar_order
+  H_idx   <- 4 + ar_order
   
   ## ---- Default maxit value -----------------------------------------  
   if (is.null(maxit)) {
@@ -102,7 +114,7 @@ lgssm <- function(temp_data,
           Q = NA
         ) +
         SSMarima(
-          ar = c(0, 0),
+          ar = rep(0, ar_order),
           d = 0,
           Q = NA
         ),
@@ -121,11 +133,11 @@ lgssm <- function(temp_data,
             Q = exp(pars[2])
           ) +
           SSMarima(
-            ar = artransform(pars[3:4]),
+            ar = artransform(pars[ar_idx]),
             d = 0,
-            Q = exp(pars[5])
+            Q = exp(pars[var_idx])
           ),
-        H = exp(pars[6])
+        H = exp(pars[H_idx])
       )
     }
 
@@ -168,7 +180,7 @@ lgssm <- function(temp_data,
           Q = NA
         ) +
         SSMarima(
-          ar = c(0, 0),
+          ar = rep(0, ar_order),
           d = 0,
           Q = NA
         )
@@ -179,7 +191,7 @@ lgssm <- function(temp_data,
     update_func <- function(pars, model) {
       return(
         SSModel(
-          H = exp(pars[6]),
+          H = exp(pars[H_idx]),
           y ~ exogenous_mat + 
             SSMtrend(degree = 2,
                      Q = c(list(0), list(exp(pars[1])))) +
@@ -188,9 +200,9 @@ lgssm <- function(temp_data,
               period = freq,
               Q = exp(pars[2])) +
             SSMarima(
-              ar = artransform(pars[3:4]),
+              ar = artransform(pars[ar_idx]),
               d = 0,
-              Q = exp(pars[5]))
+              Q = exp(pars[var_idx]))
         )
       )
     }
@@ -229,6 +241,7 @@ lgssm <- function(temp_data,
     kfs   = kfs,
     data_temp  = temp_data,
     data_exogenous = exo_data,
+    ar_order = ar_order,
     call  = match.call()
   )
 

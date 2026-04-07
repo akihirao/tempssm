@@ -17,6 +17,11 @@ summary.ThermoSSM <- function(object, ...) {
   kfs   <- object$kfs
   opt   <- object$fit$optim.out
   pars <- object$fit$optim.out$par
+  ar_order <- object$ar_order
+
+  ar_idx <- 3:(2 + ar_order)
+  var_idx <- 3 + ar_order
+  H_idx   <- 4 + ar_order
 
   exo_data <- object$data_exogenous
 
@@ -39,11 +44,11 @@ summary.ThermoSSM <- function(object, ...) {
       H = model$H,
       Q_trend = exp(pars[1]),
       Q_season = exp(pars[2]),
-      Q_ar = exp(pars[5])
+      Q_ar = exp(pars[var_idx])
     ),
     coef_ar = list(
-      AR1 = KFAS::artransform(pars[3:4])[1],
-      AR2 = KFAS::artransform(pars[3:4])[2]
+      AR_order = ar_order,
+      AR_coef = KFAS::artransform(pars[ar_idx])
     ),
     exogenous = exogenous_variable,
     exogenous_coef = exogenous_coef_ci
@@ -100,13 +105,18 @@ print.summary.ThermoSSM <- function(x, ...) {
     cat("  State (Q ar):", x$variances$Q_ar, "\n")
   }
   cat("\n")
-  cat("Coefficient of auto-regression parameters:\n")
-  if (!is.null(x$coef_ar$AR1)) {
-    cat("  AR1:", x$coef_ar$AR1, "\n")
+  cat("Components of auto-regression:\n")
+  cat("  Order of AR:", x$coef_ar$AR_order, "\n")
+  if (!is.null(x$coef_ar$AR_coef[1])) {
+    cat("  Coefficient of AR1:", x$coef_ar$AR_coef[1], "\n")
   }
-  if (!is.null(x$coef_ar$AR2)) {
-    cat("  AR2:", x$coef_ar$AR2, "\n\n")
+  if (!is.null(x$coef_ar$AR_coef[2])) {
+    cat("  Coefficient of AR2:", x$coef_ar$AR_coef[2], "\n")
   }
+  if (!is.null(x$coef_ar$AR_coef[3])) {
+    cat("  Coefficient of AR3:", x$coef_ar$AR_coef[3], "\n")
+  }
+
 
   if (!is.null(x$exogenous_coef)) {
   cat("Exogenous variable\t",x$exogenous_coef$Variable, "\n")

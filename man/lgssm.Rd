@@ -4,7 +4,14 @@
 \alias{lgssm}
 \title{Fit a linear Gaussian state-space model to temperature time series}
 \usage{
-lgssm(temp_data, exo_data = NULL, inits = NULL, maxit = NULL, reltol = NULL)
+lgssm(
+  temp_data,
+  exo_data = NULL,
+  ar_order = 2,
+  inits = NULL,
+  maxit = NULL,
+  reltol = NULL
+)
 }
 \arguments{
 \item{temp_data}{A temperature time series of class \code{ts}.
@@ -16,6 +23,10 @@ For example, a frequency of 12 represents a monthly \code{ts} object.}
 The series may have any arbitrary frequency of 2 or higher,
 but it must be the same as that of \code{temp_data}.
 The default is \code{NULL} when fitting a model without exogenous variables.}
+
+\item{ar_order}{Integer specifying the order of the autoregressive (AR) 
+component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
+Defaults to 2.}
 
 \item{inits}{Optional numeric vector of initial parameter values.
 If \code{NULL}, default values are used.}
