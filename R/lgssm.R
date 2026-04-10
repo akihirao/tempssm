@@ -54,52 +54,52 @@ lgssm <- function(temp_data,
 
   tryCatch(
     {
-  ## ---- Input checks ---------------------------------------------------
-  y <- ThermoSSM::check_temp_ts_lgssm(temp_data)
-  freq <- frequency(y)
+    ## ---- Input checks ---------------------------------------------------
+    y <- ThermoSSM::check_temp_ts_lgssm(temp_data)
+    freq <- frequency(y)
 
-  ## ---- Default initial values -----------------------------------------
-  if (is.null(inits)) {
-    # log-variances and AR parameters (on unconstrained scale)
-    ar_rep_length_minus_one <- ar_order -1
-    ar_inits <- c(0.5,rep(0,ar_rep_length_minus_one))
+    ## ---- Default initial values -----------------------------------------
+    if (is.null(inits)) {
+      # log-variances and AR parameters (on unconstrained scale)
+      ar_rep_length_minus_one <- ar_order -1
+      ar_inits <- c(0.5,rep(0,ar_rep_length_minus_one))
     
-    inits <- c(
-      -13,  # trend variance (log)
-      -7,  # seasonal variance (log)
-      ar_inits,  # AR coefficients     
-      -0.3,  # AR noise variance (log)
-      -5   # observation variance (log)
-    )
-  }
+      inits <- c(
+        -13,  # trend variance (log)
+        -7,  # seasonal variance (log)
+        ar_inits,  # AR coefficients     
+        -0.3,  # AR noise variance (log)
+        -5   # observation variance (log)
+      )
+    }
   
-  expected_len <- 2 + ar_order + 2
-  if (!is.numeric(inits) != expected_len) {
-    stop(paste("inits must be length ", expected_len))
-  }
+    expected_len <- 2 + ar_order + 2
+    if (!is.numeric(inits) != expected_len) {
+      stop(paste("inits must be length ", expected_len))
+    }
   
-  ar_idx <- 3:(2 + ar_order)
-  var_idx <- 3 + ar_order
-  H_idx   <- 4 + ar_order
+    ar_idx <- 3:(2 + ar_order)
+    var_idx <- 3 + ar_order
+    H_idx   <- 4 + ar_order
   
-  ## ---- Default maxit value -----------------------------------------  
-  if (is.null(maxit)) {
-    maxit <- 5000
-  }
+    ## ---- Default maxit value -----------------------------------------  
+    if (is.null(maxit)) {
+      maxit <- 5000
+    }
   
-  ## ---- Default reltol value -----------------------------------------  
-  if (is.null(reltol)) {
-    reltol <- 1e-16
-  }
+    ## ---- Default reltol value -----------------------------------------  
+    if (is.null(reltol)) {
+      reltol <- 1e-16
+    }
   
   
-  #========================================================
-  # Handle univariate / multivariate ts
+    #========================================================
+    # Handle univariate / multivariate ts
   
-  # ------------------------------------------------------------------------
-  # ------------------------------------------------------------------------
-  # model without exogenous variables
-  if(is.null(exo_data)){ 
+    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
+    # model without exogenous variables
+    if(is.null(exo_data)){ 
     
     exogenous_lab <- NULL
 
@@ -144,117 +144,118 @@ lgssm <- function(temp_data,
     }
 
 
-  # ------------------------------------------------------------------------
-  # ------------------------------------------------------------------------
-  # model with an exogenous variable
-  } else { # 
+    # ------------------------------------------------------------------------
+    # ------------------------------------------------------------------------
+    # model with an exogenous variable
+    } else { # 
 
-    exo_data_checked <- check_exo_ts_lgssm(temp_data = temp_data,
-                                           exo_data = exo_data)
+      exo_data_checked <- check_exo_ts_lgssm(temp_data = temp_data,
+                                             exo_data = exo_data)
     
-    if (!inherits(exo_data, "ts")) {
-      stop("temp_data must be a 'ts' object.")
-    }
+      if (!inherits(exo_data, "ts")) {
+        stop("temp_data must be a 'ts' object.")
+      }
     
-    if (frequency(exo_data) != freq) {
-      stop("frequency of exo_data must be same that of temp_data.")
-    }
+      if (frequency(exo_data) != freq) {
+        stop("frequency of exo_data must be same that of temp_data.")
+      }
     
-    if (is.null(colnames(exo_data))) {
-      stop("exo_data must have column name(s).")
-    }
+      if (is.null(colnames(exo_data))) {
+        stop("exo_data must have column name(s).")
+      }
     
-    exogenous_lab <- colnames(exo_data_checked)
-    exogenous_mat <- as.matrix(exo_data_checked)
+      exogenous_lab <- colnames(exo_data_checked)
+      exogenous_mat <- as.matrix(exo_data_checked)
 
 
-    ## ---- Model definition -----------------------------------------------
-    build_ssm <- SSModel(
-      H = NA,
-      y ~ exogenous_mat +
-        SSMtrend(
-          degree = 2,
-          Q = c(list(0), list(NA))
-        ) +
-        SSMseasonal(
-          sea.type = "dummy",
-          period = freq,
-          Q = NA
-        ) +
-        SSMarima(
-          ar = rep(0, ar_order),
-          d = 0,
-          Q = NA
-        )
-    )
+      ## ---- Model definition -----------------------------------------------
+      build_ssm <- SSModel(
+        H = NA,
+        y ~ exogenous_mat +
+          SSMtrend(
+            degree = 2,
+            Q = c(list(0), list(NA))
+          ) +
+          SSMseasonal(
+            sea.type = "dummy",
+            period = freq,
+            Q = NA
+          ) +
+          SSMarima(
+            ar = rep(0, ar_order),
+            d = 0,
+            Q = NA
+          )
+      )
   
 
-  ## ---- Parameter update function --------------------------------------
-    update_func <- function(pars, model) {
-      return(
-        SSModel(
-          H = exp(pars[H_idx]),
-          y ~ exogenous_mat + 
-            SSMtrend(degree = 2,
-                     Q = c(list(0), list(exp(pars[1])))) +
-            SSMseasonal(
-              sea.type = "dummy",
-              period = freq,
-              Q = exp(pars[2])) +
-            SSMarima(
-              ar = artransform(pars[ar_idx]),
-              d = 0,
-              Q = exp(pars[var_idx]))
+      ## ---- Parameter update function --------------------------------------
+      update_func <- function(pars, model) {
+        return(
+          SSModel(
+            H = exp(pars[H_idx]),
+            y ~ exogenous_mat + 
+              SSMtrend(degree = 2,
+                       Q = c(list(0), 
+                             list(exp(pars[1])))) +
+              SSMseasonal(
+                sea.type = "dummy",
+                period = freq,
+                Q = exp(pars[2])) +
+              SSMarima(
+                ar = artransform(pars[ar_idx]),
+                d = 0,
+                Q = exp(pars[var_idx]))
+          )
         )
-      )
-    }
-  }# close case when model with exogenous variable(s)
+      }
+    }# close case when model with exogenous variable(s)
 
     
-  ## ---- Optimization (two-step) ----------------------------------------
-  fit1 <- fitSSM(
-    build_ssm,
-    inits  = inits,
-    updatefn = update_func,
-    method = "Nelder-Mead",
-    control = list(maxit = maxit, reltol = reltol)
-  )
+    ## ---- Optimization (two-step) ----------------------------------------
+    fit1 <- fitSSM(
+      build_ssm,
+      inits  = inits,
+      updatefn = update_func,
+      method = "Nelder-Mead",
+      control = list(maxit = maxit, reltol = reltol)
+    )
     
-  fit2 <- fitSSM(
-    build_ssm,
-    inits  = fit1$optim.out$par,
-    updatefn = update_func,
-    method = "BFGS",
-    control = list(maxit = maxit, reltol = reltol)
-  )
+    fit2 <- fitSSM(
+      build_ssm,
+      inits  = fit1$optim.out$par,
+      updatefn = update_func,
+      method = "BFGS",
+      control = list(maxit = maxit, reltol = reltol)
+    )
     
-  ## ---- Kalman filtering & smoothing -----------------------------------
-  kfs <- KFS(
-    fit2$model,
-    filtering = c("state", "mean"),
-    smoothing = c("state", "mean", "disturbance")
-  )
+    ## ---- Kalman filtering & smoothing -----------------------------------
+    kfs <- KFS(
+      fit2$model,
+      filtering = c("state", "mean"),
+      smoothing = c("state", "mean", "disturbance")
+    )
 
 
-  ## ---- Output ---------------------------------------------------------
-  out <- list(
-    model = fit2$model,
-    fit   = fit2,
-    kfs   = kfs,
-    data_temp  = temp_data,
-    data_exogenous = exo_data,
-    ar_order = ar_order,
-    call  = match.call()
-  )
+    ## ---- Output ---------------------------------------------------------
+    out <- list(
+      model = fit2$model,
+      fit   = fit2,
+      kfs   = kfs,
+      data_temp  = temp_data,
+      data_exogenous = exo_data,
+      ar_order = ar_order,
+      call  = match.call()
+    )
 
-  class(out) <- "ThermoSSM"
-  return(out)
-#}
-},
-error = function(e) {
-  NA
-}
-)
+    class(out) <- "ThermoSSM"
+    return(out)
+  },
+  error = function(e) {
+    message("Warning(s): NA is returned. ", e$message)
+    NA
+  }
+  )# close tryCatch
 }
 
 

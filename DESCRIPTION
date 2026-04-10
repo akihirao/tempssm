@@ -1,7 +1,7 @@
 Package: ThermoSSM
 Type: Package
 Title: Linear Gaussian State-Space Analysis of Temperature Time Series
-Version: 0.1.1
+Version: 0.1.2
 Authors@R: c(
     person(
       given="Akira", family="Hirao",
@@ -21,8 +21,6 @@ Imports:
     zoo,
     ggplot2 (>= 3.4.0),
     rlang   (>= 1.0.0),
-    vctrs   (>= 0.5.0),
-    cli,
     dplyr,
     readr,
     lubridate,
@@ -37,9 +35,11 @@ Suggests:
     knitr,
     rmarkdown,
     purrr,
+    vctrs   (>= 0.5.0),
+    cli,
     cowplot,
-    Future,
-    parallel
+    future,
+    parallelly
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Depends: 

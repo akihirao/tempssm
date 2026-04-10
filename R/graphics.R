@@ -74,7 +74,7 @@ plot_level_ci <- function(res, ci_level=0.95){
     labs(title=paste0("Level component (grey area: ",ci_lab,")"),
        x="Year", y="Temperature") +
     geom_line(aes(y=level), size = 1.2) +
-    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3)
+    geom_ribbon(aes(ymin = .data$lwr, ymax = .data$upr), alpha = 0.3)
 
   return(level_plot)
 
@@ -123,7 +123,7 @@ plot_drift_ci <- function(res, ci_level=0.95){
       subtitle= sub_lab,
        x="Year", y="Drift") +
     geom_line(aes(y=drift), size = 1.2) +
-    geom_ribbon(aes(ymin = lwr, ymax = upr), alpha = 0.3) +
+    geom_ribbon(aes(ymin = .data$lwr, ymax = .data$upr), alpha = 0.3) +
     geom_hline(yintercept=0, linetype="dashed") 
 
   return(drift_plot)

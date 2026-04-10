@@ -265,7 +265,7 @@ exec_tsCV <- function(folds,idx=1){
     train_model <- res_train$model
     train_pars <- res_train$fit$optim.out$par
     
-    predict_temp_ts <- predict(
+    predict_temp_ts <- stats::predict(
       train_model,
       newdata = SSModel(
         H = exp(train_pars[6]),
@@ -299,7 +299,7 @@ exec_tsCV <- function(folds,idx=1){
     
     exogenous_mat <- as.matrix(exo_test)
     
-    predict_temp_ts <- predict(
+    predict_temp_ts <- stats::predict(
       train_model,
       newdata = SSModel(
         H = exp(train_pars[6]),
@@ -366,7 +366,7 @@ rolling_origin_tsCV <- function(folds, fold_ids = NULL){
     fold_ids <- seq_len(num_fold)
   }
   
-  exec_fun <- ThermoSSM:::exec_tsCV  # Importance!
+  exec_fun <- ThermoSSM::exec_tsCV  # Importance!
   
   # ---- safety check ----
   if (!is.numeric(fold_ids) || any(fold_ids < 1) || any(fold_ids > num_fold)) {
@@ -374,7 +374,7 @@ rolling_origin_tsCV <- function(folds, fold_ids = NULL){
   }
   
   ts_CV_list <- future.apply::future_lapply(
-    setNames(fold_ids, paste0("fold", fold_ids)),
+    stats::setNames(fold_ids, paste0("fold", fold_ids)),
     function(i){
       exec_fun(folds, idx = i)
     },

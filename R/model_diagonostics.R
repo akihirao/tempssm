@@ -33,24 +33,24 @@ wrapper_checkresiduals <- function(res,
   forecast::checkresiduals(std_obs_resid,
                            test=FALSE)
   
-  p <- recordPlot()
+  p <- grDevices::recordPlot()
   
   if (plot_resid_save) {
-    png(resid_file_name, width = 600, height = 400)
-    replayPlot(p)
-    dev.off()
+    grDevices::png(resid_file_name, width = 600, height = 400)
+    grDevices::replayPlot(p)
+    grDevices::dev.off()
   }
 
   if (plot_qq_save) {
-    png(qq_file_name, width = 600, height = 400)
-    qqnorm(std_obs_resid)
-    dev.off()
+    grDevices::png(qq_file_name, width = 600, height = 400)
+    stats::qqnorm(std_obs_resid)
+    grDevices::dev.off()
   }
   
   # ---- Statistical tests ----
   
   # Ljung–Box test
-  Ljung_Box_test <- Box.test(std_obs_resid,
+  Ljung_Box_test <- stats::Box.test(std_obs_resid,
                              type = "Ljung-Box",
                              lag = min(2*freq, n_ts/5))
   # 

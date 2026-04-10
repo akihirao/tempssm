@@ -71,14 +71,14 @@ plot.ThermoSSM <- function(
       df$upr <- ci_obj$level[,"upr"]
     }
 
-    p <- ggplot2::ggplot(df, ggplot2::aes(x = time, y = value)) +
+    p <- ggplot2::ggplot(df, ggplot2::aes(x = time, y = .data$value)) +
       ggplot2::geom_line(linewidth = 1.1) +
       ggplot2::labs(title = "Level component", x = "Time", y = "Temperature (\u00B0C)")
 
     if (ci) {
       p <- p +
         ggplot2::geom_ribbon(
-          ggplot2::aes(ymin = lwr, ymax = upr),
+          ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
           alpha = 0.3#, fill = "grey"
         )
     }
@@ -99,14 +99,14 @@ plot.ThermoSSM <- function(
       df$upr <- ci_obj$slope[,"upr"]
     }
 
-    p <- ggplot2::ggplot(df, ggplot2::aes(x = time, y = value)) +
+    p <- ggplot2::ggplot(df, ggplot2::aes(x = time, y = .data$value)) +
       ggplot2::geom_line(linewidth = 1.1) +
       ggplot2::labs(title = "Drift (slope) component", x = "Time", y = drift_plot_y_lab)
 
     if (ci) {
       p <- p +
         ggplot2::geom_ribbon(
-          ggplot2::aes(ymin = lwr, ymax = upr),
+          ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
           alpha = 0.3#, fill = "grey70"
         )
     }
