@@ -443,7 +443,7 @@ extract_AIC <- function(res) {
     stop("Input must be a ThermoSSM object.", call. = FALSE)
   }
 
-  k <- length(res$opt$par)
+  k <- length(res$fit$optim.out$par)
 
   # if the model includes exogenous variable(s)
   if (!is.null(res$data_exogenous)) {
