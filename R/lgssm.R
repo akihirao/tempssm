@@ -427,6 +427,38 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 
 
+#' Extract the Akaike Information Criterion (AIC)
+#'
+#' This function computes the Akaike Information Criterion (AIC)
+#' for a fitted \code{ThermoSSM} model.
+#'
+#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#'
+#' @return A numeric value representing the AIC of the fitted model.
+#'
+#' @export
+extract_AIC <- function(res) {
+
+  if (!inherits(res, "ThermoSSM")) {
+    stop("Input must be a ThermoSSM object.", call. = FALSE)
+  }
+
+  k <- length(res$opt$par)
+
+  # if the model includes exogenous variable(s)
+  if (!is.null(res$data_exogenous)) {
+    k <- k + ncol(res$data_exogenous)
+  }
+
+  loglik <- as.numeric(logLik(res$model))
+
+  AIC <- -2 * loglik + 2 * k
+
+  return(AIC)
+}
+
+
+
 #' Extract estimated parameters in the fitted models
 #'
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
@@ -434,7 +466,6 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' @return A \code{list} object of the estimated parameters.
 #'
 #' @export
-
 extract_param <- function(res){
   pars <- res$fit$optim.out$par
 
@@ -447,8 +478,6 @@ extract_param <- function(res){
               )
   return(params)
 }
-
-
 
 
 #' Extract coefficients of exogenous variables with confidence intervals
