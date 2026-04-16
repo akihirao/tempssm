@@ -80,7 +80,7 @@ lgssm <- function(temp_data,
   
     ar_idx <- 3:(2 + ar_order)
     var_idx <- 3 + ar_order
-    H_idx   <- 4 + ar_order
+    H_idx <- 4 + ar_order
   
     ## ---- Default maxit value -----------------------------------------  
     if (is.null(maxit)) {
@@ -467,15 +467,23 @@ extract_AIC <- function(res) {
 #'
 #' @export
 extract_param <- function(res){
+  
+  model <- res$model
   pars <- res$fit$optim.out$par
+  ar_order <- res$ar_order
 
-  params <- c(Q_trend  = exp(pars[1]), # process error for level component
-              Q_season = exp(pars[2]), # process error for seasonal component
-              AR1      = KFAS::artransform(pars[3:4])[1], # the AR(1) coefficient
-              AR2      = KFAS::artransform(pars[3:4])[2], # the AR(2) coefficient
-              Q_ar     = exp(pars[5]), # process error for AR
-              H        = exp(pars[6]) # observed error
-              )
+  ar_idx <- 3:(2 + ar_order)
+  var_idx <- 3 + ar_order
+  H_idx   <- 4 + ar_order
+
+  params <- list(
+    H = exp(pars[H_idx]), # observed error
+    Q_trend  = exp(pars[1]),# process error for level component
+    Q_season = exp(pars[2]), # process error for seasonal component
+    Q_ar = exp(pars[var_idx]),# process error for AR
+    ARs = KFAS::artransform(pars[ ar_idx])# the AR(s) coefficient
+    )
+
   return(params)
 }
 

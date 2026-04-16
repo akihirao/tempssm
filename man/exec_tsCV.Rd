@@ -4,12 +4,16 @@
 \alias{exec_tsCV}
 \title{Execute cross-validation of each of rolling-origin train/test data}
 \usage{
-exec_tsCV(folds, idx = 1)
+exec_tsCV(folds, idx = 1, ar_order_given)
 }
 \arguments{
 \item{folds}{A \code{list} of folds object returned by \code{ts_cv_folds()}.}
 
 \item{idx}{A \code{vector} of sequential IDs of folds for ts cross-validation.}
+
+\item{ar_order_given}{Integer specifying the order of the autoregressive (AR)
+component in the error structure (e.g., 2 for AR(2), 3 for AR(3))
+for applying \code{lgssm()}.}
 }
 \value{
 A \code{list} object of ts cross-validation output

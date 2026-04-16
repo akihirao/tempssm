@@ -229,13 +229,29 @@ scale_Q <- function(train_ts, method = c("naive", "seasonal")) {
 #'
 #' This function predict with using test data for in ts cross-validation.
 #' @param folds A \code{list} of folds object returned by \code{ts_cv_folds()}.
+#'
 #' @param idx A \code{vector} of sequential IDs of folds for ts cross-validation.
+#'
+#' @param ar_order_given Integer specifying the order of the autoregressive (AR)
+#' component in the error structure (e.g., 2 for AR(2), 3 for AR(3))
+#' for applying \code{lgssm()}.
 #' 
 #' @return A \code{list} object of ts cross-validation output
 #' 
 #' @export
-exec_tsCV <- function(folds,idx=1){
+exec_tsCV <- function(
+  folds,
+  idx=1,
+  ar_order_given){
   
+  if(is.na(ar_order_given)){
+    stop(paste("Number of order of autoregressive component should be given."))
+  }
+
+  ar_idx <- 3:(2 + ar_order_given)
+  var_idx <- 3 + ar_order_given
+  H_idx <- 4 + ar_order_given
+
   exo_judge <- unlist(lapply(folds, `[[`, "exo_train_ts"))
   
   target_fold <- folds[[idx]]
@@ -260,7 +276,8 @@ exec_tsCV <- function(folds,idx=1){
   if(is.null(exo_judge)){ # if data-set excludes exogenous variables
     
     res_train <- lgssm(temp_data = temp_train_mts,
-                       exo_data = NULL)
+                       exo_data = NULL,
+                       ar_order = ar_order_given)
     
     train_model <- res_train$model
     train_pars <- res_train$fit$optim.out$par
@@ -268,16 +285,16 @@ exec_tsCV <- function(folds,idx=1){
     predict_temp_ts <- stats::predict(
       train_model,
       newdata = SSModel(
-        H = exp(train_pars[6]),
+        H = exp(train_pars[H_idx]),
         rep(NA, nrow(temp_test_mts)) ~ #nrow(ts_object) 
           SSMtrend(degree = 2,
                    Q = c(list(0), list(exp(train_pars[1])))) + 
           SSMseasonal(sea.type = "dummy",
                       period = freq,
                       Q = exp(train_pars[2])) +
-          SSMarima(ar = artransform(train_pars[3:4]),
+          SSMarima(ar = artransform(train_pars[ar_idx]),
                    d = 0,
-                   Q = exp(train_pars[5])
+                   Q = exp(train_pars[var_idx])
           ), data = temp_test_mts
       )
     )
@@ -292,7 +309,8 @@ exec_tsCV <- function(folds,idx=1){
     colnames(temp_exo_test) <- c("Temp",colnames(exo_test))
     
     res_train<- lgssm(temp_data = temp_train_mts,
-                      exo_data = exo_train)
+                      exo_data = exo_train,
+                      ar_order = ar_order_given)
     
     train_model <- res_train$model
     train_pars <- res_train$fit$optim.out$par
@@ -302,16 +320,16 @@ exec_tsCV <- function(folds,idx=1){
     predict_temp_ts <- stats::predict(
       train_model,
       newdata = SSModel(
-        H = exp(train_pars[6]),
+        H = exp(train_pars[H_idx]),
         rep(NA, nrow(temp_exo_test)) ~ exogenous_mat + 
           SSMtrend(degree = 2,
                    Q = c(list(0), list(exp(train_pars[1])))) + 
           SSMseasonal(sea.type = "dummy",
                       period = freq,
                       Q = exp(train_pars[2])) +
-          SSMarima(ar = artransform(train_pars[3:4]),
+          SSMarima(ar = artransform(train_pars[ar_idx]),
                    d = 0,
-                   Q = exp(train_pars[5])
+                   Q = exp(train_pars[var_idx])
           ), data = temp_exo_test
       )
     )
@@ -352,13 +370,19 @@ exec_tsCV <- function(folds,idx=1){
 #' This function performs prediction using test data in time series cross-validation.
 #'
 #' @importFrom ThermoSSM exec_tsCV
+#'
 #' @param folds A \code{list} of fold objects returned by \code{ts_cv_folds()}.
+#'
 #' @param fold_ids An integer vector specifying which folds to run.
 #'   Default is all folds.
 #'
+#' @param ar_order Integer specifying the order of the autoregressive (AR)
+#' component in the error structure (e.g., 2 for AR(2), 3 for AR(3))
+#' for applying \code{lgssm()}. Defaults to 2.
+#'
 #' @return A \code{list} object of ts cross-validation output.
 #' @export
-rolling_origin_tsCV <- function(folds, fold_ids = NULL){
+rolling_origin_tsCV <- function(folds, fold_ids = NULL,ar_order){
   
   num_fold <- length(folds)
   
@@ -376,7 +400,11 @@ rolling_origin_tsCV <- function(folds, fold_ids = NULL){
   ts_CV_list <- future.apply::future_lapply(
     stats::setNames(fold_ids, paste0("fold", fold_ids)),
     function(i){
-      exec_fun(folds, idx = i)
+      exec_fun(
+        folds,
+        idx = i,
+        ar_order_given = ar_order
+        )
     },
     future.seed = TRUE,
     future.packages = c("ThermoSSM","KFAS"),

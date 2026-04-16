@@ -41,7 +41,7 @@ summary.ThermoSSM <- function(object, ...) {
     AIC         = -2 * as.numeric(logLik(model)) + 2 * k,
     convergence = opt$convergence == 0,
     variances   = list(
-      H = model$H,
+      H = exp(pars[H_idx]),
       Q_trend = exp(pars[1]),
       Q_season = exp(pars[2]),
       Q_ar = exp(pars[var_idx])

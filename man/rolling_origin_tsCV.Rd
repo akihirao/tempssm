@@ -4,13 +4,17 @@
 \alias{rolling_origin_tsCV}
 \title{Prediction based on fitted model for time series cross-validation}
 \usage{
-rolling_origin_tsCV(folds, fold_ids = NULL)
+rolling_origin_tsCV(folds, fold_ids = NULL, ar_order)
 }
 \arguments{
 \item{folds}{A \code{list} of fold objects returned by \code{ts_cv_folds()}.}
 
 \item{fold_ids}{An integer vector specifying which folds to run.
 Default is all folds.}
+
+\item{ar_order}{Integer specifying the order of the autoregressive (AR)
+component in the error structure (e.g., 2 for AR(2), 3 for AR(3))
+for applying \code{lgssm()}. Defaults to 2.}
 }
 \value{
 A \code{list} object of ts cross-validation output.
