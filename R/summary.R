@@ -107,16 +107,11 @@ print.summary.ThermoSSM <- function(x, ...) {
   cat("\n")
   cat("Components of auto-regression:\n")
   cat("  Order of AR:", x$coef_ar$AR_order, "\n")
-  if (!is.null(x$coef_ar$AR_coef[1])) {
-    cat("  Coefficient of AR1:", x$coef_ar$AR_coef[1], "\n")
+  for(i in 1:x$coef_ar$AR_order){
+    if (!is.null(x$coef_ar$AR_coef[i])) {
+      cat(paste0("  Coefficient of AR",i,":"), x$coef_ar$AR_coef[i], "\n")
+    }
   }
-  if (!is.null(x$coef_ar$AR_coef[2])) {
-    cat("  Coefficient of AR2:", x$coef_ar$AR_coef[2], "\n")
-  }
-  if (!is.null(x$coef_ar$AR_coef[3])) {
-    cat("  Coefficient of AR3:", x$coef_ar$AR_coef[3], "\n")
-  }
-
 
   if (!is.null(x$exogenous_coef)) {
   cat("Exogenous variable\t",x$exogenous_coef$Variable, "\n")
