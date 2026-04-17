@@ -18,10 +18,22 @@ summary.ThermoSSM <- function(object, ...) {
   opt   <- object$fit$optim.out
   pars <- object$fit$optim.out$par
   ar_order <- object$ar_order
+  use_seasonal <- object$use_seasonal
 
-  ar_idx <- 3:(2 + ar_order)
-  var_idx <- 3 + ar_order
-  H_idx   <- 4 + ar_order
+  if(use_seasonal){
+    ar_idx <- 3:(2 + ar_order)
+    var_idx <- 3 + ar_order
+    H_idx   <- 4 + ar_order
+    
+    Q_season_est <- exp(pars[2])
+    
+  }else{
+    ar_idx <- 2:(1 + ar_order)
+    var_idx <- 2 + ar_order
+    H_idx   <- 3 + ar_order
+    
+    Q_season_est <- NA
+  }
 
   exo_data <- object$data_exogenous
 
@@ -43,7 +55,7 @@ summary.ThermoSSM <- function(object, ...) {
     variances   = list(
       H = exp(pars[H_idx]),
       Q_trend = exp(pars[1]),
-      Q_season = exp(pars[2]),
+      Q_season = Q_season_est,    
       Q_ar = exp(pars[var_idx])
     ),
     coef_ar = list(

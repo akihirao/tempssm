@@ -42,6 +42,9 @@ plot.ThermoSSM <- function(
     stop("Object must be of class 'ThermoSSM'.", call. = FALSE)
   }
 
+  use_seasonal <- x$use_seasonal
+
+
   freq <- frequency(x$data_temp)
   if(freq==12){
     drift_plot_y_lab <- "Temperature (\u00B0C/month)"
@@ -116,9 +119,13 @@ plot.ThermoSSM <- function(
 
   ## ---- seasonal ----
   if ("seasonal" %in% components) {
-    plots$seasonal <-
-      forecast::autoplot(alpha_hat[, "sea_dummy1"]) +
-      ggplot2::labs(title = "Seasonal component", x = "Time", y = "Temperature (\u00B0C)")
+    if(use_seasonal){
+      plots$seasonal <-
+        forecast::autoplot(alpha_hat[, "sea_dummy1"]) +
+        ggplot2::labs(title = "Seasonal component", x = "Time", y = "Temperature (\u00B0C)")
+    }else{
+      warning("Seasonal component is not included in the model.", call. = FALSE)
+    }
   }
 
   ## ---- AR ----

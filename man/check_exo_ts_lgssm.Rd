@@ -5,6 +5,8 @@
 \title{Check ts object of exogenous variable(s) for applying \code{lgssm()}}
 \usage{
 check_exo_ts_lgssm(temp_data, exo_data)
+
+check_exo_ts_lgssm(temp_data, exo_data)
 }
 \arguments{
 \item{temp_data}{A temperature time series of class \code{ts}.
@@ -18,7 +20,11 @@ The default is \code{NULL} when fitting a model without exogenous variables.}
 }
 \value{
 A univariate or multivairate \code{ts} object.
+
+A univariate or multivairate \code{ts} object.
 }
 \description{
+Check ts object of exogenous variable(s) for applying \code{lgssm()}
+
 Check ts object of exogenous variable(s) for applying \code{lgssm()}
 }
