@@ -688,40 +688,6 @@ check_exo_ts_lgssm <- function(temp_data, exo_data) {
 
 
 
-#' Check ts object of temperature time series for applying \code{lgssm()}
-#'
-#' @param temp_data A temperature time series of class \code{ts}.
-#'   The series can have any arbitrary frequency of 2 or higher.
-#'   For example, a frequency of 12 represents a monthly \code{ts} object.
-#'
-#' @return A univariate \code{ts} object.
-#'
-#' @export
-check_temp_ts_lgssm <- function(temp_data) {
-  
-  if (!inherits(temp_data, "ts")) {
-    stop("The object 'temp_data' must be a 'ts' object.",
-         call. = FALSE)
-  }
-  
-  freq <- frequency(temp_data)
-  if (freq <= 1) {
-    stop("The procedure requires a ts object with frequency > 1.",
-         call. = FALSE)
-  }
-  
-  if (!is.null(dim(temp_data)) && NCOL(temp_data) != 1) {
-    stop("The object 'temp_data' must be univariate.",
-         call. = FALSE)
-  }
-  
-  message("The ts object is univariate with frequency ", freq, ".")
-  
-  return(temp_data)
-}
-
-
-
 #' Check ts object of exogenous variable(s) for applying \code{lgssm()}
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
@@ -853,6 +819,50 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 
 
+#' Extract the smoothed seasonal component as a time series
+#'
+#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param ci Logical; should confidence intervals be returned? (default: FALSE)
+#' @param ci_level Confidence level for intervals (default: 0.95).
+#'
+#' @return
+#' A univariate \code{ts} object of the smoothed level component.
+#' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
+#' \code{level}, \code{lwr}, and \code{upr} is returned.
+#'
+#' @export
+extract_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
+
+  use_seasonal <- res$use_seasonal
+
+  if (!inherits(res, "ThermoSSM")) {
+    stop("Input must be a ThermoSSM object.", call. = FALSE)
+  }
+
+  if (!use_seasonal) {
+    stop("Seasonal component is not included in this model.", call. = FALSE)
+  }
+
+  if (is.null(res$kfs$alphahat) || !"sea_dummy1" %in% colnames(res$kfs$alphahat)) {
+    stop("Seasonal component not found in the smoothing results.", call. = FALSE)
+  }
+
+  season_ts <- res$kfs$alphahat[, "sea_dummy1"]
+  
+  if(ci){
+    ci_obj <- confint(res$kfs, level = ci_level)
+
+    season_ts <- cbind(
+      season = season_ts,
+      lwr=ci_obj$ea_dummy1[,"lwr"],
+      upr=ci_obj$ea_dummy1[,"upr"]
+      )
+  }
+  return(season_ts)
+}
+
+
+
 
 #' Extract the Akaike Information Criterion (AIC)
 #'
@@ -894,21 +904,33 @@ extract_AIC <- function(res) {
 #'
 #' @export
 extract_param <- function(res){
-  
+
   model <- res$model
   pars <- res$fit$optim.out$par
   ar_order <- res$ar_order
+  use_seasonal <- res$use_seasonal
 
-  ar_idx <- 3:(2 + ar_order)
-  var_idx <- 3 + ar_order
-  H_idx   <- 4 + ar_order
+  if(use_seasonal){
+    ar_idx <- 3:(2 + ar_order)
+    var_idx <- 3 + ar_order
+    H_idx   <- 4 + ar_order
+
+    Q_season_est <- exp(pars[2])
+
+  }else{
+    ar_idx <- 2:(1 + ar_order)
+    var_idx <- 2 + ar_order
+    H_idx   <- 3 + ar_order
+
+    Q_season_est <- NA
+  }
 
   params <- list(
     H = exp(pars[H_idx]), # observed error
     Q_trend  = exp(pars[1]),# process error for level component
-    Q_season = exp(pars[2]), # process error for seasonal component
+    Q_season = Q_season_est, # process error for seasonal component
     Q_ar = exp(pars[var_idx]),# process error for AR
-    ARs = KFAS::artransform(pars[ ar_idx])# the AR(s) coefficient
+    ARs = KFAS::artransform(pars[ar_idx])# the AR(s) coefficient
     )
 
   return(params)

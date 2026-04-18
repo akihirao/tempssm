@@ -5,8 +5,6 @@
 \title{Check ts object of temperature time series for applying \code{lgssm()}}
 \usage{
 check_temp_ts_lgssm(temp_data)
-
-check_temp_ts_lgssm(temp_data)
 }
 \arguments{
 \item{temp_data}{A temperature time series of class \code{ts}.
@@ -15,11 +13,7 @@ For example, a frequency of 12 represents a monthly \code{ts} object.}
 }
 \value{
 A univariate \code{ts} object.
-
-A univariate \code{ts} object.
 }
 \description{
-Check ts object of temperature time series for applying \code{lgssm()}
-
 Check ts object of temperature time series for applying \code{lgssm()}
 }
