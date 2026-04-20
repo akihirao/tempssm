@@ -81,15 +81,37 @@ plot(plot_temp_fuji)
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Generate temperature anomalies
-example_anomaly <- ThermoSSM::monthly_anomaly(fuji_temp)
+fuji_anomaly_ts <- ThermoSSM::monthly_anomaly(fuji_temp)
 
-monthly_example_anomaly_plot <- forecast::autoplot(example_anomaly) +
-  labs(y = expression(Temperature~(degree*C)), 
-       x = "Time") +
-  ggtitle("Temperature anomaliese") +
+fuji_anomaly_tidy <- tibble(time=time(fuji_anomaly_ts),
+                           anomaly = as.numeric(fuji_anomaly_ts)) %>%
+  mutate(sign = ifelse(anomaly >= 0, "Positive","Negative"))
+
+
+plt_fuji_anomaly_ts <- ggplot() +
+  geom_col(data = fuji_anomaly_tidy,
+           aes(x = time, y = anomaly, fill = sign),
+           width = 0.8,alpha=0.2) +
+  geom_hline(yintercept = 0, color = "black") +
+  scale_fill_manual(
+    values = c(
+      "Positive"  = "firebrick",
+      "Negative" = "steelblue"
+    )
+  ) +
+  geom_line(data = fuji_anomaly_tidy,
+            aes(x = time, y = anomaly, fill=""), 
+            color="black",alpha = 0.5,
+            linewidth = 0.5) +
+  guides(fill = "none") +
+  labs(
+    y = expression(Temperature~(degree*C)), 
+    x = "Year"
+  )  +
   theme_classic()
-  
-plot(monthly_example_anomaly_plot)
+
+
+plot(plt_fuji_anomaly_ts)
 ```
 
 ## Plotting Monthly Seasonal Cycle
@@ -125,6 +147,13 @@ plot(plt_monthly_seasonal_cycle_fuji)
 # a model with a first-order autoregressive component
 res <- lgssm(fuji_temp,ar_order=1) 
 summary(res)
+
+res_ar2 <- lgssm(fuji_temp,ar_order=2) 
+summary(res_ar2)
+
+res_ar3 <- lgssm(fuji_temp,ar_order=3) 
+summary(res_ar3)
+
 ```
 
 ## Plotting Level, Drift, Seasonal, and Auto-Regressive Components
@@ -299,46 +328,20 @@ cowplot::plot_grid(plt_baba_exo_distance,
 ## Applying a Linear Gaussian State-Space Model without exogenous variables
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res_baba_without_ar1 <- lgssm(baba_temp_ts,ar_order=1) 
-summary(res_baba_without_ar1)
-res_baba_without_ar1_AIC <- extract_AIC(res_baba_without_ar1)
-plot(res_baba_without_ar1)
-
-res_baba_without_ar2 <- lgssm(baba_temp_ts,ar_order=2) 
-summary(res_baba_without_ar2)
-res_baba_without_ar2_AIC <- extract_AIC(res_baba_without_ar2)
-plot(res_baba_without_ar2)
-
-res_baba_without_ar3 <- lgssm(baba_temp_ts,ar_order=3) 
-summary(res_baba_without_ar3)
-res_baba_without_ar3_AIC <- extract_AIC(res_baba_without_ar3)
-plot(res_baba_without_ar3)
-
+res_baba_without <- lgssm(baba_temp_ts) 
+summary(res_baba_without)
+res_baba_without_AIC <- extract_AIC(res_baba_without)
+plot(res_baba_without)
 ```
 
 ## Applying a Linear Gaussian State-Space Model with exogenous variables
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res_baba_with_ar1 <- lgssm(temp_data=baba_temp_ts,
-                           exo_data=baba_exo_ts,
-                           ar_order = 1) 
-summary(res_baba_with_ar1)
-res_baba_with_ar1_AIC <- extract_AIC(res_baba_with_ar1)
-plot(res_baba_with_ar1)
-
-res_baba_with_ar2 <- lgssm(temp_data=baba_temp_ts,
-                           exo_data=baba_exo_ts,
-                           ar_order = 2) 
-summary(res_baba_with_ar2)
-res_baba_with_ar2_AIC <- extract_AIC(res_baba_with_ar2)
-plot(res_baba_with_ar2)
-
-res_baba_with_ar3 <- lgssm(temp_data=baba_temp_ts,
-                           exo_data=baba_exo_ts,
-                           ar_order = 3) 
-summary(res_baba_with_ar3)
-res_baba_with_ar3_AIC <- extract_AIC(res_baba_with_ar3)
-plot(res_baba_with_ar3)
+res_baba_with <- lgssm(temp_data=baba_temp_ts,
+                       exo_data=baba_exo_ts) 
+summary(res_baba_with)
+res_baba_with_AIC <- extract_AIC(res_baba_with)
+plot(res_baba_with)
 ```
 
 ## Model comparison based on AICs
@@ -346,22 +349,8 @@ plot(res_baba_with_ar3)
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
 models_AICs <- tibble(
-  model=c(
-  "model_without_ar1",
-  "model_without_ar2",
-  "model_without_ar3",
-  "model_with_ar1",
-  "model_with_ar2",
-  "model_with_ar3"
-  ),
-  AIC=c(
-    res_baba_without_ar1_AIC,
-    res_baba_without_ar2_AIC,
-    res_baba_without_ar3_AIC,
-    res_baba_with_ar1_AIC,
-    res_baba_with_ar2_AIC,
-    res_baba_with_ar3_AIC
-  )
+  model=c("Without","With"),
+  AIC=c(res_baba_without_AIC,res_baba_with_AIC)
 )
 
 models_AICs %>% knitr::kable()
@@ -459,82 +448,6 @@ cowplot::plot_grid(plot_MAE,plot_MAPE,plot_MASE_naive,plot_MASE_snaive,nrow=1)
 
 # Appendix: Example Data and the `sst_jma2ts()` Function
 
-## Example Data 2: Monthly air temperature at Mt. Akadake, Hokkaido, Japant
-## Duration: August 2010 to August 2023
-## The data originated from: https://www.biodic.go.jp/moni1000/findings/data/index.html. 
-## The ThermoSSM package provides the file "example_monthly_temp.csv", containging example data. Format of the csv file is as follows: 
-
-```text
-2010,8,13.6
-2010,9,6.8
-2010,10,0.2
-...
-```
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
-example_temp <- readr::read_csv(example_csv_path)
-head(example_temp)
-
-
-# Read and convert a monthly temperature CSV file to a ts object
-MtAkadake_ts <- monthly_temp_csv2ts(example_csv_path)
-head(MtAkadake_ts)
-
-frequency(MtAkadake_ts)
-start(MtAkadake_ts)
-end(MtAkadake_ts)
-
-# Months at the beginning and end of the observation period with insufficient observation days are filtered out.”
-MtAkadake_ts　<- window(MtAkadake_ts,
-                       start=c(2010,9),
-                       end=c(2023,7))
-
-# Perform linear Gaussian state-space modelling
-res_MtAkadake <- lgssm(MtAkadake_ts, ar_order=1)
-summary(res_MtAkadake)
-plot(res_MtAkadake)
-```
-
-## Example Data 3: Daily sea-surface temperature off the southern coast of Ibaraki Prefecture, Japan
-### Duration: January 1982 to December 2025
-### This dataset consists of publicly available daily sea-surface temperature data released by the Japan
-### Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-# A zoo object of daily sea-surface temperature (SST)
-# off the southern coast of Ibaraki Prefecture, Japan
-data(ibaraki_sst) 
-head(ibaraki_sst)
-
-# Convert the daily zoo object to a monthly ts object
-monthly_ibaraki_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(ibaraki_sst)
-head(monthly_ibaraki_sst_ts)
-
-# Converting from daily zoo object to monthly ts object
-monthly_ibaraki_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(ibaraki_sst)
-head(monthly_ibaraki_sst_ts)
-
-# Perform linear Gaussian state-space modelling with AR1
-res_ibaraki_sst_ar1 <- lgssm(monthly_ibaraki_sst_ts,ar_order = 1)
-summary(res_ibaraki_sst_ar1)
-plot(res_ibaraki_sst_ar1)
-
-# Perform linear Gaussian state-space modelling with AR2
-res_ibaraki_sst_ar2 <- lgssm(monthly_ibaraki_sst_ts,ar_order = 2)
-summary(res_ibaraki_sst_ar2)
-plot(res_ibaraki_sst_ar2)
-
-# Perform linear Gaussian state-space modelling with AR3
-res_ibaraki_sst_ar3 <- lgssm(monthly_ibaraki_sst_ts,ar_order = 3)
-summary(res_ibaraki_sst_ar3)
-plot(res_ibaraki_sst_ar3)
-
-# Perform linear Gaussian state-space modelling with AR4
-res_ibaraki_sst_ar4 <- lgssm(monthly_ibaraki_sst_ts,ar_order = 4)
-summary(res_ibaraki_sst_ar4)
-plot(res_ibaraki_sst_ar4)
-```
 
 ## Utility Function: sst_jma2ts()
 

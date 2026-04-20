@@ -809,7 +809,7 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   ci_obj <- confint(res$kfs, level = ci_level)
 
   drift_ts <- cbind(
-    level = drift_ts,
+    drift = drift_ts,
     lwr=ci_obj$slope[,"lwr"],
     upr=ci_obj$slope[,"upr"]
     )

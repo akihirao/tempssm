@@ -1,4 +1,3 @@
-
 #' Plot estimated components of a ThermoSSM object
 #'
 #' @param x An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
