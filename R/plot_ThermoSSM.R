@@ -18,7 +18,7 @@
 #' Note that these confidence intervals quantify uncertainty in the latent
 #' state estimates conditional on the observed data, and should not be
 #' interpreted as prediction intervals for future observations.
-#' 
+#'
 #' @param ci_level Confidence level for intervals (default 0.95).
 #' @param layout Layout of plots: \code{"grid"} or \code{"list"}.
 #' @param ... Further arguments (currently unused).
@@ -43,13 +43,8 @@ plot.ThermoSSM <- function(
 
   use_seasonal <- x$use_seasonal
 
-
   freq <- frequency(x$data_temp)
-  if(freq==12){
-    drift_plot_y_lab <- "Temperature (\u00B0C/month)"
-  }else{
-    drift_plot_y_lab <- "Temperature (\u00B0C/unit)"
-  }
+
 
   alpha_hat <- x$kfs$alphahat
   time_index <- time(alpha_hat)
@@ -93,17 +88,17 @@ plot.ThermoSSM <- function(
 
     df <- tibble::tibble(
       time  = time_index,
-      value = as.numeric(alpha_hat[, "slope"])
+      value = as.numeric(alpha_hat[, "slope"])*freq
     )
 
     if (ci) {
-      df$lwr <- ci_obj$slope[,"lwr"]
-      df$upr <- ci_obj$slope[,"upr"]
+      df$lwr <- ci_obj$slope[,"lwr"]*freq
+      df$upr <- ci_obj$slope[,"upr"]*freq
     }
 
     p <- ggplot2::ggplot(df, ggplot2::aes(x = time, y = .data$value)) +
       ggplot2::geom_line(linewidth = 1.1) +
-      ggplot2::labs(title = "Drift (slope) component", x = "Time", y = drift_plot_y_lab)
+      ggplot2::labs(title = "Drift (slope) component", x = "Time", y = "Temperature (\u00B0C/year)")
 
     if (ci) {
       p <- p +

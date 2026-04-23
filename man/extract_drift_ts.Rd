@@ -14,10 +14,17 @@ extract_drift_ts(res, ci = FALSE, ci_level = 0.95)
 \item{ci_level}{Confidence level for intervals (default: 0.95).}
 }
 \value{
-A univariate \code{ts} object of the smoothed drift component.
+A univariate \code{ts} object of the smoothed drift component (Celsius per year).
 If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 \code{level}, \code{lwr}, and \code{upr} is returned.
 }
 \description{
 Extract the smoothed drift (slope) component as a time series
+}
+\examples{
+\dontrun{
+data(niigata_sst)
+res <- lgssm_no_seasonal(niigata_sst)
+drift_ts <- extract_drift_ts(res)
+}
 }

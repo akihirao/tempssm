@@ -21,3 +21,10 @@ If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 \description{
 Extract the smoothed seasonal component as a time series
 }
+\examples{
+\dontrun{
+data(niigata_sst)
+res <- lgssm_no_seasonal(niigata_sst)
+season_ts <- extract_season_ts(res)
+}
+}

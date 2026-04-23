@@ -12,7 +12,7 @@
 #'
 #' @param ar_order Integer specifying the order of the autoregressive (AR) 
 #' component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
-#' Default to 2.
+#' Default to 1.
 #'
 #' @param use_seasonal Logical; Should seasonal component be considered. 
 #' Default to TRUE.
@@ -43,13 +43,13 @@
 #'
 #' @examples
 #' \dontrun{
-#' data(fuji_temp)
-#' res <- lgssm(fuji_temp)
+#' data(niigata_sst)
+#' res <- lgssm(niigata_sst)
 #' summary(res)
 #' }
 lgssm <- function(temp_data, 
                   exo_data = NULL,
-                  ar_order = 2,
+                  ar_order = 1,
                   use_seasonal = TRUE,
                   inits = NULL,
                   maxit = NULL,
@@ -97,7 +97,7 @@ lgssm <- function(temp_data,
 #'
 #' @param ar_order Integer specifying the order of the autoregressive (AR) 
 #' component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
-#' Defaults to 2.
+#' Defaults to 1.
 #'
 #' @param inits Optional numeric vector of initial parameter values.
 #'  If \code{NULL}, default values are used.
@@ -125,13 +125,13 @@ lgssm <- function(temp_data,
 #'
 #' @examples
 #' \dontrun{
-#' data(fuji_temp)
-#' res <- lgssm_seasonal(fuji_temp)
+#' data(niigata_sst)
+#' res <- lgssm_seasonal(niigata_sst)
 #' summary(res)
 #' }
 lgssm_seasonal <- function(temp_data, 
                   exo_data = NULL,
-                  ar_order = 2,
+                  ar_order = 1,
                   inits = NULL,
                   maxit = NULL,
                   reltol = NULL
@@ -367,7 +367,7 @@ lgssm_seasonal <- function(temp_data,
 #'
 #' @param ar_order Integer specifying the order of the autoregressive (AR) 
 #' component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
-#' Defaults to 2.
+#' Defaults to 1.
 #'
 #' @param inits Optional numeric vector of initial parameter values.
 #'  If \code{NULL}, default values are used.
@@ -377,7 +377,7 @@ lgssm_seasonal <- function(temp_data,
 #'
 #' @param reltol Optional numeric of reltol.
 #'  If \code{NULL}, default value of 1e-16 is used.
-#'  
+#'
 #' @return An object of class \code{"ThermoSSM"}, a named list containing:
 #' \describe{
 #'   \item{model}{Fitted \code{SSModel} object.}
@@ -395,13 +395,13 @@ lgssm_seasonal <- function(temp_data,
 #'
 #' @examples
 #' \dontrun{
-#' data(fuji_temp)
-#' res <- lgssm_no_seasonal(fuji_temp)
+#' data(niigata_sst)
+#' res <- lgssm_no_seasonal(niigata_sst)
 #' summary(res)
 #' }
 lgssm_no_seasonal <- function(temp_data,
                               exo_data = NULL,
-                              ar_order = 2,
+                              ar_order = 1,
                               inits = NULL,
                               maxit = NULL,
                               reltol = NULL
@@ -754,6 +754,12 @@ check_exo_ts_lgssm <- function(temp_data, exo_data) {
 #' \code{level}, \code{lwr}, and \code{upr} is returned.
 #'
 #' @export
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#' res <- lgssm_no_seasonal(niigata_sst)
+#'  level_ts <- extract_level_ts(res)
+#' }
 extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   if (!inherits(res, "ThermoSSM")) {
@@ -780,7 +786,6 @@ extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 
 
-
 #' Extract the smoothed drift (slope) component as a time series
 #'
 #' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
@@ -788,11 +793,17 @@ extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' @param ci_level Confidence level for intervals (default: 0.95).
 #'
 #' @return
-#' A univariate \code{ts} object of the smoothed drift component.
+#' A univariate \code{ts} object of the smoothed drift component (Celsius per year).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 #' \code{level}, \code{lwr}, and \code{upr} is returned.
 #'
 #' @export
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#' res <- lgssm_no_seasonal(niigata_sst)
+#' drift_ts <- extract_drift_ts(res)
+#' }
 extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   if (!inherits(res, "ThermoSSM")) {
@@ -803,16 +814,35 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     stop("Drift (slope) component not found in the smoothing results.", call. = FALSE)
   }
 
-  drift_ts <- res$kfs$alphahat[, "slope"]
+  # seasonal frequency of ts object
+  freq <- frequency(res$data_temp)
+
+  # scaling factor (e.g., 12 for monthly data → per year)
+  scale <- freq
+
+  drift_ts <- ts(
+    res$kfs$alphahat[, "slope"] * scale,
+    start = start(res$data_temp),
+    frequency = freq
+    )
 
   if(ci){
-  ci_obj <- confint(res$kfs, level = ci_level)
 
-  drift_ts <- cbind(
-    drift = drift_ts,
-    lwr=ci_obj$slope[,"lwr"],
-    upr=ci_obj$slope[,"upr"]
-    )
+    ci_obj <- confint(res$kfs, level = ci_level)
+  
+    if (!"slope" %in% names(ci_obj)) {
+      stop("Slope component not found in confidence intervals.", call. = FALSE)
+    }
+    
+    drift_ts <- ts(
+      cbind(
+        drift = drift_ts,
+        lwr=ci_obj$slope[,"lwr"] * scale,
+        upr=ci_obj$slope[,"upr"] * scale
+        ),
+      start = start(res$data_temp),
+      frequency = freq
+      )
   }
   return(drift_ts)
 }
@@ -831,6 +861,12 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' \code{level}, \code{lwr}, and \code{upr} is returned.
 #'
 #' @export
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#' res <- lgssm_no_seasonal(niigata_sst)
+#' season_ts <- extract_season_ts(res)
+#' }
 extract_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   use_seasonal <- res$use_seasonal
@@ -1010,7 +1046,6 @@ extract_exo_coef_ci <- function(res, level = 0.95) {
 }
 
 
-
 #' Assign a column label to a univariate \code{ts} object
 #'
 #' This function assigns a column name to a univariate time series object
@@ -1039,17 +1074,24 @@ label_ts_mono <- function(ts_in, label = "var") {
     stop("Input must be a ts object.", call. = FALSE)
   }
 
-  # ts がベクトルでも matrix でも安全に処理
+  # Safely handle both vector and matrix types of ts object
   if (!is.null(dim(ts_in)) && ncol(ts_in) != 1) {
     warning("A univariate ts object is expected.", call. = FALSE)
   }
 
+  x <- as.numeric(ts_in)
+
   ts_labeled <- ts(
-    matrix(as.numeric(ts_in), ncol = 1,
-           dimnames = list(NULL, label)),
+    matrix(
+      x,
+      ncol = 1,
+      dimnames = list(NULL, label)
+    ),
     start = start(ts_in),
     frequency = frequency(ts_in)
   )
 
   return(ts_labeled)
 }
+
+

@@ -7,7 +7,7 @@
 lgssm(
   temp_data,
   exo_data = NULL,
-  ar_order = 2,
+  ar_order = 1,
   use_seasonal = TRUE,
   inits = NULL,
   maxit = NULL,
@@ -27,7 +27,7 @@ The default is \code{NULL} when fitting a model without exogenous variables.}
 
 \item{ar_order}{Integer specifying the order of the autoregressive (AR) 
 component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
-Default to 2.}
+Default to 1.}
 
 \item{use_seasonal}{Logical; Should seasonal component be considered. 
 Default to TRUE.}
@@ -59,8 +59,8 @@ Wrapper function for fitting a linear Gaussian state-space model
 }
 \examples{
 \dontrun{
-data(fuji_temp)
-res <- lgssm(fuji_temp)
+data(niigata_sst)
+res <- lgssm(niigata_sst)
 summary(res)
 }
 }

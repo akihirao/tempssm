@@ -52,44 +52,47 @@ if (has_future) {
 
 ```
 
-# Practice I: Analysis of Monthly Air Temperature
+# Practice I: Analysis of Monthly Sea Surface Temperature (SST)
 
-## Example Data 1: Monthly air temperature at the summit of Mt. Fuji, Japan
-### Duration: July 1937 to December 2025
-### This dataset consists of publicly available monthly air temperature data released by the Japan 
-### Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
+## Loading dataset
+
+### Data: Monthly sea surface temperature (SST) off Niigata, Japan
+### Unit: Celsius
+### Duration: Feb 2002 to December 2023
+### This dataset provided by Japan Oceanographic Data Center (JODC), Hydrographic and Oceanographic Department, Japan Coast Guard. Original daily SST data were obtained from
+https://www.jodc.go.jp/jodcweb/JDOSS/index.html and aggregated into monthly means.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-data(fuji_temp) 
-# A ts object of monthly air temperature at the summit of Mt. Fuji, Japan
-head(fuji_temp)
+data(niigata_sst) # load a ts object of SST off Niigata
+
+head(niigata_sst)
 ```
 
 ## Plotting Monthly Time Series of Air Temperature
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plot_temp_fuji <- forecast::autoplot(fuji_temp) +
+plt_niigata_sst <- forecast::autoplot(niigata_sst) +
   labs(y = expression(Temperature~(degree*C)), 
        x = "Time") +
-  ggtitle("Monthly mean air temperature at the summit of Mt. Fuji, Japan") +
+  ggtitle("Monthly SST off Niigata, Japan") +
   theme_classic()
 
-plot(plot_temp_fuji)
+plot(plt_niigata_sst)
 # The example data includes missing observation values
 ```
 ## Plotting Time Series of Temperature Anomalies
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Generate temperature anomalies
-fuji_anomaly_ts <- ThermoSSM::monthly_anomaly(fuji_temp)
+niigata_sst_anomaly <- ThermoSSM::monthly_anomaly(niigata_sst)
 
-fuji_anomaly_tidy <- tibble(time=time(fuji_anomaly_ts),
-                           anomaly = as.numeric(fuji_anomaly_ts)) %>%
+niigata_sst_anomaly_tidy <- tibble(time=time(niigata_sst_anomaly),
+                           anomaly = as.numeric(niigata_sst_anomaly)) %>%
   mutate(sign = ifelse(anomaly >= 0, "Positive","Negative"))
 
 
-plt_fuji_anomaly_ts <- ggplot() +
-  geom_col(data = fuji_anomaly_tidy,
+plt_niigata_sst_anomaly <- ggplot() +
+  geom_col(data = niigata_sst_anomaly_tidy,
            aes(x = time, y = anomaly, fill = sign),
            width = 0.8,alpha=0.2) +
   geom_hline(yintercept = 0, color = "black") +
@@ -99,7 +102,7 @@ plt_fuji_anomaly_ts <- ggplot() +
       "Negative" = "steelblue"
     )
   ) +
-  geom_line(data = fuji_anomaly_tidy,
+  geom_line(data = niigata_sst_anomaly_tidy,
             aes(x = time, y = anomaly, fill=""), 
             color="black",alpha = 0.5,
             linewidth = 0.5) +
@@ -111,17 +114,17 @@ plt_fuji_anomaly_ts <- ggplot() +
   theme_classic()
 
 
-plot(plt_fuji_anomaly_ts)
+plot(plt_niigata_sst_anomaly)
 ```
 
 ## Plotting Monthly Seasonal Cycle
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-monthly_seasonal_cycle_fuji <- ThermoSSM::mean_seasonal_cycle(fuji_temp) 
-summary(monthly_seasonal_cycle_fuji)
+monthly_seasonal_cycle_niigata_sst <- ThermoSSM::mean_seasonal_cycle(niigata_sst) 
+summary(monthly_seasonal_cycle_niigata_sst)
 
-plt_monthly_seasonal_cycle_fuji <- ggplot(
-  data = monthly_seasonal_cycle_fuji,
+plt_monthly_seasonal_cycle_niigata_sst <- ggplot(
+  data = monthly_seasonal_cycle_niigata_sst,
   aes(x = Month, y = Temperature)
 ) +
   geom_point(size = 2) +
@@ -138,23 +141,40 @@ plt_monthly_seasonal_cycle_fuji <- ggplot(
   theme_classic()
 
 
-plot(plt_monthly_seasonal_cycle_fuji)
+plot(plt_monthly_seasonal_cycle_niigata_sst)
 ```
 
 ## Applying a Linear Gaussian State-Space Model
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # a model with a first-order autoregressive component
-res <- lgssm(fuji_temp,ar_order=1) 
+res <- lgssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
 summary(res)
 
-res_ar2 <- lgssm(fuji_temp,ar_order=2) 
+res_ar2 <- lgssm(niigata_sst,ar_order=2) 
 summary(res_ar2)
 
-res_ar3 <- lgssm(fuji_temp,ar_order=3) 
+res_ar3 <- lgssm(niigata_sst,ar_order=3) 
 summary(res_ar3)
 
 ```
+## Model selection based on AIC
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# Extract AIC
+AIC_ar1 <- extract_AIC(res)
+AIC_ar2 <- extract_AIC(res_ar2)
+AIC_ar3 <- extract_AIC(res_ar3)
+
+AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
+                        AIC = c(AIC_ar1,AIC_ar2,AIC_ar3)) %>% 
+  mutate(delta_AIC = AIC - min(AIC))
+
+AIC_table_res %>% knitr::kable()
+
+## AR1 model is better than the other models.
+```
+
 
 ## Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
@@ -185,23 +205,30 @@ level_ts <- ThermoSSM::extract_level_ts(res)
 #　Smoothing estimate of drift component
 drift_ts <- ThermoSSM::extract_drift_ts(res)
 
-# Average drift rate per year
-mean_drift_year <- mean(drift_ts) * 12
+# Average drift rate per year across the full period
+mean_drift_year <- mean(drift_ts) 
 print(mean_drift_year)
 
-# Average drift rate per year during 1950s
-drift_per_year_1950s <- window(drift_ts,
-                               start=c(1950,1),
-                               end=c(1959,12)
-                               ) %>%  mean()*12
-print(drift_per_year_1950s)
+# Average drift rate per year from Jan 2006 to Dec 2010
+ave_drift_2006_2010 <- window(drift_ts,
+                              start=c(2006,1),
+                               end=c(2010,12)
+                               ) %>%  mean()
+print(ave_drift_2006_2010)
 
-# Average drift rate per year during 2010s
-drift_per_year_2010s <- window(drift_ts,
-                               start=c(2010,1),
-                               end=c(2019,12)
-                               ) %>%  mean()*12
-print(drift_per_year_2010s)
+# Average drift rate per year from Jan 2011 to Dec 2015
+ave_drift_2011_2015 <- window(drift_ts,
+                              start=c(2011,1),
+                               end=c(2015,12)
+                               ) %>%  mean()
+print(ave_drift_2011_2015)
+
+# Average drift rate per year from Jan 2016 to Dec 2020
+ave_drift_2016_2020 <- window(drift_ts,
+                              start=c(2016,1),
+                               end=c(2020,12)
+                               ) %>%  mean()
+print(ave_drift_2016_2020)
 
 ```
 
@@ -232,95 +259,76 @@ plt_drift_ci <- plot(res,
 plot(plt_drift_ci)
 ```
 
-# Practice II: Analysis of Monthly Sea-Surface Temperature with Exogenous Variables
+# Practice II: Analysis of the Air Temperature with an exogenous variable
 
-## Dataset is originated from Baba et al. (2024)
+## Objective: Using the world’s longest temperature time series from a mountainous region—collected continuously since the mid-18th century along the northern edge of the German Alps—to isolate and verify the effect of of the North Atlantic Decadal Oscillation (NAO) as an exogenous covariate on long-term temperature variations.
 
-## Baba, S., Ishii, H., and Yoshiyama, T. (2024).  
-## Estimating sea temperature trends using a linear Gaussian state-space model in Jogashima, Kanagawa, Japan.
-## Bulletin of the Japanese Society of Fisheries Oceanography, 88, 190–199 (in Japanese with English abstruct)
-## https://doi.org/10.34423/jsfo.88.3_190
-## Supplementary code and test data are available on GitHub repository:  
-## https://github.com/logics-of-blue/sea-temperature-trend-jogashima
+## Loading Air Temperature at the Mountaton Station
 
-## loading dataset and converting ts object
+### Data: Monthly air temperature at Hohenpeissenberg Meteorological Observatory, German
+### Unit: Celsius
+### Duration: Jan 1781 to December 2025
+### This dataset is the longest record of air temperature observed in Mountain region across the world. Original dataset provided by Global Historical Climatology Network monthly (GHCNm) ver.4 was obtained from https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-baba_data <- readr::read_csv("https://raw.githubusercontent.com/logics-of-blue/sea-temperature-trend-jogashima/refs/heads/main/src/ssm-sample-data.csv")
+data(hmo_temp) # loading a ts object of air temperature at the HMO station
 
-# time        : Date (0.5-month resolution in the original study;
-#                     monthly data are used in this example)
-# temp        : Sea surface temperature
-# distance    : Distance to the Kuroshio Current axis
-# kuroshio_a  : Indicator variable taking 1 when the Kuroshio path is type A
-
-head(baba_data)
-
-# Add an indicator for autumn–winter Kuroshio type A conditions
-baba_data <- 
-  baba_data %>% 
-  mutate(winter = as.numeric(lubridate::month(as.Date(time)) %in% c(11, 12, 1, 2, 3)),
-         winter_a = winter * kuroshio_a)
-
-# winter    : Indicator variable taking 1 during autumn–winter months
-# winter_a  : Indicator variable taking 1 when it is autumn–winter
-#             and the Kuroshio path is type A
-head(baba_data)
-
-# Convert to a ts object
-# For data with a 0.5-month resolution, set frequency = 24
-baba_data_ts <- 
-  baba_data %>% 
-  dplyr::select(-time, -winter) %>%       # Remove the date column and winter indicator
-  ts(start = c(1998, 1), frequency = 12)  # Convert to a ts object
-                                          # (starting in January 1998, annual frequency)
-head(baba_data_ts)
+head(hmo_temp)
 ```
 
-## Splitting temperature data and exogenous variables
+## loading dataset of NAO index as an exogenous valiable
+
+### Data: Monthly North Atlantic Oscillation (NAO) index (Hurrell)
+### Duration: Jan 1865 to Jun 2023
+### The winter (December thru March) station-based index of the NAO is based on the difference of normalized sea level pressure (SLP) between Lisbon, Portugal and Stykkisholmur/Reykjavik, Iceland since 1864. Positive values of the NAO index are typically associated with stronger-than-average westerlies over the middle latitudes, more intense weather systems over the North Atlantic and wetter/milder weather over western Europe. Monthly, seasonal and annual indices using slightly different data sources for the southern station are also available.
+### Source dataset provided by the Climate Analysis Section, NCAR, Boulder, USA, Hurrell (2003) was obtained from https://www.jodc.go.jp/jodcweb/JDOSS/index.html.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-# ts object of temperature time series
-baba_temp_ts <- baba_data_ts[,"temp"]
+data(nao) # load a ts object of NAO index
 
-# ts object of exogenous variables
-baba_exo_ts <- baba_data_ts[,c("distance","kuroshio_a", "winter_a")]
+head(nao)
+```
+
+## Intersecting the two ts objects of temperature and NAO
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# Generate an object on a shared timeline
+hmo_nao_ts <- ts.intersect(hmo_temp, nao)
+colnames(hmo_nao_ts) <- c("Temp", "NAO")
+
+start(hmo_nao_ts)
+end(hmo_nao_ts)
+
+# Generate an ts object of HMO air-temperature with the shared timeline
+hmo_temp_common <- hmo_nao_ts[,"Temp"]
+start(hmo_temp_common)
+end(hmo_temp_common)
+
+# Generate an ts object of NAO with the shared timeline
+nao_common <- hmo_nao_ts[,"NAO"]
+
+# Execute label_ts_mono() function to label exogenous variable(s)!!
+nao_common <- label_ts_mono(nao_common, label="NAO")
+start(nao_common)
+end(nao_common)
 
 ```
 
-## Plotting Time Series of Temperature 
+## Plotting Time Series of air temperature and NAO index
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_baba_temp <- forecast::autoplot(baba_temp_ts) +
-  labs(y = expression(Temperature~(degree*C)), 
-       x = "Time") +
-  ggtitle("Monthly mean sea-surface temperature") +
+plt_homo_temp <- forecast::autoplot(hmo_temp_common) +
+  labs(x = "Time", y = expression(Temperature~(degree*C))) +
+  ggtitle("Air temperature at Hohenpeissenberg Meteorological Observatory") +
   theme_classic()
 
-plot(plt_baba_temp)
-```
-
-## Plotting Time Series of Exogenous variables
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_baba_exo_distance <- forecast::autoplot(baba_exo_ts[,"distance"]) +
-  labs(x = "Time", y = "Distance") +
-  ggtitle("Distance") +
+plt_nao <- forecast::autoplot(nao_common) +
+  labs(x = "Time", y = "NAO index") +
+  ggtitle("NAO index") +
   theme_classic()
 
-plt_baba_exo_kuroshio_a <- forecast::autoplot(baba_exo_ts[,"kuroshio_a"]) +
-  labs(x = "Time", y = "Category") +
-  ggtitle("kuroshio_a")+
-  theme_classic()
-
-plt_baba_exo_winter_a <- forecast::autoplot(baba_exo_ts[,"winter_a"]) +
-  labs(x = "Time",y = "Category") +
-  ggtitle("winter_a")+
-  theme_classic()
-
-cowplot::plot_grid(plt_baba_exo_distance,
-                   plt_baba_exo_kuroshio_a,
-                   plt_baba_exo_winter_a,
+cowplot::plot_grid(plt_homo_temp,
+                   plt_nao,
                    ncol=1)
 
 ```
@@ -328,20 +336,20 @@ cowplot::plot_grid(plt_baba_exo_distance,
 ## Applying a Linear Gaussian State-Space Model without exogenous variables
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res_baba_without <- lgssm(baba_temp_ts) 
-summary(res_baba_without)
-res_baba_without_AIC <- extract_AIC(res_baba_without)
-plot(res_baba_without)
+res_without <- lgssm(hmo_temp_common) 
+summary(res_without)
+AIC_without <- extract_AIC(res_without)
+plot(res_without)
 ```
 
 ## Applying a Linear Gaussian State-Space Model with exogenous variables
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res_baba_with <- lgssm(temp_data=baba_temp_ts,
-                       exo_data=baba_exo_ts) 
-summary(res_baba_with)
-res_baba_with_AIC <- extract_AIC(res_baba_with)
-plot(res_baba_with)
+res_with <- lgssm(temp_data = hmo_temp_common,exo_data = nao_common) 
+summary(res_with)
+AIC_with <- extract_AIC(res_with)
+plot(res_with)
+
 ```
 
 ## Model comparison based on AICs
@@ -349,41 +357,62 @@ plot(res_baba_with)
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 
 models_AICs <- tibble(
-  model=c("Without","With"),
-  AIC=c(res_baba_without_AIC,res_baba_with_AIC)
-)
+  model = c("Without","With"),
+  AIC = c(AIC_without,AIC_with),
+  delta_AIC = min(AIC)-AIC
+  )
 
 models_AICs %>% knitr::kable()
+
+## Model with the exogenous variable of NAO is remarkably better as shown in the below table. 
 ```
 
 ## time series Cross-Validation
 
+### In this tutorial, the number of tsCV iterations has been set to eigth to reduce execution time. Please ensure you perform a sufficient number of iterations during actual validation.
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # ts cross-validation of the model without exogenous variables
 
 ## Generate a list of training and test datasets with their indices
 # Procedure for constructing year-based time-series cross-validation folds:
-# 1) Training data: January 1998–December 2016;
-#    Test data: one year starting from January 2017
-# 2) Training data: January 1998–December 2017;
-#    Test data: one year starting from January 2018
+# 
+# First training data: January 1865–December 1950;
+# First test data: one year starting from January 1951
+# 
+# Second training data: January 1875–December 1960;
+# Second test data: one year starting from January 1961
 # ...
-# 6) Training data: January 1998–December 2021;
-#    Test data: one year starting from January 2022
+# 
+# Eighth training data: January 1875–December 2020;
+# 15th test data: one year starting from January 2021
+#
 # These folds are automatically generated by the ts_cv_folds() function.
-folds_6years_without <- ts_cv_folds(
-  temp_data=baba_temp_ts,
+# Generate training and test dataset
+folds_without <- ts_cv_folds(
+  temp_data = hmo_temp_common,
   exo_data = NULL,
-  initial = 228, # 228 monthly observations from Jan 1998 to Dec 2016 
-  horizon = 12,
-  step = 12,
+  initial = 1032, # 228 monthly observations from Jan 1865 to Dec 1950
+  horizon = 12, # forecast 12 monthly time-series
+  step = 120, # training data is moved by 120 months (10 years) steps
   fixed_window = FALSE,
   allow_partial = FALSE
-  ) 
+  )
 
-## Performe tsCV
-cv_meta_without <- rolling_origin_tsCV(folds_6years_without, fold_ids=seq(1:6), ar_order=1) # Hold on a few minutes
-#cv_meta_without <- rolling_origin_tsCV(folds_6years_without, fold_ids=1) # Hold on a few minutes
+folds_with <- ts_cv_folds(
+  temp_data = hmo_temp_common,
+  exo_data = nao_common,
+  initial = 1032, # 228 monthly observations from Jan 1865 to Dec 1950
+  horizon = 12, # forecast 12 monthly time-series
+  step = 120, # training data is moved by 12 months (10 years) steps
+  fixed_window = FALSE,
+  allow_partial = FALSE
+)
+
+## Performe tsCV for the model without NAO index
+cv_meta_without <- rolling_origin_tsCV(folds_without,
+                                       fold_ids=seq(1:8), 
+                                       ar_order=1) 
+# Hold on a few minutes 
 
 cv_without <- map(cv_meta_without, pluck, "CV", .default = NULL)
 
@@ -396,22 +425,15 @@ cv_without_tidy <- cv_without %>%
 print(cv_without_tidy)
 
 
-#----------------------------------------------------------
-# ts CV of the model with exogenous variables
-## Generate list of train/test data and their indexes
-folds_6years_with <- ts_cv_folds(temp_data=baba_temp_ts,
-                     exo_data = baba_exo_ts,
-                        initial = 228, # 228 monthly units from 1998-Jan to 2016-Dec 
-                        horizon = 12,
-                        step = 12,
-                        fixed_window = FALSE,
-                        allow_partial = FALSE) 
 
-## Performe tsCV
-cv_meta_with <- rolling_origin_tsCV(folds_6years_with, fold_ids=seq(1:6),ar_order=1) # Hold on a few minutes
+## Performe tsCV for the model with NAO index
+cv_meta_with <- rolling_origin_tsCV(folds_with,
+                                    fold_ids=seq(1:8),
+                                    ar_order=1)
+# Hold on a few minutes 
 
 cv_with <- map(cv_meta_with, pluck, "CV", .default = NULL)
-#cv_with <- base::lapply(cv_meta_with, `[[`, "CV")
+
 
 cv_with_tidy <- cv_with %>%
   map(~ as.data.frame(.x) %>%tibble::rownames_to_column(var = "set")) %>%
@@ -444,12 +466,9 @@ plot_MASE_snaive <- ggplot(data=cv_tidy,
 cowplot::plot_grid(plot_MAE,plot_MAPE,plot_MASE_naive,plot_MASE_snaive,nrow=1)
 ```
 
-## ==============================================
+# Appendix: Utility Function
 
-# Appendix: Example Data and the `sst_jma2ts()` Function
-
-
-## Utility Function: sst_jma2ts()
+## Utility function of sst_jma2ts()
 
 ### This function downloads publicly available daily mean sea-surface temperature (SST) data
 ### for Japanese coastal waters provided by the Japan Meteorological Agency (JMA),

@@ -1,4 +1,3 @@
-
 #' Read and convert a monthly temperature CSV file to a \code{ts} object
 #'
 #' @details
@@ -66,9 +65,9 @@ monthly_temp_csv2ts <- function(csv) {
 #' @return A monthly \code{ts} object with frequency = 12.
 #'
 #' @examples
-#' data(ibaraki_sst)
-#' ts_monthly <- zoo_daily2ts_monthly(ibaraki_sst, na_prop_max = 0.3)
-#' head(ts_monthly)
+#' sst_138_zoo <- sst_jma2zoo(sea_area_id = 138)
+#' sst_138_ts_monthly <- zoo_daily2ts_monthly(sst_138_zoo, na_prop_max = 0.3)
+#' head(sst_138_ts_monthly)
 #'
 #' @importFrom zoo index coredata as.yearmon
 #' @importFrom stats ts start aggregate

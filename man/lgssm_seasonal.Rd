@@ -7,7 +7,7 @@
 lgssm_seasonal(
   temp_data,
   exo_data = NULL,
-  ar_order = 2,
+  ar_order = 1,
   inits = NULL,
   maxit = NULL,
   reltol = NULL
@@ -26,7 +26,7 @@ The default is \code{NULL} when fitting a model without exogenous variables.}
 
 \item{ar_order}{Integer specifying the order of the autoregressive (AR) 
 component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
-Defaults to 2.}
+Defaults to 1.}
 
 \item{inits}{Optional numeric vector of initial parameter values.
 If \code{NULL}, default values are used.}
@@ -58,8 +58,8 @@ If multivariate, a column named \code{"Temp"} is used.
 }
 \examples{
 \dontrun{
-data(fuji_temp)
-res <- lgssm_seasonal(fuji_temp)
+data(niigata_sst)
+res <- lgssm_seasonal(niigata_sst)
 summary(res)
 }
 }

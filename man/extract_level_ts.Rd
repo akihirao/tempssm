@@ -21,3 +21,10 @@ If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 \description{
 Extract the smoothed level component as a time series
 }
+\examples{
+\dontrun{
+data(niigata_sst)
+res <- lgssm_no_seasonal(niigata_sst)
+ level_ts <- extract_level_ts(res)
+}
+}
