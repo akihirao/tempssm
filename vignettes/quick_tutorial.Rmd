@@ -36,7 +36,7 @@ has_future <- requireNamespace("future", quietly = TRUE)
 if (has_future) {
   if (future::nbrOfWorkers() == 1) {
 
-    # vignetteでは控えめに
+    # minimqnized setting for vignette
     workers <- min(2, future::availableCores())
 
     if (future::supportsMulticore()) {
@@ -52,15 +52,18 @@ if (has_future) {
 
 ```
 
-# Practice I: Analysis of Monthly Sea Surface Temperature (SST)
+# Practice I: Applying a linear Gaussian state-space model to univariate temperature time series
 
-## Loading dataset
+## Objective:
+Executing this package with a simple model.
 
-### Data: Monthly sea surface temperature (SST) off Niigata, Japan
-### Unit: Celsius
-### Duration: Feb 2002 to December 2023
-### This dataset provided by Japan Oceanographic Data Center (JODC), Hydrographic and Oceanographic Department, Japan Coast Guard. Original daily SST data were obtained from
-https://www.jodc.go.jp/jodcweb/JDOSS/index.html and aggregated into monthly means.
+## Loading dataset: Sea surface temperature (SST)
+
+* Data: Monthly sea surface temperature (SST) off Niigata, Japan      
+* Unit: Celsius   
+* Duration: Feb 2002 to December 2023       
+
+This dataset provided by Japan Oceanographic Data Center (JODC), Hydrographic and Oceanographic Department, Japan Coast Guard. Original daily SST data were obtained from https://www.jodc.go.jp/jodcweb/JDOSS/index.html and aggregated into monthly means.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 data(niigata_sst) # load a ts object of SST off Niigata
@@ -80,7 +83,8 @@ plt_niigata_sst <- forecast::autoplot(niigata_sst) +
 plot(plt_niigata_sst)
 # The example data includes missing observation values
 ```
-## Plotting Time Series of Temperature Anomalies
+
+## Plotting Time Series of Temperature Anomaly
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Generate temperature anomalies
@@ -92,23 +96,14 @@ niigata_sst_anomaly_tidy <- tibble(time=time(niigata_sst_anomaly),
 
 
 plt_niigata_sst_anomaly <- ggplot() +
-  geom_col(data = niigata_sst_anomaly_tidy,
-           aes(x = time, y = anomaly, fill = sign),
-           width = 0.8,alpha=0.2) +
-  geom_hline(yintercept = 0, color = "black") +
-  scale_fill_manual(
-    values = c(
-      "Positive"  = "firebrick",
-      "Negative" = "steelblue"
-    )
-  ) +
+  geom_hline(yintercept = 0, color = "black", linetype="dotted") +
   geom_line(data = niigata_sst_anomaly_tidy,
             aes(x = time, y = anomaly, fill=""), 
             color="black",alpha = 0.5,
             linewidth = 0.5) +
   guides(fill = "none") +
   labs(
-    y = expression(Temperature~(degree*C)), 
+    y = expression(Anomaly~(degree*C)), 
     x = "Year"
   )  +
   theme_classic()
@@ -259,16 +254,19 @@ plt_drift_ci <- plot(res,
 plot(plt_drift_ci)
 ```
 
-# Practice II: Analysis of the Air Temperature with an exogenous variable
+# Practice II: Applying a linear Gaussian state-space model to temperature time series with an exogenous variable.
 
-## Objective: Using the world’s longest temperature time series from a mountainous region—collected continuously since the mid-18th century along the northern edge of the German Alps—to isolate and verify the effect of of the North Atlantic Decadal Oscillation (NAO) as an exogenous covariate on long-term temperature variations.
+## Objective:     
+Using the long record of temperature time series data to isolate and verify the effect of of a large scale climate mode on long-term temperature variations.    
 
-## Loading Air Temperature at the Mountaton Station
+## Loading dataset 1: the Long Record of Air Temperature 
 
-### Data: Monthly air temperature at Hohenpeissenberg Meteorological Observatory, German
-### Unit: Celsius
-### Duration: Jan 1781 to December 2025
-### This dataset is the longest record of air temperature observed in Mountain region across the world. Original dataset provided by Global Historical Climatology Network monthly (GHCNm) ver.4 was obtained from https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4
+* Data: Monthly air temperature at Hohenpeissenberg Meteorological Observatory, German   
+* Observed Location: 47.801 °N; 11.011 °E  
+* Unit: Celsius   
+* Duration: Jan 1781 to December 2025          
+
+This dataset is the longest record of air temperature observed in Mountain region across the world. Original dataset provided by Global Historical Climatology Network monthly (GHCNm) ver.4 was obtained from https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 data(hmo_temp) # loading a ts object of air temperature at the HMO station
@@ -276,12 +274,14 @@ data(hmo_temp) # loading a ts object of air temperature at the HMO station
 head(hmo_temp)
 ```
 
-## loading dataset of NAO index as an exogenous valiable
+## Loading dataset 2: NAO index as an exogenous valiable
 
-### Data: Monthly North Atlantic Oscillation (NAO) index (Hurrell)
-### Duration: Jan 1865 to Jun 2023
-### The winter (December thru March) station-based index of the NAO is based on the difference of normalized sea level pressure (SLP) between Lisbon, Portugal and Stykkisholmur/Reykjavik, Iceland since 1864. Positive values of the NAO index are typically associated with stronger-than-average westerlies over the middle latitudes, more intense weather systems over the North Atlantic and wetter/milder weather over western Europe. Monthly, seasonal and annual indices using slightly different data sources for the southern station are also available.
-### Source dataset provided by the Climate Analysis Section, NCAR, Boulder, USA, Hurrell (2003) was obtained from https://www.jodc.go.jp/jodcweb/JDOSS/index.html.
+* Data: Monthly North Atlantic Oscillation (NAO) index (Hurrell)  
+* Duration: Jan 1865 to Jun 2023  
+
+The winter (December thru March) station-based index of the NAO is based on the difference of normalized sea level pressure (SLP) between Lisbon, Portugal and Stykkisholmur/Reykjavik, Iceland since 1864. Positive values of the NAO index are typically associated with stronger-than-average westerlies over the middle latitudes, more intense weather systems over the North Atlantic and wetter/milder weather over western Europe. Monthly, seasonal and annual indices using slightly different data sources for the southern station are also available.   
+
+Source dataset provided by the Climate Analysis Section, NCAR, Boulder, USA, Hurrell (2003) was obtained from https://www.jodc.go.jp/jodcweb/JDOSS/index.html.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 data(nao) # load a ts object of NAO index
@@ -364,7 +364,7 @@ models_AICs <- tibble(
 
 models_AICs %>% knitr::kable()
 
-## Model with the exogenous variable of NAO is remarkably better as shown in the below table. 
+## Model with the exogenous variable of NAO is remarkably better than model without one. 
 ```
 
 ## time series Cross-Validation

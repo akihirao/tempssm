@@ -19,7 +19,7 @@ has_future <- requireNamespace("future", quietly = TRUE)
 if (has_future) {
   if (future::nbrOfWorkers() == 1) {
 
-    # vignetteでは控えめに
+    # minimqnized setting for vignette
     workers <- min(2, future::availableCores())
 
     if (future::supportsMulticore()) {
@@ -34,34 +34,43 @@ if (has_future) {
 }
 ```
 
-# Practice I: Analysis of Monthly Air Temperature
+# Practice I: Applying a linear Gaussian state-space model to univariate temperature time series
 
-## Example Data 1: Monthly air temperature at the summit of Mt. Fuji, Japan
+## Objective:
 
-### Duration: July 1937 to December 2025
+Executing this package with a simple model.
 
-### This dataset consists of publicly available monthly air temperature data released by the Japan
+## Loading dataset: Sea surface temperature (SST)
 
-### Meteorological Agency (JMA) (<https://www.jma.go.jp/jma/indexe.html>).
+- Data: Monthly sea surface temperature (SST) off Niigata, Japan  
+- Unit: Celsius  
+- Duration: Feb 2002 to December 2023
+
+This dataset provided by Japan Oceanographic Data Center (JODC),
+Hydrographic and Oceanographic Department, Japan Coast Guard. Original
+daily SST data were obtained from
+<https://www.jodc.go.jp/jodcweb/JDOSS/index.html> and aggregated into
+monthly means.
 
 ``` r
-data(fuji_temp) 
-# A ts object of monthly air temperature at the summit of Mt. Fuji, Japan
-head(fuji_temp)
+data(niigata_sst) # load a ts object of SST off Niigata
+
+head(niigata_sst)
 ```
 
-    ##        Jul   Aug   Sep   Oct   Nov   Dec
-    ## 1932   5.5   5.7   1.8  -4.6  -9.5 -12.9
+    ##            Jan       Feb       Mar       Apr       May       Jun
+    ## 2002  9.951613  8.332143  9.348387 11.713333 14.529032 18.906667
 
 ## Plotting Monthly Time Series of Air Temperature
 
 ``` r
-plot_temp_fuji <- forecast::autoplot(fuji_temp) +
+plt_niigata_sst <- forecast::autoplot(niigata_sst) +
   labs(y = expression(Temperature~(degree*C)), 
        x = "Time") +
-  ggtitle("Monthly mean air temperature at the summit of Mt. Fuji, Japan")
+  ggtitle("Monthly SST off Niigata, Japan") +
+  theme_classic()
 
-plot(plot_temp_fuji)
+plot(plt_niigata_sst)
 ```
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
@@ -70,18 +79,32 @@ plot(plot_temp_fuji)
 # The example data includes missing observation values
 ```
 
-## Plotting Time Series of Temperature Anomalies
+## Plotting Time Series of Temperature Anomaly
 
 ``` r
 # Generate temperature anomalies
-example_anomaly <- ThermoSSM::monthly_anomaly(fuji_temp)
+niigata_sst_anomaly <- ThermoSSM::monthly_anomaly(niigata_sst)
 
-monthly_example_anomaly_plot <- forecast::autoplot(example_anomaly) +
-  labs(y = expression(Temperature~(degree*C)), 
-       x = "Time") +
-  ggtitle("Temperature anomaliese")
-  
-plot(monthly_example_anomaly_plot)
+niigata_sst_anomaly_tidy <- tibble(time=time(niigata_sst_anomaly),
+                           anomaly = as.numeric(niigata_sst_anomaly)) %>%
+  mutate(sign = ifelse(anomaly >= 0, "Positive","Negative"))
+
+
+plt_niigata_sst_anomaly <- ggplot() +
+  geom_hline(yintercept = 0, color = "black", linetype="dotted") +
+  geom_line(data = niigata_sst_anomaly_tidy,
+            aes(x = time, y = anomaly, fill=""), 
+            color="black",alpha = 0.5,
+            linewidth = 0.5) +
+  guides(fill = "none") +
+  labs(
+    y = expression(Anomaly~(degree*C)), 
+    x = "Year"
+  )  +
+  theme_classic()
+
+
+plot(plt_niigata_sst_anomaly)
 ```
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
@@ -89,21 +112,21 @@ plot(monthly_example_anomaly_plot)
 ## Plotting Monthly Seasonal Cycle
 
 ``` r
-monthly_seasonal_cycle_fuji <- ThermoSSM::mean_seasonal_cycle(fuji_temp) 
-summary(monthly_seasonal_cycle_fuji)
+monthly_seasonal_cycle_niigata_sst <- ThermoSSM::mean_seasonal_cycle(niigata_sst) 
+summary(monthly_seasonal_cycle_niigata_sst)
 ```
 
-    ##      Month        Temperature     
-    ##  Min.   : 1.00   Min.   :-18.798  
-    ##  1st Qu.: 3.75   1st Qu.:-14.716  
-    ##  Median : 6.50   Median : -6.170  
-    ##  Mean   : 6.50   Mean   : -6.319  
-    ##  3rd Qu.: 9.25   3rd Qu.:  1.485  
-    ##  Max.   :12.00   Max.   :  6.119
+    ##      Month        Temperature    
+    ##  Min.   : 1.00   Min.   : 9.365  
+    ##  1st Qu.: 3.75   1st Qu.:11.169  
+    ##  Median : 6.50   Median :16.318  
+    ##  Mean   : 6.50   Mean   :17.036  
+    ##  3rd Qu.: 9.25   3rd Qu.:22.294  
+    ##  Max.   :12.00   Max.   :26.873
 
 ``` r
-plt_monthly_seasonal_cycle_fuji <- ggplot(
-  data = monthly_seasonal_cycle_fuji,
+plt_monthly_seasonal_cycle_niigata_sst <- ggplot(
+  data = monthly_seasonal_cycle_niigata_sst,
   aes(x = Month, y = Temperature)
 ) +
   geom_point(size = 2) +
@@ -116,10 +139,11 @@ plt_monthly_seasonal_cycle_fuji <- ggplot(
   scale_x_continuous(
     breaks = 1:12,
     labels = sprintf("%02d", 1:12)
-  )
+  ) +
+  theme_classic()
 
 
-plot(plt_monthly_seasonal_cycle_fuji)
+plot(plt_monthly_seasonal_cycle_niigata_sst)
 ```
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
@@ -127,30 +151,114 @@ plot(plt_monthly_seasonal_cycle_fuji)
 ## Applying a Linear Gaussian State-Space Model
 
 ``` r
-res <- lgssm(fuji_temp) 
+# a model with a first-order autoregressive component
+res <- lgssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
 summary(res)
 ```
 
     ## ThermoSSM summary
     ## -----------------
     ## Call:
-    ## lgssm(temp_data = fuji_temp)
+    ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
-    ##   Log-likelihood : -2111.5 
-    ##   k              : 6 
-    ##   AIC            : 4235.01 
+    ##   Log-likelihood : -277.95 
+    ##   k              : 5 
+    ##   AIC            : 565.9 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
-    ##   Observation (H): 3.25814e-08 
-    ##   State (Q trend): 8.95151e-09 
-    ##   State (Q season): 0.0005177013 
-    ##   State (Q ar): 2.443921 
+    ##   Observation (H): 0.00598564 
+    ##   State (Q trend): 1.268118e-07 
+    ##   State (Q season): 0.001346139 
+    ##   State (Q ar): 0.4097882 
     ## 
-    ## Coefficient of auto-regression parameters:
-    ##   AR1: 0.2141506 
-    ##   AR2: -0.008769458
+    ## Components of auto-regression:
+    ##   Order of AR: 1 
+    ##   Coefficient of AR1: 0.7442999
+
+``` r
+res_ar2 <- lgssm(niigata_sst,ar_order=2) 
+summary(res_ar2)
+```
+
+    ## ThermoSSM summary
+    ## -----------------
+    ## Call:
+    ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ##     inits = inits, maxit = maxit, reltol = reltol)
+    ## 
+    ## Model fit:
+    ##   Log-likelihood : -277.95 
+    ##   k              : 6 
+    ##   AIC            : 567.89 
+    ##   Converged      : TRUE 
+    ## 
+    ## Variance parameters:
+    ##   Observation (H): 0.04528328 
+    ##   State (Q trend): 1.411893e-07 
+    ##   State (Q season): 0.001338972 
+    ##   State (Q ar): 0.3463124 
+    ## 
+    ## Components of auto-regression:
+    ##   Order of AR: 2 
+    ##   Coefficient of AR1: 0.8278959 
+    ##   Coefficient of AR2: -0.0651634
+
+``` r
+res_ar3 <- lgssm(niigata_sst,ar_order=3) 
+summary(res_ar3)
+```
+
+    ## ThermoSSM summary
+    ## -----------------
+    ## Call:
+    ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ##     inits = inits, maxit = maxit, reltol = reltol)
+    ## 
+    ## Model fit:
+    ##   Log-likelihood : -277.94 
+    ##   k              : 7 
+    ##   AIC            : 569.89 
+    ##   Converged      : TRUE 
+    ## 
+    ## Variance parameters:
+    ##   Observation (H): 0.0002537319 
+    ##   State (Q trend): 1.418092e-07 
+    ##   State (Q season): 0.001336738 
+    ##   State (Q ar): 0.418686 
+    ## 
+    ## Components of auto-regression:
+    ##   Order of AR: 3 
+    ##   Coefficient of AR1: 0.7335228 
+    ##   Coefficient of AR2: 0.0118387 
+    ##   Coefficient of AR3: -0.005368551
+
+## Model selection based on AIC
+
+``` r
+# Extract AIC
+AIC_ar1 <- extract_AIC(res)
+AIC_ar2 <- extract_AIC(res_ar2)
+AIC_ar3 <- extract_AIC(res_ar3)
+
+AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
+                        AIC = c(AIC_ar1,AIC_ar2,AIC_ar3)) %>% 
+  mutate(delta_AIC = AIC - min(AIC))
+
+AIC_table_res %>% knitr::kable()
+```
+
+| model |      AIC | delta_AIC |
+|:------|---------:|----------:|
+| AR1   | 565.8955 |  0.000000 |
+| AR2   | 567.8903 |  1.994836 |
+| AR3   | 569.8889 |  3.993417 |
+
+``` r
+## AR1 model is better than the other models.
+```
 
 ## Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
@@ -159,7 +267,7 @@ summary(res)
 plot(res)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 ## Simple Model Diagnostics
 
@@ -167,7 +275,7 @@ plot(res)
 resid_test_output <- ThermoSSM::wrapper_checkresiduals(res)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
 print(resid_test_output)
@@ -178,32 +286,13 @@ print(resid_test_output)
     ##  Box-Ljung test
     ## 
     ## data:  std_obs_resid
-    ## X-squared = 18.478, df = 24, p-value = 0.7792
+    ## X-squared = 24.225, df = 24, p-value = 0.4488
     ## 
     ## 
-    ## $Jarque_Bera
-    ## 
-    ##  Jarque Bera Test
-    ## 
-    ## data:  std_obs_resid
-    ## X-squared = 110.33, df = 2, p-value < 2.2e-16
-    ## 
-    ## 
-    ## $kurtosi
-    ## [1] 4.545271
+    ## $kurtosis
+    ## [1] 3.057601
 
 ## Estimated Parameters and Components
-
-``` r
-# Parameters including process errors and observation error
-params <- ThermoSSM::extract_param(res)
-params
-```
-
-    ##       Q_trend      Q_season           AR1           AR2          Q_ar 
-    ##  8.951510e-09  5.177013e-04  2.141506e-01 -8.769458e-03  2.443921e+00 
-    ##             H 
-    ##  3.258140e-08
 
 ``` r
 # Smoothing estimates
@@ -211,27 +300,27 @@ alpha_hat <- res$kfs$alphahat
 head(alpha_hat)
 ```
 
-    ##              level        slope sea_dummy1 sea_dummy2 sea_dummy3 sea_dummy4
-    ## Jul 1932 -6.816754 0.0005590689  11.495327   7.219398   2.636248  -2.286643
-    ## Aug 1932 -6.816195 0.0005590718  12.426540  11.495327   7.219398   2.636248
-    ## Sep 1932 -6.815636 0.0005590778   9.344077  12.426540  11.495327   7.219398
-    ## Oct 1932 -6.815077 0.0005590852   3.450236   9.344077  12.426540  11.495327
-    ## Nov 1932 -6.814518 0.0005590897  -2.895071   3.450236   9.344077  12.426540
-    ## Dec 1932 -6.813959 0.0005590907  -8.902299  -2.895071   3.450236   9.344077
+    ##            level       slope sea_dummy1 sea_dummy2 sea_dummy3 sea_dummy4
+    ## Jan 2002 16.3944 0.005600280  -6.624678  -3.337435  0.6067452  4.7593086
+    ## Feb 2002 16.4000 0.005600421  -7.676822  -6.624678 -3.3374348  0.6067452
+    ## Mar 2002 16.4056 0.005600415  -7.346316  -7.676822 -6.6246785 -3.3374348
+    ## Apr 2002 16.4112 0.005600311  -5.476554  -7.346316 -7.6768220 -6.6246785
+    ## May 2002 16.4168 0.005600335  -2.217000  -5.476554 -7.3463157 -7.6768220
+    ## Jun 2002 16.4224 0.005600467   2.468021  -2.217000 -5.4765544 -7.3463157
     ##          sea_dummy5 sea_dummy6 sea_dummy7 sea_dummy8 sea_dummy9 sea_dummy10
-    ## Jul 1932  -8.214384 -11.712963 -12.560467  -8.902299  -2.895071    3.450236
-    ## Aug 1932  -2.286643  -8.214384 -11.712963 -12.560467  -8.902299   -2.895071
-    ## Sep 1932   2.636248  -2.286643  -8.214384 -11.712963 -12.560467   -8.902299
-    ## Oct 1932   7.219398   2.636248  -2.286643  -8.214384 -11.712963  -12.560467
-    ## Nov 1932  11.495327   7.219398   2.636248  -2.286643  -8.214384  -11.712963
-    ## Dec 1932  12.426540  11.495327   7.219398   2.636248  -2.286643   -8.214384
-    ##          sea_dummy11      arima1        arima2
-    ## Jul 1932    9.344077  0.82142718 -0.0015357329
-    ## Aug 1932    3.450236  0.08965556 -0.0072034709
-    ## Sep 1932   -2.895071 -0.72844076 -0.0007862306
-    ## Oct 1932   -8.902299 -1.23515873  0.0063880304
-    ## Nov 1932  -12.560467  0.20958905  0.0108316723
-    ## Dec 1932  -11.712963  2.81625771 -0.0018379823
+    ## Jan 2002  8.5280152  9.9007961  6.4159191  2.4680213  -2.217000   -5.476554
+    ## Feb 2002  4.7593086  8.5280152  9.9007961  6.4159191   2.468021   -2.217000
+    ## Mar 2002  0.6067452  4.7593086  8.5280152  9.9007961   6.415919    2.468021
+    ## Apr 2002 -3.3374348  0.6067452  4.7593086  8.5280152   9.900796    6.415919
+    ## May 2002 -6.6246785 -3.3374348  0.6067452  4.7593086   8.528015    9.900796
+    ## Jun 2002 -7.6768220 -6.6246785 -3.3374348  0.6067452   4.759309    8.528015
+    ##          sea_dummy11       arima1
+    ## Jan 2002   -7.346316  0.175231707
+    ## Feb 2002   -5.476554 -0.377441196
+    ## Mar 2002   -2.217000  0.286840259
+    ## Apr 2002    2.468021  0.767966399
+    ## May 2002    6.415919  0.330186853
+    ## Jun 2002    9.900796  0.009042494
 
 ``` r
 #　Smoothing estimate of level component
@@ -240,34 +329,45 @@ level_ts <- ThermoSSM::extract_level_ts(res)
 #　Smoothing estimate of drift component
 drift_ts <- ThermoSSM::extract_drift_ts(res)
 
-# Average drift rate per year
-mean_drift_year <- mean(drift_ts) * 12
+# Average drift rate per year across the full period
+mean_drift_year <- mean(drift_ts) 
 print(mean_drift_year)
 ```
 
-    ## [1] 0.01719616
+    ## [1] 0.05259212
 
 ``` r
-# Average drift rate per year during 1950s
-drift_per_year_1950s <- window(drift_ts,
-                               start=c(1950,1),
-                               end=c(1959,12)
-                               ) %>%  mean()*12
-print(drift_per_year_1950s)
+# Average drift rate per year from Jan 2006 to Dec 2010
+ave_drift_2006_2010 <- window(drift_ts,
+                              start=c(2006,1),
+                               end=c(2010,12)
+                               ) %>%  mean()
+print(ave_drift_2006_2010)
 ```
 
-    ## [1] 0.006333696
+    ## [1] 0.05878758
 
 ``` r
-# Average drift rate per year during 2010s
-drift_per_year_2010s <- window(drift_ts,
-                               start=c(2010,1),
-                               end=c(2019,12)
-                               ) %>%  mean()*12
-print(drift_per_year_2010s)
+# Average drift rate per year from Jan 2011 to Dec 2015
+ave_drift_2011_2015 <- window(drift_ts,
+                              start=c(2011,1),
+                               end=c(2015,12)
+                               ) %>%  mean()
+print(ave_drift_2011_2015)
 ```
 
-    ## [1] 0.03606578
+    ## [1] 0.04891312
+
+``` r
+# Average drift rate per year from Jan 2016 to Dec 2020
+ave_drift_2016_2020 <- window(drift_ts,
+                              start=c(2016,1),
+                               end=c(2020,12)
+                               ) %>%  mean()
+print(ave_drift_2016_2020)
+```
+
+    ## [1] 0.04482296
 
 ## Plotting Level Component with 95% Confidence Interval
 
@@ -276,12 +376,13 @@ plt_level_ci <- plot(res,
                      components = "level",
                      ci = TRUE,
                      ci_level = 0.95
-                     )
+                     ) +
+  theme_classic()
 
 plot(plt_level_ci)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
 
 ## Plotting Drift Component with 95% Confidence Interval
 
@@ -290,245 +391,285 @@ plt_drift_ci <- plot(res,
                      components = "drift",
                      ci = TRUE,
                      ci_level = 0.95
-                     )
+                     ) +
+  geom_hline(yintercept = 0, lty="dotted") +
+  theme_classic()
 
 plot(plt_drift_ci)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
-# Practice II: Analysis of Monthly Sea-Surface Temperature with Exogenous Variables
+# Practice II: Applying a linear Gaussian state-space model to temperature time series with an exogenous variable.
 
-## Dataset is originated from Baba et al. (2024)
+## Objective:
 
-## Baba, S., Ishii, H., and Yoshiyama, T. (2024).
+Using the long record of temperature time series data to isolate and
+verify the effect of of a large scale climate mode on long-term
+temperature variations.
 
-## Estimating sea temperature trends using a linear Gaussian state-space model in Jogashima, Kanagawa, Japan.
+## Loading dataset 1: the Long Record of Air Temperature
 
-## Bulletin of the Japanese Society of Fisheries Oceanography, 88, 190–199 (in Japanese with English abstruct)
+- Data: Monthly air temperature at Hohenpeissenberg Meteorological
+  Observatory, German  
+- Observed Location: 47.801 °N; 11.011 °E  
+- Unit: Celsius  
+- Duration: Jan 1781 to December 2025
 
-## <https://doi.org/10.34423/jsfo.88.3_190>
-
-## Supplementary code and test data are available on GitHub repository:
-
-## <https://github.com/logics-of-blue/sea-temperature-trend-jogashima>
-
-## loading dataset and converting ts object
+This dataset is the longest record of air temperature observed in
+Mountain region across the world. Original dataset provided by Global
+Historical Climatology Network monthly (GHCNm) ver.4 was obtained from
+<https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4>
 
 ``` r
-baba_data <- readr::read_csv("https://raw.githubusercontent.com/logics-of-blue/sea-temperature-trend-jogashima/refs/heads/main/src/ssm-sample-data.csv")
+data(hmo_temp) # loading a ts object of air temperature at the HMO station
 
-# time        : Date (0.5-month resolution in the original study;
-#                     monthly data are used in this example)
-# temp        : Sea surface temperature
-# distance    : Distance to the Kuroshio Current axis
-# kuroshio_a  : Indicator variable taking 1 when the Kuroshio path is type A
-
-head(baba_data)
+head(hmo_temp)
 ```
 
-    ## # A tibble: 6 × 4
-    ##   time        temp distance kuroshio_a
-    ##   <date>     <dbl>    <dbl>      <dbl>
-    ## 1 1998-01-01  16.2      116          0
-    ## 2 1998-02-01  13.8      148          0
-    ## 3 1998-03-01  16.4       49          0
-    ## 4 1998-04-01  16.5      131          0
-    ## 5 1998-05-01  19.7       45          0
-    ## 6 1998-06-01  21.8       40          0
+    ##        Jan   Feb   Mar   Apr   May   Jun
+    ## 1781 -1.76 -1.03  2.37  8.71 12.25 14.54
+
+## Loading dataset 2: NAO index as an exogenous valiable
+
+- Data: Monthly North Atlantic Oscillation (NAO) index (Hurrell)  
+- Duration: Jan 1865 to Jun 2023
+
+The winter (December thru March) station-based index of the NAO is based
+on the difference of normalized sea level pressure (SLP) between Lisbon,
+Portugal and Stykkisholmur/Reykjavik, Iceland since 1864. Positive
+values of the NAO index are typically associated with
+stronger-than-average westerlies over the middle latitudes, more intense
+weather systems over the North Atlantic and wetter/milder weather over
+western Europe. Monthly, seasonal and annual indices using slightly
+different data sources for the southern station are also available.
+
+Source dataset provided by the Climate Analysis Section, NCAR, Boulder,
+USA, Hurrell (2003) was obtained from
+<https://www.jodc.go.jp/jodcweb/JDOSS/index.html>.
 
 ``` r
-# Add an indicator for autumn–winter Kuroshio type A conditions
-baba_data <- 
-  baba_data %>% 
-  mutate(winter = as.numeric(lubridate::month(as.Date(time)) %in% c(11, 12, 1, 2, 3)),
-         winter_a = winter * kuroshio_a)
+data(nao) # load a ts object of NAO index
 
-# winter    : Indicator variable taking 1 during autumn–winter months
-# winter_a  : Indicator variable taking 1 when it is autumn–winter
-#             and the Kuroshio path is type A
-head(baba_data)
+head(nao)
 ```
 
-    ## # A tibble: 6 × 6
-    ##   time        temp distance kuroshio_a winter winter_a
-    ##   <date>     <dbl>    <dbl>      <dbl>  <dbl>    <dbl>
-    ## 1 1998-01-01  16.2      116          0      1        0
-    ## 2 1998-02-01  13.8      148          0      1        0
-    ## 3 1998-03-01  16.4       49          0      1        0
-    ## 4 1998-04-01  16.5      131          0      0        0
-    ## 5 1998-05-01  19.7       45          0      0        0
-    ## 6 1998-06-01  21.8       40          0      0        0
+    ##       Jan  Feb  Mar  Apr  May  Jun
+    ## 1865 -0.6 -1.2  0.2 -0.2 -0.4  0.0
+
+## Intersecting the two ts objects of temperature and NAO
 
 ``` r
-# Convert to a ts object
-# For data with a 0.5-month resolution, set frequency = 24
-baba_data_ts <- 
-  baba_data %>% 
-  dplyr::select(-time, -winter) %>%       # Remove the date column and winter indicator
-  ts(start = c(1998, 1), frequency = 12)  # Convert to a ts object
-                                          # (starting in January 1998, annual frequency)
-head(baba_data_ts)
+# Generate an object on a shared timeline
+hmo_nao_ts <- ts.intersect(hmo_temp, nao)
+colnames(hmo_nao_ts) <- c("Temp", "NAO")
+
+start(hmo_nao_ts)
 ```
 
-    ##           temp distance kuroshio_a winter_a
-    ## Jan 1998 16.19      116          0        0
-    ## Feb 1998 13.82      148          0        0
-    ## Mar 1998 16.44       49          0        0
-    ## Apr 1998 16.49      131          0        0
-    ## May 1998 19.70       45          0        0
-    ## Jun 1998 21.83       40          0        0
-
-## Splitting temperature data and exogenous variables
+    ## [1] 1865    1
 
 ``` r
-# ts object of temperature time series
-baba_temp_ts <- baba_data_ts[,"temp"]
-
-# ts object of exogenous variables
-baba_exo_ts <- baba_data_ts[,c("distance","kuroshio_a", "winter_a")]
+end(hmo_nao_ts)
 ```
 
-## Plotting Time Series of Temperature
+    ## [1] 2023    6
 
 ``` r
-plt_baba_temp <- forecast::autoplot(baba_temp_ts) +
-  labs(y = expression(Temperature~(degree*C)), 
-       x = "Time") +
-  ggtitle("Monthly mean sea-surface temperature")
-
-plot(plt_baba_temp)
+# Generate an ts object of HMO air-temperature with the shared timeline
+hmo_temp_common <- hmo_nao_ts[,"Temp"]
+start(hmo_temp_common)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
-
-## Plotting Time Series of Exogenous variables
+    ## [1] 1865    1
 
 ``` r
-plt_baba_exo_distance <- forecast::autoplot(baba_exo_ts[,"distance"]) +
-  labs(x = "Time", y = "Distance") +
-  ggtitle("Distance")
+end(hmo_temp_common)
+```
 
-plt_baba_exo_kuroshio_a <- forecast::autoplot(baba_exo_ts[,"kuroshio_a"]) +
-  labs(x = "Time", y = "Category") +
-  ggtitle("kuroshio_a")
+    ## [1] 2023    6
 
-plt_baba_exo_winter_a <- forecast::autoplot(baba_exo_ts[,"winter_a"]) +
-  labs(x = "Time",y = "Category") +
-  ggtitle("winter_a")
+``` r
+# Generate an ts object of NAO with the shared timeline
+nao_common <- hmo_nao_ts[,"NAO"]
 
-cowplot::plot_grid(plt_baba_exo_distance,
-                   plt_baba_exo_kuroshio_a,
-                   plt_baba_exo_winter_a,
+# Execute label_ts_mono() function to label exogenous variable(s)!!
+nao_common <- label_ts_mono(nao_common, label="NAO")
+start(nao_common)
+```
+
+    ## [1] 1865    1
+
+``` r
+end(nao_common)
+```
+
+    ## [1] 2023    6
+
+## Plotting Time Series of air temperature and NAO index
+
+``` r
+plt_homo_temp <- forecast::autoplot(hmo_temp_common) +
+  labs(x = "Time", y = expression(Temperature~(degree*C))) +
+  ggtitle("Air temperature at Hohenpeissenberg Meteorological Observatory") +
+  theme_classic()
+
+plt_nao <- forecast::autoplot(nao_common) +
+  labs(x = "Time", y = "NAO index") +
+  ggtitle("NAO index") +
+  theme_classic()
+
+cowplot::plot_grid(plt_homo_temp,
+                   plt_nao,
                    ncol=1)
-```
-
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
-
-## Applying a Linear Gaussian State-Space Model without exogenous variables
-
-``` r
-res_baba_without <- lgssm(baba_temp_ts) 
-summary(res_baba_without)
-```
-
-    ## ThermoSSM summary
-    ## -----------------
-    ## Call:
-    ## lgssm(temp_data = baba_temp_ts)
-    ## 
-    ## Model fit:
-    ##   Log-likelihood : -227.35 
-    ##   k              : 6 
-    ##   AIC            : 466.7 
-    ##   Converged      : TRUE 
-    ## 
-    ## Variance parameters:
-    ##   Observation (H): 0.05517445 
-    ##   State (Q trend): 4.945284e-06 
-    ##   State (Q season): 0.0001859982 
-    ##   State (Q ar): 0.1497551 
-    ## 
-    ## Coefficient of auto-regression parameters:
-    ##   AR1: 0.6553233 
-    ##   AR2: 0.07430061
-
-``` r
-# plot each of components at once
-plot(res_baba_without)
 ```
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
-## Applying a Linear Gaussian State-Space Model with exogenous variables
+## Applying a Linear Gaussian State-Space Model without exogenous variables
 
 ``` r
-res_baba_with <- lgssm(temp_data=baba_temp_ts,
-                          exo_data=baba_exo_ts) 
-summary(res_baba_with)
+res_without <- lgssm(hmo_temp_common) 
+summary(res_without)
 ```
 
     ## ThermoSSM summary
     ## -----------------
     ## Call:
-    ## lgssm(temp_data = baba_temp_ts, exo_data = baba_exo_ts)
+    ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
-    ##   Log-likelihood : -180.38 
-    ##   k              : 9 
-    ##   AIC            : 378.76 
+    ##   Log-likelihood : -4116.01 
+    ##   k              : 5 
+    ##   AIC            : 8242.02 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
-    ##   Observation (H): 2.580148e-10 
-    ##   State (Q trend): 4.160215e-06 
-    ##   State (Q season): 9.523315e-05 
-    ##   State (Q ar): 0.1537217 
+    ##   Observation (H): 2.198694 
+    ##   State (Q trend): 1.115939e-08 
+    ##   State (Q season): 0.0001822552 
+    ##   State (Q ar): 2.085541 
     ## 
-    ## Coefficient of auto-regression parameters:
-    ##   AR1: 0.6009063 
-    ##   AR2: 0.0443539 
-    ## 
-    ## Exogenous variable    distance kuroshio_a winter_a 
-    ## Estimated coefficient     -0.006860767 0.3222738 0.7399126 
-    ## Lower CI  -0.008223095 -0.01808114 0.4660077 
-    ## Upper CI  -0.005498439 0.6626288 1.013818
+    ## Components of auto-regression:
+    ##   Order of AR: 1 
+    ##   Coefficient of AR1: 0.2284355
 
 ``` r
-# plot each of components at once
-plot(res_baba_with)
+AIC_without <- extract_AIC(res_without)
+plot(res_without)
 ```
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
+## Applying a Linear Gaussian State-Space Model with exogenous variables
+
+``` r
+res_with <- lgssm(temp_data = hmo_temp_common,exo_data = nao_common) 
+summary(res_with)
+```
+
+    ## ThermoSSM summary
+    ## -----------------
+    ## Call:
+    ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ##     inits = inits, maxit = maxit, reltol = reltol)
+    ## 
+    ## Model fit:
+    ##   Log-likelihood : -4063.67 
+    ##   k              : 6 
+    ##   AIC            : 8139.34 
+    ##   Converged      : TRUE 
+    ## 
+    ## Variance parameters:
+    ##   Observation (H): 2.623818 
+    ##   State (Q trend): 9.64448e-09 
+    ##   State (Q season): 0.0002605165 
+    ##   State (Q ar): 1.402478 
+    ## 
+    ## Components of auto-regression:
+    ##   Order of AR: 1 
+    ##   Coefficient of AR1: 0.2676844 
+    ## Exogenous variable    NAO 
+    ## Estimated coefficient     0.2911478 
+    ## Lower CI  0.2376886 
+    ## Upper CI  0.3446071
+
+``` r
+AIC_with <- extract_AIC(res_with)
+plot(res_with)
+```
+
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+
+## Model comparison based on AICs
+
+``` r
+models_AICs <- tibble(
+  model = c("Without","With"),
+  AIC = c(AIC_without,AIC_with),
+  delta_AIC = min(AIC)-AIC
+  )
+
+models_AICs %>% knitr::kable()
+```
+
+| model   |      AIC | delta_AIC |
+|:--------|---------:|----------:|
+| Without | 8242.017 | -102.6742 |
+| With    | 8139.343 |    0.0000 |
+
+``` r
+## Model with the exogenous variable of NAO is remarkably better than model without one. 
+```
+
 ## time series Cross-Validation
+
+### In this tutorial, the number of tsCV iterations has been set to eigth to reduce execution time. Please ensure you perform a sufficient number of iterations during actual validation.
 
 ``` r
 # ts cross-validation of the model without exogenous variables
 
 ## Generate a list of training and test datasets with their indices
 # Procedure for constructing year-based time-series cross-validation folds:
-# 1) Training data: January 1998–December 2016;
-#    Test data: one year starting from January 2017
-# 2) Training data: January 1998–December 2017;
-#    Test data: one year starting from January 2018
+# 
+# First training data: January 1865–December 1950;
+# First test data: one year starting from January 1951
+# 
+# Second training data: January 1875–December 1960;
+# Second test data: one year starting from January 1961
 # ...
-# 6) Training data: January 1998–December 2021;
-#    Test data: one year starting from January 2022
+# 
+# Eighth training data: January 1875–December 2020;
+# 15th test data: one year starting from January 2021
+#
 # These folds are automatically generated by the ts_cv_folds() function.
-folds_6years_without <- ts_cv_folds(
-  temp_data=baba_temp_ts,
+# Generate training and test dataset
+folds_without <- ts_cv_folds(
+  temp_data = hmo_temp_common,
   exo_data = NULL,
-  initial = 228, # 228 monthly observations from Jan 1998 to Dec 2016 
-  horizon = 12,
-  step = 12,
+  initial = 1032, # 228 monthly observations from Jan 1865 to Dec 1950
+  horizon = 12, # forecast 12 monthly time-series
+  step = 120, # training data is moved by 120 months (10 years) steps
   fixed_window = FALSE,
   allow_partial = FALSE
-  ) 
+  )
 
-## Performe tsCV
-cv_meta_without <- rolling_origin_tsCV(folds_6years_without, fold_ids=seq(1:6)) # Hold on a few minutes
-#cv_meta_without <- rolling_origin_tsCV(folds_6years_without, fold_ids=1) # Hold on a few minutes
+folds_with <- ts_cv_folds(
+  temp_data = hmo_temp_common,
+  exo_data = nao_common,
+  initial = 1032, # 228 monthly observations from Jan 1865 to Dec 1950
+  horizon = 12, # forecast 12 monthly time-series
+  step = 120, # training data is moved by 12 months (10 years) steps
+  fixed_window = FALSE,
+  allow_partial = FALSE
+)
+
+## Performe tsCV for the model without NAO index
+cv_meta_without <- rolling_origin_tsCV(folds_without,
+                                       fold_ids=seq(1:8), 
+                                       ar_order=1) 
+# Hold on a few minutes 
 
 cv_without <- map(cv_meta_without, pluck, "CV", .default = NULL)
 
@@ -541,38 +682,34 @@ cv_without_tidy <- cv_without %>%
 print(cv_without_tidy)
 ```
 
-    ##     Model cv_id      set         ME      RMSE       MAE        MPE     MAPE
-    ## 1 Without fold1 Test set  0.1840780 0.4007181 0.3021636  0.7756497 1.596606
-    ## 2 Without fold2 Test set -0.2512263 0.6065959 0.5782862 -1.1540092 3.060408
-    ## 3 Without fold3 Test set -0.4457947 0.8557703 0.7790297 -2.1009569 3.992982
-    ## 4 Without fold4 Test set  0.2496385 0.7477649 0.6446000  1.2783092 3.422325
-    ## 5 Without fold5 Test set  0.8037154 0.8995830 0.8037154  3.8389907 3.838991
-    ## 6 Without fold6 Test set -0.4508430 0.6042668 0.5082331 -2.1696072 2.473141
-    ##         ACF1 Theil's U MASE_naive MASE_snaive
-    ## 1  0.3203994 0.1814806  0.1770779   0.4250559
-    ## 2  0.5288184 0.2908381  0.3386929   0.8351761
-    ## 3  0.4653185 0.4238365  0.4563065   1.1299839
-    ## 4  0.2794547 0.4320052  0.3779760   0.9417857
-    ## 5 -0.3137596 0.3938901  0.4709805   1.1399606
-    ## 6  0.2922700 0.3238430  0.2974184   0.7137815
+    ##     Model cv_id      set         ME     RMSE      MAE       MPE      MAPE
+    ## 1 Without fold1 Test set  0.4889957 1.474649 1.148685 58.787802 103.61067
+    ## 2 Without fold2 Test set  1.1904456 2.606346 2.009215 24.273406  32.54334
+    ## 3 Without fold3 Test set  0.1135489 2.037836 1.857256 96.961995 117.51916
+    ## 4 Without fold4 Test set -0.1159486 1.575582 1.099652 23.311897  25.49696
+    ## 5 Without fold5 Test set -0.3779929 1.945921 1.665165  7.593377  33.60758
+    ## 6 Without fold6 Test set  0.1382091 2.651390 2.270733       Inf       Inf
+    ## 7 Without fold7 Test set  1.1811413 2.019612 1.629615 24.218516  34.10742
+    ## 8 Without fold8 Test set -0.8494083 1.993760 1.683971  2.033586  34.11603
+    ##           ACF1 Theil's U MASE_naive MASE_snaive
+    ## 1  0.202919625 0.5186926  0.3277553   0.4858329
+    ## 2  0.052893544 0.8037302  0.5754156   0.8526872
+    ## 3 -0.315093475 0.5675867  0.5308151   0.7917307
+    ## 4 -0.013508238 0.4340856  0.3169881   0.4734971
+    ## 5 -0.007453192 0.5675805  0.4791300   0.7219113
+    ## 6 -0.435854697       NaN  0.6541575   0.9848380
+    ## 7  0.099740227 0.5470913  0.4688726   0.7049821
+    ## 8 -0.277090168 0.5301606  0.4855664   0.7242332
 
 ``` r
-#----------------------------------------------------------
-# ts CV of the model with exogenous variables
-## Generate list of train/test data and their indexes
-folds_6years_with <- ts_cv_folds(temp_data=baba_temp_ts,
-                     exo_data = baba_exo_ts,
-                        initial = 228, # 228 monthly units from 1998-Jan to 2016-Dec 
-                        horizon = 12,
-                        step = 12,
-                        fixed_window = FALSE,
-                        allow_partial = FALSE) 
-
-## Performe tsCV
-cv_meta_with <- rolling_origin_tsCV(folds_6years_with, fold_ids=seq(1:6)) # Hold on a few minutes
+## Performe tsCV for the model with NAO index
+cv_meta_with <- rolling_origin_tsCV(folds_with,
+                                    fold_ids=seq(1:8),
+                                    ar_order=1)
+# Hold on a few minutes 
 
 cv_with <- map(cv_meta_with, pluck, "CV", .default = NULL)
-#cv_with <- base::lapply(cv_meta_with, `[[`, "CV")
+
 
 cv_with_tidy <- cv_with %>%
   map(~ as.data.frame(.x) %>%tibble::rownames_to_column(var = "set")) %>%
@@ -583,20 +720,24 @@ cv_with_tidy <- cv_with %>%
 print(cv_with_tidy)
 ```
 
-    ##   Model cv_id      set         ME      RMSE       MAE        MPE     MAPE
-    ## 1  With fold1 Test set -0.0313825 0.4558111 0.3579344 -0.2668966 1.859228
-    ## 2  With fold2 Test set -0.4882979 0.6901558 0.5796116 -2.4776204 2.978092
-    ## 3  With fold3 Test set -0.3151896 0.6595790 0.5492322 -1.4907984 2.802321
-    ## 4  With fold4 Test set  0.4982363 0.8373174 0.7631218  2.4099787 3.902438
-    ## 5  With fold5 Test set  1.0247984 1.0784292 1.0247984  4.8807398 4.880740
-    ## 6  With fold6 Test set -0.3037580 0.3982281 0.3145223 -1.4765876 1.529745
-    ##         ACF1 Theil's U MASE_naive MASE_snaive
-    ## 1  0.5069573 0.2056400  0.2097615   0.5035091
-    ## 2  0.4334518 0.3309232  0.3394691   0.8370903
-    ## 3  0.5267685 0.3171160  0.3217056   0.7966622
-    ## 4  0.3535131 0.4659375  0.4474740   1.1149507
-    ## 5  0.2085317 0.4434044  0.6005361   1.4535367
-    ## 6 -0.0670909 0.1969585  0.1840587   0.4417269
+    ##   Model cv_id      set          ME     RMSE      MAE        MPE      MAPE
+    ## 1  With fold1 Test set  0.48543195 1.295995 1.026690  52.583598  83.53820
+    ## 2  With fold2 Test set  1.11609061 2.499648 1.992019   9.128501  37.62516
+    ## 3  With fold3 Test set  0.16374746 2.079393 1.845031 107.098558 129.75021
+    ## 4  With fold4 Test set -0.04621108 1.738008 1.270618  24.235775  27.14959
+    ## 5  With fold5 Test set -0.43349108 2.040727 1.740272   7.616265  35.40459
+    ## 6  With fold6 Test set  0.32903989 2.527949 2.168827        Inf       Inf
+    ## 7  With fold7 Test set  0.81409922 1.752448 1.368590   9.449692  23.09277
+    ## 8  With fold8 Test set -0.61119759 1.738435 1.471531   3.981070  31.65661
+    ##          ACF1 Theil's U MASE_naive MASE_snaive
+    ## 1 -0.01964670 0.3750799  0.2929461   0.4342352
+    ## 2  0.10503306 0.7799049  0.5704907   0.8453892
+    ## 3 -0.32985210 0.6535652  0.5273213   0.7865196
+    ## 4 -0.01644048 0.4551757  0.3662711   0.5471130
+    ## 5 -0.01897327 0.6042778  0.5007411   0.7544730
+    ## 6 -0.48586337       NaN  0.6248004   0.9406408
+    ## 7 -0.11047192 0.4093789  0.3937705   0.5920609
+    ## 8 -0.33494646 0.5134535  0.4243103   0.6328684
 
 ``` r
 cv_tidy <- bind_rows(cv_without_tidy,cv_with_tidy)
@@ -622,184 +763,11 @@ plot_MASE_snaive <- ggplot(data=cv_tidy,
 cowplot::plot_grid(plot_MAE,plot_MAPE,plot_MASE_naive,plot_MASE_snaive,nrow=1)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
-
-## ==============================================
-
-# Appendix: Example Data and the `sst_jma2ts()` Function
-
-## Example Data 2: Monthly air temperature at Mt. Akadake, Hokkaido, Japant
-
-## Duration: August 2010 to August 2023
-
-## The data originated from: <https://www.biodic.go.jp/moni1000/findings/data/index.html>.
-
-## The ThermoSSM package provides the file “example_monthly_temp.csv”, containging example data. Format of the csv file is as follows:
-
-``` text
-2010,8,13.6
-2010,9,6.8
-2010,10,0.2
-...
-```
-
-``` r
-example_csv_path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
-example_temp <- readr::read_csv(example_csv_path)
-head(example_temp)
-```
-
-    ## # A tibble: 6 × 3
-    ##    Year Month  Temp
-    ##   <dbl> <dbl> <dbl>
-    ## 1  2010     8  13.6
-    ## 2  2010     9   6.8
-    ## 3  2010    10   0.2
-    ## 4  2010    11  -6.8
-    ## 5  2010    12 -12.5
-    ## 6  2011     1 -18.8
-
-``` r
-# Read and convert a monthly temperature CSV file to a ts object
-MtAkadake_ts <- monthly_temp_csv2ts(example_csv_path)
-head(MtAkadake_ts)
-```
-
-    ##        Jan Feb Mar Apr May Jun Jul   Aug   Sep   Oct   Nov   Dec
-    ## 2010                                13.6   6.8   0.2  -6.8 -12.5
-    ## 2011 -18.8
-
-``` r
-frequency(MtAkadake_ts)
-```
-
-    ## [1] 12
-
-``` r
-start(MtAkadake_ts)
-```
-
-    ## [1] 2010    8
-
-``` r
-end(MtAkadake_ts)
-```
-
-    ## [1] 2023    8
-
-``` r
-# Months at the beginning and end of the observation period with insufficient observation days are filtered out.”
-MtAkadake_ts　<- window(MtAkadake_ts,
-                       start=c(2010,9),
-                       end=c(2023,7))
-
-# Perform linear Gaussian state-space modelling
-res_MtAkadake <- lgssm(MtAkadake_ts)
-summary(res_MtAkadake)
-```
-
-    ## ThermoSSM summary
-    ## -----------------
-    ## Call:
-    ## lgssm(temp_data = MtAkadake_ts)
-    ## 
-    ## Model fit:
-    ##   Log-likelihood : -268.11 
-    ##   k              : 6 
-    ##   AIC            : 548.23 
-    ##   Converged      : TRUE 
-    ## 
-    ## Variance parameters:
-    ##   Observation (H): 0.9907183 
-    ##   State (Q trend): 1.559585e-13 
-    ##   State (Q season): 0.04127714 
-    ##   State (Q ar): 0.7376096 
-    ## 
-    ## Coefficient of auto-regression parameters:
-    ##   AR1: 0.4673504 
-    ##   AR2: -0.2598106
-
-``` r
-plot(res_MtAkadake)
-```
-
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
-
-## Example Data 3: Daily sea-surface temperature off the southern coast of Ibaraki Prefecture, Japan
-
-### Duration: January 1982 to December 2025
-
-### This dataset consists of publicly available daily sea-surface temperature data released by the Japan
-
-### Meteorological Agency (JMA) (<https://www.jma.go.jp/jma/indexe.html>).
-
-``` r
-# A zoo object of daily sea-surface temperature (SST)
-# off the southern coast of Ibaraki Prefecture, Japan
-data(ibaraki_sst) 
-head(ibaraki_sst)
-```
-
-    ##             Temp
-    ## 1982-01-01 16.21
-    ## 1982-01-02 16.28
-    ## 1982-01-03 16.36
-    ## 1982-01-04 16.36
-    ## 1982-01-05 16.22
-    ## 1982-01-06 16.04
-
-``` r
-# Convert the daily zoo object to a monthly ts object
-monthly_ibaraki_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(ibaraki_sst)
-head(monthly_ibaraki_sst_ts)
-```
-
-    ##           Jan      Feb      Mar      Apr      May      Jun
-    ## 1982 15.04419 14.22500 13.63903 15.31933 17.52258 19.52300
-
-``` r
-# Converting from daily zoo object to monthly ts object
-monthly_ibaraki_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(ibaraki_sst)
-head(monthly_ibaraki_sst_ts)
-```
-
-    ##           Jan      Feb      Mar      Apr      May      Jun
-    ## 1982 15.04419 14.22500 13.63903 15.31933 17.52258 19.52300
-
-``` r
-# Perform linear Gaussian state-space modelling
-res_ibaraki_sst <- lgssm(monthly_ibaraki_sst_ts)
-summary(res_ibaraki_sst)
-```
-
-    ## ThermoSSM summary
-    ## -----------------
-    ## Call:
-    ## lgssm(temp_data = monthly_ibaraki_sst_ts)
-    ## 
-    ## Model fit:
-    ##   Log-likelihood : -603 
-    ##   k              : 6 
-    ##   AIC            : 1218 
-    ##   Converged      : TRUE 
-    ## 
-    ## Variance parameters:
-    ##   Observation (H): 1.72128e-43 
-    ##   State (Q trend): 5.008495e-06 
-    ##   State (Q season): 0.0001880851 
-    ##   State (Q ar): 0.5141963 
-    ## 
-    ## Coefficient of auto-regression parameters:
-    ##   AR1: 0.6923188 
-    ##   AR2: -0.1245904
-
-``` r
-plot(res_ibaraki_sst)
-```
-
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
-## Utility Function: sst_jma2ts()
+# Appendix: Utility Function
+
+## Utility function of sst_jma2ts()
 
 ### This function downloads publicly available daily mean sea-surface temperature (SST) data
 
