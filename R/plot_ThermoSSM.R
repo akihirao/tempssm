@@ -1,6 +1,6 @@
-#' Plot estimated components of a ThermoSSM object
+#' Plot estimated components of a tempssm object
 #'
-#' @param x An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param x An object of class \code{"tempssm"} returned by \code{lgssm()}.
 #' @param components Components to plot. Any of \code{"level"}, \code{"drift"},
 #'   \code{"seasonal"}, \code{"ar"}.
 #' @param ci Logical; if TRUE, confidence intervals are shown for
@@ -26,7 +26,7 @@
 #' @return A ggplot object or a patchwork object.
 #'
 #' @export
-plot.ThermoSSM <- function(
+plot.tempssm <- function(
   x,
   components = c("level", "drift", "seasonal", "ar"),
   ci = FALSE,
@@ -37,8 +37,8 @@ plot.ThermoSSM <- function(
 
   layout <- match.arg(layout)
 
-  if (!inherits(x, "ThermoSSM")) {
-    stop("Object must be of class 'ThermoSSM'.", call. = FALSE)
+  if (!inherits(x, "tempssm")) {
+    stop("Object must be of class 'tempssm'.", call. = FALSE)
   }
 
   use_seasonal <- x$use_seasonal
