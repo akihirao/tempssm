@@ -268,7 +268,7 @@ mean_seasonal_cycle <- function(temp_ts){
 #' baseline period.
 #'
 #' @importFrom stats cycle window frequency start
-#' @importFrom ThermoSSM mean_seasonal_cycle
+#' @importFrom tempssm mean_seasonal_cycle
 #'
 #' @param temp_ts Monthly temperature time series of class \code{ts}.
 #'   The time series must have a frequency of 12 (monthly data).
@@ -336,7 +336,7 @@ monthly_anomaly <- function(temp_ts, baseline = NULL) {
   }
 
   ## ---- Monthly climatology -----------------------------------------------
-  clim_tbl <- ThermoSSM::mean_seasonal_cycle(ts_base)
+  clim_tbl <- tempssm::mean_seasonal_cycle(ts_base)
   clim_vec <- clim_tbl$Temperature
 
   clim <- clim_vec[cycle(temp_ts)]
@@ -431,7 +431,7 @@ sst_jma2zoo <- function(sea_area_id = NULL) {
 #' provided by the Japan Meteorological Agency (JMA),
 #' and returns the monthly average data as a \code{ts} object.
 #'
-#' @importFrom ThermoSSM zoo_daily2ts_monthly sst_jma2zoo
+#' @importFrom tempssm zoo_daily2ts_monthly sst_jma2zoo
 #'
 #' @param sea_area_id
 #' Numeric sea area ID. The default is NULL
@@ -462,8 +462,8 @@ sst_jma2zoo <- function(sea_area_id = NULL) {
 sst_jma2ts <- function(sea_area_id = NULL,
                        na_prop_max = 1) {
   
-  sst_zoo <- ThermoSSM::sst_jma2zoo(sea_area_id)
-  monthly_sst_ts <- ThermoSSM::zoo_daily2ts_monthly(sst_zoo,
+  sst_zoo <- tempssm::sst_jma2zoo(sea_area_id)
+  monthly_sst_ts <- tempssm::zoo_daily2ts_monthly(sst_zoo,
                                                     na_prop_max = na_prop_max)
   
   return(monthly_sst_ts)
