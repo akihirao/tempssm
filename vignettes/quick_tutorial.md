@@ -1,11 +1,47 @@
-# Set Ennvironment
+ThermoSSM is an R package for state-space analysis of temperature time
+series. It provides tools for fitting linear Gaussian state-space models
+and conducting inference via Kalman filtering and smoothing, implemented
+using the KFAS R package (Helske, 2017).
+
+## Key features
+
+- Designed for temperature time series with arbitrary seasonal
+  frequencies; currently validated primarily on monthly data
+- Estimates latent states using linear Gaussian state-space models
+  combined with Kalman filtering and smoothing
+- Models temperature dynamics as a sum of interpretable latent
+  components, including a long-term trend, seasonal cycle,
+  autoregressive structure, and optional exogenous effects
+- Allows users to specify an arbitrary order of the autoregressive
+  component (default: AR(1))
+- Implements time-series cross-validation for model evaluation
+
+## Input Data Format
+
+Input data for ThermoSSM must be supplied as an R `ts` object, which
+represents a regularly spaced time series (see `?stats::ts` or
+<https://stat.ethz.ch/R-manual/R-devel/library/stats/html/ts.html>).
+
+To support data preparation, the package includes utility functions that
+convert external observational data into `ts` objects suitable for model
+fitting (see Appendix).
+
+## To Install
+
+``` r
+if(!require("devtools"))
+    install.packages("devtools")
+devtools::install_github("akihirao/ThermoSSM")
+```
+
+## Set Ennvironment for Practices
 
 ``` r
 ## Set libraries
 library(ThermoSSM)
 library(forecast)
 
-library(purrr)   # list_rbind
+library(purrr) 
 library(tibble)
 library(readr)
 library(dplyr)
@@ -34,34 +70,65 @@ if (has_future) {
 }
 ```
 
-# Practice I: Applying a linear Gaussian state-space model to univariate temperature time series
+## Practice I: Applying a Linear Gaussian State-Space Model
 
-## Objective:
+## to a Univariate Temperature Time Series
 
-Executing this package with a simple model.
+### Objective
 
-## Loading dataset: Sea surface temperature (SST)
+The objective of this practice is to demonstrate the basic application
+of a linear Gaussian state-space model to a univariate temperature time
+series. This example serves as an introduction to the modeling framework
+and highlights the role of autoregressive dynamics without the inclusion
+of exogenous variables.
 
-- Data: Monthly sea surface temperature (SST) off Niigata, Japan  
-- Unit: Celsius  
-- Duration: Feb 2002 to December 2023
+### Loading the Dataset
 
-This dataset provided by Japan Oceanographic Data Center (JODC),
-Hydrographic and Oceanographic Department, Japan Coast Guard. Original
-daily SST data were obtained from
-<https://www.jodc.go.jp/jodcweb/JDOSS/index.html> and aggregated into
-monthly means.
+A sample sea surface temperature (SST) dataset is included in the
+package.
+
+- **Dataset**: Monthly sea surface temperature (SST) off Niigata,
+  Japan  
+- **Unit**: Degrees Celsius  
+- **Period**: February 2002 to December 2023  
+  \`\`
+
+This dataset is derived from observations archived at the Japan
+Oceanographic Data Center (JODC), Hydrographic and Oceanographic
+Department, Japan Coast Guard. The original daily SST data were obtained
+from  
+<https://www.jodc.go.jp/jodcweb/JDOSS/index.html>  
+and subsequently aggregated into monthly means.
 
 ``` r
 data(niigata_sst) # load a ts object of SST off Niigata
-
 head(niigata_sst)
 ```
 
     ##            Jan       Feb       Mar       Apr       May       Jun
     ## 2002  9.951613  8.332143  9.348387 11.713333 14.529032 18.906667
 
-## Plotting Monthly Time Series of Air Temperature
+``` r
+summary(niigata_sst)
+```
+
+    ##       Temp       
+    ##  Min.   : 7.707  
+    ##  1st Qu.:11.217  
+    ##  Median :16.345  
+    ##  Mean   :17.033  
+    ##  3rd Qu.:22.787  
+    ##  Max.   :28.897  
+    ##  NA's   :2
+
+The dataset includes two missing observations, which are retained and
+handled explicitly within the state-space modeling framework.
+
+### Plotting the Monthly SST Time Series
+
+We begin by visualizing the monthly SST time series to examine its
+overall structure, including apparent trends, seasonal variability, and
+missing observations.
 
 ``` r
 plt_niigata_sst <- forecast::autoplot(niigata_sst) +
@@ -75,83 +142,24 @@ plot(plt_niigata_sst)
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-``` r
-# The example data includes missing observation values
-```
+### Applying a Linear Gaussian State-Space Model
 
-## Plotting Time Series of Temperature Anomaly
+Here, we apply linear Gaussian state-space models to the univariate SST
+time series and examine the effect of the autoregressive (AR) order on
+model behavior.  
+Specifically, three models are fitted with the order of the
+autoregressive component varying from 1 to 3, while all other model
+components, including the explicit seasonal cycle, are kept the same.
 
-``` r
-# Generate temperature anomalies
-niigata_sst_anomaly <- ThermoSSM::monthly_anomaly(niigata_sst)
-
-niigata_sst_anomaly_tidy <- tibble(time=time(niigata_sst_anomaly),
-                           anomaly = as.numeric(niigata_sst_anomaly)) %>%
-  mutate(sign = ifelse(anomaly >= 0, "Positive","Negative"))
-
-
-plt_niigata_sst_anomaly <- ggplot() +
-  geom_hline(yintercept = 0, color = "black", linetype="dotted") +
-  geom_line(data = niigata_sst_anomaly_tidy,
-            aes(x = time, y = anomaly, fill=""), 
-            color="black",alpha = 0.5,
-            linewidth = 0.5) +
-  guides(fill = "none") +
-  labs(
-    y = expression(Anomaly~(degree*C)), 
-    x = "Year"
-  )  +
-  theme_classic()
-
-
-plot(plt_niigata_sst_anomaly)
-```
-
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
-
-## Plotting Monthly Seasonal Cycle
+By comparing models with different AR orders, we assess how short- and
+longer-term temporal dependencies are represented within the state-space
+framework.  
+The model summaries provide parameter estimates and diagnostics that can
+be used to evaluate the adequacy of different autoregressive orders.
+Model comparison and selection are discussed in the following section.
 
 ``` r
-monthly_seasonal_cycle_niigata_sst <- ThermoSSM::mean_seasonal_cycle(niigata_sst) 
-summary(monthly_seasonal_cycle_niigata_sst)
-```
-
-    ##      Month        Temperature    
-    ##  Min.   : 1.00   Min.   : 9.365  
-    ##  1st Qu.: 3.75   1st Qu.:11.169  
-    ##  Median : 6.50   Median :16.318  
-    ##  Mean   : 6.50   Mean   :17.036  
-    ##  3rd Qu.: 9.25   3rd Qu.:22.294  
-    ##  Max.   :12.00   Max.   :26.873
-
-``` r
-plt_monthly_seasonal_cycle_niigata_sst <- ggplot(
-  data = monthly_seasonal_cycle_niigata_sst,
-  aes(x = Month, y = Temperature)
-) +
-  geom_point(size = 2) +
-  geom_line(linetype = "dashed") +
-  labs(
-    title = "Monthly seasonal cycle of temperature",
-    x = "Month",
-    y = expression(Temperature~(degree*C))
-  ) +
-  scale_x_continuous(
-    breaks = 1:12,
-    labels = sprintf("%02d", 1:12)
-  ) +
-  theme_classic()
-
-
-plot(plt_monthly_seasonal_cycle_niigata_sst)
-```
-
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
-
-## Applying a Linear Gaussian State-Space Model
-
-``` r
-# a model with a first-order autoregressive component
+# model with first-order autoregressive component
 res <- lgssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
 summary(res)
 ```
@@ -179,6 +187,7 @@ summary(res)
     ##   Coefficient of AR1: 0.7442999
 
 ``` r
+# model with second-order autoregressive component
 res_ar2 <- lgssm(niigata_sst,ar_order=2) 
 summary(res_ar2)
 ```
@@ -207,6 +216,7 @@ summary(res_ar2)
     ##   Coefficient of AR2: -0.0651634
 
 ``` r
+# model with third-order autoregressive component
 res_ar3 <- lgssm(niigata_sst,ar_order=3) 
 summary(res_ar3)
 ```
@@ -235,7 +245,7 @@ summary(res_ar3)
     ##   Coefficient of AR2: 0.0118387 
     ##   Coefficient of AR3: -0.005368551
 
-## Model selection based on AIC
+### Model selection based on AIC
 
 ``` r
 # Extract AIC
@@ -256,26 +266,24 @@ AIC_table_res %>% knitr::kable()
 | AR2   | 567.8903 |  1.994836 |
 | AR3   | 569.8889 |  3.993417 |
 
-``` r
-## AR1 model is better than the other models.
-```
+AR1 model is better than the other models.
 
-## Plotting Level, Drift, Seasonal, and Auto-Regressive Components
+### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
 ``` r
 # plot each of components at once
 plot(res)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
-## Simple Model Diagnostics
+### Simple Model Diagnostics
 
 ``` r
 resid_test_output <- ThermoSSM::wrapper_checkresiduals(res)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 ``` r
 print(resid_test_output)
@@ -292,7 +300,7 @@ print(resid_test_output)
     ## $kurtosis
     ## [1] 3.057601
 
-## Estimated Parameters and Components
+### Estimated Parameters and Components
 
 ``` r
 # Smoothing estimates
@@ -369,7 +377,15 @@ print(ave_drift_2016_2020)
 
     ## [1] 0.04482296
 
-## Plotting Level Component with 95% Confidence Interval
+### Plotting Level and Drift Components with 95% Confidence Interval
+
+### Plotting Level and Drift Components with 95% Confidence Intervals
+
+We visualize the estimated long-term evolution of temperature levels and
+their rates of change (drift) by extracting the corresponding latent
+components from the state-space model. Seasonal variability and
+autoregressive dependence are separated out, allowing the underlying
+trend behavior to be examined more clearly.
 
 ``` r
 plt_level_ci <- plot(res,
@@ -379,14 +395,6 @@ plt_level_ci <- plot(res,
                      ) +
   theme_classic()
 
-plot(plt_level_ci)
-```
-
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
-
-## Plotting Drift Component with 95% Confidence Interval
-
-``` r
 plt_drift_ci <- plot(res,
                      components = "drift",
                      ci = TRUE,
@@ -395,69 +403,87 @@ plt_drift_ci <- plot(res,
   geom_hline(yintercept = 0, lty="dotted") +
   theme_classic()
 
-plot(plt_drift_ci)
+
+plt_level_drift_ci <- plt_level_ci + plt_drift_ci + patchwork::plot_layout(ncol=1)
+
+plot(plt_level_drift_ci)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
-# Practice II: Applying a linear Gaussian state-space model to temperature time series with an exogenous variable.
+The level component shows a persistent upward trend in sea surface
+temperature over the study period. The drift component indicates a
+relatively stable positive rate of change, with an estimated average
+annual increase of approximately 0.0525 °C. The shaded gray areas
+represent 95% confidence intervals for the estimated latent states,
+illustrating the uncertainty associated with the inferred long-term
+trend and its rate of change.
 
-## Objective:
+## Practice II: Applying a Linear Gaussian State-Space Model
 
-Using the long record of temperature time series data to isolate and
-verify the effect of of a large scale climate mode on long-term
-temperature variations.
+## to a Temperature Time Series with an Exogenous Variable
 
-## Loading dataset 1: the Long Record of Air Temperature
+### Objective
 
-- Data: Monthly air temperature at Hohenpeissenberg Meteorological
-  Observatory, German  
-- Observed Location: 47.801 °N; 11.011 °E  
-- Unit: Celsius  
-- Duration: Jan 1781 to December 2025
+The objective of this practice is to use a long record of temperature
+time series data to investigate and quantify the influence of a
+large-scale climate mode on long-term temperature variations.
+Specifically, we examine the effect of the North Atlantic Oscillation
+(NAO) as an exogenous variable within a state-space modeling framework.
 
-This dataset is the longest record of air temperature observed in
-Mountain region across the world. Original dataset provided by Global
-Historical Climatology Network monthly (GHCNm) ver.4 was obtained from
-<https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4>
+### Loading Dataset 1: Long-Term Air Temperature Record
+
+- **Data**: Monthly air temperature at the Hohenpeissenberg
+  Meteorological Observatory, Germany  
+- **Location**: 47.801°N, 11.011°E  
+- **Unit**: Degrees Celsius  
+- **Period**: January 1781 to December 2025
+
+This dataset represents one of the longest continuous instrumental
+records of air temperature available worldwide, observed at a mountain
+meteorological station. The original data were obtained from the Global
+Historical Climatology Network Monthly (GHCNm) version 4, distributed by
+the National Centers for Environmental Information (NCEI), NOAA:
+<https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4>.
 
 ``` r
 data(hmo_temp) # loading a ts object of air temperature at the HMO station
-
 head(hmo_temp)
 ```
 
     ##        Jan   Feb   Mar   Apr   May   Jun
     ## 1781 -1.76 -1.03  2.37  8.71 12.25 14.54
 
-## Loading dataset 2: NAO index as an exogenous valiable
+### Loading Dataset 2: NAO Index as an Exogenous Variable
 
-- Data: Monthly North Atlantic Oscillation (NAO) index (Hurrell)  
-- Duration: Jan 1865 to Jun 2023
+- **Data**: Monthly North Atlantic Oscillation (NAO) index (Hurrell)  
+- **Period**: January 1865 to June 202
 
-The winter (December thru March) station-based index of the NAO is based
-on the difference of normalized sea level pressure (SLP) between Lisbon,
-Portugal and Stykkisholmur/Reykjavik, Iceland since 1864. Positive
-values of the NAO index are typically associated with
-stronger-than-average westerlies over the middle latitudes, more intense
-weather systems over the North Atlantic and wetter/milder weather over
-western Europe. Monthly, seasonal and annual indices using slightly
-different data sources for the southern station are also available.
-
-Source dataset provided by the Climate Analysis Section, NCAR, Boulder,
-USA, Hurrell (2003) was obtained from
-<https://www.jodc.go.jp/jodcweb/JDOSS/index.html>.
+Monthly NAO indices derived using related data　sources are available
+from the Climate Analysis Section, National Center for Atmospheric
+Research (NCAR), Boulder, USA (Hurrell, 2003). The dataset used in this
+package was obtained from:
+<https://www.ncei.noaa.gov/access/monitoring/nao/>.
 
 ``` r
 data(nao) # load a ts object of NAO index
-
 head(nao)
 ```
 
     ##       Jan  Feb  Mar  Apr  May  Jun
     ## 1865 -0.6 -1.2  0.2 -0.2 -0.4  0.0
 
-## Intersecting the two ts objects of temperature and NAO
+### Intersecting the Temperature and NAO Time Series
+
+For state-space modeling with exogenous variables, all input time series
+must share a common and aligned time index. In this step, the
+temperature and NAO time series are restricted to their overlapping
+period by trimming the leading and trailing portions, ensuring that both
+datasets cover an identical time span.
+
+The function `ts.intersect()` is used to align the two `ts` objects on a
+shared timeline, returning a multivariate time series containing only
+the common period.
 
 ``` r
 # Generate an object on a shared timeline
@@ -506,7 +532,7 @@ end(nao_common)
 
     ## [1] 2023    6
 
-## Plotting Time Series of air temperature and NAO index
+### Plotting Time Series of Air Temperature and NAO Index
 
 ``` r
 plt_homo_temp <- forecast::autoplot(hmo_temp_common) +
@@ -524,9 +550,14 @@ cowplot::plot_grid(plt_homo_temp,
                    ncol=1)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
-## Applying a Linear Gaussian State-Space Model without exogenous variables
+### Applying a Model Without an Exogenous Variable
+
+We first fit a baseline state-space model that does not include any
+exogenous variables. This model serves as a reference case in which
+temperature variability is explained solely by the latent trend,
+seasonal cycle, and autoregressive dependence.
 
 ``` r
 res_without <- lgssm(hmo_temp_common) 
@@ -555,14 +586,19 @@ summary(res_without)
     ##   Order of AR: 1 
     ##   Coefficient of AR1: 0.2284355
 
-``` r
-AIC_without <- extract_AIC(res_without)
-plot(res_without)
-```
+The fitted model converges successfully and includes a first-order
+autoregressive \[AR(1)\] component. Prior testing of autoregressive
+orders from AR(1) to AR(3) indicated that AR(1) provided the best model
+fit for both the baseline model and the model including the exogenous
+NAO index. For brevity, the detailed results of this comparison are
+omitted here; interested users are encouraged to explore alternative AR
+orders within their own analyses.
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+This baseline model provides a useful benchmark for evaluating the
+additional explanatory power of the NAO index introduced in the
+following section.
 
-## Applying a Linear Gaussian State-Space Model with exogenous variables
+### Applying Model With an Exogenous Variable
 
 ``` r
 res_with <- lgssm(temp_data = hmo_temp_common,exo_data = nao_common) 
@@ -595,16 +631,40 @@ summary(res_with)
     ## Lower CI  0.2376886 
     ## Upper CI  0.3446071
 
+The estimated coefficient for the exogenous NAO index is positive
+(0.29), and its 95% confidence interval does not include zero \[0.24,
+0.34\], indicating a statistically significant relationship between NAO
+variability and local air temperature at the Hohenpeissenberg station.
+
+Specifically, the model suggests that a one-unit increase in the NAO
+index is associated with an average increase of approximately 0.29 °C in
+monthly air temperature, after accounting for the underlying trend,
+seasonal cycle, and autoregressive dependence. This result implies that
+positive phases of the NAO contribute systematically to warmer
+temperature conditions at the study site.
+
+Importantly, this effect is identified in addition to the internal
+dynamics of the temperature time series, rather than being an artifact
+of an improved representation of the trend or temporal dependence.
+Compared with the baseline model without exogenous variables, the
+statistical significance of the NAO coefficient indicates that the NAO
+acts as an independent large-scale climate driver influencing local
+temperature variability.
+
+We next compare the overall goodness of fit between the two models using
+the Akaike Information Criterion (AIC).
+
+### Model comparison based on AICs
+
+Model selection criteria such as the AIC provide a quantitative measure
+of model adequacy that balances goodness of fit against model
+complexity. Lower AIC values indicate a more parsimonious model with
+better support from the data.
+
 ``` r
+AIC_without <- extract_AIC(res_without)
 AIC_with <- extract_AIC(res_with)
-plot(res_with)
-```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
-
-## Model comparison based on AICs
-
-``` r
 models_AICs <- tibble(
   model = c("Without","With"),
   AIC = c(AIC_without,AIC_with),
@@ -619,13 +679,88 @@ models_AICs %>% knitr::kable()
 | Without | 8242.017 | -102.6742 |
 | With    | 8139.343 |    0.0000 |
 
+The model including the NAO index as an exogenous variable exhibits a
+substantially lower AIC than the baseline model without exogenous
+variables, indicating a markedly better overall fit. This result
+supports the conclusion that explicitly accounting for NAO variability
+improves the statistical description of the temperature time series
+beyond what is achieved by internal dynamics alone.
+
+It should be noted that AIC-based comparisons are meaningful only among
+models fitted to the same time series over an identical period.
+Moreover, in state-space models, AIC differences reflect both regression
+effects and changes in the stochastic structure of latent components.
+Therefore, AIC should be used as a complementary diagnostic alongside
+parameter estimates and their uncertainty, rather than as a sole basis
+for inference.
+
+To further assess the robustness and predictive performance of the
+models, we employ time-series cross-validation as described bellow.
+
+### Plotting Level and Drift Components with 95% CI
+
 ``` r
-## Model with the exogenous variable of NAO is remarkably better than model without one. 
+plt_level_without_ts <- plot(res_without, 
+                             components=c("level"),
+                             ci=TRUE) +
+  labs(title="Model without the NAO index") +
+  theme_classic()
+
+plt_drift_without_ts <- plot(res_without, 
+                             components=c("drift"),
+                             ci=TRUE) + 
+  labs(title="Model without the NAO index") +
+  theme_classic()
+
+plt_level_drift_without_ts <- plt_level_without_ts + 
+  plt_drift_without_ts + 
+  patchwork::plot_layout(ncol=1)
+
+plot(plt_level_drift_without_ts)
 ```
 
-## time series Cross-Validation
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
-### In this tutorial, the number of tsCV iterations has been set to eigth to reduce execution time. Please ensure you perform a sufficient number of iterations during actual validation.
+``` r
+plt_level_with_ts <- plot(res_with,
+                          components=c("level"),
+                          ci=TRUE)+ 
+  labs(title="Model with the NAO index") +
+  theme_classic()
+
+plt_drift_with_ts <- plot(res_with,
+                          components=c("drift"),
+                          ci=TRUE) + 
+  labs(title="Model with the NAO index") + 
+  theme_classic()
+
+plt_level_drift_with_ts <- plt_level_with_ts + 
+  plt_drift_with_ts + 
+  patchwork::plot_layout(ncol=1)
+
+plot(plt_level_drift_with_ts)
+```
+
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
+
+Gray areas in the above graph show 95% confidence interval.
+
+### Time Series Cross-Validation (tsCV)
+
+Time series cross-validation (tsCV) approach evaluates model performance
+based on out-of-sample prediction errors while respecting the temporal
+ordering of the data, and thus provides an additional, independent
+perspective on model adequacy.
+
+Time-series cross-validation is conducted by repeatedly fitting the
+model to an expanding training window and evaluating its predictive
+performance on subsequent observations. Unlike random cross-validation,
+this procedure avoids information leakage from the future to the past
+and is therefore well suited for temporal data.
+
+By comparing cross-validation metrics for models with and without the
+exogenous NAO variable, we assess whether the improvement suggested by
+AIC is also reflected in out-of-sample predictive skill. \`\`
 
 ``` r
 # ts cross-validation of the model without exogenous variables
@@ -641,14 +776,15 @@ models_AICs %>% knitr::kable()
 # ...
 # 
 # Eighth training data: January 1875–December 2020;
-# 15th test data: one year starting from January 2021
+# Eighth test data: one year starting from January 2021
 #
 # These folds are automatically generated by the ts_cv_folds() function.
 # Generate training and test dataset
+
 folds_without <- ts_cv_folds(
   temp_data = hmo_temp_common,
   exo_data = NULL,
-  initial = 1032, # 228 monthly observations from Jan 1865 to Dec 1950
+  initial = 1032, # 1032 monthly observations from Jan 1865 to Dec 1950
   horizon = 12, # forecast 12 monthly time-series
   step = 120, # training data is moved by 120 months (10 years) steps
   fixed_window = FALSE,
@@ -658,14 +794,14 @@ folds_without <- ts_cv_folds(
 folds_with <- ts_cv_folds(
   temp_data = hmo_temp_common,
   exo_data = nao_common,
-  initial = 1032, # 228 monthly observations from Jan 1865 to Dec 1950
+  initial = 1032, # 1032 monthly observations from Jan 1865 to Dec 1950
   horizon = 12, # forecast 12 monthly time-series
   step = 120, # training data is moved by 12 months (10 years) steps
   fixed_window = FALSE,
   allow_partial = FALSE
 )
 
-## Performe tsCV for the model without NAO index
+## Performe tsCV for the model without the exogenous variable of NAO
 cv_meta_without <- rolling_origin_tsCV(folds_without,
                                        fold_ids=seq(1:8), 
                                        ar_order=1) 
@@ -702,7 +838,7 @@ print(cv_without_tidy)
     ## 8 -0.277090168 0.5301606  0.4855664   0.7242332
 
 ``` r
-## Performe tsCV for the model with NAO index
+## Performe tsCV for the model with the exogenous variable of NAO
 cv_meta_with <- rolling_origin_tsCV(folds_with,
                                     fold_ids=seq(1:8),
                                     ar_order=1)
@@ -763,31 +899,218 @@ plot_MASE_snaive <- ggplot(data=cv_tidy,
 cowplot::plot_grid(plot_MAE,plot_MAPE,plot_MASE_naive,plot_MASE_snaive,nrow=1)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
-# Appendix: Utility Function
+Analysis of tsCV shows that the model with the exogenous variable is
+better than the model without one. In this tutorial, the number of tsCV
+iterations has been set to eigth to reduce execution time. Please ensure
+you perform a sufficient number of iterations during actual validation.
 
-## Utility function of sst_jma2ts()
+Taken together, the results consistently support the inclusion of the
+NAO index as an exogenous variable in the state-space model. The NAO
+coefficient is statistically significant, indicating a clear local
+effect on temperature variability, while the improvement in AIC
+demonstrates enhanced overall model fit. Furthermore, time-series
+cross-validation confirms that this improvement translates into superior
+out-of-sample predictive performance.
 
-### This function downloads publicly available daily mean sea-surface temperature (SST) data
+These complementary lines of evidence provide a robust and multifaceted
+justification for adopting the exogenous-variable model.
 
-### for Japanese coastal waters provided by the Japan Meteorological Agency (JMA),
+## Appendix: Utility Functions
 
-### and returns the corresponding monthly mean time series as an object of class ts.
+### Utility function: `monthly_temp_csv2ts()`
 
-``` r
-#' @param sea_area_id
-#' Numeric sea area ID. The default is NULL.
-#' For example, 138 corresponds to the coastal waters off southern Ibaraki, Japan.
-#' A list of sea area IDs and their corresponding regions is available at:
-#' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
+The function `monthly_temp_csv2ts()` converts monthly temperature data
+stored in a CSV file into an R `ts` object. It is intended to facilitate
+the ingestion of externally prepared time-series data into ThermoSSM by
+enforcing a simple and consistent data format.
+
+#### Example
+
+For monthly temperature data, prepare a CSV file with a header row. By
+default, the column names must be `Year`, `Month`, and `Temp`, where
+`Temp` represents the observed temperature value.
+
+``` text
+Year,Month,Temp
+2010,8,13.6
+2010,9,6.8
+2010,10,NA
+2010,11,-1.4
+...
 ```
 
+- Use NA for missing temperature values, and always keep the
+  corresponding Year and Month entries.
+- The CSV file must be comma-separated and UTF-8 encoded.
+
+The following example uses a sample CSV file included in the package.
+
 ``` r
-# Download SST data for the southern coastal waters of Ibaraki Prefecture, Japan
-sst_138_ts <- ThermoSSM::sst_jma2ts(sea_area_id = 138) 
+path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
+example_temp <- monthly_temp_csv2ts(path)
+head(example_temp)
+```
+
+    ##        Jan Feb Mar Apr May Jun Jul   Aug   Sep   Oct   Nov   Dec
+    ## 2010                                13.6   6.8   0.2  -6.8 -12.5
+    ## 2011 -18.8
+
+### Utility function: `monthly_temp_df2ts()`
+
+The function `monthly_temp_df2ts()` converts a data frame containing
+monthly temperature data into an R `ts` object. It is designed to
+support workflows where temperature data are first imported or prepared
+as a data frame before being used for time-series analysis.
+
+The input data frame is expected to contain at least two columns: a date
+column (`Date`) and a temperature column (`Temp`).
+
+#### Example
+
+``` r
+# Load example CSV file included in the package
+path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
+
+# Create a data frame with Date and Temp columns
+example_temp_df <- readr::read_csv(path) %>%
+  dplyr::mutate(Date = as.Date(paste0(Year, "-", Month, "-01"))) %>%
+  dplyr::select(Date, Temp)
+
+# Convert the data frame to a ts object
+example_temp_ts <- monthly_temp_df2ts(example_temp_df)
+
+head(example_temp_ts)
+```
+
+    ##        Jan Feb Mar Apr May Jun Jul   Aug   Sep   Oct   Nov   Dec
+    ## 2010                                13.6   6.8   0.2  -6.8 -12.5
+    ## 2011 -18.8
+
+### Utility function: `sst_jma2ts()`
+
+The function `sst_jma2ts()` downloads publicly available daily mean
+sea-surface temperature (SST) data for Japanese coastal waters provided
+by the Japan Meteorological Agency (JMA). It aggregates the daily values
+into monthly means and returns the resulting time series as an object of
+class `ts`.
+
+#### Example
+
+The following example demonstrates how to download SST data for the
+southern coastal waters of Ibaraki Prefecture, Japan.
+
+The argument `sea_area_id` specifies the numeric identifier of a sea
+area defined by JMA. For example, `138` corresponds to the coastal
+waters off southern Ibaraki. A list of available sea area IDs and their
+corresponding regions is provided by JMA at:
+
+<https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html>
+
+``` r
+sst_138_ts <- ThermoSSM::sst_jma2ts(sea_area_id = 138)
 head(sst_138_ts)
 ```
 
     ##           Jan      Feb      Mar      Apr      May      Jun
     ## 1982 15.04419 14.22500 13.63903 15.31933 17.52258 19.52300
+
+### Utility function: `monthly_anomaly()`
+
+The function `monthly_anomaly()` computes monthly anomalies from a time
+series provided as an R `ts` object. Monthly anomalies are calculated by
+subtracting the corresponding long-term monthly mean from each
+observation, thereby removing the seasonal cycle while preserving
+interannual variability.
+
+The reference period used to compute the monthly climatology can be
+specified via a function argument; by default, the climatology is
+computed over the entire available time series (see `?monthly_anomaly`).
+
+This transformation is useful for exploratory analysis and modeling
+applications that focus on departures from typical seasonal conditions.
+
+#### Example
+
+``` r
+# Generate temperature anomalies
+data(niigata_sst)
+niigata_sst_anomaly <- monthly_anomaly(niigata_sst)
+plot(niigata_sst_anomaly, ylab=expression(Anomaly~(degree*C))) 
+```
+
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+
+### Utility function: `mean_seasonal_cycle()`
+
+The function `mean_seasonal_cycle()` computes the climatological mean
+seasonal cycle from a `ts` object by averaging each seasonal value
+across years. It is primarily intended for exploratory analysis and
+visualization of the seasonal structure in temperature time series.
+
+#### Example
+
+``` r
+data(niigata_sst)
+monthly_seasonal_cycle_niigata_sst <- mean_seasonal_cycle(niigata_sst) 
+summary(monthly_seasonal_cycle_niigata_sst)
+```
+
+    ##      Month        Temperature    
+    ##  Min.   : 1.00   Min.   : 9.365  
+    ##  1st Qu.: 3.75   1st Qu.:11.169  
+    ##  Median : 6.50   Median :16.318  
+    ##  Mean   : 6.50   Mean   :17.036  
+    ##  3rd Qu.: 9.25   3rd Qu.:22.294  
+    ##  Max.   :12.00   Max.   :26.873
+
+``` r
+plt_monthly_seasonal_cycle_niigata_sst <- ggplot(
+  data = monthly_seasonal_cycle_niigata_sst,
+  aes(x = Month, y = Temperature)
+) +
+  geom_point(size = 2) +
+  geom_line(linetype = "dashed") +
+  labs(
+    title = "Monthly seasonal cycle of temperature",
+    x = "Month",
+    y = expression(Temperature~(degree*C))
+  ) +
+  scale_x_continuous(
+    breaks = 1:12,
+    labels = sprintf("%02d", 1:12)
+  ) +
+  theme_classic()
+
+
+plot(plt_monthly_seasonal_cycle_niigata_sst)
+```
+
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+
+These utility functions are provided to support data preparation
+and　exploratory analysis and are not required for the core modeling
+functionality of ThermoSSM.
+
+## References
+
+The statistical modeling framework implemented in `ThermoSSM` is based
+on the methodology described in Baba et al. (2024), with implementation
+details adapted from the accompanying supplementary materials and code
+repository.
+
+Baba, S., Ishii, H., and Yoshiyama, T. (2024). Estimating sea
+temperature trends using a linear Gaussian state-space model in
+Jogashima, Kanagawa, Japan. *Bulletin of the Japanese Society of
+Fisheries Oceanography*, 88(3), 190–199. (In Japanese with an English
+abstract.) <https://doi.org/10.34423/jsfo.88.3_190>
+
+Baba, S. (2024). Supplementary code and test data for estimating sea
+temperature trends using a linear Gaussian state-space model. GitHub
+repository:
+<https://github.com/logics-of-blue/sea-temperature-trend-jogashima>
+
+Helske, J. (2017). KFAS: Exponential Family State Space Models in R.  
+*Journal of Statistical Software*, 78(10), 1–39.
+<https://doi.org/10.18637/jss.v078.i10>
