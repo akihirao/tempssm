@@ -1,6 +1,6 @@
 # test-lgssm-structure.R
 
-test_that("ThermoSSM object structure is consistent", {
+test_that("tempssm object structure is consistent", {
 
   res <- lgssm(temp_ts_test)
 

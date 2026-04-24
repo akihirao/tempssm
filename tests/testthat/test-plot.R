@@ -1,6 +1,6 @@
 # plot.Thermo
 
-test_that("plot.ThermoSSM runs without error", {
+test_that("plot.tempssm runs without error", {
 
   res <- lgssm(temp_ts_test)
 
