@@ -1,17 +1,17 @@
-#' Summary method for ThermoSSM objects
+#' Summary method for tempssm objects
 #'
 #' Provides a concise summary of a fitted linear Gaussian
 #' state-space model estimated by \code{lgssm()}.
 #'
-#' @param object An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param object An object of class \code{"tempssm"} returned by \code{lgssm()}.
 #' @param ... Additional arguments (currently not used).
 #'
 #' @return A list containing model diagnostics and summaries.
 #'
-#' @method summary ThermoSSM
+#' @method summary tempssm
 #' @importFrom stats logLik
 #' @export
-summary.ThermoSSM <- function(object, ...) {
+summary.tempssm <- function(object, ...) {
 
   model <- object$model
   kfs   <- object$kfs
@@ -66,31 +66,31 @@ summary.ThermoSSM <- function(object, ...) {
     exogenous_coef = exogenous_coef_ci
   )
 
-  class(res) <- "summary.ThermoSSM"
+  class(res) <- "summary.tempssm"
   res
 }
 
 
 
-#' Print method for summary of ThermoSSM objects
+#' Print method for summary of tempssm objects
 #'
 #' Prints a human-readable summary of a fitted
 #' linear Gaussian state-space model estimated by
 #' \code{lgssm()}.
 #'
 #' This method is automatically called when a
-#' \code{summary.ThermoSSM} object is printed.
+#' \code{summary.tempssm} object is printed.
 #'
-#' @param x An object of class \code{summary.ThermoSSM}.
+#' @param x An object of class \code{summary.tempssm}.
 #' @param ... Additional arguments (currently not used).
 #'
 #' @return The input object \code{x}, invisibly.
 #'
-#' @method print summary.ThermoSSM
+#' @method print summary.tempssm
 #' @export
-print.summary.ThermoSSM <- function(x, ...) {
+print.summary.tempssm <- function(x, ...) {
 
-  cat("ThermoSSM summary\n")
+  cat("tempssm summary\n")
   cat("-----------------\n")
 
   cat("Call:\n")
