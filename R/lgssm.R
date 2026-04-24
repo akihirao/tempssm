@@ -26,7 +26,7 @@
 #' @param reltol Optional numeric of reltol.
 #'  If \code{NULL}, default value of 1e-16 is used.
 #'  
-#' @return An object of class \code{"ThermoSSM"}, a named list containing:
+#' @return An object of class \code{"tempssm"}, a named list containing:
 #' \describe{
 #'   \item{model}{Fitted \code{SSModel} object.}
 #'   \item{fit}{Results from \code{fitSSM}.}
@@ -108,7 +108,7 @@ lgssm <- function(temp_data,
 #' @param reltol Optional numeric of reltol.
 #'  If \code{NULL}, default value of 1e-16 is used.
 #'  
-#' @return An object of class \code{"ThermoSSM"}, a named list containing:
+#' @return An object of class \code{"tempssm"}, a named list containing:
 #' \describe{
 #'   \item{model}{Fitted \code{SSModel} object.}
 #'   \item{fit}{Results from \code{fitSSM}.}
@@ -140,7 +140,7 @@ lgssm_seasonal <- function(temp_data,
   tryCatch(
     {
     ## ---- Input checks ---------------------------------------------------
-    y <- ThermoSSM::check_temp_ts_lgssm(temp_data)
+    y <- tempssm::check_temp_ts_lgssm(temp_data)
     freq <- frequency(y)
 
     ## ---- Default initial values -----------------------------------------
@@ -334,7 +334,7 @@ lgssm_seasonal <- function(temp_data,
       call  = match.call()
     )
 
-    class(out) <- "ThermoSSM"
+    class(out) <- "tempssm"
     return(out)
   },
   error = function(e) {
@@ -378,7 +378,7 @@ lgssm_seasonal <- function(temp_data,
 #' @param reltol Optional numeric of reltol.
 #'  If \code{NULL}, default value of 1e-16 is used.
 #'
-#' @return An object of class \code{"ThermoSSM"}, a named list containing:
+#' @return An object of class \code{"tempssm"}, a named list containing:
 #' \describe{
 #'   \item{model}{Fitted \code{SSModel} object.}
 #'   \item{fit}{Results from \code{fitSSM}.}
@@ -410,7 +410,7 @@ lgssm_no_seasonal <- function(temp_data,
   tryCatch(
     {
       ## ---- Input checks ---------------------------------------------------
-      y <- ThermoSSM::check_temp_ts_lgssm(temp_data)
+      y <- tempssm::check_temp_ts_lgssm(temp_data)
       freq <- frequency(y)
       
       ## ---- Default initial values -----------------------------------------
@@ -587,7 +587,7 @@ lgssm_no_seasonal <- function(temp_data,
         call  = match.call()
       )
       
-      class(out) <- "ThermoSSM"
+      class(out) <- "tempssm"
       return(out)
     },
     error = function(e) {
@@ -650,7 +650,7 @@ check_temp_ts_lgssm <- function(temp_data) {
 #' @export
 check_exo_ts_lgssm <- function(temp_data, exo_data) {
 
-  temp_data_checked <- ThermoSSM::check_temp_ts_lgssm(temp_data)
+  temp_data_checked <- tempssm::check_temp_ts_lgssm(temp_data)
 
   temp_freq <- frequency(temp_data_checked)
 
@@ -704,7 +704,7 @@ check_exo_ts_lgssm <- function(temp_data, exo_data) {
 #' @export
 check_exo_ts_lgssm <- function(temp_data, exo_data) {
   
-  temp_data_checked <- ThermoSSM::check_temp_ts_lgssm(temp_data)
+  temp_data_checked <- tempssm::check_temp_ts_lgssm(temp_data)
   
   temp_freq <- frequency(temp_data_checked)
   
@@ -744,7 +744,7 @@ check_exo_ts_lgssm <- function(temp_data, exo_data) {
 
 #' Extract the smoothed level component as a time series
 #'
-#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
 #' @param ci Logical; should confidence intervals be returned? (default: FALSE)
 #' @param ci_level Confidence level for intervals (default: 0.95).
 #'
@@ -762,8 +762,8 @@ check_exo_ts_lgssm <- function(temp_data, exo_data) {
 #' }
 extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
-  if (!inherits(res, "ThermoSSM")) {
-    stop("Input must be a ThermoSSM object.", call. = FALSE)
+  if (!inherits(res, "tempssm")) {
+    stop("Input must be a tempssm object.", call. = FALSE)
   }
 
   if (is.null(res$kfs$alphahat) || !"level" %in% colnames(res$kfs$alphahat)) {
@@ -788,7 +788,7 @@ extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 #' Extract the smoothed drift (slope) component as a time series
 #'
-#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
 #' @param ci Logical; should confidence intervals be returned? (default: FALSE)
 #' @param ci_level Confidence level for intervals (default: 0.95).
 #'
@@ -806,8 +806,8 @@ extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' }
 extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
-  if (!inherits(res, "ThermoSSM")) {
-    stop("Input must be a ThermoSSM object.", call. = FALSE)
+  if (!inherits(res, "tempssm")) {
+    stop("Input must be a tempssm object.", call. = FALSE)
   }
 
   if (is.null(res$kfs$alphahat) || !"slope" %in% colnames(res$kfs$alphahat)) {
@@ -851,7 +851,7 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 #' Extract the smoothed seasonal component as a time series
 #'
-#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
 #' @param ci Logical; should confidence intervals be returned? (default: FALSE)
 #' @param ci_level Confidence level for intervals (default: 0.95).
 #'
@@ -871,8 +871,8 @@ extract_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   use_seasonal <- res$use_seasonal
 
-  if (!inherits(res, "ThermoSSM")) {
-    stop("Input must be a ThermoSSM object.", call. = FALSE)
+  if (!inherits(res, "tempssm")) {
+    stop("Input must be a tempssm object.", call. = FALSE)
   }
 
   if (!use_seasonal) {
@@ -903,17 +903,17 @@ extract_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' Extract the Akaike Information Criterion (AIC)
 #'
 #' This function computes the Akaike Information Criterion (AIC)
-#' for a fitted \code{ThermoSSM} model.
+#' for a fitted \code{tempssm} model.
 #'
-#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
 #'
 #' @return A numeric value representing the AIC of the fitted model.
 #'
 #' @export
 extract_AIC <- function(res) {
 
-  if (!inherits(res, "ThermoSSM")) {
-    stop("Input must be a ThermoSSM object.", call. = FALSE)
+  if (!inherits(res, "tempssm")) {
+    stop("Input must be a tempssm object.", call. = FALSE)
   }
 
   k <- length(res$fit$optim.out$par)
@@ -934,7 +934,7 @@ extract_AIC <- function(res) {
 
 #' Extract estimated parameters in the fitted models
 #'
-#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
 #'
 #' @return A \code{list} object of the estimated parameters.
 #'
@@ -976,13 +976,13 @@ extract_param <- function(res){
 #' Extract coefficients of exogenous variables with confidence intervals
 #'
 #' Extracts estimated regression coefficients for exogenous variable(s)
-#' included in a \code{ThermoSSM} model, together with confidence intervals
+#' included in a \code{tempssm} model, together with confidence intervals
 #' based on Kalman smoothing results.
 #'
 #' If the fitted model does not include exogenous variables,
 #' the function returns \code{NULL}.
 #'
-#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
 #'
 #' @param level Confidence level for the interval estimation.
 #'   Must be a numeric value between 0 and 1.
@@ -1008,8 +1008,8 @@ extract_param <- function(res){
 #' @export
 extract_exo_coef_ci <- function(res, level = 0.95) {
   
-  if (!inherits(res, "ThermoSSM")) {
-    stop("Input must be a 'ThermoSSM' object.", call. = FALSE)
+  if (!inherits(res, "tempssm")) {
+    stop("Input must be a 'tempssm' object.", call. = FALSE)
   }
   
   if (!is.numeric(level) || level <= 0 || level >= 1) {
