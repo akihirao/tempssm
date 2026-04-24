@@ -42,7 +42,7 @@ If \code{NULL}, default value of 5000 is used.}
 If \code{NULL}, default value of 1e-16 is used.}
 }
 \value{
-An object of class \code{"ThermoSSM"}, a named list containing:
+An object of class \code{"tempssm"}, a named list containing:
 \describe{
   \item{model}{Fitted \code{SSModel} object.}
   \item{fit}{Results from \code{fitSSM}.}

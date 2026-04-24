@@ -7,7 +7,7 @@
 extract_exo_coef_ci(res, level = 0.95)
 }
 \arguments{
-\item{res}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
+\item{res}{An object of class \code{"tempssm"} returned by \code{lgssm()}.}
 
 \item{level}{Confidence level for the interval estimation.
 Must be a numeric value between 0 and 1.
@@ -25,7 +25,7 @@ Returns \code{NULL} if no exogenous variables are included in the model.
 }
 \description{
 Extracts estimated regression coefficients for exogenous variable(s)
-included in a \code{ThermoSSM} model, together with confidence intervals
+included in a \code{tempssm} model, together with confidence intervals
 based on Kalman smoothing results.
 }
 \details{

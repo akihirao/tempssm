@@ -7,12 +7,12 @@
 extract_AIC(res)
 }
 \arguments{
-\item{res}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
+\item{res}{An object of class \code{"tempssm"} returned by \code{lgssm()}.}
 }
 \value{
 A numeric value representing the AIC of the fitted model.
 }
 \description{
 This function computes the Akaike Information Criterion (AIC)
-for a fitted \code{ThermoSSM} model.
+for a fitted \code{tempssm} model.
 }

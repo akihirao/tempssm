@@ -7,7 +7,7 @@
 extract_param(res)
 }
 \arguments{
-\item{res}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
+\item{res}{An object of class \code{"tempssm"} returned by \code{lgssm()}.}
 }
 \value{
 A \code{list} object of the estimated parameters.

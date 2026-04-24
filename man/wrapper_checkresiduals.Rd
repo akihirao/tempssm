@@ -2,7 +2,7 @@
 % Please edit documentation in R/model_diagonostics.R
 \name{wrapper_checkresiduals}
 \alias{wrapper_checkresiduals}
-\title{Residual diagnostics for ThermoSSM models}
+\title{Residual diagnostics for tempssm models}
 \usage{
 wrapper_checkresiduals(
   res,
@@ -14,7 +14,7 @@ wrapper_checkresiduals(
 )
 }
 \arguments{
-\item{res}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
+\item{res}{An object of class \code{"tempssm"} returned by \code{lgssm()}.}
 
 \item{plot_resid_save}{Logical; if TRUE, the residual diagnostic plot is saved.}
 

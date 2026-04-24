@@ -7,7 +7,7 @@
 extract_drift_ts(res, ci = FALSE, ci_level = 0.95)
 }
 \arguments{
-\item{res}{An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.}
+\item{res}{An object of class \code{"tempssm"} returned by \code{lgssm()}.}
 
 \item{ci}{Logical; should confidence intervals be returned? (default: FALSE)}
 
