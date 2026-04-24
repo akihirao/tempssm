@@ -29,7 +29,8 @@ Imports:
     tseries,
     moments,
     patchwork,
-    future.apply
+    future.apply,
+    httr2
 Suggests:
     testthat (>= 3.0.0),
     knitr,

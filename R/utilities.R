@@ -351,9 +351,20 @@ monthly_anomaly <- function(temp_ts, baseline = NULL) {
 
 
 
+# internal utilities ------------------------------------
+.user_agent <- function() {
+  getOption(
+    "tempssm.user_agent",
+    paste0(
+      "tempssm/",
+      utils::packageVersion("tempssm"),
+      " (https://github.com/yourname/tempssm)"
+    )
+  )
+}
 
 
-#' Retrieve daily mean sea-surface temperature as a zoo object from JMA 
+#' Retrieve daily mean sea-surface temperature as a zoo object from JMA
 #'
 #' This function downloads publicly available daily mean
 #' sea-surface temperature (SST) data for Japanese coastal waters
@@ -362,12 +373,20 @@ monthly_anomaly <- function(temp_ts, baseline = NULL) {
 #'
 #' @importFrom readr read_csv
 #' @importFrom rlang .data
+#' @importFrom httr2
+#'   request
+#'   req_user_agent
+#'   req_error
+#'   req_perform
+#'   resp_body_raw
+#'   resp_status
 #' @import dplyr
 #' @import zoo
 #' @import lubridate
 #'
 #' @param sea_area_id
-#' Numeric sea area ID. The default is NULL
+#' Character string giving the JMA sea area ID
+#' (numeric values are accepted and internally coerced to character).
 #' For example, 138 corresponding to the coastal sea off southern Ibaraki.
 #' A list of sea area IDs and their corresponding regions is available at:
 #' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
@@ -377,6 +396,12 @@ monthly_anomaly <- function(temp_ts, baseline = NULL) {
 #' parses daily observations, and constructs a \code{zoo} object
 #' with calendar dates as the index.
 #' Missing values in the original dataset are represented as \code{NA}.
+#'
+#' To comply with good API usage practices, HTTP requests sent by this
+#' function include a custom \emph{User-Agent} string identifying the
+#' \pkg{tempssm} package. Users may override the default User-Agent by
+#' setting the \code{"tempssm.user_agent"} option, for example:
+#' \code{options(tempssm.user_agent = "my-analysis/1.0")}.
 #'
 #' @return
 #' A \code{zoo} object of daily mean sea-surface temperature
@@ -389,64 +414,109 @@ monthly_anomaly <- function(temp_ts, baseline = NULL) {
 #' }
 #'
 #' @export
+sst_jma2zoo <- function(sea_area_id) {
 
-sst_jma2zoo <- function(sea_area_id = NULL) {
-  url_head <- "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area"
-  url <- paste0(url_head, sea_area_id, ".txt")
-  
-  sst_tidy <- readr::read_csv(url, show_col_types = FALSE) %>%
-    dplyr::slice(-dplyr::n()) # filtering out the last line of fudder
-  
+  if (!is.character(sea_area_id)) {
+    sea_area_id <- as.character(sea_area_id)
+  }
+
+  url <- paste0(
+    "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area",
+    sea_area_id,
+    ".txt"
+  )
+
+  # ---- HTTP request ----
+  resp <- httr2::request(url) |>
+    httr2::req_user_agent(.user_agent()) |>
+    httr2::req_error(body = function(resp) {
+      paste0(
+        "Failed to retrieve SST data for sea_area_id = '",
+        sea_area_id,
+        "'.\nHTTP status: ",
+        httr2::resp_status(resp)
+      )
+    }) |>
+    httr2::req_perform()
+
+  # ---- parse ----
+  sst_raw <- readr::read_csv(
+    httr2::resp_body_raw(resp),
+    show_col_types = FALSE
+  )
+
+  if (nrow(sst_raw) < 2) {
+    stop("Retrieved data has unexpected format.", call. = FALSE)
+  }
+
+  sst_tidy <- sst_raw |>
+    dplyr::slice(-dplyr::n())
+
   colnames(sst_tidy) <- c("Year", "Month", "Day", "areaNo", "flag", "Temp")
-  
-  # Use '.data' to explicitly reference data-frame columns and avoid R CMD check notes”
-  sst_tidy <- sst_tidy %>%
+
+  sst_tidy <- sst_tidy |>
     dplyr::mutate(
       Temp = as.numeric(.data$Temp),
       date = lubridate::make_date(
         year  = as.integer(.data$Year),
         month = as.integer(.data$Month),
         day   = as.integer(.data$Day)
-      )
-    ) %>%
-    dplyr::select(.data$date, .data$Temp, .data$flag) %>%
-    dplyr::mutate(
+      ),
       Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
-    )
-  
-  # convert tidy object to zoo object
-  sst_zoo <- zoo::zoo(
-    x = data.frame(Temp = sst_tidy[["Temp"]]),
-    order.by = sst_tidy[["date"]]
+    ) |>
+    dplyr::select(.data$date, .data$Temp, .data$flag)
+
+  zoo::zoo(
+    x = data.frame(Temp = sst_tidy$Temp),
+    order.by = sst_tidy$date
   )
-  
-  return(sst_zoo)
 }
 
 
-#' Retrieve daily mean sea-surface temperature as a monthly ts object from JMA 
+
+#' Retrieve daily mean sea-surface temperature as a monthly ts object from JMA
 #'
 #' This function downloads publicly available daily mean
 #' sea-surface temperature (SST) data for Japanese coastal waters
 #' provided by the Japan Meteorological Agency (JMA),
 #' and returns the monthly average data as a \code{ts} object.
 #'
-#' @importFrom tempssm zoo_daily2ts_monthly sst_jma2zoo
+#' @importFrom readr read_csv
+#' @importFrom rlang .data
+#' @importFrom tempssm zoo_daily2ts_monthly
+#' @importFrom httr2
+#'   request
+#'   req_user_agent
+#'   req_error
+#'   req_perform
+#'   resp_body_raw
+#'   resp_status
+#' @import dplyr
+#' @import zoo
+#' @import lubridate
 #'
 #' @param sea_area_id
-#' Numeric sea area ID. The default is NULL
-#' For example, 138 corresponding to the coastal sea off southern Ibaraki.
+#' Character string giving the JMA sea area ID
+#' (numeric values are accepted and internally coerced to character).
+#' For example, "138" corresponding to the coastal sea off southern Ibaraki.
 #' A list of sea area IDs and their corresponding regions is available at:
 #' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
+
 #' @param na_prop_max Maximum allowed proportion of NA values within a month.
 #'   If the proportion of missing values exceeds this threshold, the monthly
 #'   mean is set to NA. Default is \code{1} (no additional filtering).
-#' 
+#'
 #' @details
 #' The function retrieves a text-format dataset from the JMA website,
 #' parses daily observations, and constructs a \code{zoo} object
 #' with calendar dates as the index.
 #' Missing values in the original dataset are represented as \code{NA}.
+#'
+#' To comply with good API usage practices, HTTP requests sent by this
+#' function include a custom \emph{User-Agent} string identifying the
+#' \pkg{tempssm} package. Users may override the default User-Agent by
+#' setting the \code{"tempssm.user_agent"} option, for example:
+#' \code{options(tempssm.user_agent = "my-analysis/1.0")}.
 #'
 #' @return
 #' A \code{ts} object of monthly mean sea-surface temperature
@@ -459,12 +529,66 @@ sst_jma2zoo <- function(sea_area_id = NULL) {
 #' }
 #'
 #' @export
-sst_jma2ts <- function(sea_area_id = NULL,
+sst_jma2ts <- function(sea_area_id,
                        na_prop_max = 1) {
-  
-  sst_zoo <- tempssm::sst_jma2zoo(sea_area_id)
+
+  if (!is.character(sea_area_id)) {
+    sea_area_id <- as.character(sea_area_id)
+  }
+
+  url <- paste0(
+    "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area",
+    sea_area_id,
+    ".txt"
+  )
+
+  # ---- HTTP request ----
+  resp <- httr2::request(url) |>
+    httr2::req_user_agent(.user_agent()) |>
+    httr2::req_error(body = function(resp) {
+      paste0(
+        "Failed to retrieve SST data for sea_area_id = '",
+        sea_area_id,
+        "'.\nHTTP status: ",
+        httr2::resp_status(resp)
+      )
+    }) |>
+    httr2::req_perform()
+
+  # ---- parse ----
+  sst_raw <- readr::read_csv(
+    httr2::resp_body_raw(resp),
+    show_col_types = FALSE
+  )
+
+  if (nrow(sst_raw) < 2) {
+    stop("Retrieved data has unexpected format.", call. = FALSE)
+  }
+
+  sst_tidy <- sst_raw |>
+    dplyr::slice(-dplyr::n())
+
+  colnames(sst_tidy) <- c("Year", "Month", "Day", "areaNo", "flag", "Temp")
+
+  sst_tidy <- sst_tidy |>
+    dplyr::mutate(
+      Temp = as.numeric(.data$Temp),
+      date = lubridate::make_date(
+        year  = as.integer(.data$Year),
+        month = as.integer(.data$Month),
+        day   = as.integer(.data$Day)
+      ),
+      Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
+    ) |>
+    dplyr::select(.data$date, .data$Temp, .data$flag)
+
+  sst_zoo <- zoo::zoo(
+    x = data.frame(Temp = sst_tidy$Temp),
+    order.by = sst_tidy$date
+  )
+
   monthly_sst_ts <- tempssm::zoo_daily2ts_monthly(sst_zoo,
-                                                    na_prop_max = na_prop_max)
-  
+    na_prop_max = na_prop_max)
   return(monthly_sst_ts)
 }
+

@@ -4,11 +4,12 @@
 \alias{sst_jma2ts}
 \title{Retrieve daily mean sea-surface temperature as a monthly ts object from JMA}
 \usage{
-sst_jma2ts(sea_area_id = NULL, na_prop_max = 1)
+sst_jma2ts(sea_area_id, na_prop_max = 1)
 }
 \arguments{
-\item{sea_area_id}{Numeric sea area ID. The default is NULL
-For example, 138 corresponding to the coastal sea off southern Ibaraki.
+\item{sea_area_id}{Character string giving the JMA sea area ID
+(numeric values are accepted and internally coerced to character).
+For example, "138" corresponding to the coastal sea off southern Ibaraki.
 A list of sea area IDs and their corresponding regions is available at:
 \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}}
 
@@ -31,6 +32,12 @@ The function retrieves a text-format dataset from the JMA website,
 parses daily observations, and constructs a \code{zoo} object
 with calendar dates as the index.
 Missing values in the original dataset are represented as \code{NA}.
+
+To comply with good API usage practices, HTTP requests sent by this
+function include a custom \emph{User-Agent} string identifying the
+\pkg{tempssm} package. Users may override the default User-Agent by
+setting the \code{"tempssm.user_agent"} option, for example:
+\code{options(tempssm.user_agent = "my-analysis/1.0")}.
 }
 \examples{
 \dontrun{
