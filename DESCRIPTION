@@ -1,4 +1,4 @@
-Package: ThermoSSM
+Package: tempssm
 Type: Package
 Title: Linear Gaussian State-Space Analysis of Temperature Time Series
 Version: 0.1.2
