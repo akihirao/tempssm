@@ -20,7 +20,7 @@ https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 - Implements **time-series cross-validation** for model evaluation
 
 
-# How to Install
+# To Install
 ```r
 if(!require("devtools"))
 	install.packages("devtools")
@@ -81,17 +81,20 @@ The returned object `res` is an S3 object of class `'ThermoSSM`, which contains 
 
 # Example Data
 
-The package includes three example datasets for demonstration and testing of state-space temperature analyses. Two datasets are provided in `.rda` format
-and consist of publicly available temperature data released by the Japan Meteorological Agency (JMA) (https://www.jma.go.jp/jma/indexe.html).
+The package includes four example datasets for demonstration and testing of state-space temperature analyses. Three out of the four datasets are provided in `.rda` format.
 ```r
-data(ibaraki_sst)  # zoo object of daily sea surface temperature (SST) off the southern coast of Ibaraki Prefecture, Japan
+data(niigata_sst)  # ts object of monthly sea surface temperature off Niigata, Japan
 data(fuji_temp)    # ts object of monthly air temperature at the summit of Mt. Fuji, Japan
+data(hmo_temp)     # ts object of monthly air temperature at the Hohenpeissenberg Meteorological Observatory (HMO), Germany
 ```
-The third dataset is provided in .csv format and included in inst/extdata. It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan (elevation 1,840 m; 43.6766°N, 142.9423°E). The data originate from the Monitoring Sites 1000 Project conducted by the Ministry of the Environment of Japan (KOZ01.zip, downladed from https://www.biodic.go.jp/moni1000/findings/data/index.html).
+The fourth dataset is provided in .csv format and included in inst/extdata. It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan (elevation 1,840 m; 43.6766°N, 142.9423°E). The data originate from the Monitoring Sites 1000 Project conducted by the Ministry of the Environment of Japan (KOZ01.zip, downladed from https://www.biodic.go.jp/moni1000/findings/data/index.html).
 ```r
 path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
-example_3_data <- readr::read_csv(path)
-head(example_3_data)
+akadake_temp_info <- readr::read_csv(path)
+head(akadake_temp_info)
+
+# conver from data frame to monthly ts object
+akadake_temp <- ThermoSSM::monthly_temp_csv2ts(akadake_temp_info)
 ```
 
 # References

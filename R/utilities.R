@@ -1,3 +1,88 @@
+#' Convert a data frame of monthly temperature time series to a \code{ts} object
+#'
+#' @details
+#' This function converts a data frame containing a monthly temperature
+#' time series into an R \code{ts} object with a frequency of 12.
+#'
+#' The input data frame must contain the following columns:
+#' \describe{
+#'   \item{\code{Date}}{A date column indicating the time index.
+#'   If the exact day of the month is not uniquely defined, any arbitrary
+#'   day (e.g., the first day of the month) may be used.}
+#'   \item{\code{Temp}}{Monthly temperature values. Missing values should be
+#'   represented as \code{NA}.}
+#' }
+#'
+#' The function assumes that the input data represent a regularly spaced
+#' monthly time series. If missing months are detected in the \code{Date}
+#' column, a warning is issued, but the \code{ts} object is still created.
+#'
+#' The expected format is:
+#'
+#' \preformatted{
+#' Date        Temp
+#' 2001-01-01  10.4
+#' 2001-02-01   8.2
+#' 2001-03-01   NA
+#' 2001-04-01  13.6
+#' ...
+#' }
+#'
+#' @param df A data frame containing monthly temperature data with columns
+#'   \code{Date} and \code{Temp}.
+#'
+#' @return A univariate \code{ts} object representing the monthly temperature
+#'   time series.
+#'
+#' @importFrom stats ts
+#'
+#' @encoding UTF-8
+#'
+#' @export
+monthly_temp_df2ts <- function(df) {
+
+  # Check required columns
+  required_cols <- c("Date", "Temp")
+  if (!all(required_cols %in% names(df))) {
+    stop(
+      "The data frame must contain the following columns: ",
+      paste(required_cols, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  # Ensure Date is of class Date
+  if (!inherits(df$Date, "Date")) {
+    stop("The 'Date' column must be of class Date.", call. = FALSE)
+  }
+
+  # Sort by Date to ensure correct temporal order
+  df <- df[order(df$Date), ]
+
+  # Check regular monthly spacing
+  ym_index <- as.integer(format(df$Date, "%Y")) * 12 +
+              as.integer(format(df$Date, "%m"))
+
+  if (any(diff(ym_index) != 1)) {
+    warning(
+      "The input data do not form a strictly regular monthly time series. ",
+      "Some months may be missing.",
+      call. = FALSE
+    )
+  }
+
+  # Create ts object (monthly)
+  ts(
+    as.numeric(df$Temp),
+    start = c(
+      as.integer(format(df$Date[1], "%Y")),
+      as.integer(format(df$Date[1], "%m"))
+    ),
+    frequency = 12
+  )
+}
+
+
 #' Read and convert a monthly temperature CSV file to a \code{ts} object
 #'
 #' @details
