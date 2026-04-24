@@ -1,7 +1,7 @@
 #' @export
-print.ThermoSSM <- function(x, ...) {
+print.tempssm <- function(x, ...) {
 
-  cat("ThermoSSM model fit\n")
+  cat("tempssm model fit\n")
   cat("------------------\n")
 
   # Observed time series
