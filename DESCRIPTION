@@ -1,6 +1,6 @@
 Package: tempssm
 Type: Package
-Title: Linear Gaussian State-Space Analysis of Temperature Time Series
+Title: Linear Gaussian State-Space Models for Temperature Time Series
 Version: 0.1.2
 Authors@R: c(
     person(
