@@ -1,7 +1,7 @@
-ThermoSSM is an R package for state-space analysis of temperature time
-series. It provides tools for fitting linear Gaussian state-space models
-and conducting inference via Kalman filtering and smoothing, implemented
-using the KFAS R package (Helske, 2017).
+R package **tempssm** provides tools for state-space analysis of
+temperature time series. It provides tools for fitting linear Gaussian
+state-space models and conducting inference via Kalman filtering and
+smoothing, implemented using the KFAS R package (Helske, 2017).
 
 ## Key features
 
@@ -18,7 +18,7 @@ using the KFAS R package (Helske, 2017).
 
 ## Input Data Format
 
-Input data for ThermoSSM must be supplied as an R `ts` object, which
+Input data for **tempssm** must be supplied as an R `ts` object, which
 represents a regularly spaced time series (see `?stats::ts` or
 <https://stat.ethz.ch/R-manual/R-devel/library/stats/html/ts.html>).
 
@@ -31,14 +31,14 @@ fitting (see Appendix).
 ``` r
 if(!require("devtools"))
     install.packages("devtools")
-devtools::install_github("akihirao/ThermoSSM")
+devtools::install_github("akihirao/tempssm")
 ```
 
 ## Set Ennvironment for Practices
 
 ``` r
 ## Set libraries
-library(ThermoSSM)
+library(tempssm)
 library(forecast)
 
 library(purrr) 
@@ -164,7 +164,7 @@ res <- lgssm(niigata_sst) # first order of auto-regressive model (ar_order=1: de
 summary(res)
 ```
 
-    ## ThermoSSM summary
+    ## tempssm summary
     ## -----------------
     ## Call:
     ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
@@ -192,7 +192,7 @@ res_ar2 <- lgssm(niigata_sst,ar_order=2)
 summary(res_ar2)
 ```
 
-    ## ThermoSSM summary
+    ## tempssm summary
     ## -----------------
     ## Call:
     ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
@@ -221,7 +221,7 @@ res_ar3 <- lgssm(niigata_sst,ar_order=3)
 summary(res_ar3)
 ```
 
-    ## ThermoSSM summary
+    ## tempssm summary
     ## -----------------
     ## Call:
     ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
@@ -280,7 +280,7 @@ plot(res)
 ### Simple Model Diagnostics
 
 ``` r
-resid_test_output <- ThermoSSM::wrapper_checkresiduals(res)
+resid_test_output <- tempssm::wrapper_checkresiduals(res)
 ```
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
@@ -332,10 +332,10 @@ head(alpha_hat)
 
 ``` r
 #　Smoothing estimate of level component
-level_ts <- ThermoSSM::extract_level_ts(res)
+level_ts <- tempssm::extract_level_ts(res)
 
 #　Smoothing estimate of drift component
-drift_ts <- ThermoSSM::extract_drift_ts(res)
+drift_ts <- tempssm::extract_drift_ts(res)
 
 # Average drift rate per year across the full period
 mean_drift_year <- mean(drift_ts) 
@@ -564,7 +564,7 @@ res_without <- lgssm(hmo_temp_common)
 summary(res_without)
 ```
 
-    ## ThermoSSM summary
+    ## tempssm summary
     ## -----------------
     ## Call:
     ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
@@ -605,7 +605,7 @@ res_with <- lgssm(temp_data = hmo_temp_common,exo_data = nao_common)
 summary(res_with)
 ```
 
-    ## ThermoSSM summary
+    ## tempssm summary
     ## -----------------
     ## Call:
     ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
@@ -923,7 +923,7 @@ justification for adopting the exogenous-variable model.
 
 The function `monthly_temp_csv2ts()` converts monthly temperature data
 stored in a CSV file into an R `ts` object. It is intended to facilitate
-the ingestion of externally prepared time-series data into ThermoSSM by
+the ingestion of externally prepared time-series data into tempssm by
 enforcing a simple and consistent data format.
 
 #### Example
@@ -948,7 +948,7 @@ Year,Month,Temp
 The following example uses a sample CSV file included in the package.
 
 ``` r
-path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
+path <- system.file("extdata", "example_monthly_temp.csv", package = "tempssm")
 example_temp <- monthly_temp_csv2ts(path)
 head(example_temp)
 ```
@@ -971,7 +971,7 @@ column (`Date`) and a temperature column (`Temp`).
 
 ``` r
 # Load example CSV file included in the package
-path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
+path <- system.file("extdata", "example_monthly_temp.csv", package = "tempssm")
 
 # Create a data frame with Date and Temp columns
 example_temp_df <- readr::read_csv(path) %>%
@@ -1009,7 +1009,7 @@ corresponding regions is provided by JMA at:
 <https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html>
 
 ``` r
-sst_138_ts <- ThermoSSM::sst_jma2ts(sea_area_id = 138)
+sst_138_ts <- tempssm::sst_jma2ts(sea_area_id = 138)
 head(sst_138_ts)
 ```
 
@@ -1091,12 +1091,12 @@ plot(plt_monthly_seasonal_cycle_niigata_sst)
 
 These utility functions are provided to support data preparation
 and　exploratory analysis and are not required for the core modeling
-functionality of ThermoSSM.
+functionality of tempssm.
 
 ## References
 
-The statistical modeling framework implemented in `ThermoSSM` is based
-on the methodology described in Baba et al. (2024), with implementation
+The statistical modeling framework implemented in `tempssm` is based on
+the methodology described in Baba et al. (2024), with implementation
 details adapted from the accompanying supplementary materials and code
 repository.
 
