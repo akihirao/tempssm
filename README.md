@@ -1,6 +1,8 @@
-# ThermoSSM
+# tempssm
 
-**ThermoSSM** is an R package for state-space analysis of temperature time series.
+R package **tempssm** provides tools for fitting and analyzing 
+linear Gaussian state-space models to temperature time series, 
+with a focus on climate and environmental applications.
 It implements linear Gaussian state-space models and performs inference using
 Kalman filtering and smoothing.
 
@@ -24,17 +26,17 @@ https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 ```r
 if(!require("devtools"))
 	install.packages("devtools")
-devtools::install_github("akihirao/ThermoSSM")
+devtools::install_github("akihirao/tempssm")
 
 # install with vignettes
-devtools::install_github("akihirao/ThermoSSM", build_vignettes=TRUE)
+devtools::install_github("akihirao/tempssm", build_vignettes=TRUE)
 ```
 
 # Quick Tutorial
 ```r
-browseVignettes("ThermoSSM")
+browseVignettes("tempssm")
 ```
-https://github.com/akihirao/ThermoSSM/blob/main/vignettes/quick_tutorial.md
+https://github.com/akihirao/tempssm/blob/main/vignettes/quick_tutorial.md
 
 
 # Simple usage
@@ -60,9 +62,9 @@ Year,Month,Temp
 If the CSV file is named `hogehoge.csv`, load the data and convert it to a time series object using the following commands:
 
 ```r
-library(ThermoSSM)
+library(tempssm)
 
-hogehoge_ts <- ThermoSSM::monthly_temp_csv2ts("hogehoge.csv")
+hogehoge_ts <- monthly_temp_csv2ts("hogehoge.csv")
 ```
 The function `monthly_temp_csv2ts()` internally uses the base R function [`ts()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/ts) to create a time series object. Users may alternatively convert their data manually using `ts()` if finer control over the time series structure is required.
 
@@ -76,7 +78,7 @@ res <- lgssm(hogehoge_ts)
 summary(res)  # summarise results
 plot(res) # plot results
 ```
-The returned object `res` is an S3 object of class `'ThermoSSM`, which contains the fitted state-space model results. The object `res` can be analyzed using methods such as `summary()` and `plot()`.
+The returned object `res` is an S3 object of class `'tempssm`, which contains the fitted state-space model results. The object `res` can be analyzed using methods such as `summary()` and `plot()`.
 
 
 # Example Data
@@ -89,12 +91,12 @@ data(hmo_temp)     # ts object of monthly air temperature at the Hohenpeissenber
 ```
 The fourth dataset is provided in .csv format and included in inst/extdata. It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan (elevation 1,840 m; 43.6766°N, 142.9423°E). The data originate from the Monitoring Sites 1000 Project conducted by the Ministry of the Environment of Japan (KOZ01.zip, downladed from https://www.biodic.go.jp/moni1000/findings/data/index.html).
 ```r
-path <- system.file("extdata", "example_monthly_temp.csv", package = "ThermoSSM")
+path <- system.file("extdata", "example_monthly_temp.csv", package = "tempssm")
 akadake_temp_info <- readr::read_csv(path)
 head(akadake_temp_info)
 
 # conver from data frame to monthly ts object
-akadake_temp <- ThermoSSM::monthly_temp_csv2ts(akadake_temp_info)
+akadake_temp <- monthly_temp_csv2ts(akadake_temp_info)
 ```
 
 # References
