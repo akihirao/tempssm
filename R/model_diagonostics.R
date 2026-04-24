@@ -1,9 +1,9 @@
-#' Residual diagnostics for ThermoSSM models
+#' Residual diagnostics for tempssm models
 #'
 #' Wrapper function for residual diagnostics using functions from
 #' the forecast, stats, tseries, and moments packages.
 #'
-#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
 #' @param plot_resid_save Logical; if TRUE, the residual diagnostic plot is saved.
 #' @param resid_file_name Character; file name for saving the residual diagnostic plot (default: "checkresiduals.png").
 #' @param JB_test Logical; if TRUE, Jarque–Bera test is optionally execute.
