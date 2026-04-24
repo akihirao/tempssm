@@ -369,7 +369,7 @@ exec_tsCV <- function(
 #'
 #' This function performs prediction using test data in time series cross-validation.
 #'
-#' @importFrom ThermoSSM exec_tsCV
+#' @importFrom tempssm exec_tsCV
 #'
 #' @param folds A \code{list} of fold objects returned by \code{ts_cv_folds()}.
 #'
@@ -390,7 +390,7 @@ rolling_origin_tsCV <- function(folds, fold_ids = NULL,ar_order){
     fold_ids <- seq_len(num_fold)
   }
   
-  exec_fun <- ThermoSSM::exec_tsCV  # Importance!
+  exec_fun <- tempssm::exec_tsCV  # Importance!
   
   # ---- safety check ----
   if (!is.numeric(fold_ids) || any(fold_ids < 1) || any(fold_ids > num_fold)) {
@@ -407,7 +407,7 @@ rolling_origin_tsCV <- function(folds, fold_ids = NULL,ar_order){
         )
     },
     future.seed = TRUE,
-    future.packages = c("ThermoSSM","KFAS"),
+    future.packages = c("tempssm","KFAS"),
     future.globals = c("folds","exec_fun") # Note globals
   )
   
