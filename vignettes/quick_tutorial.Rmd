@@ -6,9 +6,9 @@ output:
 #  pdf_document:
 #    latex_engine: lualatex
 #    toc: true
-#  rmarkdown::html_vignette: default
-  md_document:
-    variant: gfm
+  rmarkdown::html_vignette: default
+#  md_document:
+#    variant: gfm
 vignette: >
   %\VignetteIndexEntry{"Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"}
   %\VignetteEngine{knitr::rmarkdown}

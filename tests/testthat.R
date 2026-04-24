@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(ThermoSSM)
+library(tempssm)
 
-test_check("ThermoSSM")
+test_check("tempssm")
