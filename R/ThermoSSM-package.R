@@ -1,6 +1,6 @@
-#' ThermoSSM: State space analysis of temperature time series
+#' tempssm: State space models for temperature time series
 #'
-#' \pkg{ThermoSSM} provides tools for analyzing temperature time series
+#' \pkg{tempssm} provides tools for analyzing temperature time series
 #' (e.g., air temperature and sea surface temperature) using
 #' linear Gaussian state-space models.
 #'
@@ -37,8 +37,8 @@
 #' https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 #'
 #' @seealso
-#' \url{https://github.com/akihirao/ThermoSSM}
+#' \url{https://github.com/akihirao/tempssm}
 #'
-#' @name ThermoSSM
-#' @aliases ThermoSSM-package
+#' @name tempssm
+#' @aliases tempssm-package
 NULL
