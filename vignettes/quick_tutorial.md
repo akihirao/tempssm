@@ -160,14 +160,14 @@ Model comparison and selection are discussed in the following section.
 
 ``` r
 # model with first-order autoregressive component
-res <- lgssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
+res <- ssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
 summary(res)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
     ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
@@ -188,14 +188,14 @@ summary(res)
 
 ``` r
 # model with second-order autoregressive component
-res_ar2 <- lgssm(niigata_sst,ar_order=2) 
+res_ar2 <- ssm(niigata_sst,ar_order=2) 
 summary(res_ar2)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
     ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
@@ -217,14 +217,14 @@ summary(res_ar2)
 
 ``` r
 # model with third-order autoregressive component
-res_ar3 <- lgssm(niigata_sst,ar_order=3) 
+res_ar3 <- ssm(niigata_sst,ar_order=3) 
 summary(res_ar3)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
     ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
@@ -299,6 +299,9 @@ print(resid_test_output)
     ## 
     ## $kurtosis
     ## [1] 3.057601
+
+Autocorrelation of residuals was not significant by Ljung-Box test (P \>
+0.05).
 
 ### Estimated Parameters and Components
 
@@ -378,8 +381,6 @@ print(ave_drift_2016_2020)
     ## [1] 0.04482296
 
 ### Plotting Level and Drift Components with 95% Confidence Interval
-
-### Plotting Level and Drift Components with 95% Confidence Intervals
 
 We visualize the estimated long-term evolution of temperature levels and
 their rates of change (drift) by extracting the corresponding latent
@@ -560,14 +561,14 @@ temperature variability is explained solely by the latent trend,
 seasonal cycle, and autoregressive dependence.
 
 ``` r
-res_without <- lgssm(hmo_temp_common) 
+res_without <- ssm(hmo_temp_common) 
 summary(res_without)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
     ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
@@ -601,14 +602,14 @@ following section.
 ### Applying Model With an Exogenous Variable
 
 ``` r
-res_with <- lgssm(temp_data = hmo_temp_common,exo_data = nao_common) 
+res_with <- ssm(temp_data = hmo_temp_common,exo_data = nao_common) 
 summary(res_with)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
     ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:

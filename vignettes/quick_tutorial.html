@@ -12,7 +12,7 @@
 
 <meta name="author" content="Akira Hirao" />
 
-<meta name="date" content="2026-04-24" />
+<meta name="date" content="2026-04-25" />
 
 <title>Quick tutorial for linear Gaussian state-space analysis of temperature time series with R package tempssm</title>
 
@@ -343,7 +343,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 state-space analysis of temperature time series with R package
 tempssm</h1>
 <h4 class="author">Akira Hirao</h4>
-<h4 class="date">2026-04-24</h4>
+<h4 class="date">2026-04-25</h4>
 
 
 
@@ -495,12 +495,12 @@ be used to evaluate the adequacy of different autoregressive orders.
 Model comparison and selection are discussed in the following
 section.</p>
 <div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co"># model with first-order autoregressive component</span></span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">lgssm</span>(niigata_sst) <span class="co"># first order of auto-regressive model (ar_order=1: default)</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">ssm</span>(niigata_sst) <span class="co"># first order of auto-regressive model (ar_order=1: default)</span></span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">summary</span>(res)</span></code></pre></div>
 <pre><code>## tempssm summary
 ## -----------------
 ## Call:
-## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
 ##     inits = inits, maxit = maxit, reltol = reltol)
 ## 
 ## Model fit:
@@ -519,12 +519,12 @@ section.</p>
 ##   Order of AR: 1 
 ##   Coefficient of AR1: 0.7442999</code></pre>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="co"># model with second-order autoregressive component</span></span>
-<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>res_ar2 <span class="ot">&lt;-</span> <span class="fu">lgssm</span>(niigata_sst,<span class="at">ar_order=</span><span class="dv">2</span>) </span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>res_ar2 <span class="ot">&lt;-</span> <span class="fu">ssm</span>(niigata_sst,<span class="at">ar_order=</span><span class="dv">2</span>) </span>
 <span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a><span class="fu">summary</span>(res_ar2)</span></code></pre></div>
 <pre><code>## tempssm summary
 ## -----------------
 ## Call:
-## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
 ##     inits = inits, maxit = maxit, reltol = reltol)
 ## 
 ## Model fit:
@@ -544,12 +544,12 @@ section.</p>
 ##   Coefficient of AR1: 0.8278959 
 ##   Coefficient of AR2: -0.0651634</code></pre>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="co"># model with third-order autoregressive component</span></span>
-<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>res_ar3 <span class="ot">&lt;-</span> <span class="fu">lgssm</span>(niigata_sst,<span class="at">ar_order=</span><span class="dv">3</span>) </span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>res_ar3 <span class="ot">&lt;-</span> <span class="fu">ssm</span>(niigata_sst,<span class="at">ar_order=</span><span class="dv">3</span>) </span>
 <span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="fu">summary</span>(res_ar3)</span></code></pre></div>
 <pre><code>## tempssm summary
 ## -----------------
 ## Call:
-## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
 ##     inits = inits, maxit = maxit, reltol = reltol)
 ## 
 ## Model fit:
@@ -631,6 +631,8 @@ section.</p>
 ## 
 ## $kurtosis
 ## [1] 3.057601</code></pre>
+<p>Autocorrelation of residuals was not significant by Ljung-Box test (P
+&gt; 0.05).</p>
 </div>
 <div id="estimated-parameters-and-components" class="section level3">
 <h3>Estimated Parameters and Components</h3>
@@ -693,10 +695,6 @@ section.</p>
 <div id="plotting-level-and-drift-components-with-95-confidence-interval" class="section level3">
 <h3>Plotting Level and Drift Components with 95% Confidence
 Interval</h3>
-</div>
-<div id="plotting-level-and-drift-components-with-95-confidence-intervals" class="section level3">
-<h3>Plotting Level and Drift Components with 95% Confidence
-Intervals</h3>
 <p>We visualize the estimated long-term evolution of temperature levels
 and their rates of change (drift) by extracting the corresponding latent
 components from the state-space model. Seasonal variability and
@@ -841,12 +839,12 @@ time series containing only the common period.</p>
 exogenous variables. This model serves as a reference case in which
 temperature variability is explained solely by the latent trend,
 seasonal cycle, and autoregressive dependence.</p>
-<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a>res_without <span class="ot">&lt;-</span> <span class="fu">lgssm</span>(hmo_temp_common) </span>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a>res_without <span class="ot">&lt;-</span> <span class="fu">ssm</span>(hmo_temp_common) </span>
 <span id="cb47-2"><a href="#cb47-2" tabindex="-1"></a><span class="fu">summary</span>(res_without)</span></code></pre></div>
 <pre><code>## tempssm summary
 ## -----------------
 ## Call:
-## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
 ##     inits = inits, maxit = maxit, reltol = reltol)
 ## 
 ## Model fit:
@@ -877,12 +875,12 @@ following section.</p>
 </div>
 <div id="applying-model-with-an-exogenous-variable" class="section level3">
 <h3>Applying Model With an Exogenous Variable</h3>
-<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" tabindex="-1"></a>res_with <span class="ot">&lt;-</span> <span class="fu">lgssm</span>(<span class="at">temp_data =</span> hmo_temp_common,<span class="at">exo_data =</span> nao_common) </span>
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" tabindex="-1"></a>res_with <span class="ot">&lt;-</span> <span class="fu">ssm</span>(<span class="at">temp_data =</span> hmo_temp_common,<span class="at">exo_data =</span> nao_common) </span>
 <span id="cb49-2"><a href="#cb49-2" tabindex="-1"></a><span class="fu">summary</span>(res_with)</span></code></pre></div>
 <pre><code>## tempssm summary
 ## -----------------
 ## Call:
-## lgssm_seasonal(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
 ##     inits = inits, maxit = maxit, reltol = reltol)
 ## 
 ## Model fit:

@@ -2,7 +2,7 @@
 
 test_that("tempssm object structure is consistent", {
 
-  res <- lgssm(temp_ts_test)
+  res <- ssm(temp_ts_test)
 
   expect_named(
     res,

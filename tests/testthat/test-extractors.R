@@ -2,7 +2,7 @@
 
 test_that("extract_level_ts returns ts of correct length", {
 
-  res <- lgssm(temp_ts_test)
+  res <- ssm(temp_ts_test)
   level <- extract_level_ts(res)
 
   expect_s3_class(level, "ts")

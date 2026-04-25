@@ -943,14 +943,14 @@ extract_param <- function(res){
 #'
 #' @examples
 #' \dontrun{
-#' data(hmo_temp)
-#' data(nao)
-#' hmo_temp_nao_ts <- ts.intersect(hmo_temp,nao)
-#' colnames(hmo_temp_nao_ts) <- c("Temp", "NAO")
-#' hmo_temp_common <- hmo_temp_nao_ts[,"Temp]
-#' nao_common <- hmo_temp_nao_ts[,"NAO]
-#' nao_common <- label_ts_mono(nao_common, label = "NAO") 
-#' res <- ssm(temp_data = hmo_temp_common,exo_data = nao_common)
+#' data(niigata_sst)
+#' data(pdo)
+#  niigata_sst_pdo <- ts.intersect(niigata_sst,pdo)
+#' colnames(niigata_sst_pdo) <- c("Temp", "PDO")
+#' niigata_sst_common <- niigata_sst_pdo[,"Temp]
+#' pdo_common <- niigata_sst_pdo[,"PDO]
+#' pdo_common <- label_ts_mono(nao_common, label = "PDO")
+#' res <- ssm(temp_data = niigata_sst_common,exo_data = pdo_common)
 #' extract_exo_coef_ci(res)
 #' }
 #'
