@@ -69,11 +69,11 @@ hogehoge_ts <- monthly_temp_csv2ts("hogehoge.csv")
 The function `monthly_temp_csv2ts()` internally uses the base R function [`ts()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/ts) to create a time series object. Users may alternatively convert their data manually using `ts()` if finer control over the time series structure is required.
 
 ### 3. Execute the state-space modelling    
-The function `lgssm()` fits a state-space model to the monthly temperature
+The function `ssm()` fits a state-space model to the monthly temperature
 time series using a Gaussian structural model.
 
 ```r
-res <- lgssm(hogehoge_ts)
+res <- ssm(hogehoge_ts)
 
 summary(res)  # summarise results
 plot(res) # plot results
