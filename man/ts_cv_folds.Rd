@@ -20,7 +20,7 @@ The series can have any arbitrary frequency of 2 or higher.
 For example, a frequency of 12 represents a monthly \code{ts} object.}
 
 \item{exo_data}{Exogenous time series variable(s) of class \code{ts}.
-The series may have any arbitrary frequency of 2 or higher.. 
+The series may have any arbitrary frequency of 2 or higher.
 But it must be the same as that of \code{temp_data}.}
 
 \item{initial}{Initial length of the training set (number of observations;

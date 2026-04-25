@@ -14,7 +14,7 @@ Default is all folds.}
 
 \item{ar_order}{Integer specifying the order of the autoregressive (AR)
 component in the error structure (e.g., 2 for AR(2), 3 for AR(3))
-for applying \code{lgssm()}. Defaults to 2.}
+for applying \code{ssm()}. Defaults to 2.}
 }
 \value{
 A \code{list} object of ts cross-validation output.

@@ -8,7 +8,7 @@
 #'   The series can have any arbitrary frequency of 2 or higher.
 #'   For example, a frequency of 12 represents a monthly \code{ts} object.
 #' @param exo_data Exogenous time series variable(s) of class \code{ts}.
-#'   The series may have any arbitrary frequency of 2 or higher.. 
+#'   The series may have any arbitrary frequency of 2 or higher.
 #'   But it must be the same as that of \code{temp_data}.
 #' @param initial Initial length of the training set (number of observations;
 #'   e.g., 60). Default is 60.
@@ -234,7 +234,7 @@ scale_Q <- function(train_ts, method = c("naive", "seasonal")) {
 #'
 #' @param ar_order_given Integer specifying the order of the autoregressive (AR)
 #' component in the error structure (e.g., 2 for AR(2), 3 for AR(3))
-#' for applying \code{lgssm()}.
+#' for applying \code{ssm()}.
 #' 
 #' @return A \code{list} object of ts cross-validation output
 #' 
@@ -275,7 +275,7 @@ exec_tsCV <- function(
   
   if(is.null(exo_judge)){ # if data-set excludes exogenous variables
     
-    res_train <- lgssm(temp_data = temp_train_mts,
+    res_train <- ssm(temp_data = temp_train_mts,
                        exo_data = NULL,
                        ar_order = ar_order_given)
     
@@ -308,7 +308,7 @@ exec_tsCV <- function(
                            exo_test)
     colnames(temp_exo_test) <- c("Temp",colnames(exo_test))
     
-    res_train<- lgssm(temp_data = temp_train_mts,
+    res_train<- ssm(temp_data = temp_train_mts,
                       exo_data = exo_train,
                       ar_order = ar_order_given)
     
@@ -378,7 +378,7 @@ exec_tsCV <- function(
 #'
 #' @param ar_order Integer specifying the order of the autoregressive (AR)
 #' component in the error structure (e.g., 2 for AR(2), 3 for AR(3))
-#' for applying \code{lgssm()}. Defaults to 2.
+#' for applying \code{ssm()}. Defaults to 2.
 #'
 #' @return A \code{list} object of ts cross-validation output.
 #' @export

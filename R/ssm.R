@@ -44,33 +44,32 @@
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- lgssm(niigata_sst)
+#' res <- ssm(niigata_sst)
 #' summary(res)
 #' }
-lgssm <- function(temp_data, 
-                  exo_data = NULL,
-                  ar_order = 1,
-                  use_seasonal = TRUE,
-                  inits = NULL,
-                  maxit = NULL,
-                  reltol = NULL) {
+ssm <- function(temp_data,exo_data = NULL,
+                ar_order = 1,
+                use_seasonal = TRUE,
+                inits = NULL,
+                maxit = NULL,
+                reltol = NULL) {
   
   if(use_seasonal){
-    out <- lgssm_seasonal(temp_data=temp_data,
-                          exo_data=exo_data,
-                          ar_order = ar_order,
-                          inits = inits,
-                          maxit = maxit,
-                          reltol = reltol
-                          )
+    out <- ssm_season(temp_data=temp_data,
+                      exo_data=exo_data,
+                      ar_order = ar_order,
+                      inits = inits,
+                      maxit = maxit,
+                      reltol = reltol
+                      )
   }else{
-    out <- lgssm_no_seasonal(temp_data=temp_data,
-                             exo_data=exo_data,
-                             ar_order = ar_order,
-                             inits = inits,
-                             maxit = maxit,
-                             reltol = reltol
-                             )
+    out <- ssm_no_season(temp_data=temp_data,
+                         exo_data=exo_data,
+                         ar_order = ar_order,
+                         inits = inits,
+                         maxit = maxit,
+                         reltol = reltol
+                         )
   }
   
   return(out)
@@ -80,7 +79,7 @@ lgssm <- function(temp_data,
 
 #' Base function for fitting a linear Gaussian state-space model to temperature time series
 #'
-#' This function estimates a linear Gaussian state-space model (LGSSM)
+#' This function estimates a linear Gaussian state-space model (SSM)
 #' for monthly temperature time series using Kalman filtering and smoothing.
 #' Both univariate and multivariate \code{ts} objects are supported.
 #' If multivariate, a column named \code{"Temp"} is used.
@@ -126,21 +125,20 @@ lgssm <- function(temp_data,
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- lgssm_seasonal(niigata_sst)
+#' res <- ssm_seasonal(niigata_sst)
 #' summary(res)
 #' }
-lgssm_seasonal <- function(temp_data, 
-                  exo_data = NULL,
-                  ar_order = 1,
-                  inits = NULL,
-                  maxit = NULL,
-                  reltol = NULL
-                  ) {
-
+ssm_season <- function(temp_data,
+                       exo_data = NULL,
+                       ar_order = 1,
+                       inits = NULL,
+                       maxit = NULL,
+                       reltol = NULL
+                       ) {
   tryCatch(
     {
     ## ---- Input checks ---------------------------------------------------
-    y <- tempssm::check_temp_ts_lgssm(temp_data)
+    y <- tempssm::.ssm_check_temp_ts(temp_data)
     freq <- frequency(y)
 
     ## ---- Default initial values -----------------------------------------
@@ -234,7 +232,7 @@ lgssm_seasonal <- function(temp_data,
     # model with an exogenous variable
     } else { # 
 
-      exo_data_checked <- check_exo_ts_lgssm(temp_data = temp_data,
+      exo_data_checked <- .ssm_check_exo_ts(temp_data = temp_data,
                                              exo_data = exo_data)
     
       if (!inherits(exo_data, "ts")) {
@@ -350,7 +348,7 @@ lgssm_seasonal <- function(temp_data,
 #' Base function for fitting a linear Gaussian state-space model 
 #' without seasonal component to temperature time series
 #'
-#' This function estimates a linear Gaussian state-space model (LGSSM)
+#' This function estimates a linear Gaussian state-space model (SSM)
 #' for monthly temperature time series using Kalman filtering and smoothing.
 #' Both univariate and multivariate \code{ts} objects are supported.
 #' If multivariate, a column named \code{"Temp"} is used.
@@ -396,21 +394,20 @@ lgssm_seasonal <- function(temp_data,
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- lgssm_no_seasonal(niigata_sst)
+#' res <- ssm_no_season(niigata_sst)
 #' summary(res)
 #' }
-lgssm_no_seasonal <- function(temp_data,
-                              exo_data = NULL,
-                              ar_order = 1,
-                              inits = NULL,
-                              maxit = NULL,
-                              reltol = NULL
-                              ) {
-  
+ssm_no_season <- function(temp_data,
+                          exo_data = NULL,
+                          ar_order = 1,
+                          inits = NULL,
+                          maxit = NULL,
+                          reltol = NULL
+                          ) {
   tryCatch(
     {
       ## ---- Input checks ---------------------------------------------------
-      y <- tempssm::check_temp_ts_lgssm(temp_data)
+      y <- tempssm::.ssm_check_temp_ts(temp_data)
       freq <- frequency(y)
       
       ## ---- Default initial values -----------------------------------------
@@ -495,7 +492,7 @@ lgssm_no_seasonal <- function(temp_data,
         # model with an exogenous variable
       } else { # 
         
-        exo_data_checked <- check_exo_ts_lgssm(temp_data = temp_data,
+        exo_data_checked <- .ssm_check_exo_ts(temp_data = temp_data,
                                                exo_data = exo_data)
         
         if (!inherits(exo_data, "ts")) {
@@ -600,7 +597,7 @@ lgssm_no_seasonal <- function(temp_data,
 
 
 
-#' Check ts object of temperature time series for applying \code{lgssm()}
+#' Check ts object of temperature time series for applying \code{ssm()}
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
 #'   The series can have any arbitrary frequency of 2 or higher.
@@ -609,7 +606,7 @@ lgssm_no_seasonal <- function(temp_data,
 #' @return A univariate \code{ts} object.
 #'
 #' @export
-check_temp_ts_lgssm <- function(temp_data) {
+.ssm_check_temp_ts <- function(temp_data) {
   
   if (!inherits(temp_data, "ts")) {
     stop("The object 'temp_data' must be a 'ts' object.",
@@ -633,8 +630,8 @@ check_temp_ts_lgssm <- function(temp_data) {
 }
 
 
-  
-#' Check ts object of exogenous variable(s) for applying \code{lgssm()}
+
+#' Check ts object of exogenous variable(s) for applying \code{ssm()}
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
 #'   The series can have any arbitrary frequency of 2 or higher.
@@ -648,9 +645,9 @@ check_temp_ts_lgssm <- function(temp_data) {
 #' @return A univariate or multivairate \code{ts} object.
 #'
 #' @export
-check_exo_ts_lgssm <- function(temp_data, exo_data) {
+.ssm_check_exo_ts <- function(temp_data, exo_data) {
 
-  temp_data_checked <- tempssm::check_temp_ts_lgssm(temp_data)
+  temp_data_checked <- tempssm::.ssm_check_temp_ts(temp_data)
 
   temp_freq <- frequency(temp_data_checked)
 
@@ -688,63 +685,9 @@ check_exo_ts_lgssm <- function(temp_data, exo_data) {
 
 
 
-#' Check ts object of exogenous variable(s) for applying \code{lgssm()}
-#'
-#' @param temp_data A temperature time series of class \code{ts}.
-#'   The series can have any arbitrary frequency of 2 or higher.
-#'   For example, a frequency of 12 represents a monthly \code{ts} object.
-#'
-#' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
-#'   The series may have any arbitrary frequency of 2 or higher,
-#'   but it must be the same as that of \code{temp_data}.
-#'   The default is \code{NULL} when fitting a model without exogenous variables.
-#'
-#' @return A univariate or multivairate \code{ts} object.
-#'
-#' @export
-check_exo_ts_lgssm <- function(temp_data, exo_data) {
-  
-  temp_data_checked <- tempssm::check_temp_ts_lgssm(temp_data)
-  
-  temp_freq <- frequency(temp_data_checked)
-  
-  if (!inherits(exo_data, "ts")) {
-    stop("The object 'exo_data' must be a 'ts' object.",
-         call. = FALSE)
-  }
-  
-  exo_freq <- frequency(exo_data)
-  if (!(exo_freq == temp_freq)) {
-    stop("Frequency of 'exo_data' must be same that of 'temp_data'.",
-         call. = FALSE)
-  }
-  
-  if (!(time(exo_freq) == time(temp_freq))) {
-    stop("Time series of 'exo_data' must be same that of 'temp_data'.",
-         call. = FALSE)
-  }
-  
-  if (is.null(colnames(exo_data))) {
-    stop("The object 'exo_data' must have column name(s).",
-         call. = FALSE)
-  }
-  
-  if ((dim(exo_data)[2]) > 1) {
-    uni_multi <- "multivariate"
-  }else{
-    uni_multi <- "univariate"
-  }
-  
-  message(paste0("The object 'exo_data' is ", uni_multi, " with frequency ", exo_freq, "."))
-  
-  return(exo_data)
-}
-
-
-
 #' Extract the smoothed level component as a time series
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
 #' @param ci Logical; should confidence intervals be returned? (default: FALSE)
 #' @param ci_level Confidence level for intervals (default: 0.95).
 #'
@@ -757,8 +700,8 @@ check_exo_ts_lgssm <- function(temp_data, exo_data) {
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- lgssm_no_seasonal(niigata_sst)
-#'  level_ts <- extract_level_ts(res)
+#' res <- ssm(niigata_sst)
+#' level_ts <- extract_level_ts(res)
 #' }
 extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
@@ -788,7 +731,7 @@ extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 #' Extract the smoothed drift (slope) component as a time series
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
 #' @param ci Logical; should confidence intervals be returned? (default: FALSE)
 #' @param ci_level Confidence level for intervals (default: 0.95).
 #'
@@ -801,7 +744,7 @@ extract_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- lgssm_no_seasonal(niigata_sst)
+#' res <- ssm(niigata_sst)
 #' drift_ts <- extract_drift_ts(res)
 #' }
 extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
@@ -851,7 +794,7 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 #' Extract the smoothed seasonal component as a time series
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
 #' @param ci Logical; should confidence intervals be returned? (default: FALSE)
 #' @param ci_level Confidence level for intervals (default: 0.95).
 #'
@@ -864,7 +807,7 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- lgssm_no_seasonal(niigata_sst)
+#' res <- ssm(niigata_sst)
 #' season_ts <- extract_season_ts(res)
 #' }
 extract_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
@@ -905,7 +848,7 @@ extract_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' This function computes the Akaike Information Criterion (AIC)
 #' for a fitted \code{tempssm} model.
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
 #'
 #' @return A numeric value representing the AIC of the fitted model.
 #'
@@ -934,7 +877,7 @@ extract_AIC <- function(res) {
 
 #' Extract estimated parameters in the fitted models
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
 #'
 #' @return A \code{list} object of the estimated parameters.
 #'
@@ -982,7 +925,7 @@ extract_param <- function(res){
 #' If the fitted model does not include exogenous variables,
 #' the function returns \code{NULL}.
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{lgssm()}.
+#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
 #'
 #' @param level Confidence level for the interval estimation.
 #'   Must be a numeric value between 0 and 1.
@@ -1000,7 +943,14 @@ extract_param <- function(res){
 #'
 #' @examples
 #' \dontrun{
-#' res <- lgssm(temp_ts, exogenous = c("kuroshio")
+#' data(hmo_temp)
+#' data(nao)
+#' hmo_temp_nao_ts <- ts.intersect(hmo_temp,nao)
+#' colnames(hmo_temp_nao_ts) <- c("Temp", "NAO")
+#' hmo_temp_common <- hmo_temp_nao_ts[,"Temp]
+#' nao_common <- hmo_temp_nao_ts[,"NAO]
+#' nao_common <- label_ts_mono(nao_common, label = "NAO") 
+#' res <- ssm(temp_data = hmo_temp_common,exo_data = nao_common)
 #' extract_exo_coef_ci(res)
 #' }
 #'
