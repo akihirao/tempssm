@@ -16,3 +16,10 @@ A numeric value representing the AIC of the fitted model.
 This function computes the Akaike Information Criterion (AIC)
 for a fitted \code{tempssm} model.
 }
+\examples{
+\dontrun{
+data(niigata_sst)
+res <- ssm(niigata_sst)
+model_AIC <- extract_AIC(res)
+}
+}

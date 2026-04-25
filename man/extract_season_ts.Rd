@@ -24,7 +24,7 @@ Extract the smoothed seasonal component as a time series
 \examples{
 \dontrun{
 data(niigata_sst)
-res <- ssm(niigata_sst)
-season_ts <- extract_season_ts(res)
+res = ssm(niigata_sst)
+season_ts = extract_season_ts(res)
 }
 }
