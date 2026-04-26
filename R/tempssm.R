@@ -44,10 +44,10 @@
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- ssm(niigata_sst)
+#' res <- tempssm(niigata_sst)
 #' summary(res)
 #' }
-ssm <- function(temp_data,exo_data = NULL,
+tempssm <- function(temp_data,exo_data = NULL,
                 ar_order = 1,
                 use_seasonal = TRUE,
                 inits = NULL,
@@ -55,7 +55,7 @@ ssm <- function(temp_data,exo_data = NULL,
                 reltol = NULL) {
   
   if(use_seasonal){
-    out = ssm_season(temp_data=temp_data,
+    out <- tempssm_season(temp_data=temp_data,
                       exo_data=exo_data,
                       ar_order = ar_order,
                       inits = inits,
@@ -63,7 +63,7 @@ ssm <- function(temp_data,exo_data = NULL,
                       reltol = reltol
                       )
   }else{
-    out = ssm_no_season(temp_data=temp_data,
+    out <- tempssm_no_season(temp_data=temp_data,
                          exo_data=exo_data,
                          ar_order = ar_order,
                          inits = inits,
@@ -125,10 +125,10 @@ ssm <- function(temp_data,exo_data = NULL,
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- ssm_seasonal(niigata_sst)
+#' res <- tempssm_seasonal(niigata_sst)
 #' summary(res)
 #' }
-ssm_season = function(temp_data,
+tempssm_season <- function(temp_data,
                        exo_data = NULL,
                        ar_order = 1,
                        inits = NULL,
@@ -138,41 +138,41 @@ ssm_season = function(temp_data,
   tryCatch(
     {
     ## ---- Input checks ---------------------------------------------------
-    y = tempssm::.ssm_check_temp_ts(temp_data)
-    freq = frequency(y)
+    y <- tempssm::.tempssm_check_temp_ts(temp_data)
+    freq <- frequency(y)
 
     ## ---- Default initial values -----------------------------------------
     if (is.null(inits)) {
       # log-variances and AR parameters (on unconstrained scale)
-      ar_rep_length_minus_one = ar_order -1
-      ar_inits = c(0.5,rep(0,ar_rep_length_minus_one))
+      ar_rep_length_minus_one <- ar_order -1
+      ar_inits <- c(0.5,rep(0,ar_rep_length_minus_one))
     
-      inits = c(
+      inits <- c(
         -13,  # trend variance (log)
         -7,  # seasonal variance (log)
-        ar_inits,  # AR coefficients
+        ar_inits,  # AR coefficients     
         -0.3,  # AR noise variance (log)
         -5   # observation variance (log)
       )
     }
   
-    expected_len = 2 + ar_order + 2
+    expected_len <- 2 + ar_order + 2
     if (!is.numeric(inits) != expected_len) {
       stop(paste("inits must be length ", expected_len))
     }
   
-    ar_idx = 3:(2 + ar_order)
-    var_idx = 3 + ar_order
-    H_idx = 4 + ar_order
+    ar_idx <- 3:(2 + ar_order)
+    var_idx <- 3 + ar_order
+    H_idx <- 4 + ar_order
   
     ## ---- Default maxit value -----------------------------------------  
     if (is.null(maxit)) {
-      maxit = 5000
+      maxit <- 5000
     }
   
     ## ---- Default reltol value -----------------------------------------  
     if (is.null(reltol)) {
-      reltol = 1e-16
+      reltol <- 1e-16
     }
   
   
@@ -184,10 +184,10 @@ ssm_season = function(temp_data,
     # model without exogenous variables
     if(is.null(exo_data)){ 
     
-    exogenous_lab = NULL
+    exogenous_lab <- NULL
 
     ## ---- Model definition -----------------------------------------------
-    build_ssm = SSModel(
+    build_ssm <- SSModel(
       y ~
         SSMtrend(
           degree = 2,
@@ -207,7 +207,7 @@ ssm_season = function(temp_data,
     )
     
     ## ---- Parameter update function --------------------------------------
-    update_func = function(pars, model) {
+    update_func <- function(pars, model) {
       model <- SSModel(
         y ~
           SSMtrend(degree = 2,
@@ -230,9 +230,9 @@ ssm_season = function(temp_data,
     # ------------------------------------------------------------------------
     # ------------------------------------------------------------------------
     # model with an exogenous variable
-    } else { #
+    } else { # 
 
-      exo_data_checked <- .ssm_check_exo_ts(temp_data = temp_data,
+      exo_data_checked <- tempssm::.tempssm_check_exo_ts(temp_data = temp_data,
                                              exo_data = exo_data)
     
       if (!inherits(exo_data, "ts")) {
@@ -247,12 +247,12 @@ ssm_season = function(temp_data,
         stop("exo_data must have column name(s).")
       }
     
-      exogenous_lab = colnames(exo_data_checked)
-      exogenous_mat = as.matrix(exo_data_checked)
+      exogenous_lab <- colnames(exo_data_checked)
+      exogenous_mat <- as.matrix(exo_data_checked)
 
 
       ## ---- Model definition -----------------------------------------------
-      build_ssm = SSModel(
+      build_ssm <- SSModel(
         H = NA,
         y ~ exogenous_mat +
           SSMtrend(
@@ -273,13 +273,13 @@ ssm_season = function(temp_data,
   
 
       ## ---- Parameter update function --------------------------------------
-      update_func = function(pars, model) {
+      update_func <- function(pars, model) {
         return(
           SSModel(
             H = exp(pars[H_idx]),
-            y ~ exogenous_mat +
+            y ~ exogenous_mat + 
               SSMtrend(degree = 2,
-                       Q = c(list(0),
+                       Q = c(list(0), 
                              list(exp(pars[1])))) +
               SSMseasonal(
                 sea.type = "dummy",
@@ -296,7 +296,7 @@ ssm_season = function(temp_data,
 
     
     ## ---- Optimization (two-step) ----------------------------------------
-    fit1 = fitSSM(
+    fit1 <- fitSSM(
       build_ssm,
       inits  = inits,
       updatefn = update_func,
@@ -304,7 +304,7 @@ ssm_season = function(temp_data,
       control = list(maxit = maxit, reltol = reltol)
     )
     
-    fit2 = fitSSM(
+    fit2 <- fitSSM(
       build_ssm,
       inits  = fit1$optim.out$par,
       updatefn = update_func,
@@ -313,7 +313,7 @@ ssm_season = function(temp_data,
     )
     
     ## ---- Kalman filtering & smoothing -----------------------------------
-    kfs = KFS(
+    kfs <- KFS(
       fit2$model,
       filtering = c("state", "mean"),
       smoothing = c("state", "mean", "disturbance")
@@ -321,7 +321,7 @@ ssm_season = function(temp_data,
 
 
     ## ---- Output ---------------------------------------------------------
-    out = list(
+    out <- list(
       model = fit2$model,
       fit   = fit2,
       kfs   = kfs,
@@ -394,10 +394,10 @@ ssm_season = function(temp_data,
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- ssm_no_season(niigata_sst)
+#' res <- tempssm_no_season(niigata_sst)
 #' summary(res)
 #' }
-ssm_no_season = function(temp_data,
+tempssm_no_season <- function(temp_data,
                           exo_data = NULL,
                           ar_order = 1,
                           inits = NULL,
@@ -407,16 +407,16 @@ ssm_no_season = function(temp_data,
   tryCatch(
     {
       ## ---- Input checks ---------------------------------------------------
-      y = tempssm::.ssm_check_temp_ts(temp_data)
-      freq = frequency(y)
+      y <- tempssm::.tempssm_check_temp_ts(temp_data)
+      freq <- frequency(y)
       
       ## ---- Default initial values -----------------------------------------
       if (is.null(inits)) {
         # log-variances and AR parameters (on unconstrained scale)
-        ar_rep_length_minus_one = ar_order -1
-        ar_inits = c(0.5,rep(0,ar_rep_length_minus_one))
+        ar_rep_length_minus_one <- ar_order -1
+        ar_inits <- c(0.5,rep(0,ar_rep_length_minus_one))
         
-        inits = c(
+        inits <- c(
           -13,  # trend variance (log)
           ar_inits,  # AR coefficients     
           -0.3,  # AR noise variance (log)
@@ -424,23 +424,23 @@ ssm_no_season = function(temp_data,
         )
       }
       
-      expected_len = 1 + ar_order + 2
+      expected_len <- 1 + ar_order + 2
       if (!is.numeric(inits) != expected_len) {
         stop(paste("inits must be length ", expected_len))
       }
       
-      ar_idx = 2:(1 + ar_order)
-      var_idx = 2 + ar_order
-      H_idx = 3 + ar_order
+      ar_idx <- 2:(1 + ar_order)
+      var_idx <- 2 + ar_order
+      H_idx <- 3 + ar_order
       
       ## ---- Default maxit value -----------------------------------------  
       if (is.null(maxit)) {
-        maxit = 5000
+        maxit <- 5000
       }
       
       ## ---- Default reltol value -----------------------------------------  
       if (is.null(reltol)) {
-        reltol = 1e-16
+        reltol <- 1e-16
       }
       
       
@@ -452,10 +452,10 @@ ssm_no_season = function(temp_data,
       # model without exogenous variables
       if(is.null(exo_data)){ 
         
-        exogenous_lab = NULL
+        exogenous_lab <- NULL
         
         ## ---- Model definition -----------------------------------------------
-        build_ssm = SSModel(
+        build_ssm <- SSModel(
           y ~
             SSMtrend(
               degree = 2,
@@ -470,7 +470,7 @@ ssm_no_season = function(temp_data,
         )
         
         ## ---- Parameter update function --------------------------------------
-        update_func = function(pars, model) {
+        update_func <- function(pars, model) {
           model <- SSModel(
             y ~
               SSMtrend(
@@ -490,9 +490,9 @@ ssm_no_season = function(temp_data,
         # ------------------------------------------------------------------------
         # ------------------------------------------------------------------------
         # model with an exogenous variable
-      } else { #
+      } else { # 
         
-        exo_data_checked = .ssm_check_exo_ts(temp_data = temp_data,
+        exo_data_checked <- tempssm::.tempssm_check_exo_ts(temp_data = temp_data,
                                                exo_data = exo_data)
         
         if (!inherits(exo_data, "ts")) {
@@ -507,12 +507,12 @@ ssm_no_season = function(temp_data,
           stop("exo_data must have column name(s).")
         }
         
-        exogenous_lab = colnames(exo_data_checked)
-        exogenous_mat = as.matrix(exo_data_checked)
+        exogenous_lab <- colnames(exo_data_checked)
+        exogenous_mat <- as.matrix(exo_data_checked)
         
         
         ## ---- Model definition -----------------------------------------------
-        build_ssm = SSModel(
+        build_ssm <- SSModel(
           H = NA,
           y ~ exogenous_mat +
             SSMtrend(
@@ -528,11 +528,11 @@ ssm_no_season = function(temp_data,
         
         
         ## ---- Parameter update function --------------------------------------
-        update_func = function(pars, model) {
+        update_func <- function(pars, model) {
           return(
             SSModel(
               H = exp(pars[H_idx]),
-              y ~ exogenous_mat +
+              y ~ exogenous_mat + 
                 SSMtrend(
                   degree = 2,
                   Q = c(list(0),list(exp(pars[1])))
@@ -548,7 +548,7 @@ ssm_no_season = function(temp_data,
       
       
       ## ---- Optimization (two-step) ----------------------------------------
-      fit1 = fitSSM(
+      fit1 <- fitSSM(
         build_ssm,
         inits  = inits,
         updatefn = update_func,
@@ -556,7 +556,7 @@ ssm_no_season = function(temp_data,
         control = list(maxit = maxit, reltol = reltol)
       )
       
-      fit2 = fitSSM(
+      fit2 <- fitSSM(
         build_ssm,
         inits  = fit1$optim.out$par,
         updatefn = update_func,
@@ -565,7 +565,7 @@ ssm_no_season = function(temp_data,
       )
       
       ## ---- Kalman filtering & smoothing -----------------------------------
-      kfs = KFS(
+      kfs <- KFS(
         fit2$model,
         filtering = c("state", "mean"),
         smoothing = c("state", "mean", "disturbance")
@@ -573,7 +573,7 @@ ssm_no_season = function(temp_data,
       
       
       ## ---- Output ---------------------------------------------------------
-      out = list(
+      out <- list(
         model = fit2$model,
         fit   = fit2,
         kfs   = kfs,
@@ -584,7 +584,7 @@ ssm_no_season = function(temp_data,
         call  = match.call()
       )
       
-      class(out) = "tempssm"
+      class(out) <- "tempssm"
       return(out)
     },
     error = function(e) {
@@ -606,7 +606,7 @@ ssm_no_season = function(temp_data,
 #' @return A univariate \code{ts} object.
 #'
 #' @export
-.ssm_check_temp_ts = function(temp_data) {
+.tempssm_check_temp_ts <- function(temp_data) {
   
   if (!inherits(temp_data, "ts")) {
     stop("The object 'temp_data' must be a 'ts' object.",
@@ -645,18 +645,19 @@ ssm_no_season = function(temp_data,
 #' @return A univariate or multivairate \code{ts} object.
 #'
 #' @export
-.ssm_check_exo_ts = function(temp_data, exo_data) {
+.tempssm_check_exo_ts <- function(temp_data,
+                                  exo_data) {
 
-  temp_data_checked = tempssm::.ssm_check_temp_ts(temp_data)
+  temp_data_checked <- tempssm::.tempssm_check_temp_ts(temp_data)
 
-  temp_freq = frequency(temp_data_checked)
+  temp_freq <- frequency(temp_data_checked)
 
   if (!inherits(exo_data, "ts")) {
     stop("The object 'exo_data' must be a 'ts' object.",
          call. = FALSE)
   }
 
-  exo_freq = frequency(exo_data)
+  exo_freq <- frequency(exo_data)
   if (!(exo_freq == temp_freq)) {
     stop("Frequency of 'exo_data' must be same that of 'temp_data'.",
          call. = FALSE)
@@ -673,9 +674,9 @@ ssm_no_season = function(temp_data,
   }
 
   if ((dim(exo_data)[2]) > 1) {
-    uni_multi = "multivariate"
+    uni_multi <- "multivariate"
   }else{
-    uni_multi = "univariate"
+    uni_multi <- "univariate"
   }
   
   message(paste0("The object 'exo_data' is ", uni_multi, " with frequency ", exo_freq, "."))
@@ -699,7 +700,7 @@ ssm_no_season = function(temp_data,
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- ssm(niigata_sst)
+#' res <- tempssm(niigata_sst)
 #' level_ts <- extract_level_ts(res)
 #' }
 #' @export
@@ -713,12 +714,12 @@ extract_level_ts = function(res, ci = FALSE, ci_level = 0.95) {
     stop("Level component not found in the smoothing results.", call. = FALSE)
   }
 
-  level_ts = res$kfs$alphahat[, "level"]
+  level_ts <- res$kfs$alphahat[, "level"]
   
   if(ci){
-    ci_obj = confint(res$kfs, level = ci_level)
+    ci_obj <- confint(res$kfs, level = ci_level)
 
-    level_ts = cbind(
+    level_ts <- cbind(
       level = level_ts,
       lwr=ci_obj$level[,"lwr"],
       upr=ci_obj$level[,"upr"]
@@ -744,10 +745,10 @@ extract_level_ts = function(res, ci = FALSE, ci_level = 0.95) {
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- ssm(niigata_sst)
+#' res <- tempssm(niigata_sst)
 #' drift_ts <- extract_drift_ts(res)
 #' }
-extract_drift_ts = function(res, ci = FALSE, ci_level = 0.95) {
+extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   if (!inherits(res, "tempssm")) {
     stop("Input must be a tempssm object.", call. = FALSE)
@@ -758,26 +759,26 @@ extract_drift_ts = function(res, ci = FALSE, ci_level = 0.95) {
   }
 
   # seasonal frequency of ts object
-  freq = frequency(res$data_temp)
+  freq <- frequency(res$data_temp)
 
   # scaling factor (e.g., 12 for monthly data → per year)
-  scale = freq
+  scale <- freq
 
-  drift_ts = ts(
+  drift_ts <- ts(
     res$kfs$alphahat[, "slope"] * scale,
-    start = start(res$data_temp),
+    start <- start(res$data_temp),
     frequency = freq
     )
 
   if(ci){
 
-    ci_obj = confint(res$kfs, level = ci_level)
+    ci_obj <- confint(res$kfs, level = ci_level)
   
     if (!"slope" %in% names(ci_obj)) {
       stop("Slope component not found in confidence intervals.", call. = FALSE)
     }
     
-    drift_ts = ts(
+    drift_ts <- ts(
       cbind(
         drift = drift_ts,
         lwr=ci_obj$slope[,"lwr"] * scale,
@@ -807,12 +808,12 @@ extract_drift_ts = function(res, ci = FALSE, ci_level = 0.95) {
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res = ssm(niigata_sst)
+#' res = tempssm(niigata_sst)
 #' season_ts = extract_season_ts(res)
 #' }
-extract_season_ts = function(res, ci = FALSE, ci_level = 0.95) {
+extract_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
-  use_seasonal = res$use_seasonal
+  use_seasonal <- res$use_seasonal
 
   if (!inherits(res, "tempssm")) {
     stop("Input must be a tempssm object.", call. = FALSE)
@@ -826,10 +827,10 @@ extract_season_ts = function(res, ci = FALSE, ci_level = 0.95) {
     stop("Seasonal component not found in the smoothing results.", call. = FALSE)
   }
 
-  season_ts = res$kfs$alphahat[, "sea_dummy1"]
+  season_ts <- res$kfs$alphahat[, "sea_dummy1"]
   
   if(ci){
-    ci_obj = confint(res$kfs, level = ci_level)
+    ci_obj <- confint(res$kfs, level = ci_level)
 
     season_ts <- cbind(
       season = season_ts,
@@ -855,26 +856,26 @@ extract_season_ts = function(res, ci = FALSE, ci_level = 0.95) {
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- ssm(niigata_sst)
+#' res <- tempssm(niigata_sst)
 #' model_AIC <- extract_AIC(res)
 #' }
 #' @export
-extract_AIC = function(res) {
+extract_AIC <- function(res) {
 
   if (!inherits(res, "tempssm")) {
     stop("Input must be a tempssm object.", call. = FALSE)
   }
 
-  k = length(res$fit$optim.out$par)
+  k <- length(res$fit$optim.out$par)
 
   # if the model includes exogenous variable(s)
   if (!is.null(res$data_exogenous)) {
-    k = k + ncol(res$data_exogenous)
+    k <- k + ncol(res$data_exogenous)
   }
 
   loglik <- as.numeric(logLik(res$model))
 
-  AIC = -2 * loglik + 2 * k
+  AIC <- -2 * loglik + 2 * k
 
   return(AIC)
 }
@@ -888,26 +889,26 @@ extract_AIC = function(res) {
 #' @return A \code{list} object of the estimated parameters.
 #'
 #' @export
-extract_param = function(res){
+extract_param <- function(res){
 
-  model = res$model
-  pars = res$fit$optim.out$par
-  ar_order = res$ar_order
-  use_seasonal = res$use_seasonal
+  model <- res$model
+  pars <- res$fit$optim.out$par
+  ar_order <- res$ar_order
+  use_seasonal <- res$use_seasonal
 
   if(use_seasonal){
-    ar_idx  = 3:(2 + ar_order)
-    var_idx = 3 + ar_order
-    H_idx   = 4 + ar_order
+    ar_idx  <- 3:(2 + ar_order)
+    var_idx <- 3 + ar_order
+    H_idx   <- 4 + ar_order
 
     Q_season_est <- exp(pars[2])
 
   }else{
-    ar_idx  = 2:(1 + ar_order)
-    var_idx = 2 + ar_order
-    H_idx   = 3 + ar_order
+    ar_idx  <- 2:(1 + ar_order)
+    var_idx <- 2 + ar_order
+    H_idx   <- 3 + ar_order
 
-    Q_season_est = NA
+    Q_season_est <- NA
   }
 
   params = list(
@@ -972,25 +973,25 @@ extract_exo_coef_ci = function(res, level = 0.95) {
     stop("'level' must be a numeric value between 0 and 1.", call. = FALSE)
   }
   
-  exo_vars = colnames(res$data_exogenous)
-  kfs      = res$kfs
+  exo_vars <- colnames(res$data_exogenous)
+  kfs      <- res$kfs
   
   # No exogenous variables
   if (is.null(exo_vars)) {
     return(NULL)
   }
   
-  n_exo = length(exo_vars)
+  n_exo <- length(exo_vars)
   
   # Extract smoothed state estimates
-  alpha_hat = kfs$alphahat
+  alpha_hat <- kfs$alphahat
   
   # Exogenous coefficients are assumed to be the first states
-  beta_hat = alpha_hat[1, seq_len(n_exo), drop = FALSE]
+  beta_hat <- alpha_hat[1, seq_len(n_exo), drop = FALSE]
   
   # Confidence intervals
-  ci_obj = confint(kfs, level = level)[seq_len(n_exo)]
-  ci_mat = do.call(rbind, lapply(ci_obj, head, n = 1))
+  ci_obj <- confint(kfs, level = level)[seq_len(n_exo)]
+  ci_mat <- do.call(rbind, lapply(ci_obj, head, n = 1))
   
   data.frame(
     Variable    = exo_vars,
@@ -1024,7 +1025,7 @@ extract_exo_coef_ci = function(res, level = 0.95) {
 #' ts_labeled <- label_ts_mono(ts_in, label = "var")
 #'
 #' @export
-label_ts_mono = function(ts_in, label = "var") {
+label_ts_mono <- function(ts_in, label = "var") {
 
   if (!inherits(ts_in, "ts")) {
     stop("Input must be a ts object.", call. = FALSE)
@@ -1035,9 +1036,9 @@ label_ts_mono = function(ts_in, label = "var") {
     warning("A univariate ts object is expected.", call. = FALSE)
   }
 
-  x = as.numeric(ts_in)
+  x <- as.numeric(ts_in)
 
-  ts_labeled = ts(
+  ts_labeled <- ts(
     matrix(
       x,
       ncol = 1,

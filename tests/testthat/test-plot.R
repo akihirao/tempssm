@@ -1,8 +1,8 @@
-# plot.Thermo
+# plot.tempssm
 
 test_that("plot.tempssm runs without error", {
 
-  res <- ssm(temp_ts_test)
+  res <- tempssm(temp_ts_test)
 
   expect_silent(plot(res))
   expect_silent(plot(res, ci = TRUE))
