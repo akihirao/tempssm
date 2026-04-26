@@ -156,15 +156,15 @@ Model comparison and selection are discussed in the following section.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # model with first-order autoregressive component
-res <- ssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
+res <- tempssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
 summary(res)
 
 # model with second-order autoregressive component
-res_ar2 <- ssm(niigata_sst,ar_order=2) 
+res_ar2 <- tempssm(niigata_sst,ar_order=2) 
 summary(res_ar2)
 
 # model with third-order autoregressive component
-res_ar3 <- ssm(niigata_sst,ar_order=3) 
+res_ar3 <- tempssm(niigata_sst,ar_order=3) 
 summary(res_ar3)
 
 ```
@@ -282,6 +282,7 @@ with the inferred long-term trend and its rate of change.
 
 
 ## Practice II: Applying a Linear Gaussian State-Space Model
+
 ## to a Temperature Time Series with an Exogenous Variable
 
 ### Objective
@@ -294,17 +295,17 @@ Specifically, we examine the effect of the North Atlantic Oscillation
 
 ### Loading Dataset 1: Long-Term Air Temperature Record
 
-- **Data**: Monthly air temperature at the Hohenpeissenberg Meteorological Observatory, Germany  
+- **Data**: Monthly air temperature at the Hohenpeissenberg
+  Meteorological Observatory, Germany  
 - **Location**: 47.801°N, 11.011°E  
 - **Unit**: Degrees Celsius  
-- **Period**: January 1781 to December 2025 
-     
+- **Period**: January 1781 to December 2025
+
 This dataset represents one of the longest continuous instrumental
-records of air temperature available worldwide, observed at a
-mountain meteorological station.
-The original data were obtained from the Global Historical Climatology
-Network Monthly (GHCNm) version 4, distributed by the National Centers
-for Environmental Information (NCEI), NOAA:
+records of air temperature available worldwide, observed at a mountain
+meteorological station. The original data were obtained from the Global
+Historical Climatology Network Monthly (GHCNm) version 4, distributed by
+the National Centers for Environmental Information (NCEI), NOAA:
 <https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4>.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
@@ -317,10 +318,10 @@ head(hmo_temp)
 - **Data**: Monthly North Atlantic Oscillation (NAO) index (Hurrell)  
 - **Period**: January 1865 to June 202
 
-Monthly NAO indices derived using related data　sources are available 
-from the Climate Analysis Section, National Center
-for Atmospheric Research (NCAR), Boulder, USA (Hurrell, 2003).
-The dataset used in this package was obtained from:
+Monthly NAO indices derived using related data　sources are available
+from the Climate Analysis Section, National Center for Atmospheric
+Research (NCAR), Boulder, USA (Hurrell, 2003). The dataset used in this
+package was obtained from:
 <https://www.ncei.noaa.gov/access/monitoring/nao/>.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
@@ -331,10 +332,10 @@ head(nao)
 ### Intersecting the Temperature and NAO Time Series
 
 For state-space modeling with exogenous variables, all input time series
-must share a common and aligned time index.
-In this step, the temperature and NAO time series are restricted to
-their overlapping period by trimming the leading and trailing portions,
-ensuring that both datasets cover an identical time span.
+must share a common and aligned time index. In this step, the
+temperature and NAO time series are restricted to their overlapping
+period by trimming the leading and trailing portions, ensuring that both
+datasets cover an identical time span.
 
 The function `ts.intersect()` is used to align the two `ts` objects on a
 shared timeline, returning a multivariate time series containing only
@@ -391,7 +392,7 @@ is explained solely by the latent trend, seasonal cycle, and
 autoregressive dependence.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res_without <- ssm(hmo_temp_common) 
+res_without <- tempssm(hmo_temp_common) 
 summary(res_without)
 ```
 
@@ -399,34 +400,34 @@ The fitted model converges successfully and includes a first-order
 autoregressive [AR(1)] component.
 Prior testing of autoregressive orders from AR(1) to AR(3) indicated
 that AR(1) provided the best model fit for both the baseline model and
-the model including the exogenous NAO index.
+the model including the exogenous PDO index.
 For brevity, the detailed results of this comparison are omitted here;
 interested users are encouraged to explore alternative AR orders within
 their own analyses.
 
 This baseline model provides a useful benchmark for evaluating the
-additional explanatory power of the NAO index introduced in the
+additional explanatory power of the PDO index introduced in the
 following section.
 
 ### Applying Model With an Exogenous Variable
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res_with <- ssm(temp_data = hmo_temp_common,exo_data = nao_common) 
+res_with <- tempssm(temp_data = hmo_temp_common,
+                    exo_data = nao_common) 
 summary(res_with)
 ```
 
 The estimated coefficient for the exogenous NAO index is positive
-(0.29), and its 95% confidence interval does not include zero
-[0.24, 0.34], indicating a statistically significant relationship
-between NAO variability and local air temperature at the
-Hohenpeissenberg station.
+(0.29), and its 95% confidence interval does not include zero \[0.24,
+0.34\], indicating a statistically significant relationship between NAO
+variability and local air temperature at the Hohenpeissenberg station.
 
 Specifically, the model suggests that a one-unit increase in the NAO
-index is associated with an average increase of approximately 0.29 °C
-in monthly air temperature, after accounting for the underlying trend,
-seasonal cycle, and autoregressive dependence.
-This result implies that positive phases of the NAO contribute
-systematically to warmer temperature conditions at the study site.
+index is associated with an average increase of approximately 0.29 °C in
+monthly air temperature, after accounting for the underlying trend,
+seasonal cycle, and autoregressive dependence. This result implies that
+positive phases of the NAO contribute systematically to warmer
+temperature conditions at the study site.
 
 Importantly, this effect is identified in addition to the internal
 dynamics of the temperature time series, rather than being an artifact
@@ -436,8 +437,8 @@ statistical significance of the NAO coefficient indicates that the NAO
 acts as an independent large-scale climate driver influencing local
 temperature variability.
 
-We next compare the overall goodness of fit between the two models
-using the Akaike Information Criterion (AIC).
+We next compare the overall goodness of fit between the two models using
+the Akaike Information Criterion (AIC).
 
 ### Model comparison based on AICs
 
@@ -460,10 +461,10 @@ models_AICs %>% knitr::kable()
 
 The model including the NAO index as an exogenous variable exhibits a
 substantially lower AIC than the baseline model without exogenous
-variables, indicating a markedly better overall fit.
-This result supports the conclusion that explicitly accounting for NAO
-variability improves the statistical description of the temperature
-time series beyond what is achieved by internal dynamics alone.
+variables, indicating a markedly better overall fit. This result
+supports the conclusion that explicitly accounting for NAO variability
+improves the statistical description of the temperature time series
+beyond what is achieved by internal dynamics alone.
 
 It should be noted that AIC-based comparisons are meaningful only among
 models fitted to the same time series over an identical period.
@@ -534,7 +535,7 @@ leakage from the future to the past and is therefore well suited for
 temporal data.
 
 By comparing cross-validation metrics for models with and without the
-exogenous NAO variable, we assess whether the improvement suggested by
+exogenous PDO variable, we assess whether the improvement suggested by
 AIC is also reflected in out-of-sample predictive skill.
 ``
 

@@ -160,14 +160,14 @@ Model comparison and selection are discussed in the following section.
 
 ``` r
 # model with first-order autoregressive component
-res <- ssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
+res <- tempssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
 summary(res)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ## tempssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
     ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
@@ -188,14 +188,14 @@ summary(res)
 
 ``` r
 # model with second-order autoregressive component
-res_ar2 <- ssm(niigata_sst,ar_order=2) 
+res_ar2 <- tempssm(niigata_sst,ar_order=2) 
 summary(res_ar2)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ## tempssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
     ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
@@ -217,14 +217,14 @@ summary(res_ar2)
 
 ``` r
 # model with third-order autoregressive component
-res_ar3 <- ssm(niigata_sst,ar_order=3) 
+res_ar3 <- tempssm(niigata_sst,ar_order=3) 
 summary(res_ar3)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ## tempssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
     ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
@@ -561,14 +561,14 @@ temperature variability is explained solely by the latent trend,
 seasonal cycle, and autoregressive dependence.
 
 ``` r
-res_without <- ssm(hmo_temp_common) 
+res_without <- tempssm(hmo_temp_common) 
 summary(res_without)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ## tempssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
     ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
@@ -591,25 +591,26 @@ The fitted model converges successfully and includes a first-order
 autoregressive \[AR(1)\] component. Prior testing of autoregressive
 orders from AR(1) to AR(3) indicated that AR(1) provided the best model
 fit for both the baseline model and the model including the exogenous
-NAO index. For brevity, the detailed results of this comparison are
+PDO index. For brevity, the detailed results of this comparison are
 omitted here; interested users are encouraged to explore alternative AR
 orders within their own analyses.
 
 This baseline model provides a useful benchmark for evaluating the
-additional explanatory power of the NAO index introduced in the
+additional explanatory power of the PDO index introduced in the
 following section.
 
 ### Applying Model With an Exogenous Variable
 
 ``` r
-res_with <- ssm(temp_data = hmo_temp_common,exo_data = nao_common) 
+res_with <- tempssm(temp_data = hmo_temp_common,
+                    exo_data = nao_common) 
 summary(res_with)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## ssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
+    ## tempssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
     ##     inits = inits, maxit = maxit, reltol = reltol)
     ## 
     ## Model fit:
@@ -633,8 +634,12 @@ summary(res_with)
     ## Upper CI  0.3446071
 
 The estimated coefficient for the exogenous NAO index is positive
-(0.29), and its 95% confidence interval does not include zero \[0.24,
-0.34\], indicating a statistically significant relationship between NAO
+(0.29), and its 95% confidence interval does not include zero
+``` math
+0.24,
+0.34
+```
+, indicating a statistically significant relationship between NAO
 variability and local air temperature at the Hohenpeissenberg station.
 
 Specifically, the model suggests that a one-unit increase in the NAO
@@ -760,7 +765,7 @@ this procedure avoids information leakage from the future to the past
 and is therefore well suited for temporal data.
 
 By comparing cross-validation metrics for models with and without the
-exogenous NAO variable, we assess whether the improvement suggested by
+exogenous PDO variable, we assess whether the improvement suggested by
 AIC is also reflected in out-of-sample predictive skill. \`\`
 
 ``` r
