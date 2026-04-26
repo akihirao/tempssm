@@ -234,7 +234,7 @@ scale_Q <- function(train_ts, method = c("naive", "seasonal")) {
 #'
 #' @param ar_order_given Integer specifying the order of the autoregressive (AR)
 #' component in the error structure (e.g., 2 for AR(2), 3 for AR(3))
-#' for applying \code{ssm()}.
+#' for applying \code{tempssm()}.
 #' 
 #' @return A \code{list} object of ts cross-validation output
 #' 
@@ -275,7 +275,7 @@ exec_tsCV <- function(
   
   if(is.null(exo_judge)){ # if data-set excludes exogenous variables
     
-    res_train <- ssm(temp_data = temp_train_mts,
+    res_train <- tempssm(temp_data = temp_train_mts,
                        exo_data = NULL,
                        ar_order = ar_order_given)
     
@@ -308,7 +308,7 @@ exec_tsCV <- function(
                            exo_test)
     colnames(temp_exo_test) <- c("Temp",colnames(exo_test))
     
-    res_train<- ssm(temp_data = temp_train_mts,
+    res_train<- tempssm(temp_data = temp_train_mts,
                       exo_data = exo_train,
                       ar_order = ar_order_given)
     
@@ -378,7 +378,7 @@ exec_tsCV <- function(
 #'
 #' @param ar_order Integer specifying the order of the autoregressive (AR)
 #' component in the error structure (e.g., 2 for AR(2), 3 for AR(3))
-#' for applying \code{ssm()}. Defaults to 2.
+#' for applying \code{tempssm()}. Defaults to 2.
 #'
 #' @return A \code{list} object of ts cross-validation output.
 #' @export

@@ -13,7 +13,7 @@ exec_tsCV(folds, idx = 1, ar_order_given)
 
 \item{ar_order_given}{Integer specifying the order of the autoregressive (AR)
 component in the error structure (e.g., 2 for AR(2), 3 for AR(3))
-for applying \code{ssm()}.}
+for applying \code{tempssm()}.}
 }
 \value{
 A \code{list} object of ts cross-validation output
