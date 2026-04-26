@@ -9,10 +9,10 @@ tempssm(
   temp_data,
   exo_data = NULL,
   ar_order = 1,
-  use_seasonal = TRUE,
   inits = NULL,
   maxit = NULL,
-  reltol = NULL
+  reltol = NULL,
+  use_season = TRUE
 )
 }
 \arguments{
@@ -28,10 +28,7 @@ The default is \code{NULL} when fitting a model without exogenous variables.}
 
 \item{ar_order}{Integer specifying the order of the autoregressive (AR) 
 component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
-Default to 1.}
-
-\item{use_seasonal}{Logical; Should seasonal component be considered. 
-Default to TRUE.}
+Defaults to 1.}
 
 \item{inits}{Optional numeric vector of initial parameter values.
 If \code{NULL}, default values are used.}
@@ -41,6 +38,9 @@ If \code{NULL}, default value of 5000 is used.}
 
 \item{reltol}{Optional numeric of reltol.
 If \code{NULL}, default value of 1e-16 is used.}
+
+\item{use_season}{Logical; Should seasonal component be considered. 
+Default to TRUE.}
 }
 \value{
 An object of class \code{"tempssm"}, a named list containing:
@@ -51,7 +51,7 @@ An object of class \code{"tempssm"}, a named list containing:
   \item{data_temp}{Temperature time series used for estimation.}
   \item{data_exo}{Time series of exogenous variable(s) used for estimation.}
   \item{ar_order}{Order of the autoregressive component.}
-  \item{use_seasonal}{Logical; whether to include a seasonal component.}
+  \item{use_season}{Logical; whether to include a seasonal component.}
   \item{call}{Matched function call.}
 }
 }
@@ -59,6 +59,11 @@ An object of class \code{"tempssm"}, a named list containing:
 \pkg{tempssm} provides tools for analyzing temperature time series
 (e.g., air temperature and sea surface temperature) using
 linear Gaussian state-space models.
+
+This function estimates a linear Gaussian state-space model (SSM)
+for monthly temperature time series using Kalman filtering and smoothing.
+Both univariate and multivariate \code{ts} objects are supported.
+If multivariate, a column named \code{"Temp"} is used.
 }
 \details{
 The package is designed for long-term environmental monitoring data

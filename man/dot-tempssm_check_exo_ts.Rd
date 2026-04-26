@@ -2,7 +2,7 @@
 % Please edit documentation in R/tempssm.R
 \name{.tempssm_check_exo_ts}
 \alias{.tempssm_check_exo_ts}
-\title{Check ts object of exogenous variable(s) for applying \code{ssm()}}
+\title{Check ts object of exogenous variable(s) for applying \code{tempssm()}}
 \usage{
 .tempssm_check_exo_ts(temp_data, exo_data)
 }
@@ -20,5 +20,5 @@ The default is \code{NULL} when fitting a model without exogenous variables.}
 A univariate or multivairate \code{ts} object.
 }
 \description{
-Check ts object of exogenous variable(s) for applying \code{ssm()}
+Check ts object of exogenous variable(s) for applying \code{tempssm()}
 }

@@ -18,9 +18,9 @@ summary.tempssm <- function(object, ...) {
   opt   <- object$fit$optim.out
   pars <- object$fit$optim.out$par
   ar_order <- object$ar_order
-  use_seasonal <- object$use_seasonal
+  use_season <- object$use_season
 
-  if(use_seasonal){
+  if(use_season){
     ar_idx <- 3:(2 + ar_order)
     var_idx <- 3 + ar_order
     H_idx   <- 4 + ar_order

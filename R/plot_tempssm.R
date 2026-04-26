@@ -2,7 +2,7 @@
 #'
 #' @param x An object of class \code{"tempssm"} returned by \code{lgssm()}.
 #' @param components Components to plot. Any of \code{"level"}, \code{"drift"},
-#'   \code{"seasonal"}, \code{"ar"}.
+#'   \code{"season"}, \code{"ar"}.
 #' @param ci Logical; if TRUE, confidence intervals are shown for
 #'   level and drift components.
 #' @details
@@ -28,7 +28,7 @@
 #' @export
 plot.tempssm <- function(
   x,
-  components = c("level", "drift", "seasonal", "ar"),
+  components = c("level", "drift", "season", "ar"),
   ci = FALSE,
   ci_level = 0.95,
   layout = c("grid", "list"),
@@ -41,7 +41,7 @@ plot.tempssm <- function(
     stop("Object must be of class 'tempssm'.", call. = FALSE)
   }
 
-  use_seasonal <- x$use_seasonal
+  use_season <- x$use_season
 
   freq <- frequency(x$data_temp)
 
@@ -111,10 +111,10 @@ plot.tempssm <- function(
     plots$drift <- p
   }
 
-  ## ---- seasonal ----
-  if ("seasonal" %in% components) {
-    if(use_seasonal){
-      plots$seasonal <-
+  ## ---- season ----
+  if ("season" %in% components) {
+    if(use_season){
+      plots$season <-
         forecast::autoplot(alpha_hat[, "sea_dummy1"]) +
         ggplot2::labs(title = "Seasonal component", x = "Time", y = "Temperature (\u00B0C)")
     }else{

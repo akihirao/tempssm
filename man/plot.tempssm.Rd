@@ -6,7 +6,7 @@
 \usage{
 \method{plot}{tempssm}(
   x,
-  components = c("level", "drift", "seasonal", "ar"),
+  components = c("level", "drift", "season", "ar"),
   ci = FALSE,
   ci_level = 0.95,
   layout = c("grid", "list"),
@@ -17,7 +17,7 @@
 \item{x}{An object of class \code{"tempssm"} returned by \code{lgssm()}.}
 
 \item{components}{Components to plot. Any of \code{"level"}, \code{"drift"},
-\code{"seasonal"}, \code{"ar"}.}
+\code{"season"}, \code{"ar"}.}
 
 \item{ci}{Logical; if TRUE, confidence intervals are shown for
 level and drift components.}

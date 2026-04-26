@@ -1,82 +1,3 @@
-#' Wrapper function for fitting a linear Gaussian state-space model
-#'
-#' @param temp_data A temperature time series of class \code{ts}.
-#'   The \code{ts} object must be univariant.
-#'   The series can have any arbitrary frequency of 2 or higher.
-#'   For example, a frequency of 12 represents a monthly \code{ts} object.
-#'
-#' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
-#'   The series may have any arbitrary frequency of 2 or higher,
-#'   but it must be the same as that of \code{temp_data}.
-#'   The default is \code{NULL} when fitting a model without exogenous variables.
-#'
-#' @param ar_order Integer specifying the order of the autoregressive (AR) 
-#' component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
-#' Default to 1.
-#'
-#' @param use_seasonal Logical; Should seasonal component be considered. 
-#' Default to TRUE.
-#'  
-#' @param inits Optional numeric vector of initial parameter values.
-#'  If \code{NULL}, default values are used.
-#'  
-#' @param maxit Optional numeric of maximum iteration.
-#'  If \code{NULL}, default value of 5000 is used.
-#'
-#' @param reltol Optional numeric of reltol.
-#'  If \code{NULL}, default value of 1e-16 is used.
-#'  
-#' @return An object of class \code{"tempssm"}, a named list containing:
-#' \describe{
-#'   \item{model}{Fitted \code{SSModel} object.}
-#'   \item{fit}{Results from \code{fitSSM}.}
-#'   \item{kfs}{Kalman filtering and smoothing results from \code{KFS}.}
-#'   \item{data_temp}{Temperature time series used for estimation.}
-#'   \item{data_exo}{Time series of exogenous variable(s) used for estimation.}
-#'   \item{ar_order}{Order of the autoregressive component.}
-#'   \item{use_seasonal}{Logical; whether to include a seasonal component.}
-#'   \item{call}{Matched function call.}
-#' }
-#'
-#' @import KFAS
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' data(niigata_sst)
-#' res <- tempssm(niigata_sst)
-#' summary(res)
-#' }
-tempssm <- function(temp_data,exo_data = NULL,
-                ar_order = 1,
-                use_seasonal = TRUE,
-                inits = NULL,
-                maxit = NULL,
-                reltol = NULL) {
-  
-  if(use_seasonal){
-    out <- tempssm_season(temp_data=temp_data,
-                      exo_data=exo_data,
-                      ar_order = ar_order,
-                      inits = inits,
-                      maxit = maxit,
-                      reltol = reltol
-                      )
-  }else{
-    out <- tempssm_no_season(temp_data=temp_data,
-                         exo_data=exo_data,
-                         ar_order = ar_order,
-                         inits = inits,
-                         maxit = maxit,
-                         reltol = reltol
-                         )
-  }
-  
-  return(out)
-  
-}
-
-
 #' Base function for fitting a linear Gaussian state-space model to temperature time series
 #'
 #' This function estimates a linear Gaussian state-space model (SSM)
@@ -98,6 +19,9 @@ tempssm <- function(temp_data,exo_data = NULL,
 #' component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
 #' Defaults to 1.
 #'
+#' @param use_season Logical; Should seasonal component be considered. 
+#' Default to TRUE.
+#' 
 #' @param inits Optional numeric vector of initial parameter values.
 #'  If \code{NULL}, default values are used.
 #'  
@@ -115,7 +39,7 @@ tempssm <- function(temp_data,exo_data = NULL,
 #'   \item{data_temp}{Temperature time series used for estimation.}
 #'   \item{data_exo}{Time series of exogenous variable(s) used for estimation.}
 #'   \item{ar_order}{Order of the autoregressive component.}
-#'   \item{use_seasonal}{Logical; whether to include a seasonal component.}
+#'   \item{use_season}{Logical; whether to include a seasonal component.}
 #'   \item{call}{Matched function call.}
 #' }
 #'
@@ -125,16 +49,17 @@ tempssm <- function(temp_data,exo_data = NULL,
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res <- tempssm_seasonal(niigata_sst)
+#' res <- tempssm(niigata_sst)
 #' summary(res)
 #' }
-tempssm_season <- function(temp_data,
-                       exo_data = NULL,
-                       ar_order = 1,
-                       inits = NULL,
-                       maxit = NULL,
-                       reltol = NULL
-                       ) {
+tempssm <- function(temp_data,
+                    exo_data = NULL,
+                    ar_order = 1,
+                    inits = NULL,
+                    maxit = NULL,
+                    reltol = NULL,
+                    use_season = TRUE
+                    ) {
   tryCatch(
     {
     ## ---- Input checks ---------------------------------------------------
@@ -161,10 +86,7 @@ tempssm_season <- function(temp_data,
       stop(paste("inits must be length ", expected_len))
     }
   
-    ar_idx <- 3:(2 + ar_order)
-    var_idx <- 3 + ar_order
-    H_idx <- 4 + ar_order
-  
+
     ## ---- Default maxit value -----------------------------------------  
     if (is.null(maxit)) {
       maxit <- 5000
@@ -175,126 +97,209 @@ tempssm_season <- function(temp_data,
       reltol <- 1e-16
     }
   
-  
-    #========================================================
-    # Handle univariate / multivariate ts
-  
-    # ------------------------------------------------------------------------
-    # ------------------------------------------------------------------------
-    # model without exogenous variables
-    if(is.null(exo_data)){ 
     
-    exogenous_lab <- NULL
-
-    ## ---- Model definition -----------------------------------------------
-    build_ssm <- SSModel(
-      y ~
-        SSMtrend(
-          degree = 2,
-          Q = c(list(0), list(NA))
-        ) +
-        SSMseasonal(
-          sea.type = "dummy",
-          period = freq,
-          Q = NA
-        ) +
-        SSMarima(
-          ar = rep(0, ar_order),
-          d = 0,
-          Q = NA
-        ),
-      H = NA
-    )
-    
-    ## ---- Parameter update function --------------------------------------
-    update_func <- function(pars, model) {
-      model <- SSModel(
-        y ~
-          SSMtrend(degree = 2,
-                   Q = c(list(0), list(exp(pars[1])))) +
-          SSMseasonal(
-            sea.type = "dummy",
-            period = freq,
-            Q = exp(pars[2])
-          ) +
-          SSMarima(
-            ar = artransform(pars[ar_idx]),
-            d = 0,
-            Q = exp(pars[var_idx])
-          ),
-        H = exp(pars[H_idx])
-      )
+    # index for parameters
+    if(use_season){ 
+      ar_idx <- 3:(2 + ar_order)
+      var_idx <- 3 + ar_order
+      H_idx <- 4 + ar_order
+    }else{
+      ar_idx <- 2:(1 + ar_order)
+      var_idx <- 2 + ar_order
+      H_idx <- 3 + ar_order
     }
 
-
-    # ------------------------------------------------------------------------
-    # ------------------------------------------------------------------------
-    # model with an exogenous variable
-    } else { # 
-
-      exo_data_checked <- tempssm::.tempssm_check_exo_ts(temp_data = temp_data,
-                                             exo_data = exo_data)
     
-      if (!inherits(exo_data, "ts")) {
-        stop("temp_data must be a 'ts' object.")
-      }
-    
-      if (frequency(exo_data) != freq) {
-        stop("frequency of exo_data must be same that of temp_data.")
-      }
-    
-      if (is.null(colnames(exo_data))) {
-        stop("exo_data must have column name(s).")
-      }
-    
-      exogenous_lab <- colnames(exo_data_checked)
-      exogenous_mat <- as.matrix(exo_data_checked)
+    ## ==== Define Model ====================================================
+ 
+    ### ---- Model with seasonal components--------------------
+    if(use_season){
 
+      ### ---- Model with no exogenous variables
+      if(is.null(exo_data)){ 
 
-      ## ---- Model definition -----------------------------------------------
-      build_ssm <- SSModel(
-        H = NA,
-        y ~ exogenous_mat +
-          SSMtrend(
-            degree = 2,
-            Q = c(list(0), list(NA))
-          ) +
-          SSMseasonal(
-            sea.type = "dummy",
-            period = freq,
-            Q = NA
-          ) +
-          SSMarima(
-            ar = rep(0, ar_order),
-            d = 0,
-            Q = NA
-          )
-      )
-  
-
-      ## ---- Parameter update function --------------------------------------
-      update_func <- function(pars, model) {
-        return(
-          SSModel(
-            H = exp(pars[H_idx]),
-            y ~ exogenous_mat + 
+        exogenous_lab <- NULL
+        
+        #### ---- Build Model -------------------------------
+        build_ssm <- SSModel(
+          y ~
+            SSMtrend(
+              degree = 2,
+              Q = c(list(0), list(NA))
+            ) +
+            SSMseasonal(
+              sea.type = "dummy",
+              period = freq,
+              Q = NA
+            ) +
+            SSMarima(
+              ar = rep(0, ar_order),
+              d = 0,
+              Q = NA
+            ),
+          H = NA
+        )
+      
+        #### --- Parameter update function ------------------------
+        update_func <- function(pars, model) {
+          model <- SSModel(
+            y ~
               SSMtrend(degree = 2,
-                       Q = c(list(0), 
-                             list(exp(pars[1])))) +
+                       Q = c(list(0), list(exp(pars[1])))) +
               SSMseasonal(
                 sea.type = "dummy",
                 period = freq,
-                Q = exp(pars[2])) +
+                Q = exp(pars[2])
+              ) +
               SSMarima(
                 ar = artransform(pars[ar_idx]),
                 d = 0,
-                Q = exp(pars[var_idx]))
+                Q = exp(pars[var_idx])
+              ),
+            H = exp(pars[H_idx])
           )
+        }
+      
+      }else{ # Model with exogenous variables
+       
+        exo_data_checked <- tempssm::.tempssm_check_exo_ts(temp_data = temp_data,
+                                                           exo_data = exo_data)
+        
+        exogenous_lab <- colnames(exo_data_checked)
+        exogenous_mat <- as.matrix(exo_data_checked)
+        
+        ## ---- Model definition -----------------------------------------------
+        build_ssm <- SSModel(
+          H = NA,
+          y ~ exogenous_mat +
+            SSMtrend(
+              degree = 2,
+              Q = c(list(0), list(NA))
+            ) +
+            SSMseasonal(
+              sea.type = "dummy",
+              period = freq,
+              Q = NA
+            ) +
+            SSMarima(
+              ar = rep(0, ar_order),
+              d = 0,
+              Q = NA
+            )
         )
-      }
-    }# close case when model with exogenous variable(s)
+        
+        ## ---- Parameter update function --------------------------------------
+        update_func <- function(pars, model) {
+          return(
+            SSModel(
+              H = exp(pars[H_idx]),
+              y ~ exogenous_mat + 
+                SSMtrend(degree = 2,
+                         Q = c(list(0), 
+                               list(exp(pars[1])))) +
+                SSMseasonal(
+                  sea.type = "dummy",
+                  period = freq,
+                  Q = exp(pars[2])) +
+                SSMarima(
+                  ar = artransform(pars[ar_idx]),
+                  d = 0,
+                  Q = exp(pars[var_idx]))
+            )
+          )
+        }
 
+      } # close model with seasonal component & exogenous variables
     
+    
+    }else{ # model without seasonal component
+      
+      if(is.null(exo_data)){ # Model with no exogenous variables
+        
+        exogenous_lab <- NULL
+        
+        #### ---- Model definition -------------------------------      
+        build_ssm <- SSModel(
+          y ~
+            SSMtrend(
+              degree = 2,
+              Q = c(list(0), list(NA))
+            ) +
+            SSMarima(
+              ar = rep(0, ar_order),
+              d = 0,
+              Q = NA
+            ),
+          H = NA
+        )
+      
+        #### ---- Parameter update function ----------------------
+        update_func <- function(pars, model) {
+          model <- SSModel(
+            y ~
+              SSMtrend(
+                degree = 2,
+                Q = c(list(0), list(exp(pars[1])))
+              ) +
+              SSMarima(
+                ar = artransform(pars[ar_idx]),
+                d = 0,
+                Q = exp(pars[var_idx])
+              ),
+            H = exp(pars[H_idx])
+          )
+        }
+      
+      
+      }else{# Model with exogenous variables
+        
+        exo_data_checked <- tempssm::.tempssm_check_exo_ts(temp_data = temp_data,
+                                                           exo_data = exo_data)
+        
+        exogenous_lab <- colnames(exo_data_checked)
+        exogenous_mat <- as.matrix(exo_data_checked)
+        
+        
+        ## ---- Model definition -----------------------------------------------
+        build_ssm <- SSModel(
+          H = NA,
+          y ~ exogenous_mat +
+            SSMtrend(
+              degree = 2,
+              Q = c(list(0), list(NA))
+            ) +
+            SSMarima(
+              ar = rep(0, ar_order),
+              d = 0,
+              Q = NA
+            )
+        )
+        
+        
+        ## ---- Parameter update function --------------------------------------
+        update_func <- function(pars, model) {
+          return(
+            SSModel(
+              H = exp(pars[H_idx]),
+              y ~ exogenous_mat + 
+                SSMtrend(
+                  degree = 2,
+                  Q = c(list(0),list(exp(pars[1])))
+                ) +
+                SSMarima(
+                  ar = artransform(pars[ar_idx]),
+                  d = 0,
+                  Q = exp(pars[var_idx]))
+            )
+          )
+        }
+      }# close case when model with exogenous variable(s)
+
+
+    }
+    ## ==== close Define Model ================================
+      
+
     ## ---- Optimization (two-step) ----------------------------------------
     fit1 <- fitSSM(
       build_ssm,
@@ -328,7 +333,7 @@ tempssm_season <- function(temp_data,
       data_temp  = temp_data,
       data_exogenous = exo_data,
       ar_order = ar_order,
-      use_seasonal = TRUE,
+      use_season = use_season,
       call  = match.call()
     )
 
@@ -344,269 +349,20 @@ tempssm_season <- function(temp_data,
 
 
 
-
-#' Base function for fitting a linear Gaussian state-space model 
-#' without seasonal component to temperature time series
-#'
-#' This function estimates a linear Gaussian state-space model (SSM)
-#' for monthly temperature time series using Kalman filtering and smoothing.
-#' Both univariate and multivariate \code{ts} objects are supported.
-#' If multivariate, a column named \code{"Temp"} is used.
-#'
-#' @param temp_data A temperature time series of class \code{ts}.
-#'   The \code{ts} object must be univariant.
-#'   The series can have any arbitrary frequency of 2 or higher.
-#'   For example, a frequency of 12 represents a monthly \code{ts} object.
-#'
-#' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
-#'   The series may have any arbitrary frequency of 2 or higher,
-#'   but it must be the same as that of \code{temp_data}.
-#'   The default is \code{NULL} when fitting a model without exogenous variables.
-#'
-#' @param ar_order Integer specifying the order of the autoregressive (AR) 
-#' component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
-#' Defaults to 1.
-#'
-#' @param inits Optional numeric vector of initial parameter values.
-#'  If \code{NULL}, default values are used.
-#'  
-#' @param maxit Optional numeric of maximum iteration.
-#'  If \code{NULL}, default value of 5000 is used.
-#'
-#' @param reltol Optional numeric of reltol.
-#'  If \code{NULL}, default value of 1e-16 is used.
-#'
-#' @return An object of class \code{"tempssm"}, a named list containing:
-#' \describe{
-#'   \item{model}{Fitted \code{SSModel} object.}
-#'   \item{fit}{Results from \code{fitSSM}.}
-#'   \item{kfs}{Kalman filtering and smoothing results from \code{KFS}.}
-#'   \item{data_temp}{Temperature time series used for estimation.}
-#'   \item{data_exo}{Time series of exogenous variable(s) used for estimation.}
-#'   \item{ar_order}{Order of the autoregressive component.}
-#'   \item{use_seasonal}{Logical; whether to include a seasonal component.}
-#'   \item{call}{Matched function call.}
-#' }
-#'
-#' @import KFAS
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' data(niigata_sst)
-#' res <- tempssm_no_season(niigata_sst)
-#' summary(res)
-#' }
-tempssm_no_season <- function(temp_data,
-                          exo_data = NULL,
-                          ar_order = 1,
-                          inits = NULL,
-                          maxit = NULL,
-                          reltol = NULL
-                          ) {
-  tryCatch(
-    {
-      ## ---- Input checks ---------------------------------------------------
-      y <- tempssm::.tempssm_check_temp_ts(temp_data)
-      freq <- frequency(y)
-      
-      ## ---- Default initial values -----------------------------------------
-      if (is.null(inits)) {
-        # log-variances and AR parameters (on unconstrained scale)
-        ar_rep_length_minus_one <- ar_order -1
-        ar_inits <- c(0.5,rep(0,ar_rep_length_minus_one))
-        
-        inits <- c(
-          -13,  # trend variance (log)
-          ar_inits,  # AR coefficients     
-          -0.3,  # AR noise variance (log)
-          -5   # observation variance (log)
-        )
-      }
-      
-      expected_len <- 1 + ar_order + 2
-      if (!is.numeric(inits) != expected_len) {
-        stop(paste("inits must be length ", expected_len))
-      }
-      
-      ar_idx <- 2:(1 + ar_order)
-      var_idx <- 2 + ar_order
-      H_idx <- 3 + ar_order
-      
-      ## ---- Default maxit value -----------------------------------------  
-      if (is.null(maxit)) {
-        maxit <- 5000
-      }
-      
-      ## ---- Default reltol value -----------------------------------------  
-      if (is.null(reltol)) {
-        reltol <- 1e-16
-      }
-      
-      
-      #========================================================
-      # Handle univariate / multivariate ts
-      
-      # ------------------------------------------------------------------------
-      # ------------------------------------------------------------------------
-      # model without exogenous variables
-      if(is.null(exo_data)){ 
-        
-        exogenous_lab <- NULL
-        
-        ## ---- Model definition -----------------------------------------------
-        build_ssm <- SSModel(
-          y ~
-            SSMtrend(
-              degree = 2,
-              Q = c(list(0), list(NA))
-            ) +
-            SSMarima(
-              ar = rep(0, ar_order),
-              d = 0,
-              Q = NA
-            ),
-          H = NA
-        )
-        
-        ## ---- Parameter update function --------------------------------------
-        update_func <- function(pars, model) {
-          model <- SSModel(
-            y ~
-              SSMtrend(
-                degree = 2,
-                Q = c(list(0), list(exp(pars[1])))
-                ) +
-              SSMarima(
-                ar = artransform(pars[ar_idx]),
-                d = 0,
-                Q = exp(pars[var_idx])
-                ),
-            H = exp(pars[H_idx])
-          )
-        }
-        
-        
-        # ------------------------------------------------------------------------
-        # ------------------------------------------------------------------------
-        # model with an exogenous variable
-      } else { # 
-        
-        exo_data_checked <- tempssm::.tempssm_check_exo_ts(temp_data = temp_data,
-                                               exo_data = exo_data)
-        
-        if (!inherits(exo_data, "ts")) {
-          stop("temp_data must be a 'ts' object.")
-        }
-        
-        if (frequency(exo_data) != freq) {
-          stop("frequency of exo_data must be same that of temp_data.")
-        }
-        
-        if (is.null(colnames(exo_data))) {
-          stop("exo_data must have column name(s).")
-        }
-        
-        exogenous_lab <- colnames(exo_data_checked)
-        exogenous_mat <- as.matrix(exo_data_checked)
-        
-        
-        ## ---- Model definition -----------------------------------------------
-        build_ssm <- SSModel(
-          H = NA,
-          y ~ exogenous_mat +
-            SSMtrend(
-              degree = 2,
-              Q = c(list(0), list(NA))
-            ) +
-            SSMarima(
-              ar = rep(0, ar_order),
-              d = 0,
-              Q = NA
-            )
-        )
-        
-        
-        ## ---- Parameter update function --------------------------------------
-        update_func <- function(pars, model) {
-          return(
-            SSModel(
-              H = exp(pars[H_idx]),
-              y ~ exogenous_mat + 
-                SSMtrend(
-                  degree = 2,
-                  Q = c(list(0),list(exp(pars[1])))
-                  ) +
-                SSMarima(
-                  ar = artransform(pars[ar_idx]),
-                  d = 0,
-                  Q = exp(pars[var_idx]))
-            )
-          )
-        }
-      }# close case when model with exogenous variable(s)
-      
-      
-      ## ---- Optimization (two-step) ----------------------------------------
-      fit1 <- fitSSM(
-        build_ssm,
-        inits  = inits,
-        updatefn = update_func,
-        method = "Nelder-Mead",
-        control = list(maxit = maxit, reltol = reltol)
-      )
-      
-      fit2 <- fitSSM(
-        build_ssm,
-        inits  = fit1$optim.out$par,
-        updatefn = update_func,
-        method = "BFGS",
-        control = list(maxit = maxit, reltol = reltol)
-      )
-      
-      ## ---- Kalman filtering & smoothing -----------------------------------
-      kfs <- KFS(
-        fit2$model,
-        filtering = c("state", "mean"),
-        smoothing = c("state", "mean", "disturbance")
-      )
-      
-      
-      ## ---- Output ---------------------------------------------------------
-      out <- list(
-        model = fit2$model,
-        fit   = fit2,
-        kfs   = kfs,
-        data_temp  = temp_data,
-        data_exogenous = exo_data,
-        ar_order = ar_order,
-        use_seasonal = FALSE,
-        call  = match.call()
-      )
-      
-      class(out) <- "tempssm"
-      return(out)
-    },
-    error = function(e) {
-      message("Warning(s): NA is returned. ", e$message)
-      NA
-    }
-  )# close tryCatch
-}
-
-
-
-
-#' Check ts object of temperature time series for applying \code{ssm()}
+#' Check ts object of temperature time series for applying \code{tempssm()}
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
 #'   The series can have any arbitrary frequency of 2 or higher.
 #'   For example, a frequency of 12 represents a monthly \code{ts} object.
+#'
+#' @param message Logical; Whether Masseage is showed. 
+#' Default to TRUE.
 #'
 #' @return A univariate \code{ts} object.
 #'
 #' @export
-.tempssm_check_temp_ts <- function(temp_data) {
+.tempssm_check_temp_ts <- function(temp_data,
+                                   message=TRUE) {
   
   if (!inherits(temp_data, "ts")) {
     stop("The object 'temp_data' must be a 'ts' object.",
@@ -624,14 +380,16 @@ tempssm_no_season <- function(temp_data,
          call. = FALSE)
   }
   
-  message("The ts object is univariate with frequency ", freq, ".")
+  if(message){
+    message("The ts object 'temp_data' is univariate with frequency ", freq, ".")
+  }
   
   return(temp_data)
 }
 
 
 
-#' Check ts object of exogenous variable(s) for applying \code{ssm()}
+#' Check ts object of exogenous variable(s) for applying \code{tempssm()}
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
 #'   The series can have any arbitrary frequency of 2 or higher.
@@ -648,7 +406,8 @@ tempssm_no_season <- function(temp_data,
 .tempssm_check_exo_ts <- function(temp_data,
                                   exo_data) {
 
-  temp_data_checked <- tempssm::.tempssm_check_temp_ts(temp_data)
+  temp_data_checked <- tempssm::.tempssm_check_temp_ts(temp_data,
+                                                       message=FALSE)
 
   temp_freq <- frequency(temp_data_checked)
 
@@ -679,7 +438,7 @@ tempssm_no_season <- function(temp_data,
     uni_multi <- "univariate"
   }
   
-  message(paste0("The object 'exo_data' is ", uni_multi, " with frequency ", exo_freq, "."))
+  message(paste0("The ts object 'exo_data' is ", uni_multi, " with frequency ", exo_freq, "."))
 
   return(exo_data)
 }
@@ -813,13 +572,13 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' }
 extract_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
-  use_seasonal <- res$use_seasonal
+  use_season <- res$use_season
 
   if (!inherits(res, "tempssm")) {
     stop("Input must be a tempssm object.", call. = FALSE)
   }
 
-  if (!use_seasonal) {
+  if (!use_season) {
     stop("Seasonal component is not included in this model.", call. = FALSE)
   }
 
@@ -894,9 +653,9 @@ extract_param <- function(res){
   model <- res$model
   pars <- res$fit$optim.out$par
   ar_order <- res$ar_order
-  use_seasonal <- res$use_seasonal
+  use_season <- res$use_season
 
-  if(use_seasonal){
+  if(use_season){
     ar_idx  <- 3:(2 + ar_order)
     var_idx <- 3 + ar_order
     H_idx   <- 4 + ar_order
