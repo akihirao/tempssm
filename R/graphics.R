@@ -443,7 +443,7 @@ autoplot_ar1 <- function(res,
   
   if (ci) {
     ci_res <- stats::confint(res$kfs, level = ci_level)
-    ar1_df <- cbind(season_df, as.data.frame(ci_res$arima1))
+    ar1_df <- cbind(ar1_df, as.data.frame(ci_res$arima1))
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
   
