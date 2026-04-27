@@ -27,6 +27,11 @@ jobs:
           # Suggests も含めて入れる（testthat のため）
           needs: test
 
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          needs: test
+          extra-packages: devtools
+
       - name: Run testthat
         run: |
           Rscript -e 'devtools::test()'
