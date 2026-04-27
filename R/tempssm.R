@@ -476,7 +476,7 @@ extract_level_ts = function(res, ci = FALSE, ci_level = 0.95) {
   level_ts <- res$kfs$alphahat[, "level"]
   
   if(ci){
-    ci_obj <- confint(res$kfs, level = ci_level)
+    ci_obj <- stats::confint(res$kfs, level = ci_level)
 
     level_ts <- cbind(
       level = level_ts,
@@ -531,7 +531,7 @@ extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   if(ci){
 
-    ci_obj <- confint(res$kfs, level = ci_level)
+    ci_obj <- stats::confint(res$kfs, level = ci_level)
   
     if (!"slope" %in% names(ci_obj)) {
       stop("Slope component not found in confidence intervals.", call. = FALSE)
@@ -589,7 +589,7 @@ extract_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   season_ts <- res$kfs$alphahat[, "sea_dummy1"]
   
   if(ci){
-    ci_obj <- confint(res$kfs, level = ci_level)
+    ci_obj <- stats::confint(res$kfs, level = ci_level)
 
     season_ts <- cbind(
       season = season_ts,
@@ -749,7 +749,7 @@ extract_exo_coef_ci = function(res, level = 0.95) {
   beta_hat <- alpha_hat[1, seq_len(n_exo), drop = FALSE]
   
   # Confidence intervals
-  ci_obj <- confint(kfs, level = level)[seq_len(n_exo)]
+  ci_obj <- stats::confint(kfs, level = level)[seq_len(n_exo)]
   ci_mat <- do.call(rbind, lapply(ci_obj, head, n = 1))
   
   data.frame(

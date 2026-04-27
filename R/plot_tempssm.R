@@ -50,7 +50,7 @@ plot.tempssm <- function(
   time_index <- time(alpha_hat)
 
   if (ci) {
-    ci_obj <- confint(x$kfs, level = ci_level)
+    ci_obj <- stats::confint(x$kfs, level = ci_level)
   }
 
   plots <- list()
