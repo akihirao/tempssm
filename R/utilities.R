@@ -319,7 +319,6 @@ compute_monthly_climatology <- function(temp_ts){
 #' baseline period.
 #'
 #' @importFrom stats cycle window frequency start
-#' @importFrom tempssm mean_seasonal_cycle
 #'
 #' @param temp_ts Monthly temperature time series of class \code{ts}.
 #'   The time series must have a frequency of 12 (monthly data).
@@ -534,7 +533,6 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #'
 #' @importFrom readr read_csv
 #' @importFrom rlang .data
-#' @importFrom tempssm zoo_daily2ts_monthly
 #' @importFrom httr2
 #'   request
 #'   req_user_agent
