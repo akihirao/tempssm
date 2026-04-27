@@ -3,9 +3,10 @@ name: testthat
 on:
   pull_request:
   push:
-    branches-ignore:
-      - main
-      - master
+    branches: [main, master]
+    #branches-ignore:
+    #  - main
+    #  - master
 
 permissions: read-all
 
