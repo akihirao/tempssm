@@ -6,10 +6,14 @@
 \title{Function to plot time series of monthly temperature and temperature deviation}
 \usage{
 plot_temp_dev(ts)
+
+plot_temp_dev(ts)
 }
 \arguments{
 \item{ts}{temperature time series object}
 }
 \description{
+Function to plot time series of monthly temperature and temperature deviation
+
 Function to plot time series of monthly temperature and temperature deviation
 }

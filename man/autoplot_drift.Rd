@@ -5,6 +5,10 @@
 \title{Plot the estimated drift (slope) component from a tempssm model}
 \usage{
 autoplot_drift(res, ci = TRUE, ci_level = 0.95, ylab = "Temperature")
+
+autoplot_drift(res, ci = TRUE, ci_level = 0.95, ylab = "Temperature")
+
+autoplot_drift(res, ci = TRUE, ci_level = 0.95, ylab = "Temperature")
 }
 \arguments{
 \item{res}{An object returned by \code{tempssm()} from the \pkg{tempssm} package.}
@@ -21,13 +25,37 @@ Defalut is "temperature".}
 \value{
 A \code{ggplot} object, allowing further customization by adding
 standard \pkg{ggplot2} layers.
+
+A \code{ggplot} object, allowing further customization by adding
+standard \pkg{ggplot2} layers.
+
+A \code{ggplot} object, allowing further customization by adding
+standard \pkg{ggplot2} layers.
 }
 \description{
 Create a \pkg{ggplot2} visualization of the estimated drift component
 obtained from a state space model fitted by \code{tempssm()}.
 A pointwise confidence interval is shown as a shaded ribbon.
+
+Create a \pkg{ggplot2} visualization of the estimated drift component
+obtained from a state space model fitted by \code{tempssm()}.
+A pointwise confidence interval is shown as a shaded ribbon.
+
+Create a \pkg{ggplot2} visualization of the estimated drift component
+obtained from a state space model fitted by \code{tempssm()}.
+A pointwise confidence interval is shown as a shaded ribbon.
 }
 \details{
+The confidence interval is computed using
+\code{stats::confint()} applied to the Kalman filter and smoother
+results stored in \code{res$kfs}. The shaded ribbon represents
+pointwise confidence intervals for the level state.
+
+The confidence interval is computed using
+\code{stats::confint()} applied to the Kalman filter and smoother
+results stored in \code{res$kfs}. The shaded ribbon represents
+pointwise confidence intervals for the level state.
+
 The confidence interval is computed using
 \code{stats::confint()} applied to the Kalman filter and smoother
 results stored in \code{res$kfs}. The shaded ribbon represents
@@ -44,7 +72,31 @@ autoplot_level(res)
 # Custom confidence level
 autoplot_drift(res, ci_level = 0.9)
 }
+\dontrun{
+data(niigata_sst)
+res <- tempssm(niigata_sst)
+
+# Default 95\% confidence interval
+autoplot_level(res)
+
+# Custom confidence level
+autoplot_drift(res, ci_level = 0.9)
+}
+\dontrun{
+data(niigata_sst)
+res <- tempssm(niigata_sst)
+
+# Default 95\% confidence interval
+autoplot_season(res)
+
+# Custom confidence level
+autoplot_season(res, ci_level = 0.9)
+}
 }
 \seealso{
+\code{\link{tempssm}}, \code{\link[stats]{confint}}
+
+\code{\link{tempssm}}, \code{\link[stats]{confint}}
+
 \code{\link{tempssm}}, \code{\link[stats]{confint}}
 }
