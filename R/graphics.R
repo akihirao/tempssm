@@ -196,14 +196,14 @@ autoplot_drift <- function(res,
   alpha_hat <- res$kfs$alphahat
   slope <- alpha_hat[, "slope"]
   
-  drift_df <- data.frame(
+  slope_df <- data.frame(
     time  = time(slope),
     slope = as.numeric(slope)
   )
   
   if (ci) {
     ci_res <- stats::confint(res$kfs, level = ci_level)
-    slope_df <- cbind(drift_df, as.data.frame(ci_res$slope))
+    slope_df <- cbind(slope_df, as.data.frame(ci_res$slope))
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
   
