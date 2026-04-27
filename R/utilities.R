@@ -38,8 +38,27 @@
 #'
 #' @encoding UTF-8
 #'
+#' @examples
+#' ## Create a data frame of monthly temperature data
+#' df <- data.frame(
+#'   Date = as.Date(c(
+#'     "2001-01-01",
+#'     "2001-02-01",
+#'     "2001-03-01",
+#'     "2001-04-01",
+#'     "2001-05-01"
+#'   )),
+#'   Temp = c(10.4, 8.2, NA, 13.6, 16.1)
+#' )
+#'
+#' ## Convert to a monthly ts object
+#' temp_ts <- convert_monthly_df_to_ts(df)
+#'
+#' ## Inspect the result
+#' temp_ts
+#'
 #' @export
-monthly_temp_df2ts <- function(df) {
+convert_monthly_df_to_ts <- function(df) {
 
   # Check required columns
   required_cols <- c("Date", "Temp")
@@ -107,8 +126,30 @@ monthly_temp_df2ts <- function(df) {
 #'
 #' @encoding UTF-8
 #'
+#' @examples
+#' ## Create a temporary CSV file with monthly temperature data
+#' tmp_csv <- tempfile(fileext = ".csv")
+#'
+#' writeLines(
+#'   c(
+#'     "Year,Month,Temp",
+#'     "2001,1,10.4",
+#'     "2001,2,8.2",
+#'     "2001,3,NA",
+#'     "2001,4,13.6",
+#'     "2001,5,16.1"
+#'   ),
+#'   tmp_csv
+#' )
+#'
+#' ## Read the CSV file and convert to a monthly ts object
+#' temp_ts <- read_monthly_temp_ts(tmp_csv)
+#'
+#' ## Inspect the result
+#' temp_ts
+#'
 #' @export
-monthly_temp_csv2ts <- function(csv) {
+read_monthly_temp_ts <- function(csv) {
 
   raw_data <- readr::read_csv(csv)
 
@@ -150,15 +191,16 @@ monthly_temp_csv2ts <- function(csv) {
 #' @return A monthly \code{ts} object with frequency = 12.
 #'
 #' @examples
-#' sst_138_zoo <- sst_jma2zoo(sea_area_id = 138)
-#' sst_138_ts_monthly <- zoo_daily2ts_monthly(sst_138_zoo, na_prop_max = 0.3)
-#' head(sst_138_ts_monthly)
+#' \dontrun{
+#' sst_zoo <- get_jma_sst_zoo(sea_area_id = 138)
+#' sst_ts_monthly <- aggregate_daily_zoo_to_monthly_ts(sst_138_zoo)
+#' }
 #'
 #' @importFrom zoo index coredata as.yearmon
 #' @importFrom stats ts start aggregate
 #'
 #' @export
-zoo_daily2ts_monthly <- function(zoo_obj,
+aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
                                  var = "Temp",
                                  na.rm = TRUE,
                                  na_prop_max = 1) {
@@ -223,7 +265,7 @@ zoo_daily2ts_monthly <- function(zoo_obj,
 
 
 
-#' Estimate monthly climatology (mean seasonal cycle)
+#' Compute monthly climatology (mean seasonal cycle)
 #'
 #' @param temp_ts Monthly temperature time series of class \code{ts}.
 #'   The time series must have a frequency of 12 (monthly data).
@@ -236,8 +278,17 @@ zoo_daily2ts_monthly <- function(zoo_obj,
 #'
 #' @encoding UTF-8
 #'
+#'#' @examples
+#' temp_ts <- ts(
+#'   rnorm(12 * 30, mean = 10),
+#'   start = c(1981, 1),
+#'   frequency = 12
+#' )
+#'
+#' monthly_climatology <- compute_monthly_climatology(temp_ts)
+#' 
 #' @export
-mean_seasonal_cycle <- function(temp_ts){
+compute_monthly_climatology <- function(temp_ts){
 
   if (!inherits(temp_ts, "ts")) {
     stop("Input must be a 'ts' object.", call. = FALSE)
@@ -260,7 +311,7 @@ mean_seasonal_cycle <- function(temp_ts){
 
 
 
-#' Calculate monthly temperature anomalies
+#' Compute monthly temperature anomalies
 #'
 #' Monthly temperature anomalies are calculated by subtracting a
 #' monthly climatology from each observation. The climatology can be
@@ -295,13 +346,13 @@ mean_seasonal_cycle <- function(temp_ts){
 #' )
 #'
 #' # Full-period climatology
-#' anom_all <- monthly_anomaly(temp_ts)
+#' anom_all <- compute_temp_anomaly(temp_ts)
 #'
 #' # Baseline climatology (1981–2010)
-#' anom_base <- monthly_anomaly(temp_ts, baseline = c(1981, 2010))
-#'
+#' anom_base <- compute_temp_anomaly(temp_ts, baseline = c(1981, 2010))
+#' 
 #' @export
-monthly_anomaly <- function(temp_ts, baseline = NULL) {
+compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 
   if (!inherits(temp_ts, "ts")) {
     stop("Input must be a 'ts' object.", call. = FALSE)
@@ -409,12 +460,12 @@ monthly_anomaly <- function(temp_ts, baseline = NULL) {
 #'
 #' @examples
 #' \dontrun{
-#' sst_138_zoo <- sst_jma2zoo(sea_area_id = 138)
+#' sst_138_zoo <- get_jma_sst_zoo(sea_area_id = 138)
 #' head(sst_138_zoo)
 #' }
 #'
 #' @export
-sst_jma2zoo <- function(sea_area_id) {
+get_jma_sst_zoo <- function(sea_area_id) {
 
   if (!is.character(sea_area_id)) {
     sea_area_id <- as.character(sea_area_id)
@@ -524,12 +575,12 @@ sst_jma2zoo <- function(sea_area_id) {
 #'
 #' @examples
 #' \dontrun{
-#' sst_138_ts <- sst_jma2ts(sea_area_id = 138)
+#' sst_138_ts <- get_jma_sst_ts(sea_area_id = 138)
 #' head(sst_138_ts)
 #' }
 #'
 #' @export
-sst_jma2ts <- function(sea_area_id,
+get_jma_sst_ts <- function(sea_area_id,
                        na_prop_max = 1) {
 
   if (!is.character(sea_area_id)) {

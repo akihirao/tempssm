@@ -103,39 +103,36 @@ of exogenous variables.
 
 A sample sea surface temperature (SST) dataset is included in the package.
 
-- **Dataset**: Monthly sea surface temperature (SST) off Niigata, Japan  
+- **Dataset**: Monthly sea surface temperature (SST) off Yamaguchi Prefecture, Japan  
 - **Unit**: Degrees Celsius  
 - **Period**: February 2002 to December 2023  
 ``
 
-This dataset is derived from observations archived at the
-Japan Oceanographic Data Center (JODC),
-Hydrographic and Oceanographic Department, Japan Coast Guard.
-The original daily SST data were obtained from  
-<https://www.jodc.go.jp/jodcweb/JDOSS/index.html>  
-and subsequently aggregated into monthly means.
+This dataset is derived from observations archived at Japan Meteorological Agency (JMA). 
+Data obtained from the JMA website: https://www.jma.go.jp/jma/indexe.html
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-data(niigata_sst) # load a ts object of SST off Niigata
-head(niigata_sst)
-summary(niigata_sst)
+data(yamaguchi_sst) # load a ts object of SST off Niigata
+head(yamaguchi_sst)
+summary(yamaguchi_sst)
 ```
-The dataset includes two missing observations, which are retained and
-handled explicitly within the state-space modeling framework.
+The dataset includes no missing observations. Even if missing observations was included, 
+there are retained and handled explicitly within the state-space modeling framework.
 
 ### Plotting the Monthly SST Time Series
 
 We begin by visualizing the monthly SST time series to examine its
 overall structure, including apparent trends, seasonal variability,
 and missing observations.
+
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_niigata_sst <- forecast::autoplot(niigata_sst) +
+plt_yamaguchi_sst <- forecast::autoplot(yamaguchi_sst) +
   labs(y = expression(Temperature~(degree*C)), 
        x = "Time") +
-  ggtitle("Monthly SST off Niigata, Japan") +
+  ggtitle("Monthly SST off Yamaguchi, Japan") +
   theme_classic()
 
-plot(plt_niigata_sst)
+plot(plt_yamaguchi_sst)
 ```
 
 ### Applying a Linear Gaussian State-Space Model
@@ -156,15 +153,15 @@ Model comparison and selection are discussed in the following section.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # model with first-order autoregressive component
-res <- tempssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
+res <- tempssm(yamaguchi_sst) # first order of auto-regressive model (ar_order=1: default)
 summary(res)
 
 # model with second-order autoregressive component
-res_ar2 <- tempssm(niigata_sst,ar_order=2) 
+res_ar2 <- tempssm(yamaguchi_sst,ar_order=2) 
 summary(res_ar2)
 
 # model with third-order autoregressive component
-res_ar3 <- tempssm(niigata_sst,ar_order=3) 
+res_ar3 <- tempssm(yamaguchi_sst,ar_order=3) 
 summary(res_ar3)
 
 ```
@@ -184,19 +181,19 @@ AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
 AIC_table_res %>% knitr::kable()
 ```
 
-AR1 model is better than the other models.
+AR2 model is better than the other models.
 
 ### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # plot each of components at once
-plot(res)
+plot(res_ar2)
 ```
 
 ### Simple Model Diagnostics
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-resid_test_output <- tempssm::wrapper_checkresiduals(res)
+resid_test_output <- tempssm::wrapper_checkresiduals(res_ar2)
 print(resid_test_output)
 ```
 Autocorrelation of residuals was not significant by Ljung-Box test (P > 0.05).
@@ -206,39 +203,54 @@ Autocorrelation of residuals was not significant by Ljung-Box test (P > 0.05).
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Smoothing estimates
-alpha_hat <- res$kfs$alphahat
+alpha_hat <- res_ar2$kfs$alphahat
 head(alpha_hat)
 
 #　Smoothing estimate of level component
-level_ts <- tempssm::extract_level_ts(res)
+level_ts <- tempssm::extract_level_ts(res_ar2)
 
 #　Smoothing estimate of drift component
-drift_ts <- tempssm::extract_drift_ts(res)
+drift_ts <- tempssm::extract_drift_ts(res_ar2)
 
 # Average drift rate per year across the full period
 mean_drift_year <- mean(drift_ts) 
 print(mean_drift_year)
 
-# Average drift rate per year from Jan 2006 to Dec 2010
-ave_drift_2006_2010 <- window(drift_ts,
-                              start=c(2006,1),
-                               end=c(2010,12)
-                               ) %>%  mean()
-print(ave_drift_2006_2010)
+# Average drift rate per year during 1980s
+ave_drift_1980s <- window(drift_ts,
+                          start=c(1982,1),
+                          end=c(1990,12)
+                          ) %>%  mean()
+print(ave_drift_1980s)
 
-# Average drift rate per year from Jan 2011 to Dec 2015
-ave_drift_2011_2015 <- window(drift_ts,
-                              start=c(2011,1),
-                               end=c(2015,12)
+# Average drift rate per year during 1990s
+ave_drift_1990s <- window(drift_ts,
+                          start=c(1991,1),
+                          end=c(2000,12)
                                ) %>%  mean()
-print(ave_drift_2011_2015)
+print(ave_drift_1990s)
 
-# Average drift rate per year from Jan 2016 to Dec 2020
-ave_drift_2016_2020 <- window(drift_ts,
-                              start=c(2016,1),
-                               end=c(2020,12)
+# Average drift rate per year during 2000s
+ave_drift_2000s <- window(drift_ts,
+                          start=c(2001,1),
+                          end=c(2009,12)
                                ) %>%  mean()
-print(ave_drift_2016_2020)
+print(ave_drift_2000s)
+
+# Average drift rate per year during 2010s
+ave_drift_2010s <- window(drift_ts,
+                          start=c(2011,1),
+                          end=c(2019,12)
+                               ) %>%  mean()
+print(ave_drift_2010s)
+
+
+# Average drift rate per year during 2020s
+ave_drift_2020s <- window(drift_ts,
+                          start=c(2021,1),
+                          end=c(2025,12)
+                               ) %>%  mean()
+print(ave_drift_2020s)
 
 ```
 
@@ -251,14 +263,14 @@ Seasonal variability and autoregressive dependence are separated out,
 allowing the underlying trend behavior to be examined more clearly.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_level_ci <- plot(res,
+plt_level_ci <- plot(res_ar2,
                      components = "level",
                      ci = TRUE,
                      ci_level = 0.95
                      ) +
   theme_classic()
 
-plt_drift_ci <- plot(res,
+plt_drift_ci <- plot(res_ar2,
                      components = "drift",
                      ci = TRUE,
                      ci_level = 0.95
@@ -287,99 +299,75 @@ with the inferred long-term trend and its rate of change.
 
 ### Objective
 
-The objective of this practice is to use a long record of temperature
-time series data to investigate and quantify the influence of a
-large-scale climate mode on long-term temperature variations.
-Specifically, we examine the effect of the North Atlantic Oscillation
-(NAO) as an exogenous variable within a state-space modeling framework.
+The objective of this practice is to investigate and quantify 
+the influence of a large-scale climate mode on temperature variations.
+Specifically, we examine the effect of the Pacific Decadal Oscillation
+(PDO) as an exogenous variable on SST observed off Yamaguchi Prefecture, 
+Japan, within a state-space modeling framework.
 
-### Loading Dataset 1: Long-Term Air Temperature Record
+### Loading Dataset: PDO Index as an Exogenous Variable
 
-- **Data**: Monthly air temperature at the Hohenpeissenberg
-  Meteorological Observatory, Germany  
-- **Location**: 47.801°N, 11.011°E  
-- **Unit**: Degrees Celsius  
-- **Period**: January 1781 to December 2025
+- **Data**: Monthly Pacific Decadal Oscillation (PDO) index (JMA)  
+- **Period**: January 1901 to December 2025
 
-This dataset represents one of the longest continuous instrumental
-records of air temperature available worldwide, observed at a mountain
-meteorological station. The original data were obtained from the Global
-Historical Climatology Network Monthly (GHCNm) version 4, distributed by
-the National Centers for Environmental Information (NCEI), NOAA:
-<https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4>.
+The Pacific Decadal Oscillation (PDO) index is defined as the projection of monthly mean sea surface temperature (SST) anomalies onto the leading empirical orthogonal function (EOF) of SST variability over the North Pacific north of 20°N. The EOF is computed using SST anomalies for 1901–2000, defined relative to the 1901–2000 monthly climatology. To remove the global warming signal, the global-mean SST anomaly is subtracted from each grid point prior to the EOF analysis.
+In this package, we use the PDO index provided by the Japan Meteorological Agency (JMA), available at
+<https://www.data.jma.go.jp/kaiyou/data/shindan/b_1/pdo/pdo.txt>.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-data(hmo_temp) # loading a ts object of air temperature at the HMO station
-head(hmo_temp)
+data(pdo) # load a ts object of NAO index
+head(pdo)
 ```
 
-### Loading Dataset 2: NAO Index as an Exogenous Variable
-
-- **Data**: Monthly North Atlantic Oscillation (NAO) index (Hurrell)  
-- **Period**: January 1865 to June 202
-
-Monthly NAO indices derived using related data　sources are available
-from the Climate Analysis Section, National Center for Atmospheric
-Research (NCAR), Boulder, USA (Hurrell, 2003). The dataset used in this
-package was obtained from:
-<https://www.ncei.noaa.gov/access/monitoring/nao/>.
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-data(nao) # load a ts object of NAO index
-head(nao)
-```
-
-### Intersecting the Temperature and NAO Time Series
+### Intersecting the Temperature and PDO Time Series
 
 For state-space modeling with exogenous variables, all input time series
-must share a common and aligned time index. In this step, the
-temperature and NAO time series are restricted to their overlapping
-period by trimming the leading and trailing portions, ensuring that both
-datasets cover an identical time span.
+must share a common and aligned time index.
+In this step, the temperature and PDO time series are restricted to
+their overlapping period by trimming the leading and trailing portions,
+ensuring that both datasets cover an identical time span.
 
-The function `ts.intersect()` is used to align the two `ts` objects on a
-shared timeline, returning a multivariate time series containing only
+The function `tempssm::trim_ts_overlap()` is used to align the two `ts` objects 
+on a shared timeline, returning a multivariate time series containing only
 the common period.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Generate an object on a shared timeline
-hmo_nao_ts <- ts.intersect(hmo_temp, nao)
-colnames(hmo_nao_ts) <- c("Temp", "NAO")
+yamaguchi_sst_trim <- trim_ts_overlap(yamaguchi_sst,
+                                      pdo,
+                                      temp_name = "Temp",
+                                      exo_name="PDO")$temperature
 
-start(hmo_nao_ts)
-end(hmo_nao_ts)
 
-# Generate an ts object of HMO air-temperature with the shared timeline
-hmo_temp_common <- hmo_nao_ts[,"Temp"]
-start(hmo_temp_common)
-end(hmo_temp_common)
+pdo_trim <- trim_ts_overlap(yamaguchi_sst,
+                            pdo,
+                            temp_name = "Temp",
+                            exo_name="PDO")$exogenous
 
-# Generate an ts object of NAO with the shared timeline
-nao_common <- hmo_nao_ts[,"NAO"]
+start(yamaguchi_sst_trim)
+end(yamaguchi_sst_trim)
 
-# Execute set_ts_name() function to label exogenous variable(s)!!
-nao_common <- set_ts_name(nao_common, label="NAO")
-start(nao_common)
-end(nao_common)
+start(pdo_trim)
+end(pdo_trim)
 
 ```
 
 ### Plotting Time Series of Air Temperature and NAO Index
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_homo_temp <- forecast::autoplot(hmo_temp_common) +
-  labs(x = "Time", y = expression(Temperature~(degree*C))) +
-  ggtitle("Air temperature at Hohenpeissenberg Meteorological Observatory") +
+plt_yamaguchi_sst_trim <- forecast::autoplot(yamaguchi_sst_trim) +
+  labs(y = expression(Temperature~(degree*C)), 
+       x = "Time") +
+  ggtitle("Monthly SST off Yamaguchi, Japan") +
   theme_classic()
 
-plt_nao <- forecast::autoplot(nao_common) +
-  labs(x = "Time", y = "NAO index") +
-  ggtitle("NAO index") +
+
+plt_pdo <- forecast::autoplot(pdo_trim) +
+  labs(x = "Time", y = "PDO index") +
+  ggtitle("PDO index") +
   theme_classic()
 
-cowplot::plot_grid(plt_homo_temp,
-                   plt_nao,
-                   ncol=1)
+plt_yamaguchi_sst_trim + plt_pdo + patchwork::plot_layout(ncol=1)
 
 ```
 
@@ -392,7 +380,7 @@ is explained solely by the latent trend, seasonal cycle, and
 autoregressive dependence.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res_without <- tempssm(hmo_temp_common) 
+res_without <- tempssm(yamaguchi_sst_trim,ar=2) 
 summary(res_without)
 ```
 
@@ -412,28 +400,29 @@ following section.
 ### Applying Model With an Exogenous Variable
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res_with <- tempssm(temp_data = hmo_temp_common,
-                    exo_data = nao_common) 
+res_with <- tempssm(temp_data = yamaguchi_sst_trim,
+                    exo_data = pdo_trim,
+                    ar_order = 2) 
 summary(res_with)
 ```
 
-The estimated coefficient for the exogenous NAO index is positive
-(0.29), and its 95% confidence interval does not include zero \[0.24,
-0.34\], indicating a statistically significant relationship between NAO
-variability and local air temperature at the Hohenpeissenberg station.
+The estimated coefficient for the exogenous PDO index is negative
+(-0.44), and its 95% confidence interval does not include zero \[-0.53,
+-0.35\], indicating a statistically significant relationship between 
+local SST off Yamaguchi Prefecture and the PDO variability.
 
-Specifically, the model suggests that a one-unit increase in the NAO
-index is associated with an average increase of approximately 0.29 °C in
-monthly air temperature, after accounting for the underlying trend,
-seasonal cycle, and autoregressive dependence. This result implies that
-positive phases of the NAO contribute systematically to warmer
-temperature conditions at the study site.
+Specifically, the model suggests that a one-unit increase in the PDO
+index is associated with an average decrease of approximately 0.44 °C in
+monthly SST, after accounting for the underlying trend, seasonal cycle, 
+and autoregressive dependence. This result implies that positive phases 
+of the PDO contribute systematically to cooler temperature conditions 
+at the study site.
 
 Importantly, this effect is identified in addition to the internal
 dynamics of the temperature time series, rather than being an artifact
 of an improved representation of the trend or temporal dependence.
 Compared with the baseline model without exogenous variables, the
-statistical significance of the NAO coefficient indicates that the NAO
+statistical significance of the PDO coefficient indicates that the PDO
 acts as an independent large-scale climate driver influencing local
 temperature variability.
 
@@ -459,7 +448,7 @@ models_AICs <- tibble(
 models_AICs %>% knitr::kable()
 ```
 
-The model including the NAO index as an exogenous variable exhibits a
+The model including the PDO index as an exogenous variable exhibits a
 substantially lower AIC than the baseline model without exogenous
 variables, indicating a markedly better overall fit. This result
 supports the conclusion that explicitly accounting for NAO variability
@@ -483,13 +472,13 @@ models, we employ time-series cross-validation as described bellow.
 plt_level_without_ts <- plot(res_without, 
                              components=c("level"),
                              ci=TRUE) +
-  labs(title="Model without the NAO index") +
+  labs(title="Model without the PDO index") +
   theme_classic()
 
 plt_drift_without_ts <- plot(res_without, 
                              components=c("drift"),
                              ci=TRUE) + 
-  labs(title="Model without the NAO index") +
+  labs(title="Model without the PDO index") +
   theme_classic()
 
 plt_level_drift_without_ts <- plt_level_without_ts + 
@@ -502,13 +491,13 @@ plot(plt_level_drift_without_ts)
 plt_level_with_ts <- plot(res_with,
                           components=c("level"),
                           ci=TRUE)+ 
-  labs(title="Model with the NAO index") +
+  labs(title="Model with the PDO index") +
   theme_classic()
 
 plt_drift_with_ts <- plot(res_with,
                           components=c("drift"),
                           ci=TRUE) + 
-  labs(title="Model with the NAO index") + 
+  labs(title="Model with the PDO index") + 
   theme_classic()
 
 plt_level_drift_with_ts <- plt_level_with_ts + 
@@ -537,7 +526,7 @@ temporal data.
 By comparing cross-validation metrics for models with and without the
 exogenous PDO variable, we assess whether the improvement suggested by
 AIC is also reflected in out-of-sample predictive skill.
-``
+
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # ts cross-validation of the model without exogenous variables
@@ -559,24 +548,24 @@ AIC is also reflected in out-of-sample predictive skill.
 # Generate training and test dataset
 
 folds_without <- ts_cv_folds(
-  temp_data = hmo_temp_common,
+  temp_data = yamaguchi_sst_trim,
   exo_data = NULL,
-  initial = 1032, # 1032 monthly observations from Jan 1865 to Dec 1950
+  initial = 432, # 1032 monthly observations from Jan 1865 to Dec 1950
   horizon = 12, # forecast 12 monthly time-series
-  step = 120, # training data is moved by 120 months (10 years) steps
+  step = 12, # training data is moved by 12 months (1 years) steps
   fixed_window = FALSE,
   allow_partial = FALSE
   )
 
 folds_with <- ts_cv_folds(
-  temp_data = hmo_temp_common,
-  exo_data = nao_common,
-  initial = 1032, # 1032 monthly observations from Jan 1865 to Dec 1950
+  temp_data = yamaguchi_sst_trim,
+  exo_data = pdo_trim,
+  initial = 432, # 1032 monthly observations from Jan 1865 to Dec 1950
   horizon = 12, # forecast 12 monthly time-series
-  step = 120, # training data is moved by 12 months (10 years) steps
+  step = 12, # training data is moved by 12 months (10 years) steps
   fixed_window = FALSE,
   allow_partial = FALSE
-)
+  )
 
 ## Performe tsCV for the model without the exogenous variable of NAO
 cv_meta_without <- rolling_origin_tsCV(folds_without,
@@ -654,9 +643,9 @@ multifaceted justification for adopting the exogenous-variable model.
 
 ## Appendix: Utility Functions
 
-### Utility function: `monthly_temp_csv2ts()`
+### Utility function: `read_monthly_temp_ts()`
 
-The function `monthly_temp_csv2ts()` converts monthly temperature data
+The function `read_monthly_temp_ts()` converts monthly temperature data
 stored in a CSV file into an R `ts` object.
 It is intended to facilitate the ingestion of externally prepared
 time-series data into tempssm by enforcing a simple and consistent
@@ -670,10 +659,11 @@ where `Temp` represents the observed temperature value.
 
 ```text
 Year,Month,Temp
-2010,8,13.6
-2010,9,6.8
-2010,10,NA
-2010,11,-1.4
+2001,1,10.4
+2001,2,8.2
+2001,3,NA
+2001,4,13.6
+2001,5,16.1
 ...
 ```
 
@@ -683,14 +673,24 @@ Year,Month,Temp
 The following example uses a sample CSV file included in the package.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-path <- system.file("extdata", "example_monthly_temp.csv", package = "tempssm")
-example_temp <- monthly_temp_csv2ts(path)
-head(example_temp)
+tmp_csv <- tempfile(fileext = ".csv")
+writeLines(
+  c("Year,Month,Temp",
+    "2001,1,10.4",
+    "2001,2,8.2",
+    "2001,3,NA",
+    "2001,4,13.6",
+    "2001,5,16.1"),
+   tmp_csv
+ )
+
+# Read the CSV file and convert to a monthly ts object
+temp_ts <- read_monthly_temp_ts(tmp_csv)
 ```
 
-### Utility function: `monthly_temp_df2ts()`
+### Utility function: `convert_monthly_df_to_ts()`
 
-The function `monthly_temp_df2ts()` converts a data frame containing
+The function `convert_monthly_df_to_ts()` converts a data frame containing
 monthly temperature data into an R `ts` object. It is designed to support
 workflows where temperature data are first imported or prepared as a data
 frame before being used for time-series analysis.   
@@ -701,23 +701,26 @@ a date column (`Date`) and a temperature column (`Temp`).
 #### Example
 
 ```{r message = FALSE, warning = FALSE}
-# Load example CSV file included in the package
-path <- system.file("extdata", "example_monthly_temp.csv", package = "tempssm")
+# Create a data frame of monthly temperature data
+df <- data.frame(
+  Date = as.Date(c(
+    "2001-01-01",
+    "2001-02-01",
+    "2001-03-01",
+    "2001-04-01",
+    "2001-05-01")
+    ),
+  Temp = c(10.4, 8.2, NA, 13.6, 16.1)
+  )
 
-# Create a data frame with Date and Temp columns
-example_temp_df <- readr::read_csv(path) %>%
-  dplyr::mutate(Date = as.Date(paste0(Year, "-", Month, "-01"))) %>%
-  dplyr::select(Date, Temp)
-
-# Convert the data frame to a ts object
-example_temp_ts <- monthly_temp_df2ts(example_temp_df)
-
-head(example_temp_ts)
+# Convert to a monthly ts object
+temp_ts <- convert_monthly_df_to_ts(df)
+head(temp_ts)
 ```
 
-### Utility function: `sst_jma2ts()`
+### Utility function: `get_jma_sst_ts()`
 
-The function `sst_jma2ts()` downloads publicly available daily mean
+The function `get_jma_sst_ts()` downloads publicly available daily mean
 sea-surface temperature (SST) data for Japanese coastal waters
 provided by the Japan Meteorological Agency (JMA).
 It aggregates the daily values into monthly means and returns
@@ -736,21 +739,21 @@ corresponding regions is provided by JMA at:
 <https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html>
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-sst_138_ts <- tempssm::sst_jma2ts(sea_area_id = 138)
+sst_138_ts <- get_jma_sst_ts(sea_area_id = 138)
 head(sst_138_ts)
 ```
 
-### Utility function: `monthly_anomaly()`
+### Utility function: `compute_temp_anomaly()`
 
-The function `monthly_anomaly()` computes monthly anomalies from a
-time series provided as an R `ts` object.
+The function `compute_temp_anomaly()` computes monthly anomalies 
+from a time series provided as an R `ts` object.
 Monthly anomalies are calculated by subtracting the corresponding
 long-term monthly mean from each observation, thereby removing the
 seasonal cycle while preserving interannual variability.
 
 The reference period used to compute the monthly climatology can be
 specified via a function argument; by default, the climatology is
-computed over the entire available time series (see `?monthly_anomaly`).
+computed over the entire available time series (see `?compute_temp_anomaly`).
 
 This transformation is useful for exploratory analysis and modeling
 applications that focus on departures from typical seasonal conditions.
@@ -760,14 +763,14 @@ applications that focus on departures from typical seasonal conditions.
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Generate temperature anomalies
 data(niigata_sst)
-niigata_sst_anomaly <- monthly_anomaly(niigata_sst)
+niigata_sst_anomaly <- compute_temp_anomaly(niigata_sst)
 plot(niigata_sst_anomaly, ylab=expression(Anomaly~(degree*C))) 
 ```
 
-### Utility function: `mean_seasonal_cycle()`
+### Utility function: `compute_monthly_climatology()`
 
-The function `mean_seasonal_cycle()` computes the climatological mean
-seasonal cycle from a `ts` object by averaging each seasonal value
+The function `compute_monthly_climatology()` computes the climatological 
+mean seasonal cycle from a `ts` object by averaging each seasonal value
 across years. It is primarily intended for exploratory analysis and
 visualization of the seasonal structure in temperature time series.
 
@@ -775,7 +778,7 @@ visualization of the seasonal structure in temperature time series.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 data(niigata_sst)
-monthly_seasonal_cycle_niigata_sst <- mean_seasonal_cycle(niigata_sst) 
+monthly_seasonal_cycle_niigata_sst <- compute_monthly_climatology(niigata_sst) 
 summary(monthly_seasonal_cycle_niigata_sst)
 
 plt_monthly_seasonal_cycle_niigata_sst <- ggplot(
