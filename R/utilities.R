@@ -636,7 +636,7 @@ get_jma_sst_ts <- function(sea_area_id,
     order.by = sst_tidy$date
   )
 
-  monthly_sst_ts <- tempssm::zoo_daily2ts_monthly(sst_zoo,
+  monthly_sst_ts <- tempssm::aggregate_daily_zoo_to_monthly_ts(sst_zoo,
     na_prop_max = na_prop_max)
   return(monthly_sst_ts)
 }
