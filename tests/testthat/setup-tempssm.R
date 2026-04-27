@@ -12,4 +12,4 @@ temp_ts_test <- ts(
 )
 
 
-res_tempssm <- tempssm(temp_ts_test)
+res_tempssm <- tempssm::tempssm(temp_ts_test)
