@@ -811,3 +811,110 @@ label_ts_mono <- function(ts_in, label = "var") {
 }
 
 
+
+#' Trim and align temperature and exogenous time series over their shared period
+#'
+#' @description
+#' `trim_ts_overlap()` aligns a temperature time series and one or more exogenous
+#' time series by trimming them to their shared (overlapping) time period.
+#' The function returns the trimmed series as a named list of `ts` objects,
+#' with consistent variable labels applied for downstream modeling in
+#' \code{tempssm()}.
+#'
+#' Univariate `ts` objects are labeled using \code{label_ts_mono()} to ensure a
+#' consistent handling of variable names within the \pkg{tempssm} framework.
+#'
+#' @param temp_ts
+#' A univariate \code{ts} object representing the temperature time series.
+#'
+#' @param exo_ts
+#' A multivariate or univariate \code{ts} object of exogenous variables.
+#' Each column represents a distinct exogenous covariate.
+#'
+#' @param temp_name
+#' Character string giving the variable name for the temperature series.
+#' This name is applied using \code{label_ts_mono()}.
+#'
+#' @param exo_name
+#' Optional character vector giving variable names for the exogenous variables.
+#' If \code{NULL}, default names of the form \code{var1}, \code{var2}, \dots
+#' are assigned with a warning.
+#'
+#' @details
+#' The shared time window is determined using \code{ts.intersect()}, and both
+#' temperature and exogenous series are trimmed accordingly.
+#'
+#' For univariate series, variable names are assigned via
+#' \code{label_ts_mono()} rather than \code{colnames()} in order to maintain
+#' internal consistency required by \code{tempssm()}.
+#'
+#' @return
+#' A named list with the following elements:
+#' \describe{
+#'   \item{temperature}{A univariate \code{ts} object of the trimmed temperature series.}
+#'   \item{exogenous}{A \code{ts} object of the trimmed exogenous variables.}
+#' }
+#'
+#' @seealso
+#' [ts.intersect()], [label_ts_mono()], \code{\link{tempssm}}
+#'
+#' @examples
+#' temp_ts <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
+#' exo_ts  <- ts(matrix(rnorm(200), ncol = 2),
+#'               start = c(2001, 1), frequency = 12)
+#'
+#' trim_ts_overlap(
+#'   temp_ts,
+#'   exo_ts,
+#'   temp_name = "mean_temp",
+#'   exo_name  = c("precip", "solar")
+#' )
+#'
+#' @importFrom stats ts.intersect
+#' @export
+trim_ts_overlap <- function(
+    temp_ts,
+    exo_ts,
+    temp_name = "temp",
+    exo_name = NULL
+) {
+  
+  num_exo_variable <- NCOL(exo_ts)
+  
+  if (is.null(exo_name)) {
+    warning(
+      "`exo_name` is not supplied. Using default names: var1, var2, ..."
+    )
+    exo_name <- paste0("var", seq_len(num_exo_variable))
+  } else {
+    if (length(exo_name) != num_exo_variable) {
+      stop("Length of `exo_name` must equal number of exogenous variables")
+    }
+  }
+  
+  ## overlap
+  temp_exo_ts_overlap <- ts.intersect(temp_ts, exo_ts)
+  
+  temp_ts_overlap <- temp_exo_ts_overlap[, 1, drop = FALSE]
+  exo_ts_overlap  <- temp_exo_ts_overlap[, -1, drop = FALSE]
+  
+  ## labels
+    temp_ts_overlap <- label_ts_mono(temp_ts_overlap,
+                                   label=temp_name)
+  
+  if(num_exo_variable==1){
+    exo_ts_overlap <- label_ts_mono(exo_ts_overlap,
+                                    label=exo_name)
+  }else{
+    colnames(exo_ts_overlap) <- exo_name
+  }
+  
+  
+  ## output
+  out <- list(
+    temperature = temp_ts_overlap,
+    exogenous   = exo_ts_overlap
+  )
+  
+  return(out)
+}
