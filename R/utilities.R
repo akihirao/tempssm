@@ -330,7 +330,7 @@ compute_monthly_climatology <- function(temp_ts){
 #'
 #' @details
 #' Monthly climatology is computed using
-#' \code{mean_seasonal_cycle()}.
+#' \code{compute_temp_anomaly()}.
 #' If \code{baseline} is provided, climatology is estimated using
 #' only data within the specified reference period.
 #' Missing values are ignored when calculating climatological means.
@@ -386,7 +386,7 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
   }
 
   ## ---- Monthly climatology -----------------------------------------------
-  clim_tbl <- tempssm::mean_seasonal_cycle(ts_base)
+  clim_tbl <- tempssm::compute_temp_anomaly(ts_base)
   clim_vec <- clim_tbl$Temperature
 
   clim <- clim_vec[cycle(temp_ts)]

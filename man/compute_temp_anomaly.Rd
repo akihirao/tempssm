@@ -26,7 +26,7 @@ baseline period.
 }
 \details{
 Monthly climatology is computed using
-\code{mean_seasonal_cycle()}.
+\code{compute_temp_anomaly()}.
 If \code{baseline} is provided, climatology is estimated using
 only data within the specified reference period.
 Missing values are ignored when calculating climatological means.
