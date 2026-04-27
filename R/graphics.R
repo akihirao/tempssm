@@ -334,7 +334,7 @@ autoplot_drift <- function(res,
   
   # ---- Plot ----
   p <- ggplot2::ggplot(
-    drift_tidy,
+    slope_tidy,
     ggplot2::aes(x = .data$time, y = .data$slope)
   ) +
     ggplot2::geom_line(size = 1.2) +
@@ -457,7 +457,7 @@ autoplot_season <- function(res,
     season_tidy,
     ggplot2::aes(x = .data$time, y = .data$season)
   ) +
-    ggplot2::geom_line(size = 1.2) +
+    ggplot2::geom_line() +
     ggplot2::labs(
       title = if (ci) {
         paste0("Seasonal component (", ci_lab, ")")
