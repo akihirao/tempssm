@@ -39,7 +39,7 @@ data(pdo)
 colnames(niigata_sst_pdo) <- c("Temp", "PDO")
 niigata_sst_common <- niigata_sst_pdo[,"Temp]
 pdo_common <- niigata_sst_pdo[,"PDO]
-pdo_common <- label_ts_mono(nao_common, label = "PDO")
+pdo_common <- set_ts_name(nao_common, label = "PDO")
 res <- ssm(temp_data = niigata_sst_common,exo_data = pdo_common)
 extract_exo_coef_ci(res)
 }

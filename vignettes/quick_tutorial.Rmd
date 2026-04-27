@@ -357,8 +357,8 @@ end(hmo_temp_common)
 # Generate an ts object of NAO with the shared timeline
 nao_common <- hmo_nao_ts[,"NAO"]
 
-# Execute label_ts_mono() function to label exogenous variable(s)!!
-nao_common <- label_ts_mono(nao_common, label="NAO")
+# Execute set_ts_name() function to label exogenous variable(s)!!
+nao_common <- set_ts_name(nao_common, label="NAO")
 start(nao_common)
 end(nao_common)
 

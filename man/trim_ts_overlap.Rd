@@ -13,7 +13,7 @@ trim_ts_overlap(temp_ts, exo_ts, temp_name = "temp", exo_name = NULL)
 Each column represents a distinct exogenous covariate.}
 
 \item{temp_name}{Character string giving the variable name for the temperature series.
-This name is applied using \code{label_ts_mono()}.}
+This name is applied using \code{set_ts_name()}.}
 
 \item{exo_name}{Optional character vector giving variable names for the exogenous variables.
 If \code{NULL}, default names of the form \code{var1}, \code{var2}, \dots
@@ -33,7 +33,7 @@ The function returns the trimmed series as a named list of `ts` objects,
 with consistent variable labels applied for downstream modeling in
 \code{tempssm()}.
 
-Univariate `ts` objects are labeled using \code{label_ts_mono()} to ensure a
+Univariate `ts` objects are labeled using \code{set_ts_name()} to ensure a
 consistent handling of variable names within the \pkg{tempssm} framework.
 }
 \details{
@@ -41,7 +41,7 @@ The shared time window is determined using \code{ts.intersect()}, and both
 temperature and exogenous series are trimmed accordingly.
 
 For univariate series, variable names are assigned via
-\code{label_ts_mono()} rather than \code{colnames()} in order to maintain
+\code{set_ts_name()} rather than \code{colnames()} in order to maintain
 internal consistency required by \code{tempssm()}.
 }
 \examples{
@@ -58,5 +58,5 @@ trim_ts_overlap(
 
 }
 \seealso{
-[ts.intersect()], [label_ts_mono()], \code{\link{tempssm}}
+[ts.intersect()], [set_ts_name()], \code{\link{tempssm}}
 }

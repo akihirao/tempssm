@@ -715,7 +715,7 @@ extract_param <- function(res){
 #' colnames(niigata_sst_pdo) <- c("Temp", "PDO")
 #' niigata_sst_common <- niigata_sst_pdo[,"Temp]
 #' pdo_common <- niigata_sst_pdo[,"PDO]
-#' pdo_common <- label_ts_mono(nao_common, label = "PDO")
+#' pdo_common <- set_ts_name(nao_common, label = "PDO")
 #' res <- ssm(temp_data = niigata_sst_common,exo_data = pdo_common)
 #' extract_exo_coef_ci(res)
 #' }
@@ -762,52 +762,107 @@ extract_exo_coef_ci = function(res, level = 0.95) {
 }
 
 
-#' Assign a column label to a univariate \code{ts} object
+#' Assign variable names to a ts object
 #'
-#' This function assigns a column name to a univariate time series object
-#' of class \code{ts}. It is useful when downstream functions require
-#' a labeled series.
+#' @description
+#' `set_ts_name()` assigns variable (column) names to a time series object
+#' of class \code{ts}. The function supports both univariate and multivariate
+#' time series and ensures that variable names are handled consistently within
+#' the \pkg{tempssm} framework.
 #'
-#' @param ts_in A univariate time series object of class \code{ts}.
-#' @param label A character string specifying the column name to assign
-#'   (default: \code{"var"}).
+#' For univariate series, the input is converted to a single-column \code{ts}
+#' object with the specified name. For multivariate series, column names are
+#' assigned directly.
 #'
-#' @return A \code{ts} object with a single column labeled by \code{label}.
+#' @param ts_in
+#' A time series object of class \code{ts}. May be univariate or multivariate.
+#'
+#' @param label
+#' A character string or character vector specifying variable names.
+#' For a univariate series, must be a length-one character string.
+#' For a multivariate series, must be either length one (recycled) or the same
+#' length as the number of columns in \code{ts_in}.
+#'
+#' @details
+#' This function does not modify the time attributes of the input series
+#' (e.g., start time, frequency). It only assigns variable names while preserving
+#' the internal structure required by downstream functions such as
+#' \code{tempssm()}.
+#'
+#' @return
+#' A \code{ts} object with assigned variable names.
+#'
+#' @seealso
+#' \code{\link{trim_ts_overlap}},
+#' \code{\link{split_multi_ts}},
+#' \code{\link{tempssm}}
 #'
 #' @examples
-#' ts_in <- ts(
-#'   rnorm(12 * 30, mean = 10),
-#'   start = c(1981, 1),
+#' ## Univariate example
+#' ts_uni <- ts(
+#'   rnorm(12 * 10),
+#'   start = c(2000, 1),
 #'   frequency = 12
 #' )
 #'
-#' ts_labeled <- label_ts_mono(ts_in, label = "var")
+#' ts_uni_named <- set_ts_name(ts_uni, label = "temperature")
+#'
+#' ## Multivariate example
+#' ts_multi <- ts(
+#'   matrix(rnorm(240), ncol = 3),
+#'   start = c(2000, 1),
+#'   frequency = 12
+#' )
+#'
+#' ts_multi_named <- set_ts_name(
+#'   ts_multi,
+#'   label = c("precip", "solar", "wind")
+#' )
 #'
 #' @export
-label_ts_mono <- function(ts_in, label = "var") {
-
+set_ts_name <- function(ts_in, label) {
+  
   if (!inherits(ts_in, "ts")) {
-    stop("Input must be a ts object.", call. = FALSE)
+    stop("`ts_in` must be an object of class `ts`.", call. = FALSE)
   }
-
-  # Safely handle both vector and matrix types of ts object
-  if (!is.null(dim(ts_in)) && ncol(ts_in) != 1) {
-    warning("A univariate ts object is expected.", call. = FALSE)
+  
+  n_col <- NCOL(ts_in)
+  
+  ## validate label
+  if (!is.character(label)) {
+    stop("`label` must be a character vector.", call. = FALSE)
   }
-
-  x <- as.numeric(ts_in)
-
-  ts_labeled <- ts(
-    matrix(
-      x,
-      ncol = 1,
-      dimnames = list(NULL, label)
-    ),
+  
+  if (!(length(label) == 1L || length(label) == n_col)) {
+    stop(
+      "Length of `label` must be 1 or equal to the number of series in `ts_in`.",
+      call. = FALSE
+    )
+  }
+  
+  ## recycle label if needed
+  if (length(label) == 1L) {
+    label <- rep(label, n_col)
+  }
+  
+  ## ensure matrix form for ts
+  x <- if (is.null(dim(ts_in))) {
+    matrix(ts_in, ncol = 1)
+  } else {
+    ts_in
+  }
+  
+  ## assign column names
+  colnames(x) <- label
+  
+  ## reconstruct ts with preserved attributes
+  ts_out <- ts(
+    x,
     start = start(ts_in),
     frequency = frequency(ts_in)
   )
-
-  return(ts_labeled)
+  
+  return(ts_out)
 }
 
 
@@ -821,7 +876,7 @@ label_ts_mono <- function(ts_in, label = "var") {
 #' with consistent variable labels applied for downstream modeling in
 #' \code{tempssm()}.
 #'
-#' Univariate `ts` objects are labeled using \code{label_ts_mono()} to ensure a
+#' Univariate `ts` objects are labeled using \code{set_ts_name()} to ensure a
 #' consistent handling of variable names within the \pkg{tempssm} framework.
 #'
 #' @param temp_ts
@@ -833,7 +888,7 @@ label_ts_mono <- function(ts_in, label = "var") {
 #'
 #' @param temp_name
 #' Character string giving the variable name for the temperature series.
-#' This name is applied using \code{label_ts_mono()}.
+#' This name is applied using \code{set_ts_name()}.
 #'
 #' @param exo_name
 #' Optional character vector giving variable names for the exogenous variables.
@@ -845,7 +900,7 @@ label_ts_mono <- function(ts_in, label = "var") {
 #' temperature and exogenous series are trimmed accordingly.
 #'
 #' For univariate series, variable names are assigned via
-#' \code{label_ts_mono()} rather than \code{colnames()} in order to maintain
+#' \code{set_ts_name()} rather than \code{colnames()} in order to maintain
 #' internal consistency required by \code{tempssm()}.
 #'
 #' @return
@@ -856,7 +911,7 @@ label_ts_mono <- function(ts_in, label = "var") {
 #' }
 #'
 #' @seealso
-#' [ts.intersect()], [label_ts_mono()], \code{\link{tempssm}}
+#' [ts.intersect()], [set_ts_name()], \code{\link{tempssm}}
 #'
 #' @examples
 #' temp_ts <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
@@ -899,11 +954,11 @@ trim_ts_overlap <- function(
   exo_ts_overlap  <- temp_exo_ts_overlap[, -1, drop = FALSE]
   
   ## labels
-    temp_ts_overlap <- label_ts_mono(temp_ts_overlap,
+    temp_ts_overlap <- set_ts_name(temp_ts_overlap,
                                    label=temp_name)
   
   if(num_exo_variable==1){
-    exo_ts_overlap <- label_ts_mono(exo_ts_overlap,
+    exo_ts_overlap <- set_ts_name(exo_ts_overlap,
                                     label=exo_name)
   }else{
     colnames(exo_ts_overlap) <- exo_name
@@ -916,5 +971,74 @@ trim_ts_overlap <- function(
     exogenous   = exo_ts_overlap
   )
   
+  return(out)
+}
+
+
+
+#' Split a multivariate ts object into univariate ts objects
+#'
+#' @description
+#' `split_multi_ts()` splits a multivariate \code{ts} object into a list of
+#' univariate \code{ts} objects, one for each variable (column).
+#'
+#' Each resulting univariate series preserves the original time attributes and
+#' is labeled using \code{set_ts_name()} with the corresponding column name.
+#' This ensures consistent handling of variable names within the
+#' \pkg{tempssm} framework.
+#'
+#' @param multi_ts
+#' A multivariate \code{ts} object.
+#' Each column represents a distinct variable.
+#'
+#' @details
+#' The function requires \code{multi_ts} to have valid column names.
+#' If a univariate \code{ts} object is supplied, the function stops with an error.
+#'
+#' @return
+#' A named list of univariate \code{ts} objects.
+#' Each list element corresponds to one column of \code{multi_ts}, and the list
+#' names are taken from \code{colnames(multi_ts)}.
+#'
+#' @seealso
+#' \code{\link{trim_ts_overlap}},
+#' \code{\link{set_ts_name}},
+#' \code{\link{tempssm}}
+#'
+#' @examples
+#' multi_ts <- ts(
+#'   matrix(rnorm(200), ncol = 2),
+#'   start = c(2001, 1),
+#'   frequency = 12
+#' )
+#' colnames(multi_ts) <- c("precip", "solar")
+#'
+#' split_multi_ts(multi_ts)
+#'
+#' @export
+split_multi_ts <- function(multi_ts) {
+  
+  num_variable <- NCOL(multi_ts)
+  
+  if (num_variable == 1) {
+    stop("This `ts` object is univariate and cannot be split.")
+  }
+  
+  if (is.null(colnames(multi_ts))) {
+    stop("`multi_ts` must have column names.")
+  }
+  
+  names_var <- colnames(multi_ts)
+  out <- vector("list", num_variable)
+  
+  for (i in seq_len(num_variable)) {
+    target_name <- names_var[i]
+    out[[i]] <- set_ts_name(
+      multi_ts[, i, drop = FALSE],
+      label = target_name
+    )
+  }
+  
+  names(out) <- names_var
   return(out)
 }
