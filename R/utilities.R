@@ -181,9 +181,12 @@ read_monthly_temp_ts <- function(csv) {
 #'
 #' @param zoo_obj A \code{zoo} object with daily observations.
 #'   The index must be of class \code{Date} or \code{POSIXt}.
+#'   
 #' @param var A character string specifying the name of the variable
 #'   to be aggregated (default: \code{"Temp"}).
+#'   
 #' @param na.rm Logical; should missing values be removed before averaging?
+#' 
 #' @param na_prop_max Maximum allowed proportion of NA values within a month.
 #'   If the proportion of missing values exceeds this threshold, the monthly
 #'   mean is set to NA. Default is \code{1} (no additional filtering).

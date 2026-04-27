@@ -1,3 +1,243 @@
+#' Plot the estimated level component from a tempssm model
+#'
+#' @description
+#' Create a \pkg{ggplot2} visualization of the estimated level component
+#' obtained from a state space model fitted by \code{tempssm()}.
+#' A pointwise confidence interval is shown as a shaded ribbon.
+#'
+#' @param res
+#' An object returned by \code{tempssm()} from the \pkg{tempssm} package.
+#'
+#' @param ci
+#' Logical; if TRUE (default), pointwise confidence intervals are shown
+#' as a shaded ribbon.
+#' 
+#' @param ylab
+#' Character string giving label of y-axis. 
+#' Defalut is "temperature".
+#'
+#' @param ci_level
+#' Numeric confidence level between 0 and 1.
+#' Defaults to \code{0.95}, corresponding to a 95\% confidence interval.
+#'
+#' @details
+#' The confidence interval is computed using
+#' \code{stats::confint()} applied to the Kalman filter and smoother
+#' results stored in \code{res$kfs}. The shaded ribbon represents
+#' pointwise confidence intervals for the level state.
+#'
+#' @return
+#' A \code{ggplot} object, allowing further customization by adding
+#' standard \pkg{ggplot2} layers.
+#'
+#' @seealso
+#' \code{\link{tempssm}}, \code{\link[stats]{confint}}
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#' res <- tempssm(niigata_sst)
+#'
+#' # Default 95% confidence interval
+#' autoplot_level(res)
+#'
+#' # Custom confidence level
+#' autoplot_level(res, ci_level = 0.9)
+#' }
+autoplot_level <- function(res,
+                           ci = TRUE,
+                           ci_level = 0.95,
+                           ylab = "Temperature") {
+  
+  # ---- Input validation ----
+  if (!is.list(res) || is.null(res$kfs)) {
+    stop("`res` must be an object returned by tempssm().",
+         call. = FALSE)
+  }
+  
+  if (!is.logical(ci) || length(ci) != 1) {
+    stop("`ci` must be a single logical value.", call. = FALSE)
+  }
+  
+  if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+      ci_level <= 0 || ci_level >= 1) {
+    stop("`ci_level` must be a numeric value between 0 and 1.",
+         call. = FALSE)
+  }
+  
+  if (is.null(res$kfs$alphahat)) {
+    stop("State estimates not found in `res$kfs$alphahat`.",
+         call. = FALSE)
+  }
+  
+  # ---- Extract estimates ----
+  alpha_hat <- res$kfs$alphahat
+  level <- alpha_hat[, "level"]
+  
+  level_df <- data.frame(
+    time  = time(level),
+    level = as.numeric(level)
+  )
+  
+  if (ci) {
+    ci_res <- stats::confint(res$kfs, level = ci_level)
+    level_df <- cbind(level_df, as.data.frame(ci_res$level))
+    ci_lab <- paste0(round(ci_level * 100), "% CI")
+  }
+  
+  level_tidy <- tibble::as_tibble(level_df)
+  
+  # ---- Plot ----
+  p <- ggplot2::ggplot(
+    level_tidy,
+    ggplot2::aes(x = .data$time, y = .data$level)
+  ) +
+    ggplot2::geom_line(size = 1.2) +
+    ggplot2::labs(
+      title = if (ci) {
+        paste0("Level component (", ci_lab, ")")
+      } else {
+        "Level component"
+      },
+      x = "Time",
+      y = ylab
+    )
+  
+  if (ci) {
+    p <- p +
+      ggplot2::geom_ribbon(
+        ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
+        alpha = 0.3
+      )
+  }
+  
+  p
+}
+
+
+
+#' Plot the estimated drift (slope) component from a tempssm model
+#'
+#' @description
+#' Create a \pkg{ggplot2} visualization of the estimated drift component
+#' obtained from a state space model fitted by \code{tempssm()}.
+#' A pointwise confidence interval is shown as a shaded ribbon.
+#'
+#' @param res
+#' An object returned by \code{tempssm()} from the \pkg{tempssm} package.
+#'
+#' @param ci
+#' Logical; if TRUE (default), pointwise confidence intervals are shown
+#' as a shaded ribbon.
+#' 
+#' @param ylab
+#' Character string giving label of y-axis. 
+#' Defalut is "temperature".
+#'
+#' @param ci_level
+#' Numeric confidence level between 0 and 1.
+#' Defaults to \code{0.95}, corresponding to a 95\% confidence interval.
+#'
+#' @details
+#' The confidence interval is computed using
+#' \code{stats::confint()} applied to the Kalman filter and smoother
+#' results stored in \code{res$kfs}. The shaded ribbon represents
+#' pointwise confidence intervals for the level state.
+#'
+#' @return
+#' A \code{ggplot} object, allowing further customization by adding
+#' standard \pkg{ggplot2} layers.
+#'
+#' @seealso
+#' \code{\link{tempssm}}, \code{\link[stats]{confint}}
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#' res <- tempssm(niigata_sst)
+#'
+#' # Default 95% confidence interval
+#' autoplot_level(res)
+#'
+#' # Custom confidence level
+#' autoplot_drift(res, ci_level = 0.9)
+#' }
+autoplot_drift <- function(res,
+                           ci = TRUE,
+                           ci_level = 0.95,
+                           ylab = "Temperature") {
+  
+  # ---- Input validation ----
+  if (!is.list(res) || is.null(res$kfs)) {
+    stop("`res` must be an object returned by tempssm().",
+         call. = FALSE)
+  }
+  
+  if (!is.logical(ci) || length(ci) != 1) {
+    stop("`ci` must be a single logical value.", call. = FALSE)
+  }
+  
+  if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+      ci_level <= 0 || ci_level >= 1) {
+    stop("`ci_level` must be a numeric value between 0 and 1.",
+         call. = FALSE)
+  }
+  
+  if (is.null(res$kfs$alphahat)) {
+    stop("State estimates not found in `res$kfs$alphahat`.",
+         call. = FALSE)
+  }
+  
+  # ---- Extract estimates ----
+  alpha_hat <- res$kfs$alphahat
+  drift <- alpha_hat[, "slope"]
+  
+  drift_df <- data.frame(
+    time  = time(drift),
+    level = as.numeric(drift)
+  )
+  
+  if (ci) {
+    ci_res <- stats::confint(res$kfs, level = ci_level)
+    drift_df <- cbind(drift_df, as.data.frame(ci_res$level))
+    ci_lab <- paste0(round(ci_level * 100), "% CI")
+  }
+  
+  drift_tidy <- tibble::as_tibble(drift_df)
+  
+  # ---- Plot ----
+  p <- ggplot2::ggplot(
+    level_tidy,
+    ggplot2::aes(x = .data$time, y = .data$level)
+  ) +
+    ggplot2::geom_line(size = 1.2) +
+    ggplot2::labs(
+      title = if (ci) {
+        paste0("Drift component (", ci_lab, ")")
+      } else {
+        "Drift component"
+      },
+      x = "Time",
+      y = ylab
+    )
+  
+  if (ci) {
+    p <- p +
+      ggplot2::geom_ribbon(
+        ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
+        alpha = 0.3
+      )
+  }
+  
+  p
+}
+
+
+
 
 #' Function to plot time series of monthly temperature and temperature deviation
 #'
@@ -35,97 +275,4 @@ plot_temp_dev <- function(ts){
   plot(dev_plot)
 
   
-}
-
-
-
-
-#' Function to plot level component with confidence interval
-#'
-#' @import ggplot2
-#' @importFrom stats confint
-#'
-#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
-#' @param ci_level Confidence level for the interval estimation.
-#'   Must be a numeric value between 0 and 1.
-#'   The default is \code{0.95}, corresponding to a 95\% confidence interval.
-#'
-#' @encoding UTF-8
-#'
-#' @export
-#'
-plot_level_ci <- function(res, ci_level=0.95){
-
-  alpha_hat <- res$kfs$alphahat
-
-  ci_lab <- paste0(round(ci_level*100,0),"% CI")
-  level <- alpha_hat[,"level"]
-  ci <- stats::confint(res$kfs, level = ci_level)
-
-  level_tidy <- cbind(
-    data.frame(time=time(level),
-               level=level),
-  as.data.frame(ci$level)
-  ) %>%
-  as_tibble()
-
-  level_plot <- ggplot(data=level_tidy,
-                         aes(x=time,y=level)) +
-    labs(title=paste0("Level component (grey area: ",ci_lab,")"),
-       x="Year", y="Temperature") +
-    geom_line(aes(y=level), size = 1.2) +
-    geom_ribbon(aes(ymin = .data$lwr, ymax = .data$upr), alpha = 0.3)
-
-  return(level_plot)
-
-}
-
-
-
-
-
-#' Function to plot drift component with confidence interval
-#'
-#' @import ggplot2
-#' @importFrom stats confint
-#'
-#' @param res An object of class \code{"ThermoSSM"} returned by \code{lgssm()}.
-#' @param ci_level Confidence level for the interval estimation.
-#'   Must be a numeric value between 0 and 1.
-#'   The default is \code{0.95}, corresponding to a 95\% confidence interval.
-#'
-#' @encoding UTF-8
-#'
-#' @export
-#'
-plot_drift_ci <- function(res, ci_level=0.95){
-
-  alpha_hat <- res$kfs$alphahat
-
-  drift <- alpha_hat[,"slope"]
-  ci <- stats::confint(res$kfs, level = ci_level)
-
-  mean_drift_year <- round(mean(drift) * 12,4)
-
-  drift_tidy <- cbind(
-    data.frame(time=time(drift),
-               drift=drift),
-  as.data.frame(ci$slope)
-  ) %>%
-  as_tibble()
-
-  ci_lab <- paste0("Drift component (grey area: ", round(ci_level*100,0),"% CI)")
-  sub_lab <- paste0("Average drift rate per year = " ,mean_drift_year)
-
-  drift_plot <- ggplot(data=drift_tidy,
-                         aes(x=time,y=drift)) +
-    labs(title=ci_lab,
-      subtitle= sub_lab,
-       x="Year", y="Drift") +
-    geom_line(aes(y=drift), size = 1.2) +
-    geom_ribbon(aes(ymin = .data$lwr, ymax = .data$upr), alpha = 0.3) +
-    geom_hline(yintercept=0, linetype="dashed") 
-
-  return(drift_plot)
-
 }
