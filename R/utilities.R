@@ -278,7 +278,7 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
 #'
 #' @encoding UTF-8
 #'
-#'#' @examples
+#' @examples
 #' temp_ts <- ts(
 #'   rnorm(12 * 30, mean = 10),
 #'   start = c(1981, 1),
