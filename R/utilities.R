@@ -386,7 +386,7 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
   }
 
   ## ---- Monthly climatology -----------------------------------------------
-  clim_tbl <- tempssm::compute_temp_anomaly(ts_base)
+  clim_tbl <- tempssm::compute_monthly_climatology(ts_base)
   clim_vec <- clim_tbl$Temperature
 
   clim <- clim_vec[cycle(temp_ts)]
