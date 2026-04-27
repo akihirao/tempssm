@@ -161,7 +161,7 @@ autoplot_level <- function(res,
 #' res <- tempssm(niigata_sst)
 #'
 #' # Default 95% confidence interval
-#' autoplot_level(res)
+#' autoplot_drift(res)
 #'
 #' # Custom confidence level
 #' autoplot_drift(res, ci_level = 0.9)
@@ -238,44 +238,6 @@ autoplot_drift <- function(res,
 
 
 
-
-#' Function to plot time series of monthly temperature and temperature deviation
-#'
-#' @import ggplot2
-#'
-#' @param ts temperature time series object
-#'
-#' @encoding UTF-8
-#'
-#' @export
-#'
-plot_temp_dev <- function(ts){
-
-  stopifnot(frequency(ts) == 12)  # check for monthly time series
-
-  temp <- as.numeric(ts)
-  mnum <- cycle(ts)
-  mfac <- factor(mnum, levels = 1:12)
-  monthly_ave_temp <- tapply(temp, mfac, function(v) mean(v, na.rm = TRUE))
-
-  clim <- monthly_ave_temp[as.integer(mfac)]
-  anom <- temp - clim
-
-  ts_dev <- cbind(Temp=ts, Dev=anom)
-
-
-  temp_plot <- forecast::autoplot(ts_dev[,"Temp"]) +
-  labs(y = expression(Temperature~(degree*C)), x = "Time") +
-  ggtitle("Temperature")
-
-  dev_plot <- forecast::autoplot(ts_dev[,"Dev"]) +
-  labs(y = expression(Temperature~(degree*C)), x = "Time") +
-  ggtitle("Temperature anomalies")
-
-  plot(dev_plot)
-
-  
-}
 
 
 
@@ -355,25 +317,25 @@ autoplot_drift <- function(res,
   
   # ---- Extract estimates ----
   alpha_hat <- res$kfs$alphahat
-  drift <- alpha_hat[, "slope"]
+  slope <- alpha_hat[, "slope"]
   
   drift_df <- data.frame(
-    time  = time(drift),
-    level = as.numeric(drift)
+    time  = time(slope),
+    slope = as.numeric(slope)
   )
   
   if (ci) {
     ci_res <- stats::confint(res$kfs, level = ci_level)
-    drift_df <- cbind(drift_df, as.data.frame(ci_res$level))
+    slope_df <- cbind(drift_df, as.data.frame(ci_res$slope))
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
   
-  drift_tidy <- tibble::as_tibble(drift_df)
+  slope_tidy <- tibble::as_tibble(slope_df)
   
   # ---- Plot ----
   p <- ggplot2::ggplot(
     drift_tidy,
-    ggplot2::aes(x = .data$time, y = .data$level)
+    ggplot2::aes(x = .data$time, y = .data$slope)
   ) +
     ggplot2::geom_line(size = 1.2) +
     ggplot2::labs(
@@ -447,10 +409,10 @@ autoplot_drift <- function(res,
 #' # Custom confidence level
 #' autoplot_season(res, ci_level = 0.9)
 #' }
-autoplot_drift <- function(res,
-                           ci = TRUE,
-                           ci_level = 0.95,
-                           ylab = "Temperature") {
+autoplot_season <- function(res,
+                            ci = TRUE,
+                            ci_level = 0.95,
+                            ylab = "Temperature") {
   
   # ---- Input validation ----
   if (!is.list(res) || is.null(res$kfs)) {
@@ -479,12 +441,12 @@ autoplot_drift <- function(res,
   
   season_df <- data.frame(
     time  = time(season),
-    level = as.numeric(season)
+    season = as.numeric(season)
   )
   
   if (ci) {
     ci_res <- stats::confint(res$kfs, level = ci_level)
-    season_df <- cbind(season_df, as.data.frame(ci_res$level))
+    season_df <- cbind(season_df, as.data.frame(ci_res$sea_dummy1))
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
   
@@ -493,7 +455,7 @@ autoplot_drift <- function(res,
   # ---- Plot ----
   p <- ggplot2::ggplot(
     season_tidy,
-    ggplot2::aes(x = .data$time, y = .data$level)
+    ggplot2::aes(x = .data$time, y = .data$season)
   ) +
     ggplot2::geom_line(size = 1.2) +
     ggplot2::labs(
