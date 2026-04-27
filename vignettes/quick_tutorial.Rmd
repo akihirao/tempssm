@@ -6,9 +6,9 @@ output:
 #  pdf_document:
 #    latex_engine: lualatex
 #    toc: true
-  rmarkdown::html_vignette: default
-#  md_document:
-#    variant: gfm
+#  rmarkdown::html_vignette: default
+  md_document:
+    variant: gfm
 vignette: >
   %\VignetteIndexEntry{"Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"}
   %\VignetteEngine{knitr::rmarkdown}
@@ -534,8 +534,8 @@ AIC is also reflected in out-of-sample predictive skill.
 ## Generate a list of training and test datasets with their indices
 # Procedure for constructing year-based time-series cross-validation folds:
 # 
-# First training data: January 1865–December 1950;
-# First test data: one year starting from January 1951
+# First training data: January 1982–December 2017;
+# First test data: one year starting from January 2018
 # 
 # Second training data: January 1875–December 1960;
 # Second test data: one year starting from January 1961

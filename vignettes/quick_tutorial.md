@@ -87,42 +87,39 @@ of exogenous variables.
 A sample sea surface temperature (SST) dataset is included in the
 package.
 
-- **Dataset**: Monthly sea surface temperature (SST) off Niigata,
-  Japan  
+- **Dataset**: Monthly sea surface temperature (SST) off Yamaguchi
+  Prefecture, Japan  
 - **Unit**: Degrees Celsius  
 - **Period**: February 2002 to December 2023  
   \`\`
 
-This dataset is derived from observations archived at the Japan
-Oceanographic Data Center (JODC), Hydrographic and Oceanographic
-Department, Japan Coast Guard. The original daily SST data were obtained
-from  
-<https://www.jodc.go.jp/jodcweb/JDOSS/index.html>  
-and subsequently aggregated into monthly means.
+This dataset is derived from observations archived at Japan
+Meteorological Agency (JMA). Data obtained from the JMA website:
+<https://www.jma.go.jp/jma/indexe.html>
 
 ``` r
-data(niigata_sst) # load a ts object of SST off Niigata
-head(niigata_sst)
+data(yamaguchi_sst) # load a ts object of SST off Niigata
+head(yamaguchi_sst)
 ```
 
-    ##            Jan       Feb       Mar       Apr       May       Jun
-    ## 2002  9.951613  8.332143  9.348387 11.713333 14.529032 18.906667
+    ##           Jan      Feb      Mar      Apr      May      Jun
+    ## 1982 14.85516 13.36500 13.55645 14.29933 17.72419 21.53000
 
 ``` r
-summary(niigata_sst)
+summary(yamaguchi_sst)
 ```
 
-    ##       Temp       
-    ##  Min.   : 7.707  
-    ##  1st Qu.:11.217  
-    ##  Median :16.345  
-    ##  Mean   :17.033  
-    ##  3rd Qu.:22.787  
-    ##  Max.   :28.897  
-    ##  NA's   :2
+    ##       Temp      
+    ##  Min.   :11.45  
+    ##  1st Qu.:15.13  
+    ##  Median :18.84  
+    ##  Mean   :19.54  
+    ##  3rd Qu.:23.63  
+    ##  Max.   :29.49
 
-The dataset includes two missing observations, which are retained and
-handled explicitly within the state-space modeling framework.
+The dataset includes no missing observations. Even if missing
+observations was included, there are retained and handled explicitly
+within the state-space modeling framework.
 
 ### Plotting the Monthly SST Time Series
 
@@ -131,13 +128,13 @@ overall structure, including apparent trends, seasonal variability, and
 missing observations.
 
 ``` r
-plt_niigata_sst <- forecast::autoplot(niigata_sst) +
+plt_yamaguchi_sst <- forecast::autoplot(yamaguchi_sst) +
   labs(y = expression(Temperature~(degree*C)), 
        x = "Time") +
-  ggtitle("Monthly SST off Niigata, Japan") +
+  ggtitle("Monthly SST off Yamaguchi, Japan") +
   theme_classic()
 
-plot(plt_niigata_sst)
+plot(plt_yamaguchi_sst)
 ```
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
@@ -160,90 +157,87 @@ Model comparison and selection are discussed in the following section.
 
 ``` r
 # model with first-order autoregressive component
-res <- tempssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
+res <- tempssm(yamaguchi_sst) # first order of auto-regressive model (ar_order=1: default)
 summary(res)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## tempssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
-    ##     inits = inits, maxit = maxit, reltol = reltol)
+    ## tempssm(temp_data = yamaguchi_sst)
     ## 
     ## Model fit:
-    ##   Log-likelihood : -277.95 
+    ##   Log-likelihood : -470.61 
     ##   k              : 5 
-    ##   AIC            : 565.9 
+    ##   AIC            : 951.21 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
-    ##   Observation (H): 0.00598564 
-    ##   State (Q trend): 1.268118e-07 
-    ##   State (Q season): 0.001346139 
-    ##   State (Q ar): 0.4097882 
+    ##   Observation (H): 1.890233e-13 
+    ##   State (Q trend): 9.936506e-08 
+    ##   State (Q season): 4.135766e-53 
+    ##   State (Q ar): 0.3145626 
     ## 
     ## Components of auto-regression:
     ##   Order of AR: 1 
-    ##   Coefficient of AR1: 0.7442999
+    ##   Coefficient of AR1: 0.620232
 
 ``` r
 # model with second-order autoregressive component
-res_ar2 <- tempssm(niigata_sst,ar_order=2) 
+res_ar2 <- tempssm(yamaguchi_sst,ar_order=2) 
 summary(res_ar2)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## tempssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
-    ##     inits = inits, maxit = maxit, reltol = reltol)
+    ## tempssm(temp_data = yamaguchi_sst, ar_order = 2)
     ## 
     ## Model fit:
-    ##   Log-likelihood : -277.95 
+    ##   Log-likelihood : -467.66 
     ##   k              : 6 
-    ##   AIC            : 567.89 
+    ##   AIC            : 947.33 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
-    ##   Observation (H): 0.04528328 
-    ##   State (Q trend): 1.411893e-07 
-    ##   State (Q season): 0.001338972 
-    ##   State (Q ar): 0.3463124 
+    ##   Observation (H): 0.1209081 
+    ##   State (Q trend): 2.20625e-07 
+    ##   State (Q season): 3.672084e-16 
+    ##   State (Q ar): 0.1044201 
     ## 
     ## Components of auto-regression:
     ##   Order of AR: 2 
-    ##   Coefficient of AR1: 0.8278959 
-    ##   Coefficient of AR2: -0.0651634
+    ##   Coefficient of AR1: 1.185819 
+    ##   Coefficient of AR2: -0.4790532
 
 ``` r
 # model with third-order autoregressive component
-res_ar3 <- tempssm(niigata_sst,ar_order=3) 
+res_ar3 <- tempssm(yamaguchi_sst,ar_order=3) 
 summary(res_ar3)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## tempssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
-    ##     inits = inits, maxit = maxit, reltol = reltol)
+    ## tempssm(temp_data = yamaguchi_sst, ar_order = 3)
     ## 
     ## Model fit:
-    ##   Log-likelihood : -277.94 
+    ##   Log-likelihood : -467.5 
     ##   k              : 7 
-    ##   AIC            : 569.89 
+    ##   AIC            : 949 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
-    ##   Observation (H): 0.0002537319 
-    ##   State (Q trend): 1.418092e-07 
-    ##   State (Q season): 0.001336738 
-    ##   State (Q ar): 0.418686 
+    ##   Observation (H): 0.1123195 
+    ##   State (Q trend): 2.24258e-07 
+    ##   State (Q season): 8.435308e-10 
+    ##   State (Q ar): 0.1245958 
     ## 
     ## Components of auto-regression:
     ##   Order of AR: 3 
-    ##   Coefficient of AR1: 0.7335228 
-    ##   Coefficient of AR2: 0.0118387 
-    ##   Coefficient of AR3: -0.005368551
+    ##   Coefficient of AR1: 1.074592 
+    ##   Coefficient of AR2: -0.3334564 
+    ##   Coefficient of AR3: -0.06336912
 
 ### Model selection based on AIC
 
@@ -262,17 +256,17 @@ AIC_table_res %>% knitr::kable()
 
 | model |      AIC | delta_AIC |
 |:------|---------:|----------:|
-| AR1   | 565.8955 |  0.000000 |
-| AR2   | 567.8903 |  1.994836 |
-| AR3   | 569.8889 |  3.993417 |
+| AR1   | 951.2127 |  3.884414 |
+| AR2   | 947.3283 |  0.000000 |
+| AR3   | 949.0037 |  1.675464 |
 
-AR1 model is better than the other models.
+AR2 model is better than the other models.
 
 ### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
 ``` r
 # plot each of components at once
-plot(res)
+plot(res_ar2)
 ```
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
@@ -280,7 +274,7 @@ plot(res)
 ### Simple Model Diagnostics
 
 ``` r
-resid_test_output <- tempssm::wrapper_checkresiduals(res)
+resid_test_output <- tempssm::wrapper_checkresiduals(res_ar2)
 ```
 
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
@@ -294,11 +288,11 @@ print(resid_test_output)
     ##  Box-Ljung test
     ## 
     ## data:  std_obs_resid
-    ## X-squared = 24.225, df = 24, p-value = 0.4488
+    ## X-squared = 24.004, df = 24, p-value = 0.4614
     ## 
     ## 
     ## $kurtosis
-    ## [1] 3.057601
+    ## [1] 3.661688
 
 Autocorrelation of residuals was not significant by Ljung-Box test (P \>
 0.05).
@@ -307,78 +301,100 @@ Autocorrelation of residuals was not significant by Ljung-Box test (P \>
 
 ``` r
 # Smoothing estimates
-alpha_hat <- res$kfs$alphahat
+alpha_hat <- res_ar2$kfs$alphahat
 head(alpha_hat)
 ```
 
-    ##            level       slope sea_dummy1 sea_dummy2 sea_dummy3 sea_dummy4
-    ## Jan 2002 16.3944 0.005600280  -6.624678  -3.337435  0.6067452  4.7593086
-    ## Feb 2002 16.4000 0.005600421  -7.676822  -6.624678 -3.3374348  0.6067452
-    ## Mar 2002 16.4056 0.005600415  -7.346316  -7.676822 -6.6246785 -3.3374348
-    ## Apr 2002 16.4112 0.005600311  -5.476554  -7.346316 -7.6768220 -6.6246785
-    ## May 2002 16.4168 0.005600335  -2.217000  -5.476554 -7.3463157 -7.6768220
-    ## Jun 2002 16.4224 0.005600467   2.468021  -2.217000 -5.4765544 -7.3463157
+    ##             level       slope sea_dummy1 sea_dummy2 sea_dummy3 sea_dummy4
+    ## Jan 1982 18.95931 0.002015928  -4.388281  -1.989806  0.8433008  3.3260566
+    ## Feb 1982 18.96132 0.002016067  -5.783414  -4.388281 -1.9898060  0.8433008
+    ## Mar 1982 18.96334 0.002016258  -5.905548  -5.783414 -4.3882811 -1.9898060
+    ## Apr 1982 18.96536 0.002016898  -4.594205  -5.905548 -5.7834141 -4.3882811
+    ## May 1982 18.96737 0.002017330  -1.902724  -4.594205 -5.9055484 -5.7834141
+    ## Jun 1982 18.96939 0.002017773   1.458513  -1.902724 -4.5942046 -5.9055484
     ##          sea_dummy5 sea_dummy6 sea_dummy7 sea_dummy8 sea_dummy9 sea_dummy10
-    ## Jan 2002  8.5280152  9.9007961  6.4159191  2.4680213  -2.217000   -5.476554
-    ## Feb 2002  4.7593086  8.5280152  9.9007961  6.4159191   2.468021   -2.217000
-    ## Mar 2002  0.6067452  4.7593086  8.5280152  9.9007961   6.415919    2.468021
-    ## Apr 2002 -3.3374348  0.6067452  4.7593086  8.5280152   9.900796    6.415919
-    ## May 2002 -6.6246785 -3.3374348  0.6067452  4.7593086   8.528015    9.900796
-    ## Jun 2002 -7.6768220 -6.6246785 -3.3374348  0.6067452   4.759309    8.528015
-    ##          sea_dummy11       arima1
-    ## Jan 2002   -7.346316  0.175231707
-    ## Feb 2002   -5.476554 -0.377441196
-    ## Mar 2002   -2.217000  0.286840259
-    ## Apr 2002    2.468021  0.767966399
-    ## May 2002    6.415919  0.330186853
-    ## Jun 2002    9.900796  0.009042494
+    ## Jan 1982  6.1502216  7.6638746  5.1220111  1.4585130  -1.902724   -4.594205
+    ## Feb 1982  3.3260566  6.1502216  7.6638746  5.1220111   1.458513   -1.902724
+    ## Mar 1982  0.8433008  3.3260566  6.1502216  7.6638746   5.122011    1.458513
+    ## Apr 1982 -1.9898060  0.8433008  3.3260566  6.1502216   7.663875    5.122011
+    ## May 1982 -4.3882811 -1.9898060  0.8433008  3.3260566   6.150222    7.663875
+    ## Jun 1982 -5.7834141 -4.3882811 -1.9898060  0.8433008   3.326057    6.150222
+    ##          sea_dummy11    arima1      arima2
+    ## Jan 1982   -5.905548 0.2080997 -0.06449092
+    ## Feb 1982   -4.594205 0.2341012 -0.09969084
+    ## Mar 1982   -1.902724 0.2821581 -0.11214693
+    ## Apr 1982    1.458513 0.2875607 -0.13516876
+    ## May 1982    5.122011 0.5397161 -0.13775686
+    ## Jun 1982    7.663875 0.5449232 -0.25855271
 
 ``` r
 #　Smoothing estimate of level component
-level_ts <- tempssm::extract_level_ts(res)
+level_ts <- tempssm::extract_level_ts(res_ar2)
 
 #　Smoothing estimate of drift component
-drift_ts <- tempssm::extract_drift_ts(res)
+drift_ts <- tempssm::extract_drift_ts(res_ar2)
 
 # Average drift rate per year across the full period
 mean_drift_year <- mean(drift_ts) 
 print(mean_drift_year)
 ```
 
-    ## [1] 0.05259212
+    ## [1] 0.03663452
 
 ``` r
-# Average drift rate per year from Jan 2006 to Dec 2010
-ave_drift_2006_2010 <- window(drift_ts,
-                              start=c(2006,1),
-                               end=c(2010,12)
-                               ) %>%  mean()
-print(ave_drift_2006_2010)
+# Average drift rate per year during 1980s
+ave_drift_1980s <- window(drift_ts,
+                          start=c(1982,1),
+                          end=c(1990,12)
+                          ) %>%  mean()
+print(ave_drift_1980s)
 ```
 
-    ## [1] 0.05878758
+    ## [1] 0.03048294
 
 ``` r
-# Average drift rate per year from Jan 2011 to Dec 2015
-ave_drift_2011_2015 <- window(drift_ts,
-                              start=c(2011,1),
-                               end=c(2015,12)
+# Average drift rate per year during 1990s
+ave_drift_1990s <- window(drift_ts,
+                          start=c(1991,1),
+                          end=c(2000,12)
                                ) %>%  mean()
-print(ave_drift_2011_2015)
+print(ave_drift_1990s)
 ```
 
-    ## [1] 0.04891312
+    ## [1] 0.03524637
 
 ``` r
-# Average drift rate per year from Jan 2016 to Dec 2020
-ave_drift_2016_2020 <- window(drift_ts,
-                              start=c(2016,1),
-                               end=c(2020,12)
+# Average drift rate per year during 2000s
+ave_drift_2000s <- window(drift_ts,
+                          start=c(2001,1),
+                          end=c(2009,12)
                                ) %>%  mean()
-print(ave_drift_2016_2020)
+print(ave_drift_2000s)
 ```
 
-    ## [1] 0.04482296
+    ## [1] -0.003607836
+
+``` r
+# Average drift rate per year during 2010s
+ave_drift_2010s <- window(drift_ts,
+                          start=c(2011,1),
+                          end=c(2019,12)
+                               ) %>%  mean()
+print(ave_drift_2010s)
+```
+
+    ## [1] 0.05043439
+
+``` r
+# Average drift rate per year during 2020s
+ave_drift_2020s <- window(drift_ts,
+                          start=c(2021,1),
+                          end=c(2025,12)
+                               ) %>%  mean()
+print(ave_drift_2020s)
+```
+
+    ## [1] 0.09035023
 
 ### Plotting Level and Drift Components with 95% Confidence Interval
 
@@ -389,14 +405,14 @@ autoregressive dependence are separated out, allowing the underlying
 trend behavior to be examined more clearly.
 
 ``` r
-plt_level_ci <- plot(res,
+plt_level_ci <- plot(res_ar2,
                      components = "level",
                      ci = TRUE,
                      ci_level = 0.95
                      ) +
   theme_classic()
 
-plt_drift_ci <- plot(res,
+plt_drift_ci <- plot(res_ar2,
                      components = "drift",
                      ci = TRUE,
                      ci_level = 0.95
@@ -426,132 +442,103 @@ trend and its rate of change.
 
 ### Objective
 
-The objective of this practice is to use a long record of temperature
-time series data to investigate and quantify the influence of a
-large-scale climate mode on long-term temperature variations.
-Specifically, we examine the effect of the North Atlantic Oscillation
-(NAO) as an exogenous variable within a state-space modeling framework.
+The objective of this practice is to investigate and quantify the
+influence of a large-scale climate mode on temperature variations.
+Specifically, we examine the effect of the Pacific Decadal Oscillation
+(PDO) as an exogenous variable on SST observed off Yamaguchi Prefecture,
+Japan, within a state-space modeling framework.
 
-### Loading Dataset 1: Long-Term Air Temperature Record
+### Loading Dataset: PDO Index as an Exogenous Variable
 
-- **Data**: Monthly air temperature at the Hohenpeissenberg
-  Meteorological Observatory, Germany  
-- **Location**: 47.801°N, 11.011°E  
-- **Unit**: Degrees Celsius  
-- **Period**: January 1781 to December 2025
+- **Data**: Monthly Pacific Decadal Oscillation (PDO) index (JMA)  
+- **Period**: January 1901 to December 2025
 
-This dataset represents one of the longest continuous instrumental
-records of air temperature available worldwide, observed at a mountain
-meteorological station. The original data were obtained from the Global
-Historical Climatology Network Monthly (GHCNm) version 4, distributed by
-the National Centers for Environmental Information (NCEI), NOAA:
-<https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4>.
-
-``` r
-data(hmo_temp) # loading a ts object of air temperature at the HMO station
-head(hmo_temp)
-```
-
-    ##        Jan   Feb   Mar   Apr   May   Jun
-    ## 1781 -1.76 -1.03  2.37  8.71 12.25 14.54
-
-### Loading Dataset 2: NAO Index as an Exogenous Variable
-
-- **Data**: Monthly North Atlantic Oscillation (NAO) index (Hurrell)  
-- **Period**: January 1865 to June 202
-
-Monthly NAO indices derived using related data　sources are available
-from the Climate Analysis Section, National Center for Atmospheric
-Research (NCAR), Boulder, USA (Hurrell, 2003). The dataset used in this
-package was obtained from:
-<https://www.ncei.noaa.gov/access/monitoring/nao/>.
+The Pacific Decadal Oscillation (PDO) index is defined as the projection
+of monthly mean sea surface temperature (SST) anomalies onto the leading
+empirical orthogonal function (EOF) of SST variability over the North
+Pacific north of 20°N. The EOF is computed using SST anomalies for
+1901–2000, defined relative to the 1901–2000 monthly climatology. To
+remove the global warming signal, the global-mean SST anomaly is
+subtracted from each grid point prior to the EOF analysis. In this
+package, we use the PDO index provided by the Japan Meteorological
+Agency (JMA), available at
+<https://www.data.jma.go.jp/kaiyou/data/shindan/b_1/pdo/pdo.txt>.
 
 ``` r
-data(nao) # load a ts object of NAO index
-head(nao)
+data(pdo) # load a ts object of NAO index
+head(pdo)
 ```
 
-    ##       Jan  Feb  Mar  Apr  May  Jun
-    ## 1865 -0.6 -1.2  0.2 -0.2 -0.4  0.0
+    ##          Jan     Feb     Mar     Apr     May     Jun
+    ## 1901  1.0040  0.7403  0.9011 -0.0109 -0.2325 -0.6810
 
-### Intersecting the Temperature and NAO Time Series
+### Intersecting the Temperature and PDO Time Series
 
 For state-space modeling with exogenous variables, all input time series
 must share a common and aligned time index. In this step, the
-temperature and NAO time series are restricted to their overlapping
+temperature and PDO time series are restricted to their overlapping
 period by trimming the leading and trailing portions, ensuring that both
 datasets cover an identical time span.
 
-The function `ts.intersect()` is used to align the two `ts` objects on a
-shared timeline, returning a multivariate time series containing only
-the common period.
+The function `tempssm::trim_ts_overlap()` is used to align the two `ts`
+objects on a shared timeline, returning a multivariate time series
+containing only the common period.
 
 ``` r
 # Generate an object on a shared timeline
-hmo_nao_ts <- ts.intersect(hmo_temp, nao)
-colnames(hmo_nao_ts) <- c("Temp", "NAO")
+yamaguchi_sst_trim <- trim_ts_overlap(yamaguchi_sst,
+                                      pdo,
+                                      temp_name = "Temp",
+                                      exo_name="PDO")$temperature
 
-start(hmo_nao_ts)
+
+pdo_trim <- trim_ts_overlap(yamaguchi_sst,
+                            pdo,
+                            temp_name = "Temp",
+                            exo_name="PDO")$exogenous
+
+start(yamaguchi_sst_trim)
 ```
 
-    ## [1] 1865    1
+    ## [1] 1982    1
 
 ``` r
-end(hmo_nao_ts)
+end(yamaguchi_sst_trim)
 ```
 
-    ## [1] 2023    6
+    ## [1] 2025   12
 
 ``` r
-# Generate an ts object of HMO air-temperature with the shared timeline
-hmo_temp_common <- hmo_nao_ts[,"Temp"]
-start(hmo_temp_common)
+start(pdo_trim)
 ```
 
-    ## [1] 1865    1
+    ## [1] 1982    1
 
 ``` r
-end(hmo_temp_common)
+end(pdo_trim)
 ```
 
-    ## [1] 2023    6
-
-``` r
-# Generate an ts object of NAO with the shared timeline
-nao_common <- hmo_nao_ts[,"NAO"]
-
-# Execute label_ts_mono() function to label exogenous variable(s)!!
-nao_common <- label_ts_mono(nao_common, label="NAO")
-start(nao_common)
-```
-
-    ## [1] 1865    1
-
-``` r
-end(nao_common)
-```
-
-    ## [1] 2023    6
+    ## [1] 2025   12
 
 ### Plotting Time Series of Air Temperature and NAO Index
 
 ``` r
-plt_homo_temp <- forecast::autoplot(hmo_temp_common) +
-  labs(x = "Time", y = expression(Temperature~(degree*C))) +
-  ggtitle("Air temperature at Hohenpeissenberg Meteorological Observatory") +
+plt_yamaguchi_sst_trim <- forecast::autoplot(yamaguchi_sst_trim) +
+  labs(y = expression(Temperature~(degree*C)), 
+       x = "Time") +
+  ggtitle("Monthly SST off Yamaguchi, Japan") +
   theme_classic()
 
-plt_nao <- forecast::autoplot(nao_common) +
-  labs(x = "Time", y = "NAO index") +
-  ggtitle("NAO index") +
+
+plt_pdo <- forecast::autoplot(pdo_trim) +
+  labs(x = "Time", y = "PDO index") +
+  ggtitle("PDO index") +
   theme_classic()
 
-cowplot::plot_grid(plt_homo_temp,
-                   plt_nao,
-                   ncol=1)
+plt_yamaguchi_sst_trim + plt_pdo + patchwork::plot_layout(ncol=1)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 ### Applying a Model Without an Exogenous Variable
 
@@ -561,31 +548,31 @@ temperature variability is explained solely by the latent trend,
 seasonal cycle, and autoregressive dependence.
 
 ``` r
-res_without <- tempssm(hmo_temp_common) 
+res_without <- tempssm(yamaguchi_sst_trim,ar=2) 
 summary(res_without)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## tempssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
-    ##     inits = inits, maxit = maxit, reltol = reltol)
+    ## tempssm(temp_data = yamaguchi_sst_trim, ar_order = 2)
     ## 
     ## Model fit:
-    ##   Log-likelihood : -4116.01 
-    ##   k              : 5 
-    ##   AIC            : 8242.02 
+    ##   Log-likelihood : -466.08 
+    ##   k              : 6 
+    ##   AIC            : 944.17 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
-    ##   Observation (H): 2.198694 
-    ##   State (Q trend): 1.115939e-08 
-    ##   State (Q season): 0.0001822552 
-    ##   State (Q ar): 2.085541 
+    ##   Observation (H): 0.1207592 
+    ##   State (Q trend): 2.163326e-07 
+    ##   State (Q season): 2.910014e-13 
+    ##   State (Q ar): 0.1071189 
     ## 
     ## Components of auto-regression:
-    ##   Order of AR: 1 
-    ##   Coefficient of AR1: 0.2284355
+    ##   Order of AR: 2 
+    ##   Coefficient of AR1: 1.178246 
+    ##   Coefficient of AR2: -0.4720562
 
 The fitted model converges successfully and includes a first-order
 autoregressive \[AR(1)\] component. Prior testing of autoregressive
@@ -602,58 +589,60 @@ following section.
 ### Applying Model With an Exogenous Variable
 
 ``` r
-res_with <- tempssm(temp_data = hmo_temp_common,
-                    exo_data = nao_common) 
+res_with <- tempssm(temp_data = yamaguchi_sst_trim,
+                    exo_data = pdo_trim,
+                    ar_order = 2) 
 summary(res_with)
 ```
 
     ## tempssm summary
     ## -----------------
     ## Call:
-    ## tempssm_season(temp_data = temp_data, exo_data = exo_data, ar_order = ar_order, 
-    ##     inits = inits, maxit = maxit, reltol = reltol)
+    ## tempssm(temp_data = yamaguchi_sst_trim, exo_data = pdo_trim, 
+    ##     ar_order = 2)
     ## 
     ## Model fit:
-    ##   Log-likelihood : -4063.67 
-    ##   k              : 6 
-    ##   AIC            : 8139.34 
+    ##   Log-likelihood : -427.33 
+    ##   k              : 7 
+    ##   AIC            : 868.65 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
-    ##   Observation (H): 2.623818 
-    ##   State (Q trend): 9.64448e-09 
-    ##   State (Q season): 0.0002605165 
-    ##   State (Q ar): 1.402478 
+    ##   Observation (H): 0.05748997 
+    ##   State (Q trend): 3.864314e-19 
+    ##   State (Q season): 1.610093e-54 
+    ##   State (Q ar): 0.1792553 
     ## 
     ## Components of auto-regression:
-    ##   Order of AR: 1 
-    ##   Coefficient of AR1: 0.2676844 
-    ## Exogenous variable    NAO 
-    ## Estimated coefficient     0.2911478 
-    ## Lower CI  0.2376886 
-    ## Upper CI  0.3446071
+    ##   Order of AR: 2 
+    ##   Coefficient of AR1: 0.8656252 
+    ##   Coefficient of AR2: -0.1615365 
+    ## Exogenous variable    PDO 
+    ## Estimated coefficient     -0.4406609 
+    ## Lower CI  -0.5296035 
+    ## Upper CI  -0.3517183
 
-The estimated coefficient for the exogenous NAO index is positive
-(0.29), and its 95% confidence interval does not include zero
+The estimated coefficient for the exogenous PDO index is negative
+(-0.44), and its 95% confidence interval does not include zero
 ``` math
-0.24,
-0.34
+-0.53,
+-0.35
 ```
-, indicating a statistically significant relationship between NAO
-variability and local air temperature at the Hohenpeissenberg station.
+, indicating a statistically significant relationship between local SST
+off Yamaguchi Prefecture and the PDO variability.
 
-Specifically, the model suggests that a one-unit increase in the NAO
-index is associated with an average increase of approximately 0.29 °C in
-monthly air temperature, after accounting for the underlying trend,
-seasonal cycle, and autoregressive dependence. This result implies that
-positive phases of the NAO contribute systematically to warmer
-temperature conditions at the study site.
+Specifically, the model suggests that a one-unit increase in the PDO
+index is associated with an average decrease of approximately 0.44 °C in
+monthly SST, after accounting for the underlying trend, seasonal cycle,
+and autoregressive dependence. This result implies that positive phases
+of the PDO contribute systematically to cooler temperature conditions at
+the study site.
 
 Importantly, this effect is identified in addition to the internal
 dynamics of the temperature time series, rather than being an artifact
 of an improved representation of the trend or temporal dependence.
 Compared with the baseline model without exogenous variables, the
-statistical significance of the NAO coefficient indicates that the NAO
+statistical significance of the PDO coefficient indicates that the PDO
 acts as an independent large-scale climate driver influencing local
 temperature variability.
 
@@ -682,10 +671,10 @@ models_AICs %>% knitr::kable()
 
 | model   |      AIC | delta_AIC |
 |:--------|---------:|----------:|
-| Without | 8242.017 | -102.6742 |
-| With    | 8139.343 |    0.0000 |
+| Without | 944.1678 | -75.51744 |
+| With    | 868.6503 |   0.00000 |
 
-The model including the NAO index as an exogenous variable exhibits a
+The model including the PDO index as an exogenous variable exhibits a
 substantially lower AIC than the baseline model without exogenous
 variables, indicating a markedly better overall fit. This result
 supports the conclusion that explicitly accounting for NAO variability
@@ -709,13 +698,13 @@ models, we employ time-series cross-validation as described bellow.
 plt_level_without_ts <- plot(res_without, 
                              components=c("level"),
                              ci=TRUE) +
-  labs(title="Model without the NAO index") +
+  labs(title="Model without the PDO index") +
   theme_classic()
 
 plt_drift_without_ts <- plot(res_without, 
                              components=c("drift"),
                              ci=TRUE) + 
-  labs(title="Model without the NAO index") +
+  labs(title="Model without the PDO index") +
   theme_classic()
 
 plt_level_drift_without_ts <- plt_level_without_ts + 
@@ -725,19 +714,19 @@ plt_level_drift_without_ts <- plt_level_without_ts +
 plot(plt_level_drift_without_ts)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
 plt_level_with_ts <- plot(res_with,
                           components=c("level"),
                           ci=TRUE)+ 
-  labs(title="Model with the NAO index") +
+  labs(title="Model with the PDO index") +
   theme_classic()
 
 plt_drift_with_ts <- plot(res_with,
                           components=c("drift"),
                           ci=TRUE) + 
-  labs(title="Model with the NAO index") + 
+  labs(title="Model with the PDO index") + 
   theme_classic()
 
 plt_level_drift_with_ts <- plt_level_with_ts + 
@@ -747,7 +736,7 @@ plt_level_drift_with_ts <- plt_level_with_ts +
 plot(plt_level_drift_with_ts)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
 
 Gray areas in the above graph show 95% confidence interval.
 
@@ -766,7 +755,7 @@ and is therefore well suited for temporal data.
 
 By comparing cross-validation metrics for models with and without the
 exogenous PDO variable, we assess whether the improvement suggested by
-AIC is also reflected in out-of-sample predictive skill. \`\`
+AIC is also reflected in out-of-sample predictive skill.
 
 ``` r
 # ts cross-validation of the model without exogenous variables
@@ -774,8 +763,8 @@ AIC is also reflected in out-of-sample predictive skill. \`\`
 ## Generate a list of training and test datasets with their indices
 # Procedure for constructing year-based time-series cross-validation folds:
 # 
-# First training data: January 1865–December 1950;
-# First test data: one year starting from January 1951
+# First training data: January 1982–December 2017;
+# First test data: one year starting from January 2018
 # 
 # Second training data: January 1875–December 1960;
 # Second test data: one year starting from January 1961
@@ -788,24 +777,24 @@ AIC is also reflected in out-of-sample predictive skill. \`\`
 # Generate training and test dataset
 
 folds_without <- ts_cv_folds(
-  temp_data = hmo_temp_common,
+  temp_data = yamaguchi_sst_trim,
   exo_data = NULL,
-  initial = 1032, # 1032 monthly observations from Jan 1865 to Dec 1950
+  initial = 432, # 1032 monthly observations from Jan 1865 to Dec 1950
   horizon = 12, # forecast 12 monthly time-series
-  step = 120, # training data is moved by 120 months (10 years) steps
+  step = 12, # training data is moved by 12 months (1 years) steps
   fixed_window = FALSE,
   allow_partial = FALSE
   )
 
 folds_with <- ts_cv_folds(
-  temp_data = hmo_temp_common,
-  exo_data = nao_common,
-  initial = 1032, # 1032 monthly observations from Jan 1865 to Dec 1950
+  temp_data = yamaguchi_sst_trim,
+  exo_data = pdo_trim,
+  initial = 432, # 1032 monthly observations from Jan 1865 to Dec 1950
   horizon = 12, # forecast 12 monthly time-series
-  step = 120, # training data is moved by 12 months (10 years) steps
+  step = 12, # training data is moved by 12 months (10 years) steps
   fixed_window = FALSE,
   allow_partial = FALSE
-)
+  )
 
 ## Performe tsCV for the model without the exogenous variable of NAO
 cv_meta_without <- rolling_origin_tsCV(folds_without,
@@ -824,24 +813,24 @@ cv_without_tidy <- cv_without %>%
 print(cv_without_tidy)
 ```
 
-    ##     Model cv_id      set         ME     RMSE      MAE       MPE      MAPE
-    ## 1 Without fold1 Test set  0.4889957 1.474649 1.148685 58.787802 103.61067
-    ## 2 Without fold2 Test set  1.1904456 2.606346 2.009215 24.273406  32.54334
-    ## 3 Without fold3 Test set  0.1135489 2.037836 1.857256 96.961995 117.51916
-    ## 4 Without fold4 Test set -0.1159486 1.575582 1.099652 23.311897  25.49696
-    ## 5 Without fold5 Test set -0.3779929 1.945921 1.665165  7.593377  33.60758
-    ## 6 Without fold6 Test set  0.1382091 2.651390 2.270733       Inf       Inf
-    ## 7 Without fold7 Test set  1.1811413 2.019612 1.629615 24.218516  34.10742
-    ## 8 Without fold8 Test set -0.8494083 1.993760 1.683971  2.033586  34.11603
-    ##           ACF1 Theil's U MASE_naive MASE_snaive
-    ## 1  0.202919625 0.5186926  0.3277553   0.4858329
-    ## 2  0.052893544 0.8037302  0.5754156   0.8526872
-    ## 3 -0.315093475 0.5675867  0.5308151   0.7917307
-    ## 4 -0.013508238 0.4340856  0.3169881   0.4734971
-    ## 5 -0.007453192 0.5675805  0.4791300   0.7219113
-    ## 6 -0.435854697       NaN  0.6541575   0.9848380
-    ## 7  0.099740227 0.5470913  0.4688726   0.7049821
-    ## 8 -0.277090168 0.5301606  0.4855664   0.7242332
+    ##     Model cv_id      set           ME      RMSE       MAE        MPE     MAPE
+    ## 1 Without fold1 Test set -0.082131309 0.3968985 0.3368543 -0.6841675 1.882836
+    ## 2 Without fold2 Test set  0.274628719 0.6472397 0.5268065  1.8561485 2.914802
+    ## 3 Without fold3 Test set  0.003464786 0.5533610 0.5193769  0.2777597 2.682239
+    ## 4 Without fold4 Test set  0.289903864 0.5411872 0.4636516  1.5656503 2.388918
+    ## 5 Without fold5 Test set  0.169223387 0.5748575 0.4548490  0.3943817 2.360390
+    ## 6 Without fold6 Test set  0.526716069 0.6843648 0.5831273  2.3731460 2.742728
+    ## 7 Without fold7 Test set  0.649569786 1.0016343 0.7400788  2.5704196 3.132720
+    ## 8 Without fold8 Test set  0.290709682 1.3687556 1.1917132 -0.2547193 5.973012
+    ##         ACF1 Theil's U MASE_naive MASE_snaive
+    ## 1 0.31737585 0.1719900  0.1489075   0.4387554
+    ## 2 0.46104334 0.3501850  0.2327077   0.6897065
+    ## 3 0.22048884 0.2126665  0.2300251   0.6797621
+    ## 4 0.01973158 0.2653134  0.2052778   0.6082287
+    ## 5 0.59652583 0.2311136  0.2017504   0.5968111
+    ## 6 0.32786740 0.2733864  0.2581054   0.7720604
+    ## 7 0.52516266 0.3170262  0.3273829   0.9867860
+    ## 8 0.69684921 0.4633858  0.5254662   1.6067073
 
 ``` r
 ## Performe tsCV for the model with the exogenous variable of NAO
@@ -862,24 +851,24 @@ cv_with_tidy <- cv_with %>%
 print(cv_with_tidy)
 ```
 
-    ##   Model cv_id      set          ME     RMSE      MAE        MPE      MAPE
-    ## 1  With fold1 Test set  0.48543195 1.295995 1.026690  52.583598  83.53820
-    ## 2  With fold2 Test set  1.11609061 2.499648 1.992019   9.128501  37.62516
-    ## 3  With fold3 Test set  0.16374746 2.079393 1.845031 107.098558 129.75021
-    ## 4  With fold4 Test set -0.04621108 1.738008 1.270618  24.235775  27.14959
-    ## 5  With fold5 Test set -0.43349108 2.040727 1.740272   7.616265  35.40459
-    ## 6  With fold6 Test set  0.32903989 2.527949 2.168827        Inf       Inf
-    ## 7  With fold7 Test set  0.81409922 1.752448 1.368590   9.449692  23.09277
-    ## 8  With fold8 Test set -0.61119759 1.738435 1.471531   3.981070  31.65661
-    ##          ACF1 Theil's U MASE_naive MASE_snaive
-    ## 1 -0.01964670 0.3750799  0.2929461   0.4342352
-    ## 2  0.10503306 0.7799049  0.5704907   0.8453892
-    ## 3 -0.32985210 0.6535652  0.5273213   0.7865196
-    ## 4 -0.01644048 0.4551757  0.3662711   0.5471130
-    ## 5 -0.01897327 0.6042778  0.5007411   0.7544730
-    ## 6 -0.48586337       NaN  0.6248004   0.9406408
-    ## 7 -0.11047192 0.4093789  0.3937705   0.5920609
-    ## 8 -0.33494646 0.5134535  0.4243103   0.6328684
+    ##   Model cv_id      set          ME      RMSE       MAE        MPE     MAPE
+    ## 1  With fold1 Test set -0.49171398 0.6209634 0.5067416 -2.8574194 2.916676
+    ## 2  With fold2 Test set  0.19570225 0.6097237 0.5165839  1.4370289 2.789247
+    ## 3  With fold3 Test set -0.61575251 0.8445650 0.7097614 -2.9638975 3.540828
+    ## 4  With fold4 Test set -0.07627415 0.4111311 0.3429435 -0.2349414 1.730350
+    ## 5  With fold5 Test set -0.14535379 0.4431122 0.3898476 -1.1328844 2.133973
+    ## 6  With fold6 Test set  0.26691056 0.4172336 0.3426234  1.1296991 1.580559
+    ## 7  With fold7 Test set  0.32112553 0.7277710 0.4934504  1.1577386 2.115787
+    ## 8  With fold8 Test set  0.08602358 1.1579232 1.0213551 -0.8913629 5.292845
+    ##        ACF1 Theil's U MASE_naive MASE_snaive
+    ## 1 0.1004110 0.2820851  0.2240067   0.6600350
+    ## 2 0.3997061 0.3244092  0.2281920   0.6763228
+    ## 3 0.2844610 0.3275413  0.3143438   0.9289380
+    ## 4 0.2115888 0.1821588  0.1518353   0.4498811
+    ## 5 0.6411915 0.1763824  0.1729188   0.5115223
+    ## 6 0.4796117 0.1539913  0.1516529   0.4536333
+    ## 7 0.4159829 0.2272423  0.2182838   0.6579434
+    ## 8 0.6516727 0.4176161  0.4503496   1.3770248
 
 ``` r
 cv_tidy <- bind_rows(cv_without_tidy,cv_with_tidy)
@@ -905,7 +894,7 @@ plot_MASE_snaive <- ggplot(data=cv_tidy,
 cowplot::plot_grid(plot_MAE,plot_MAPE,plot_MASE_naive,plot_MASE_snaive,nrow=1)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 Analysis of tsCV shows that the model with the exogenous variable is
 better than the model without one. In this tutorial, the number of tsCV
@@ -925,9 +914,9 @@ justification for adopting the exogenous-variable model.
 
 ## Appendix: Utility Functions
 
-### Utility function: `monthly_temp_csv2ts()`
+### Utility function: `read_monthly_temp_ts()`
 
-The function `monthly_temp_csv2ts()` converts monthly temperature data
+The function `read_monthly_temp_ts()` converts monthly temperature data
 stored in a CSV file into an R `ts` object. It is intended to facilitate
 the ingestion of externally prepared time-series data into tempssm by
 enforcing a simple and consistent data format.
@@ -940,10 +929,11 @@ default, the column names must be `Year`, `Month`, and `Temp`, where
 
 ``` text
 Year,Month,Temp
-2010,8,13.6
-2010,9,6.8
-2010,10,NA
-2010,11,-1.4
+2001,1,10.4
+2001,2,8.2
+2001,3,NA
+2001,4,13.6
+2001,5,16.1
 ...
 ```
 
@@ -954,21 +944,27 @@ Year,Month,Temp
 The following example uses a sample CSV file included in the package.
 
 ``` r
-path <- system.file("extdata", "example_monthly_temp.csv", package = "tempssm")
-example_temp <- monthly_temp_csv2ts(path)
-head(example_temp)
+tmp_csv <- tempfile(fileext = ".csv")
+writeLines(
+  c("Year,Month,Temp",
+    "2001,1,10.4",
+    "2001,2,8.2",
+    "2001,3,NA",
+    "2001,4,13.6",
+    "2001,5,16.1"),
+   tmp_csv
+ )
+
+# Read the CSV file and convert to a monthly ts object
+temp_ts <- read_monthly_temp_ts(tmp_csv)
 ```
 
-    ##        Jan Feb Mar Apr May Jun Jul   Aug   Sep   Oct   Nov   Dec
-    ## 2010                                13.6   6.8   0.2  -6.8 -12.5
-    ## 2011 -18.8
+### Utility function: `convert_monthly_df_to_ts()`
 
-### Utility function: `monthly_temp_df2ts()`
-
-The function `monthly_temp_df2ts()` converts a data frame containing
-monthly temperature data into an R `ts` object. It is designed to
-support workflows where temperature data are first imported or prepared
-as a data frame before being used for time-series analysis.
+The function `convert_monthly_df_to_ts()` converts a data frame
+containing monthly temperature data into an R `ts` object. It is
+designed to support workflows where temperature data are first imported
+or prepared as a data frame before being used for time-series analysis.
 
 The input data frame is expected to contain at least two columns: a date
 column (`Date`) and a temperature column (`Temp`).
@@ -976,27 +972,29 @@ column (`Date`) and a temperature column (`Temp`).
 #### Example
 
 ``` r
-# Load example CSV file included in the package
-path <- system.file("extdata", "example_monthly_temp.csv", package = "tempssm")
+# Create a data frame of monthly temperature data
+df <- data.frame(
+  Date = as.Date(c(
+    "2001-01-01",
+    "2001-02-01",
+    "2001-03-01",
+    "2001-04-01",
+    "2001-05-01")
+    ),
+  Temp = c(10.4, 8.2, NA, 13.6, 16.1)
+  )
 
-# Create a data frame with Date and Temp columns
-example_temp_df <- readr::read_csv(path) %>%
-  dplyr::mutate(Date = as.Date(paste0(Year, "-", Month, "-01"))) %>%
-  dplyr::select(Date, Temp)
-
-# Convert the data frame to a ts object
-example_temp_ts <- monthly_temp_df2ts(example_temp_df)
-
-head(example_temp_ts)
+# Convert to a monthly ts object
+temp_ts <- convert_monthly_df_to_ts(df)
+head(temp_ts)
 ```
 
-    ##        Jan Feb Mar Apr May Jun Jul   Aug   Sep   Oct   Nov   Dec
-    ## 2010                                13.6   6.8   0.2  -6.8 -12.5
-    ## 2011 -18.8
+    ##       Jan  Feb  Mar  Apr  May
+    ## 2001 10.4  8.2   NA 13.6 16.1
 
-### Utility function: `sst_jma2ts()`
+### Utility function: `get_jma_sst_ts()`
 
-The function `sst_jma2ts()` downloads publicly available daily mean
+The function `get_jma_sst_ts()` downloads publicly available daily mean
 sea-surface temperature (SST) data for Japanese coastal waters provided
 by the Japan Meteorological Agency (JMA). It aggregates the daily values
 into monthly means and returns the resulting time series as an object of
@@ -1015,24 +1013,25 @@ corresponding regions is provided by JMA at:
 <https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html>
 
 ``` r
-sst_138_ts <- tempssm::sst_jma2ts(sea_area_id = 138)
+sst_138_ts <- get_jma_sst_ts(sea_area_id = 138)
 head(sst_138_ts)
 ```
 
     ##           Jan      Feb      Mar      Apr      May      Jun
     ## 1982 15.04419 14.22500 13.63903 15.31933 17.52258 19.52300
 
-### Utility function: `monthly_anomaly()`
+### Utility function: `compute_temp_anomaly()`
 
-The function `monthly_anomaly()` computes monthly anomalies from a time
-series provided as an R `ts` object. Monthly anomalies are calculated by
-subtracting the corresponding long-term monthly mean from each
-observation, thereby removing the seasonal cycle while preserving
+The function `compute_temp_anomaly()` computes monthly anomalies from a
+time series provided as an R `ts` object. Monthly anomalies are
+calculated by subtracting the corresponding long-term monthly mean from
+each observation, thereby removing the seasonal cycle while preserving
 interannual variability.
 
 The reference period used to compute the monthly climatology can be
 specified via a function argument; by default, the climatology is
-computed over the entire available time series (see `?monthly_anomaly`).
+computed over the entire available time series (see
+`?compute_temp_anomaly`).
 
 This transformation is useful for exploratory analysis and modeling
 applications that focus on departures from typical seasonal conditions.
@@ -1042,16 +1041,16 @@ applications that focus on departures from typical seasonal conditions.
 ``` r
 # Generate temperature anomalies
 data(niigata_sst)
-niigata_sst_anomaly <- monthly_anomaly(niigata_sst)
+niigata_sst_anomaly <- compute_temp_anomaly(niigata_sst)
 plot(niigata_sst_anomaly, ylab=expression(Anomaly~(degree*C))) 
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
-### Utility function: `mean_seasonal_cycle()`
+### Utility function: `compute_monthly_climatology()`
 
-The function `mean_seasonal_cycle()` computes the climatological mean
-seasonal cycle from a `ts` object by averaging each seasonal value
+The function `compute_monthly_climatology()` computes the climatological
+mean seasonal cycle from a `ts` object by averaging each seasonal value
 across years. It is primarily intended for exploratory analysis and
 visualization of the seasonal structure in temperature time series.
 
@@ -1059,7 +1058,7 @@ visualization of the seasonal structure in temperature time series.
 
 ``` r
 data(niigata_sst)
-monthly_seasonal_cycle_niigata_sst <- mean_seasonal_cycle(niigata_sst) 
+monthly_seasonal_cycle_niigata_sst <- compute_monthly_climatology(niigata_sst) 
 summary(monthly_seasonal_cycle_niigata_sst)
 ```
 
@@ -1093,7 +1092,7 @@ plt_monthly_seasonal_cycle_niigata_sst <- ggplot(
 plot(plt_monthly_seasonal_cycle_niigata_sst)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 These utility functions are provided to support data preparation
 and　exploratory analysis and are not required for the core modeling
