@@ -6,6 +6,8 @@ with a focus on climate and environmental applications.
 It implements linear Gaussian state-space models and performs inference using
 Kalman filtering and smoothing.
 
+The package was previously named `ThermoSSM` and has been renamed to `tempssm`.
+
 The core implementation is adapted from the supplementary code provided in
 Baba et al. (2024), which is publicly available on GitHub:
 https://github.com/logics-of-blue/sea-temperature-trend-jogashima
