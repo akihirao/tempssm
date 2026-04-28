@@ -87,6 +87,295 @@ of exogenous variables.
 A sample sea surface temperature (SST) dataset is included in the
 package.
 
+- **Dataset**: Monthly sea surface temperature (SST) off Niigata,
+  Japan  
+- **Unit**: Degrees Celsius  
+- **Period**: February 2002 to December 2023  
+  \`\`
+
+This dataset is derived from observations archived at Japan
+Oceanographic Data Center (JODC), Hydrographic and Oceanographic
+Department, Japan Coast Guard. Original daily SST data were obtained
+from <https://www.jodc.go.jp/jodcweb/JDOSS/index.html> and aggregated
+into monthly means.
+
+``` r
+data(niigata_sst) # load a ts object of SST off Niigata
+head(niigata_sst)
+```
+
+    ##            Jan       Feb       Mar       Apr       May       Jun
+    ## 2002  9.951613  8.332143  9.348387 11.713333 14.529032 18.906667
+
+``` r
+summary(niigata_sst)
+```
+
+    ##       Temp       
+    ##  Min.   : 7.707  
+    ##  1st Qu.:11.217  
+    ##  Median :16.345  
+    ##  Mean   :17.033  
+    ##  3rd Qu.:22.787  
+    ##  Max.   :28.897  
+    ##  NA's   :2
+
+The dataset includes two missing observations. Even if missing
+observations was in your dataset included, there are retained and
+handled explicitly within the state-space modeling framework.
+
+### Plotting the Monthly SST Time Series
+
+We begin by visualizing the monthly SST time series to examine its
+overall structure, including apparent trends, seasonal variability, and
+missing observations.
+
+``` r
+plt_niigata_sst <- forecast::autoplot(niigata_sst) +
+  labs(y = expression(Temperature~(degree*C)), 
+       x = "Time") +
+  ggtitle("Monthly SST off Niigata, Japan") +
+  theme_classic()
+
+plot(plt_niigata_sst)
+```
+
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+### Applying a Linear Gaussian State-Space Model
+
+Here, we apply linear Gaussian state-space models to the univariate SST
+time series and examine the effect of the autoregressive (AR) order on
+model behavior.  
+Specifically, three models are fitted with the order of the
+autoregressive component varying from 1 to 3, while all other model
+components, including the explicit seasonal cycle, are kept the same.
+
+By comparing models with different AR orders, we assess how short- and
+longer-term temporal dependencies are represented within the state-space
+framework.  
+The model summaries provide parameter estimates and diagnostics that can
+be used to evaluate the adequacy of different autoregressive orders.
+Model comparison and selection are discussed in the following section.
+
+``` r
+# model with first-order autoregressive component
+res <- tempssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
+summary(res)
+```
+
+    ## tempssm summary
+    ## -----------------
+    ## Call:
+    ## tempssm(temp_data = niigata_sst)
+    ## 
+    ## Model fit:
+    ##   Log-likelihood : -277.95 
+    ##   k              : 5 
+    ##   AIC            : 565.9 
+    ##   Converged      : TRUE 
+    ## 
+    ## Variance parameters:
+    ##   Observation (H): 0.00598564 
+    ##   State (Q trend): 1.268118e-07 
+    ##   State (Q season): 0.001346139 
+    ##   State (Q ar): 0.4097882 
+    ## 
+    ## Components of auto-regression:
+    ##   Order of AR: 1 
+    ##   Coefficient of AR1: 0.7442999
+
+``` r
+# model with second-order autoregressive component
+res_ar2 <- tempssm(niigata_sst,ar_order=2) 
+summary(res_ar2)
+```
+
+    ## tempssm summary
+    ## -----------------
+    ## Call:
+    ## tempssm(temp_data = niigata_sst, ar_order = 2)
+    ## 
+    ## Model fit:
+    ##   Log-likelihood : -277.95 
+    ##   k              : 6 
+    ##   AIC            : 567.89 
+    ##   Converged      : TRUE 
+    ## 
+    ## Variance parameters:
+    ##   Observation (H): 0.04528328 
+    ##   State (Q trend): 1.411893e-07 
+    ##   State (Q season): 0.001338972 
+    ##   State (Q ar): 0.3463124 
+    ## 
+    ## Components of auto-regression:
+    ##   Order of AR: 2 
+    ##   Coefficient of AR1: 0.8278959 
+    ##   Coefficient of AR2: -0.0651634
+
+``` r
+# model with third-order autoregressive component
+res_ar3 <- tempssm(niigata_sst,ar_order=3) 
+summary(res_ar3)
+```
+
+    ## tempssm summary
+    ## -----------------
+    ## Call:
+    ## tempssm(temp_data = niigata_sst, ar_order = 3)
+    ## 
+    ## Model fit:
+    ##   Log-likelihood : -277.94 
+    ##   k              : 7 
+    ##   AIC            : 569.89 
+    ##   Converged      : TRUE 
+    ## 
+    ## Variance parameters:
+    ##   Observation (H): 0.0002537319 
+    ##   State (Q trend): 1.418092e-07 
+    ##   State (Q season): 0.001336738 
+    ##   State (Q ar): 0.418686 
+    ## 
+    ## Components of auto-regression:
+    ##   Order of AR: 3 
+    ##   Coefficient of AR1: 0.7335228 
+    ##   Coefficient of AR2: 0.0118387 
+    ##   Coefficient of AR3: -0.005368551
+
+### Model selection based on AIC
+
+``` r
+# Extract AIC
+AIC_ar1 <- extract_AIC(res)
+AIC_ar2 <- extract_AIC(res_ar2)
+AIC_ar3 <- extract_AIC(res_ar3)
+
+AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
+                        AIC = c(AIC_ar1,AIC_ar2,AIC_ar3)) %>% 
+  mutate(delta_AIC = AIC - min(AIC))
+
+AIC_table_res %>% knitr::kable()
+```
+
+| model |      AIC | delta_AIC |
+|:------|---------:|----------:|
+| AR1   | 565.8955 |  0.000000 |
+| AR2   | 567.8903 |  1.994836 |
+| AR3   | 569.8889 |  3.993417 |
+
+AR1 model is better than the other models.
+
+### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
+
+We visualize the estimated long-term evolution of temperature levels and
+their rates of change (drift) by extracting the corresponding latent
+components from the state-space model.Additionally, seasonal variability
+and autoregressive dependence are plotted out, allowing the underlying
+trend behavior to be examined more clearly.
+
+``` r
+# plot each of components at once
+autoplot(res)
+```
+
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+Rhe level component shows a persistent upward trend in sea surface
+temperature over the study period. The drift component indicates a
+relatively stable positive rate of change. The shaded gray areas
+represent 95% confidence intervals for the estimated latent states,
+illustrating the uncertainty associated with the inferred long-term
+trend and its rate of change.
+
+### Simple Model Diagnostics
+
+``` r
+resid_test_output <- tempssm::wrapper_checkresiduals(res_ar2)
+```
+
+![](quick_tutorial_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
+``` r
+print(resid_test_output)
+```
+
+    ## $Ljung_Box
+    ## 
+    ##  Box-Ljung test
+    ## 
+    ## data:  std_obs_resid
+    ## X-squared = 24.039, df = 24, p-value = 0.4594
+    ## 
+    ## 
+    ## $kurtosis
+    ## [1] 3.058861
+
+Autocorrelation of residuals was not significant by Ljung-Box test (P \>
+0.05).
+
+### Estimated Parameters and Components
+
+``` r
+# Smoothing estimates
+alpha_hat <- res_ar2$kfs$alphahat
+head(alpha_hat)
+```
+
+    ##             level       slope sea_dummy1 sea_dummy2 sea_dummy3 sea_dummy4
+    ## Jan 2002 16.38745 0.005741462  -6.624146  -3.337748  0.6067547  4.7591913
+    ## Feb 2002 16.39319 0.005741621  -7.677456  -6.624146 -3.3377475  0.6067547
+    ## Mar 2002 16.39893 0.005741616  -7.345735  -7.677456 -6.6241456 -3.3377475
+    ## Apr 2002 16.40467 0.005741502  -5.477243  -7.345735 -7.6774564 -6.6241456
+    ## May 2002 16.41042 0.005741531  -2.216006  -5.477243 -7.3457349 -7.6774564
+    ## Jun 2002 16.41616 0.005741682   2.467139  -2.216006 -5.4772431 -7.3457349
+    ##          sea_dummy5 sea_dummy6 sea_dummy7 sea_dummy8 sea_dummy9 sea_dummy10
+    ## Jan 2002  8.5283425  9.9003246  6.4165810  2.4671389  -2.216006   -5.477243
+    ## Feb 2002  4.7591913  8.5283425  9.9003246  6.4165810   2.467139   -2.216006
+    ## Mar 2002  0.6067547  4.7591913  8.5283425  9.9003246   6.416581    2.467139
+    ## Apr 2002 -3.3377475  0.6067547  4.7591913  8.5283425   9.900325    6.416581
+    ## May 2002 -6.6241456 -3.3377475  0.6067547  4.7591913   8.528342    9.900325
+    ## Jun 2002 -7.6774564 -6.6241456 -3.3377475  0.6067547   4.759191    8.528342
+    ##          sea_dummy11      arima1       arima2
+    ## Jan 2002   -7.345735  0.13755973 -0.008613188
+    ## Feb 2002   -5.477243 -0.28072777 -0.008963859
+    ## Mar 2002   -2.216006  0.27844430  0.018293176
+    ## Apr 2002    2.467139  0.70444118 -0.018144377
+    ## May 2002    6.416581  0.34181822 -0.045903781
+    ## Jun 2002    9.900325 -0.03076938 -0.022274037
+
+``` r
+#　Smoothing estimate of level component
+level_ts <- tempssm::extract_level_ts(res_ar2)
+
+#　Smoothing estimate of drift component
+drift_ts <- tempssm::extract_drift_ts(res_ar2)
+
+# Average drift rate per year across the full period
+mean_drift_year <- mean(drift_ts) 
+print(mean_drift_year)
+```
+
+    ## [1] 0.05271973
+
+Average annual increase in SST is approximately 0.05 °C.
+
+## Practice II: Applying a Linear Gaussian State-Space Model
+
+## to a Temperature Time Series with an Exogenous Variable
+
+### Objective
+
+The objective of this practice is to investigate and quantify the
+influence of a large-scale climate mode on temperature variations.
+Specifically, we examine the effect of the Pacific Decadal Oscillation
+(PDO) as an exogenous variable on SST observed off Yamaguchi Prefecture,
+Japan, within a state-space modeling framework.
+
+### Loading the Dataset 1: SST
+
+A sample sea surface temperature (SST) dataset is included in the
+package.
+
 - **Dataset**: Monthly sea surface temperature (SST) off Yamaguchi
   Prefecture, Japan  
 - **Unit**: Degrees Celsius  
@@ -117,338 +406,7 @@ summary(yamaguchi_sst)
     ##  3rd Qu.:23.63  
     ##  Max.   :29.49
 
-The dataset includes no missing observations. Even if missing
-observations was included, there are retained and handled explicitly
-within the state-space modeling framework.
-
-### Plotting the Monthly SST Time Series
-
-We begin by visualizing the monthly SST time series to examine its
-overall structure, including apparent trends, seasonal variability, and
-missing observations.
-
-``` r
-plt_yamaguchi_sst <- forecast::autoplot(yamaguchi_sst) +
-  labs(y = expression(Temperature~(degree*C)), 
-       x = "Time") +
-  ggtitle("Monthly SST off Yamaguchi, Japan") +
-  theme_classic()
-
-plot(plt_yamaguchi_sst)
-```
-
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
-
-### Applying a Linear Gaussian State-Space Model
-
-Here, we apply linear Gaussian state-space models to the univariate SST
-time series and examine the effect of the autoregressive (AR) order on
-model behavior.  
-Specifically, three models are fitted with the order of the
-autoregressive component varying from 1 to 3, while all other model
-components, including the explicit seasonal cycle, are kept the same.
-
-By comparing models with different AR orders, we assess how short- and
-longer-term temporal dependencies are represented within the state-space
-framework.  
-The model summaries provide parameter estimates and diagnostics that can
-be used to evaluate the adequacy of different autoregressive orders.
-Model comparison and selection are discussed in the following section.
-
-``` r
-# model with first-order autoregressive component
-res <- tempssm(yamaguchi_sst) # first order of auto-regressive model (ar_order=1: default)
-summary(res)
-```
-
-    ## tempssm summary
-    ## -----------------
-    ## Call:
-    ## tempssm(temp_data = yamaguchi_sst)
-    ## 
-    ## Model fit:
-    ##   Log-likelihood : -470.61 
-    ##   k              : 5 
-    ##   AIC            : 951.21 
-    ##   Converged      : TRUE 
-    ## 
-    ## Variance parameters:
-    ##   Observation (H): 1.890233e-13 
-    ##   State (Q trend): 9.936506e-08 
-    ##   State (Q season): 4.135766e-53 
-    ##   State (Q ar): 0.3145626 
-    ## 
-    ## Components of auto-regression:
-    ##   Order of AR: 1 
-    ##   Coefficient of AR1: 0.620232
-
-``` r
-# model with second-order autoregressive component
-res_ar2 <- tempssm(yamaguchi_sst,ar_order=2) 
-summary(res_ar2)
-```
-
-    ## tempssm summary
-    ## -----------------
-    ## Call:
-    ## tempssm(temp_data = yamaguchi_sst, ar_order = 2)
-    ## 
-    ## Model fit:
-    ##   Log-likelihood : -467.66 
-    ##   k              : 6 
-    ##   AIC            : 947.33 
-    ##   Converged      : TRUE 
-    ## 
-    ## Variance parameters:
-    ##   Observation (H): 0.1209081 
-    ##   State (Q trend): 2.20625e-07 
-    ##   State (Q season): 3.672084e-16 
-    ##   State (Q ar): 0.1044201 
-    ## 
-    ## Components of auto-regression:
-    ##   Order of AR: 2 
-    ##   Coefficient of AR1: 1.185819 
-    ##   Coefficient of AR2: -0.4790532
-
-``` r
-# model with third-order autoregressive component
-res_ar3 <- tempssm(yamaguchi_sst,ar_order=3) 
-summary(res_ar3)
-```
-
-    ## tempssm summary
-    ## -----------------
-    ## Call:
-    ## tempssm(temp_data = yamaguchi_sst, ar_order = 3)
-    ## 
-    ## Model fit:
-    ##   Log-likelihood : -467.5 
-    ##   k              : 7 
-    ##   AIC            : 949 
-    ##   Converged      : TRUE 
-    ## 
-    ## Variance parameters:
-    ##   Observation (H): 0.1123195 
-    ##   State (Q trend): 2.24258e-07 
-    ##   State (Q season): 8.435308e-10 
-    ##   State (Q ar): 0.1245958 
-    ## 
-    ## Components of auto-regression:
-    ##   Order of AR: 3 
-    ##   Coefficient of AR1: 1.074592 
-    ##   Coefficient of AR2: -0.3334564 
-    ##   Coefficient of AR3: -0.06336912
-
-### Model selection based on AIC
-
-``` r
-# Extract AIC
-AIC_ar1 <- extract_AIC(res)
-AIC_ar2 <- extract_AIC(res_ar2)
-AIC_ar3 <- extract_AIC(res_ar3)
-
-AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
-                        AIC = c(AIC_ar1,AIC_ar2,AIC_ar3)) %>% 
-  mutate(delta_AIC = AIC - min(AIC))
-
-AIC_table_res %>% knitr::kable()
-```
-
-| model |      AIC | delta_AIC |
-|:------|---------:|----------:|
-| AR1   | 951.2127 |  3.884414 |
-| AR2   | 947.3283 |  0.000000 |
-| AR3   | 949.0037 |  1.675464 |
-
-AR2 model is better than the other models.
-
-### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
-
-``` r
-# plot each of components at once
-plot(res_ar2)
-```
-
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
-
-### Simple Model Diagnostics
-
-``` r
-resid_test_output <- tempssm::wrapper_checkresiduals(res_ar2)
-```
-
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
-
-``` r
-print(resid_test_output)
-```
-
-    ## $Ljung_Box
-    ## 
-    ##  Box-Ljung test
-    ## 
-    ## data:  std_obs_resid
-    ## X-squared = 24.004, df = 24, p-value = 0.4614
-    ## 
-    ## 
-    ## $kurtosis
-    ## [1] 3.661688
-
-Autocorrelation of residuals was not significant by Ljung-Box test (P \>
-0.05).
-
-### Estimated Parameters and Components
-
-``` r
-# Smoothing estimates
-alpha_hat <- res_ar2$kfs$alphahat
-head(alpha_hat)
-```
-
-    ##             level       slope sea_dummy1 sea_dummy2 sea_dummy3 sea_dummy4
-    ## Jan 1982 18.95931 0.002015928  -4.388281  -1.989806  0.8433008  3.3260566
-    ## Feb 1982 18.96132 0.002016067  -5.783414  -4.388281 -1.9898060  0.8433008
-    ## Mar 1982 18.96334 0.002016258  -5.905548  -5.783414 -4.3882811 -1.9898060
-    ## Apr 1982 18.96536 0.002016898  -4.594205  -5.905548 -5.7834141 -4.3882811
-    ## May 1982 18.96737 0.002017330  -1.902724  -4.594205 -5.9055484 -5.7834141
-    ## Jun 1982 18.96939 0.002017773   1.458513  -1.902724 -4.5942046 -5.9055484
-    ##          sea_dummy5 sea_dummy6 sea_dummy7 sea_dummy8 sea_dummy9 sea_dummy10
-    ## Jan 1982  6.1502216  7.6638746  5.1220111  1.4585130  -1.902724   -4.594205
-    ## Feb 1982  3.3260566  6.1502216  7.6638746  5.1220111   1.458513   -1.902724
-    ## Mar 1982  0.8433008  3.3260566  6.1502216  7.6638746   5.122011    1.458513
-    ## Apr 1982 -1.9898060  0.8433008  3.3260566  6.1502216   7.663875    5.122011
-    ## May 1982 -4.3882811 -1.9898060  0.8433008  3.3260566   6.150222    7.663875
-    ## Jun 1982 -5.7834141 -4.3882811 -1.9898060  0.8433008   3.326057    6.150222
-    ##          sea_dummy11    arima1      arima2
-    ## Jan 1982   -5.905548 0.2080997 -0.06449092
-    ## Feb 1982   -4.594205 0.2341012 -0.09969084
-    ## Mar 1982   -1.902724 0.2821581 -0.11214693
-    ## Apr 1982    1.458513 0.2875607 -0.13516876
-    ## May 1982    5.122011 0.5397161 -0.13775686
-    ## Jun 1982    7.663875 0.5449232 -0.25855271
-
-``` r
-#　Smoothing estimate of level component
-level_ts <- tempssm::extract_level_ts(res_ar2)
-
-#　Smoothing estimate of drift component
-drift_ts <- tempssm::extract_drift_ts(res_ar2)
-
-# Average drift rate per year across the full period
-mean_drift_year <- mean(drift_ts) 
-print(mean_drift_year)
-```
-
-    ## [1] 0.03663452
-
-``` r
-# Average drift rate per year during 1980s
-ave_drift_1980s <- window(drift_ts,
-                          start=c(1982,1),
-                          end=c(1990,12)
-                          ) %>%  mean()
-print(ave_drift_1980s)
-```
-
-    ## [1] 0.03048294
-
-``` r
-# Average drift rate per year during 1990s
-ave_drift_1990s <- window(drift_ts,
-                          start=c(1991,1),
-                          end=c(2000,12)
-                               ) %>%  mean()
-print(ave_drift_1990s)
-```
-
-    ## [1] 0.03524637
-
-``` r
-# Average drift rate per year during 2000s
-ave_drift_2000s <- window(drift_ts,
-                          start=c(2001,1),
-                          end=c(2009,12)
-                               ) %>%  mean()
-print(ave_drift_2000s)
-```
-
-    ## [1] -0.003607836
-
-``` r
-# Average drift rate per year during 2010s
-ave_drift_2010s <- window(drift_ts,
-                          start=c(2011,1),
-                          end=c(2019,12)
-                               ) %>%  mean()
-print(ave_drift_2010s)
-```
-
-    ## [1] 0.05043439
-
-``` r
-# Average drift rate per year during 2020s
-ave_drift_2020s <- window(drift_ts,
-                          start=c(2021,1),
-                          end=c(2025,12)
-                               ) %>%  mean()
-print(ave_drift_2020s)
-```
-
-    ## [1] 0.09035023
-
-### Plotting Level and Drift Components with 95% Confidence Interval
-
-We visualize the estimated long-term evolution of temperature levels and
-their rates of change (drift) by extracting the corresponding latent
-components from the state-space model. Seasonal variability and
-autoregressive dependence are separated out, allowing the underlying
-trend behavior to be examined more clearly.
-
-``` r
-plt_level_ci <- plot(res_ar2,
-                     components = "level",
-                     ci = TRUE,
-                     ci_level = 0.95
-                     ) +
-  theme_classic()
-
-plt_drift_ci <- plot(res_ar2,
-                     components = "drift",
-                     ci = TRUE,
-                     ci_level = 0.95
-                     ) +
-  geom_hline(yintercept = 0, lty="dotted") +
-  theme_classic()
-
-
-plt_level_drift_ci <- plt_level_ci + plt_drift_ci + patchwork::plot_layout(ncol=1)
-
-plot(plt_level_drift_ci)
-```
-
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
-
-The level component shows a persistent upward trend in sea surface
-temperature over the study period. The drift component indicates a
-relatively stable positive rate of change, with an estimated average
-annual increase of approximately 0.0525 °C. The shaded gray areas
-represent 95% confidence intervals for the estimated latent states,
-illustrating the uncertainty associated with the inferred long-term
-trend and its rate of change.
-
-## Practice II: Applying a Linear Gaussian State-Space Model
-
-## to a Temperature Time Series with an Exogenous Variable
-
-### Objective
-
-The objective of this practice is to investigate and quantify the
-influence of a large-scale climate mode on temperature variations.
-Specifically, we examine the effect of the Pacific Decadal Oscillation
-(PDO) as an exogenous variable on SST observed off Yamaguchi Prefecture,
-Japan, within a state-space modeling framework.
-
-### Loading Dataset: PDO Index as an Exogenous Variable
+### Loading Dataset 2: PDO Index as an Exogenous Variable
 
 - **Data**: Monthly Pacific Decadal Oscillation (PDO) index (JMA)  
 - **Period**: January 1901 to December 2025
@@ -695,15 +653,15 @@ models, we employ time-series cross-validation as described bellow.
 ### Plotting Level and Drift Components with 95% CI
 
 ``` r
-plt_level_without_ts <- plot(res_without, 
-                             components=c("level"),
-                             ci=TRUE) +
+plt_level_without_ts <- autoplot(res_without,
+                                 component=c("level")
+                                 ) +
   labs(title="Model without the PDO index") +
   theme_classic()
 
-plt_drift_without_ts <- plot(res_without, 
-                             components=c("drift"),
-                             ci=TRUE) + 
+plt_drift_without_ts <- autoplot(res_without, 
+                             component=c("drift")
+                             ) + 
   labs(title="Model without the PDO index") +
   theme_classic()
 
@@ -717,15 +675,15 @@ plot(plt_level_drift_without_ts)
 ![](quick_tutorial_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
-plt_level_with_ts <- plot(res_with,
-                          components=c("level"),
-                          ci=TRUE)+ 
+plt_level_with_ts <- autoplot(res_with,
+                          component=c("level")
+                          )+ 
   labs(title="Model with the PDO index") +
   theme_classic()
 
-plt_drift_with_ts <- plot(res_with,
-                          components=c("drift"),
-                          ci=TRUE) + 
+plt_drift_with_ts <- autoplot(res_with,
+                          component=c("drift")
+                          ) + 
   labs(title="Model with the PDO index") + 
   theme_classic()
 

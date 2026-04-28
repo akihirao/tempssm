@@ -6,9 +6,9 @@ output:
 #  pdf_document:
 #    latex_engine: lualatex
 #    toc: true
-#  rmarkdown::html_vignette: default
-  md_document:
-    variant: gfm
+  rmarkdown::html_vignette: default
+#  md_document:
+#    variant: gfm
 vignette: >
   %\VignetteIndexEntry{"Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"}
   %\VignetteEngine{knitr::rmarkdown}
@@ -190,7 +190,7 @@ components from the state-space model.Additionally, seasonal variability and aut
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # plot each of components at once
-tempssm::autoplot(res)
+autoplot(res)
 ```
 
 Rhe level component shows a persistent upward trend in sea surface
@@ -424,13 +424,13 @@ models, we employ time-series cross-validation as described bellow.
 ### Plotting Level and Drift Components with 95% CI 
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_level_without_ts <- tempssm::autoplot(res_without,
+plt_level_without_ts <- autoplot(res_without,
                                  component=c("level")
                                  ) +
   labs(title="Model without the PDO index") +
   theme_classic()
 
-plt_drift_without_ts <- tempssm::autoplot(res_without, 
+plt_drift_without_ts <- autoplot(res_without, 
                              component=c("drift")
                              ) + 
   labs(title="Model without the PDO index") +
@@ -443,13 +443,13 @@ plt_level_drift_without_ts <- plt_level_without_ts +
 plot(plt_level_drift_without_ts)
 
 
-plt_level_with_ts <- tempssm::autoplot(res_with,
+plt_level_with_ts <- autoplot(res_with,
                           component=c("level")
                           )+ 
   labs(title="Model with the PDO index") +
   theme_classic()
 
-plt_drift_with_ts <- tempssm::autoplot(res_with,
+plt_drift_with_ts <- autoplot(res_with,
                           component=c("drift")
                           ) + 
   labs(title="Model with the PDO index") + 
