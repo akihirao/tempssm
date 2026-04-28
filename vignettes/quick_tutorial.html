@@ -669,10 +669,10 @@ trend and its rate of change.</p>
 ## May 2002    6.416581  0.34181822 -0.045903781
 ## Jun 2002    9.900325 -0.03076938 -0.022274037</code></pre>
 <div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co">#　Smoothing estimate of level component</span></span>
-<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>level_ts <span class="ot">&lt;-</span> tempssm<span class="sc">::</span><span class="fu">extract_level_ts</span>(res_ar2)</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>level_ts <span class="ot">&lt;-</span> <span class="fu">get_level_ts</span>(res_ar2)</span>
 <span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a></span>
 <span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="co">#　Smoothing estimate of drift component</span></span>
-<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>drift_ts <span class="ot">&lt;-</span> tempssm<span class="sc">::</span><span class="fu">extract_drift_ts</span>(res_ar2)</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>drift_ts <span class="ot">&lt;-</span> <span class="fu">get_drift_ts</span>(res_ar2)</span>
 <span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a></span>
 <span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a><span class="co"># Average drift rate per year across the full period</span></span>
 <span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a>mean_drift_year <span class="ot">&lt;-</span> <span class="fu">mean</span>(drift_ts) </span>

@@ -345,10 +345,10 @@ head(alpha_hat)
 
 ``` r
 #　Smoothing estimate of level component
-level_ts <- tempssm::extract_level_ts(res_ar2)
+level_ts <- get_level_ts(res_ar2)
 
 #　Smoothing estimate of drift component
-drift_ts <- tempssm::extract_drift_ts(res_ar2)
+drift_ts <- get_drift_ts(res_ar2)
 
 # Average drift rate per year across the full period
 mean_drift_year <- mean(drift_ts) 
