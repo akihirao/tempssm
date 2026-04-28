@@ -1,3 +1,6 @@
+#' @importFrom ggplot2 autoplot
+NULL
+
 #' Autoplot method for tempssm objects
 #'
 #' @description
@@ -23,8 +26,6 @@
 #' Additional arguments passed to the corresponding
 #' \code{autoplot_*()} function.
 #'
-#' @importFrom ggplot2 autoplot
-#'
 #' @return
 #' A \code{ggplot} object if a single component is requested,
 #' or a \pkg{patchwork} object combining multiple plots.
@@ -45,7 +46,7 @@
 #' }
 #'
 #' @method autoplot tempssm
-#' @expor
+#' @export
 autoplot.tempssm <- function(object,
                              component = NULL,
                              ci = TRUE,
