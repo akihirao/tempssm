@@ -445,162 +445,295 @@ tempssm <- function(temp_data,
 
 
 
-#' Extract the smoothed level component as a time series
+#' Extract the level component as a time series
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
-#' @param ci Logical; should confidence intervals be returned? (default: FALSE)
-#' @param ci_level Confidence level for intervals (default: 0.95).
+#' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
+#' @param ci Logical; if TRUE, pointwise confidence intervals are returned.
+#' @param ci_level Numeric confidence level between 0 and 1 (default: 0.95).
 #'
 #' @return
-#' A univariate \code{ts} object of the smoothed level component.
+#' A univariate \code{ts} object of the smoothed level component
+#' (in degrees Celsius).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 #' \code{level}, \code{lwr}, and \code{upr} is returned.
+#'
+#' @export
 #'
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
 #' res <- tempssm(niigata_sst)
-#' level_ts <- extract_level_ts(res)
+#' level_ts <- get_level_ts(res)
 #' }
-#' @export
-extract_level_ts = function(res, ci = FALSE, ci_level = 0.95) {
+get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   if (!inherits(res, "tempssm")) {
     stop("Input must be a tempssm object.", call. = FALSE)
+  }
+
+  if (ci) {
+    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+        ci_level <= 0 || ci_level >= 1) {
+      stop("`ci_level` must be a numeric value between 0 and 1.",
+           call. = FALSE)
+    }
   }
 
   if (is.null(res$kfs$alphahat) || !"level" %in% colnames(res$kfs$alphahat)) {
     stop("Level component not found in the smoothing results.", call. = FALSE)
   }
 
-  level_ts <- res$kfs$alphahat[, "level"]
+  freq <- frequency(res$data_temp)
   
+  level <- ts(
+    res$kfs$alphahat[, "level"],
+    start = start(res$data_temp),
+    frequency = freq
+  )
+
   if(ci){
     ci_obj <- stats::confint(res$kfs, level = ci_level)
 
-    level_ts <- cbind(
-      level = level_ts,
-      lwr=ci_obj$level[,"lwr"],
-      upr=ci_obj$level[,"upr"]
-      )
+    if (!"level" %in% names(ci_obj)) {
+      stop("Level component not found in confidence intervals.",
+           call. = FALSE)
+    }
+
+    level <- ts(
+      cbind(
+        level = level,
+        lwr = ci_obj$level[, "lwr"],
+        upr = ci_obj$level[, "upr"]
+      ),
+      start = start(res$data_temp),
+      frequency = freq
+    )
   }
-  return(level_ts)
+  level
 }
 
 
 
 #' Extract the smoothed drift (slope) component as a time series
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
-#' @param ci Logical; should confidence intervals be returned? (default: FALSE)
-#' @param ci_level Confidence level for intervals (default: 0.95).
+#' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
+#' @param ci Logical; if TRUE, pointwise confidence intervals are returned.
+#' @param ci_level Numeric confidence level between 0 and 1 (default: 0.95).
+#'
+#' @details
+#' The drift component is scaled to represent change per year.
+#' For example, monthly data (frequency = 12) are multiplied by 12.
 #'
 #' @return
-#' A univariate \code{ts} object of the smoothed drift component (Celsius per year).
+#' A univariate \code{ts} object of the smoothed drift component
+#' (in degrees Celsius per year).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
-#' \code{level}, \code{lwr}, and \code{upr} is returned.
+#' \code{drift}, \code{lwr}, and \code{upr} is returned.
 #'
 #' @export
+#'
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
 #' res <- tempssm(niigata_sst)
-#' drift_ts <- extract_drift_ts(res)
+#' drift <- get_drift_ts(res)
 #' }
-extract_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
-
-  if (!inherits(res, "tempssm")) {
-    stop("Input must be a tempssm object.", call. = FALSE)
-  }
-
-  if (is.null(res$kfs$alphahat) || !"slope" %in% colnames(res$kfs$alphahat)) {
-    stop("Drift (slope) component not found in the smoothing results.", call. = FALSE)
-  }
-
-  # seasonal frequency of ts object
-  freq <- frequency(res$data_temp)
-
-  # scaling factor (e.g., 12 for monthly data → per year)
-  scale <- freq
-
-  drift_ts <- ts(
-    res$kfs$alphahat[, "slope"] * scale,
-    start <- start(res$data_temp),
-    frequency = freq
-    )
-
-  if(ci){
-
-    ci_obj <- stats::confint(res$kfs, level = ci_level)
+get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   
+  if (!inherits(res, "tempssm")) {
+    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+  }
+  
+  if (ci) {
+    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+        ci_level <= 0 || ci_level >= 1) {
+      stop("`ci_level` must be a numeric value between 0 and 1.",
+           call. = FALSE)
+    }
+  }
+  
+  if (is.null(res$kfs$alphahat) || !"slope" %in% colnames(res$kfs$alphahat)) {
+    stop("Drift (slope) component not found in smoothing results.",
+         call. = FALSE)
+  }
+  
+  freq <- frequency(res$data_temp)
+  scale <- freq
+  
+  drift <- ts(
+    res$kfs$alphahat[, "slope"] * scale, #scaled per year
+    start = start(res$data_temp),
+    frequency = freq
+  )
+  
+  if (ci) {
+    
+    ci_obj <- stats::confint(res$kfs, level = ci_level)
+    
     if (!"slope" %in% names(ci_obj)) {
-      stop("Slope component not found in confidence intervals.", call. = FALSE)
+      stop("Slope component not found in confidence intervals.",
+           call. = FALSE)
     }
     
-    drift_ts <- ts(
+    drift <- ts(
       cbind(
-        drift = drift_ts,
-        lwr=ci_obj$slope[,"lwr"] * scale,
-        upr=ci_obj$slope[,"upr"] * scale
-        ),
+        drift = drift,
+        lwr = ci_obj$slope[, "lwr"] * scale,#scaled per year 
+        upr = ci_obj$slope[, "upr"] * scale #scaled per year
+      ),
       start = start(res$data_temp),
       frequency = freq
-      )
+    )
   }
-  return(drift_ts)
+  
+  drift
 }
 
 
 
 #' Extract the smoothed seasonal component as a time series
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
-#' @param ci Logical; should confidence intervals be returned? (default: FALSE)
-#' @param ci_level Confidence level for intervals (default: 0.95).
+#' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
+#' @param ci Logical; if TRUE, pointwise confidence intervals are returned.
+#' @param ci_level Numeric confidence level between 0 and 1 (default: 0.95).
+#'
+#' @details
+#' The seasonal component represents recurrent intra-year variability
+#' captured by seasonal dummy state components in the state space model.
 #'
 #' @return
-#' A univariate \code{ts} object of the smoothed level component.
+#' A univariate \code{ts} object of the smoothed seasonal component
+#' (in degrees Celsius).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
-#' \code{level}, \code{lwr}, and \code{upr} is returned.
+#' \code{season}, \code{lwr}, and \code{upr} is returned.
 #'
 #' @export
+#'
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
-#' res = tempssm(niigata_sst)
-#' season_ts = extract_season_ts(res)
+#' res <- tempssm(niigata_sst)
+#' season_ts <- get_season_ts(res)
 #' }
-extract_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
-
-  use_season <- res$use_season
-
+get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
+  
   if (!inherits(res, "tempssm")) {
-    stop("Input must be a tempssm object.", call. = FALSE)
+    stop("`res` must be a tempssm object.", call. = FALSE)
   }
-
-  if (!use_season) {
-    stop("Seasonal component is not included in this model.", call. = FALSE)
+  
+  if (ci) {
+    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+        ci_level <= 0 || ci_level >= 1) {
+      stop("`ci_level` must be a numeric value between 0 and 1.",
+           call. = FALSE)
+    }
   }
-
-  if (is.null(res$kfs$alphahat) || !"sea_dummy1" %in% colnames(res$kfs$alphahat)) {
+  
+  if (is.null(res$kfs$alphahat) || ! "sea_dummy1" %in% colnames(res$kfs$alphahat)) {
     stop("Seasonal component not found in the smoothing results.", call. = FALSE)
   }
+  
+  freq <- frequency(res$data_temp)
 
-  season_ts <- res$kfs$alphahat[, "sea_dummy1"]
+  season <- ts(
+    res$kfs$alphahat[, "sea_dummy1"],
+    start = start(res$data_temp),
+    frequency = freq
+  )
   
   if(ci){
     ci_obj <- stats::confint(res$kfs, level = ci_level)
-
-    season_ts <- cbind(
-      season = season_ts,
-      lwr=ci_obj$ea_dummy1[,"lwr"],
-      upr=ci_obj$ea_dummy1[,"upr"]
-      )
+    
+    if (!"sea_dummy1" %in% names(ci_obj)) {
+      stop("Seasonal component not found in confidence intervals.",
+           call. = FALSE)
+    }
+    
+    season <- ts(
+      cbind(
+        season = season,
+        lwr = ci_obj$sea_dummy1[, "lwr"],
+        upr = ci_obj$sea_dummy1[, "upr"]
+      ),
+      start = start(res$data_temp),
+      frequency = freq
+    )
   }
-  return(season_ts)
+  season
 }
 
 
+
+#' Extract the smoothed first autoregressive component (AR1) as a time series
+#'
+#' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
+#' @param ci Logical; if TRUE, pointwise confidence intervals are returned.
+#' @param ci_level Numeric confidence level between 0 and 1 (default: 0.95).
+#'
+#' @details
+#' The AR1 component represents short-term autocorrelated deviations
+#' from the level and seasonal structure.
+#'
+#' @return
+#' A univariate \code{ts} object of the smoothed AR1 component
+#' (in degrees Celsius).
+#' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
+#' \code{ar1}, \code{lwr}, and \code{upr} is returned.
+#'
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#' res <- tempssm(niigata_sst)
+#' ar1_ts <- get_ar1_ts(res)
+#' }
+get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
+  
+  if (!inherits(res, "tempssm")) {
+    stop("`res` must be a tempssm object.", call. = FALSE)
+  }
+  
+  if (ci) {
+    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+        ci_level <= 0 || ci_level >= 1) {
+      stop("`ci_level` must be a numeric value between 0 and 1.",
+           call. = FALSE)
+    }
+  }
+  
+  if (is.null(res$kfs$alphahat) || ! "arima1" %in% colnames(res$kfs$alphahat)) {
+    stop("First autoregressive component (AR1) not found in the smoothing results.", call. = FALSE)
+  }
+  
+  freq <- frequency(res$data_temp)
+  
+  ar1 <- ts(
+    res$kfs$alphahat[, "arima1"],
+    start = start(res$data_temp),
+    frequency = freq
+  )
+  
+  if(ci){
+    ci_obj <- stats::confint(res$kfs, level = ci_level)
+    
+    if (!"arima1" %in% names(ci_obj)) {
+      stop("First Autoregressive (AR1) component not found in confidence intervals.",
+           call. = FALSE)
+    }
+    
+    ar1 <- ts(
+      cbind(
+        ar1 = ar1,
+        lwr = ci_obj$arima1[, "lwr"],
+        upr = ci_obj$arima1[, "upr"]
+      ),
+      start = start(res$data_temp),
+      frequency = freq
+    )
+  }
+  ar1
+}
 
 
 #' Extract the Akaike Information Criterion (AIC)
