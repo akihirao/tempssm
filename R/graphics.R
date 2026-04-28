@@ -94,7 +94,7 @@ autoplot_level <- function(res,
     level_tidy,
     ggplot2::aes(x = .data$time, y = .data$level)
   ) +
-    ggplot2::geom_line(size = 1.2) +
+    ggplot2::geom_line(linewidth = 1.2) +
     ggplot2::labs(
       title = if (ci) {
         paste0("Level component (", ci_lab, ")")
@@ -214,7 +214,7 @@ autoplot_drift <- function(res,
     slope_tidy,
     ggplot2::aes(x = .data$time, y = .data$slope)
   ) +
-    ggplot2::geom_line(size = 1.2) +
+    ggplot2::geom_line(linewidth = 1.2) +
     ggplot2::labs(
       title = if (ci) {
         paste0("Drift component (", ci_lab, ")")
