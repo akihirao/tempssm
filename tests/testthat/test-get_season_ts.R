@@ -22,6 +22,11 @@ test_that("get_season_ts checks inputs correctly", {
 
   expect_error(
     get_season_ts("not a model"),
-    "`res` must be a tempssm object"
+    "`res` must be an object of class 'tempssm'"
+  )
+
+  expect_error(
+    get_season_ts(res_tempssm, ci = TRUE, ci_level = 1.2),
+    "`ci_level` must be a numeric value between 0 and 1"
   )
 })

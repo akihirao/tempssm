@@ -468,13 +468,13 @@ tempssm <- function(temp_data,
 get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   if (!inherits(res, "tempssm")) {
-    stop("Input must be a tempssm object.", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
   }
 
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
         ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
+      stop("`ci_level` must be a numeric value between 0 and 1",
            call. = FALSE)
     }
   }
@@ -541,13 +541,13 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
   }
   
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
         ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
+      stop("`ci_level` must be a numeric value between 0 and 1",
            call. = FALSE)
     }
   }
@@ -618,13 +618,13 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be a tempssm object.", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
   }
   
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
         ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
+      stop("`ci_level` must be a numeric value between 0 and 1",
            call. = FALSE)
     }
   }
@@ -691,13 +691,13 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be a tempssm object.", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
   }
   
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
         ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
+      stop("`ci_level` must be a numeric value between 0 and 1",
            call. = FALSE)
     }
   }

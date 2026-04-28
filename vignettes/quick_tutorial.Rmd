@@ -203,8 +203,9 @@ with the inferred long-term trend and its rate of change.
 ### Simple Model Diagnostics
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-diag <- diagnose_residuals(res_ar2)
+diag <- diagnose_residuals(res)
 print(diag)
+plot_residual_diagnostics(res)
 ```
 Autocorrelation of residuals was not significant by Ljung-Box test (P > 0.05).
 

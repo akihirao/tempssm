@@ -25,4 +25,9 @@ test_that("get_ar1_ts checks inputs correctly", {
     get_ar1_ts(NULL),
     "`res` must be an object of class 'tempssm'"
   )
+
+  expect_error(
+    get_ar1_ts(res_tempssm, ci = TRUE, ci_level = 1.2),
+    "`ci_level` must be a numeric value between 0 and 1"
+  )
 })
