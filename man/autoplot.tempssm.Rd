@@ -43,4 +43,5 @@ autoplot(res, ci = FALSE)
 # plot each of components
 autoplot(res, component = "level", ci = FALSE)
 }
+
 }

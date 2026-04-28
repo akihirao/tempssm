@@ -11,7 +11,7 @@
 #' Character string specifying which component to plot.
 #' One of \code{"level"}, \code{"drift"}, \code{"season"}, or \code{"ar1"}.
 #' If NULL (default), all components are plotted.
-#' 
+#'
 #' @param ci
 #' Logical; if TRUE (default), pointwise confidence intervals are shown.
 #'
@@ -23,12 +23,12 @@
 #' Additional arguments passed to the corresponding
 #' \code{autoplot_*()} function.
 #'
+#' @importFrom ggplot2 autoplot
+#'
 #' @return
 #' A \code{ggplot} object if a single component is requested,
 #' or a \pkg{patchwork} object combining multiple plots.
 #'
-#' @export
-#' 
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
@@ -39,10 +39,13 @@
 #'
 #' # plot all components without 95% confidence interval
 #' autoplot(res, ci = FALSE)
-#' 
+#'
 #' # plot each of components
 #' autoplot(res, component = "level", ci = FALSE)
 #' }
+#'
+#' @method autoplot tempssm
+#' @expor
 autoplot.tempssm <- function(object,
                              component = NULL,
                              ci = TRUE,
