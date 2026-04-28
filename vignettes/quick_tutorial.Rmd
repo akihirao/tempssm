@@ -103,21 +103,20 @@ of exogenous variables.
 
 A sample sea surface temperature (SST) dataset is included in the package.
 
-- **Dataset**: Monthly sea surface temperature (SST) off Yamaguchi Prefecture, Japan  
+- **Dataset**: Monthly sea surface temperature (SST) off Niigata, Japan  
 - **Unit**: Degrees Celsius  
 - **Period**: February 2002 to December 2023  
 ``
 
-This dataset is derived from observations archived at Japan Meteorological Agency (JMA). 
-Data obtained from the JMA website: https://www.jma.go.jp/jma/indexe.html
+This dataset is derived from observations archived at Japan Oceanographic Data Center (JODC), Hydrographic and Oceanographic Department, Japan Coast Guard. Original daily SST data were obtained from https://www.jodc.go.jp/jodcweb/JDOSS/index.html and aggregated into monthly means.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-data(yamaguchi_sst) # load a ts object of SST off Niigata
-head(yamaguchi_sst)
-summary(yamaguchi_sst)
+data(niigata_sst) # load a ts object of SST off Niigata
+head(niigata_sst)
+summary(niigata_sst)
 ```
-The dataset includes no missing observations. Even if missing observations was included, 
-there are retained and handled explicitly within the state-space modeling framework.
+
+The dataset includes two missing observations. Even if missing observations was in your dataset included, there are retained and handled explicitly within the state-space modeling framework.
 
 ### Plotting the Monthly SST Time Series
 
@@ -126,13 +125,13 @@ overall structure, including apparent trends, seasonal variability,
 and missing observations.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_yamaguchi_sst <- forecast::autoplot(yamaguchi_sst) +
+plt_niigata_sst <- forecast::autoplot(niigata_sst) +
   labs(y = expression(Temperature~(degree*C)), 
        x = "Time") +
-  ggtitle("Monthly SST off Yamaguchi, Japan") +
+  ggtitle("Monthly SST off Niigata, Japan") +
   theme_classic()
 
-plot(plt_yamaguchi_sst)
+plot(plt_niigata_sst)
 ```
 
 ### Applying a Linear Gaussian State-Space Model
@@ -153,15 +152,15 @@ Model comparison and selection are discussed in the following section.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # model with first-order autoregressive component
-res <- tempssm(yamaguchi_sst) # first order of auto-regressive model (ar_order=1: default)
+res <- tempssm(niigata_sst) # first order of auto-regressive model (ar_order=1: default)
 summary(res)
 
 # model with second-order autoregressive component
-res_ar2 <- tempssm(yamaguchi_sst,ar_order=2) 
+res_ar2 <- tempssm(niigata_sst,ar_order=2) 
 summary(res_ar2)
 
 # model with third-order autoregressive component
-res_ar3 <- tempssm(yamaguchi_sst,ar_order=3) 
+res_ar3 <- tempssm(niigata_sst,ar_order=3) 
 summary(res_ar3)
 
 ```
@@ -181,14 +180,25 @@ AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
 AIC_table_res %>% knitr::kable()
 ```
 
-AR2 model is better than the other models.
+AR1 model is better than the other models.
 
 ### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
+We visualize the estimated long-term evolution of temperature levels
+and their rates of change (drift) by extracting the corresponding latent
+components from the state-space model.Additionally, seasonal variability and autoregressive dependence are plotted out, allowing the underlying trend behavior to be examined more clearly.
+
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # plot each of components at once
-plot(res_ar2)
+autoplot(res)
 ```
+
+Rhe level component shows a persistent upward trend in sea surface
+temperature over the study period. The drift component indicates 
+a relatively stable positive rate of change. The shaded 
+gray areas represent 95% confidence intervals for the
+estimated latent states, illustrating the uncertainty associated 
+with the inferred long-term trend and its rate of change.
 
 ### Simple Model Diagnostics
 
@@ -215,82 +225,9 @@ drift_ts <- tempssm::extract_drift_ts(res_ar2)
 # Average drift rate per year across the full period
 mean_drift_year <- mean(drift_ts) 
 print(mean_drift_year)
-
-# Average drift rate per year during 1980s
-ave_drift_1980s <- window(drift_ts,
-                          start=c(1982,1),
-                          end=c(1990,12)
-                          ) %>%  mean()
-print(ave_drift_1980s)
-
-# Average drift rate per year during 1990s
-ave_drift_1990s <- window(drift_ts,
-                          start=c(1991,1),
-                          end=c(2000,12)
-                               ) %>%  mean()
-print(ave_drift_1990s)
-
-# Average drift rate per year during 2000s
-ave_drift_2000s <- window(drift_ts,
-                          start=c(2001,1),
-                          end=c(2009,12)
-                               ) %>%  mean()
-print(ave_drift_2000s)
-
-# Average drift rate per year during 2010s
-ave_drift_2010s <- window(drift_ts,
-                          start=c(2011,1),
-                          end=c(2019,12)
-                               ) %>%  mean()
-print(ave_drift_2010s)
-
-
-# Average drift rate per year during 2020s
-ave_drift_2020s <- window(drift_ts,
-                          start=c(2021,1),
-                          end=c(2025,12)
-                               ) %>%  mean()
-print(ave_drift_2020s)
-
 ```
-
-### Plotting Level and Drift Components with 95% Confidence Interval
-
-We visualize the estimated long-term evolution of temperature levels
-and their rates of change (drift) by extracting the corresponding latent
-components from the state-space model.
-Seasonal variability and autoregressive dependence are separated out,
-allowing the underlying trend behavior to be examined more clearly.
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_level_ci <- plot(res_ar2,
-                     components = "level",
-                     ci = TRUE,
-                     ci_level = 0.95
-                     ) +
-  theme_classic()
-
-plt_drift_ci <- plot(res_ar2,
-                     components = "drift",
-                     ci = TRUE,
-                     ci_level = 0.95
-                     ) +
-  geom_hline(yintercept = 0, lty="dotted") +
-  theme_classic()
-
-
-plt_level_drift_ci <- plt_level_ci + plt_drift_ci + patchwork::plot_layout(ncol=1)
-
-plot(plt_level_drift_ci)
-```
-
-The level component shows a persistent upward trend in sea surface
-temperature over the study period. The drift component indicates 
-a relatively stable positive rate of change, with an estimated 
-average annual increase of approximately 0.0525 °C. The shaded 
-gray areas represent 95% confidence intervals for the
-estimated latent states, illustrating the uncertainty associated 
-with the inferred long-term trend and its rate of change.
+ 
+Average annual increase in SST is approximately 0.05 °C.
 
 
 ## Practice II: Applying a Linear Gaussian State-Space Model
@@ -305,7 +242,25 @@ Specifically, we examine the effect of the Pacific Decadal Oscillation
 (PDO) as an exogenous variable on SST observed off Yamaguchi Prefecture, 
 Japan, within a state-space modeling framework.
 
-### Loading Dataset: PDO Index as an Exogenous Variable
+### Loading the Dataset 1: SST
+
+A sample sea surface temperature (SST) dataset is included in the package.
+
+- **Dataset**: Monthly sea surface temperature (SST) off Yamaguchi Prefecture, Japan  
+- **Unit**: Degrees Celsius  
+- **Period**: February 2002 to December 2023  
+``
+
+This dataset is derived from observations archived at Japan Meteorological Agency (JMA). 
+Data obtained from the JMA website: https://www.jma.go.jp/jma/indexe.html
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+data(yamaguchi_sst) # load a ts object of SST off Niigata
+head(yamaguchi_sst)
+summary(yamaguchi_sst)
+```
+
+### Loading Dataset 2: PDO Index as an Exogenous Variable
 
 - **Data**: Monthly Pacific Decadal Oscillation (PDO) index (JMA)  
 - **Period**: January 1901 to December 2025
@@ -469,15 +424,15 @@ models, we employ time-series cross-validation as described bellow.
 ### Plotting Level and Drift Components with 95% CI 
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-plt_level_without_ts <- plot(res_without, 
-                             components=c("level"),
-                             ci=TRUE) +
+plt_level_without_ts <- autoplot(res_without,
+                                 component=c("level")
+                                 ) +
   labs(title="Model without the PDO index") +
   theme_classic()
 
 plt_drift_without_ts <- plot(res_without, 
-                             components=c("drift"),
-                             ci=TRUE) + 
+                             component=c("drift")
+                             ) + 
   labs(title="Model without the PDO index") +
   theme_classic()
 
@@ -489,14 +444,14 @@ plot(plt_level_drift_without_ts)
 
 
 plt_level_with_ts <- plot(res_with,
-                          components=c("level"),
-                          ci=TRUE)+ 
+                          component=c("level")
+                          )+ 
   labs(title="Model with the PDO index") +
   theme_classic()
 
 plt_drift_with_ts <- plot(res_with,
-                          components=c("drift"),
-                          ci=TRUE) + 
+                          component=c("drift")
+                          ) + 
   labs(title="Model with the PDO index") + 
   theme_classic()
 
