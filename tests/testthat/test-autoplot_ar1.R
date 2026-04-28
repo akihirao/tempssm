@@ -12,7 +12,7 @@ test_that("autoplot_ar1 checks inputs correctly", {
 
   expect_error(
     autoplot_ar1(NULL),
-    "`res` must be an object returned by tempssm"
+    "`res` must be an object of class 'tempssm'"
   )
 
   expect_error(

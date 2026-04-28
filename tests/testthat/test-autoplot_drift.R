@@ -12,7 +12,7 @@ test_that("autoplot_drift checks inputs correctly", {
 
   expect_error(
     autoplot_drift(NULL),
-    "`res` must be an object returned by tempssm"
+    "`res` must be an object of class 'tempssm'"
   )
 
   expect_error(

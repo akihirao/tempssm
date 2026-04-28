@@ -11,9 +11,9 @@
 #' @param ci
 #' Logical; if TRUE (default), pointwise confidence intervals are shown
 #' as a shaded ribbon.
-#' 
+#'
 #' @param ylab
-#' Character string giving label of y-axis. 
+#' Character string giving label of y-axis.
 #' Defalut is "temperature".
 #'
 #' @param ci_level
@@ -50,45 +50,43 @@ autoplot_level <- function(res,
                            ci = TRUE,
                            ci_level = 0.95,
                            ylab = "Temperature") {
-  
-  # ---- Input validation ----
-  if (!is.list(res) || is.null(res$kfs)) {
-    stop("`res` must be an object returned by tempssm().",
-         call. = FALSE)
+
+  if (!inherits(res, "tempssm")) {
+    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
   }
-  
+
+  # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
     stop("`ci` must be a single logical value.", call. = FALSE)
   }
-  
-  if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-    stop("`ci_level` must be a numeric value between 0 and 1.",
-         call. = FALSE)
-  }
-  
-  if (is.null(res$kfs$alphahat)) {
-    stop("State estimates not found in `res$kfs$alphahat`.",
-         call. = FALSE)
-  }
-  
-  # ---- Extract estimates ----
-  alpha_hat <- res$kfs$alphahat
-  level <- alpha_hat[, "level"]
-  
-  level_df <- data.frame(
-    time  = time(level),
-    level = as.numeric(level)
-  )
-  
+
+  # ---- check ci_level only if ci is TRUE ----
   if (ci) {
-    ci_res <- stats::confint(res$kfs, level = ci_level)
-    level_df <- cbind(level_df, as.data.frame(ci_res$level))
+    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+        ci_level <= 0 || ci_level >= 1) {
+      stop("`ci_level` must be a numeric value between 0 and 1.",
+           call. = FALSE)
+    }
+  }
+
+  level_ts <- get_level_ts(res, ci = TRUE, ci_level = ci_level)
+
+  level_df <- data.frame(
+    time  = time(level_ts),
+    level = as.numeric(level_ts[,"level"])
+  )
+
+  if (ci) {
+    ci_df = data.frame(
+      lwr = as.numeric(level_ts[,"lwr"]),
+      upr = as.numeric(level_ts[,"upr"])
+      )
+    level_df <- cbind(level_df, ci_df)
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
-  
+
   level_tidy <- tibble::as_tibble(level_df)
-  
+
   # ---- Plot ----
   p <- ggplot2::ggplot(
     level_tidy,
@@ -104,7 +102,7 @@ autoplot_level <- function(res,
       x = "Time",
       y = ylab
     )
-  
+
   if (ci) {
     p <- p +
       ggplot2::geom_ribbon(
@@ -112,7 +110,7 @@ autoplot_level <- function(res,
         alpha = 0.3
       )
   }
-  
+
   p
 }
 
@@ -170,49 +168,47 @@ autoplot_drift <- function(res,
                            ci = TRUE,
                            ci_level = 0.95,
                            ylab = "Temperature") {
-  
-  # ---- Input validation ----
-  if (!is.list(res) || is.null(res$kfs)) {
-    stop("`res` must be an object returned by tempssm().",
-         call. = FALSE)
+
+  if (!inherits(res, "tempssm")) {
+    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
   }
-  
+
+  # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
     stop("`ci` must be a single logical value.", call. = FALSE)
   }
-  
-  if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-    stop("`ci_level` must be a numeric value between 0 and 1.",
-         call. = FALSE)
-  }
-  
-  if (is.null(res$kfs$alphahat)) {
-    stop("State estimates not found in `res$kfs$alphahat`.",
-         call. = FALSE)
-  }
-  
-  # ---- Extract estimates ----
-  alpha_hat <- res$kfs$alphahat
-  slope <- alpha_hat[, "slope"]
-  
-  slope_df <- data.frame(
-    time  = time(slope),
-    slope = as.numeric(slope)
-  )
-  
+
+  # ---- check ci_level only if ci is TRUE ----
   if (ci) {
-    ci_res <- stats::confint(res$kfs, level = ci_level)
-    slope_df <- cbind(slope_df, as.data.frame(ci_res$slope))
+    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+        ci_level <= 0 || ci_level >= 1) {
+      stop("`ci_level` must be a numeric value between 0 and 1.",
+           call. = FALSE)
+    }
+  }
+
+  drift_ts <- get_drift_ts(res, ci = TRUE, ci_level = ci_level)
+
+  drift_df <- data.frame(
+    time  = time(drift_ts),
+    drift = as.numeric(drift_ts[,"drift"])
+  )
+
+  if (ci) {
+    ci_df = data.frame(
+      lwr = as.numeric(drift_ts[,"lwr"]),
+      upr = as.numeric(drift_ts[,"upr"])
+      )
+    drift_df <- cbind(drift_df, ci_df)
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
-  
-  slope_tidy <- tibble::as_tibble(slope_df)
-  
+
+  drift_tidy <- tibble::as_tibble(drift_df)
+
   # ---- Plot ----
   p <- ggplot2::ggplot(
-    slope_tidy,
-    ggplot2::aes(x = .data$time, y = .data$slope)
+    drift_tidy,
+    ggplot2::aes(x = .data$time, y = .data$drift)
   ) +
     ggplot2::geom_line(linewidth = 1.2) +
     ggplot2::labs(
@@ -224,7 +220,7 @@ autoplot_drift <- function(res,
       x = "Time",
       y = ylab
     )
-  
+
   if (ci) {
     p <- p +
       ggplot2::geom_ribbon(
@@ -232,7 +228,7 @@ autoplot_drift <- function(res,
         alpha = 0.3
       )
   }
-  
+
   p
 }
 
@@ -251,9 +247,9 @@ autoplot_drift <- function(res,
 #' @param ci
 #' Logical; if TRUE (default), pointwise confidence intervals are shown
 #' as a shaded ribbon.
-#' 
+#'
 #' @param ylab
-#' Character string giving label of y-axis. 
+#' Character string giving label of y-axis.
 #' Defalut is "temperature".
 #'
 #' @param ci_level
@@ -290,45 +286,43 @@ autoplot_season <- function(res,
                             ci = TRUE,
                             ci_level = 0.95,
                             ylab = "Temperature") {
-  
-  # ---- Input validation ----
-  if (!is.list(res) || is.null(res$kfs)) {
-    stop("`res` must be an object returned by tempssm().",
-         call. = FALSE)
+
+  if (!inherits(res, "tempssm")) {
+    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
   }
-  
+
+  # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
     stop("`ci` must be a single logical value.", call. = FALSE)
   }
-  
-  if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-    stop("`ci_level` must be a numeric value between 0 and 1.",
-         call. = FALSE)
-  }
-  
-  if (is.null(res$kfs$alphahat)) {
-    stop("State estimates not found in `res$kfs$alphahat`.",
-         call. = FALSE)
-  }
-  
-  # ---- Extract estimates ----
-  alpha_hat <- res$kfs$alphahat
-  season <- alpha_hat[, "sea_dummy1"]
-  
-  season_df <- data.frame(
-    time  = time(season),
-    season = as.numeric(season)
-  )
-  
+
+  # ---- check ci_level only if ci is TRUE ----
   if (ci) {
-    ci_res <- stats::confint(res$kfs, level = ci_level)
-    season_df <- cbind(season_df, as.data.frame(ci_res$sea_dummy1))
+    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+        ci_level <= 0 || ci_level >= 1) {
+      stop("`ci_level` must be a numeric value between 0 and 1.",
+           call. = FALSE)
+    }
+  }
+
+  season_ts <- get_season_ts(res, ci = TRUE, ci_level = ci_level)
+
+  season_df <- data.frame(
+    time  = time(season_ts),
+    season = as.numeric(season_ts[,"season"])
+  )
+
+  if (ci) {
+    ci_df = data.frame(
+      lwr = as.numeric(season_ts[,"lwr"]),
+      upr = as.numeric(season_ts[,"upr"])
+      )
+    season_df <- cbind(season_df, ci_df)
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
-  
+
   season_tidy <- tibble::as_tibble(season_df)
-  
+
   # ---- Plot ----
   p <- ggplot2::ggplot(
     season_tidy,
@@ -344,7 +338,7 @@ autoplot_season <- function(res,
       x = "Time",
       y = ylab
     )
-  
+
   if (ci) {
     p <- p +
       ggplot2::geom_ribbon(
@@ -352,7 +346,7 @@ autoplot_season <- function(res,
         alpha = 0.3
       )
   }
-  
+
   p
 }
 
@@ -371,9 +365,9 @@ autoplot_season <- function(res,
 #' @param ci
 #' Logical; if TRUE (default), pointwise confidence intervals are shown
 #' as a shaded ribbon.
-#' 
+#'
 #' @param ylab
-#' Character string giving label of y-axis. 
+#' Character string giving label of y-axis.
 #' Defalut is "temperature".
 #'
 #' @param ci_level
@@ -410,45 +404,43 @@ autoplot_ar1 <- function(res,
                         ci = TRUE,
                         ci_level = 0.95,
                         ylab = "Temperature") {
-  
-  # ---- Input validation ----
-  if (!is.list(res) || is.null(res$kfs)) {
-    stop("`res` must be an object returned by tempssm().",
-         call. = FALSE)
+
+  if (!inherits(res, "tempssm")) {
+    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
   }
-  
+
+  # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
     stop("`ci` must be a single logical value.", call. = FALSE)
   }
-  
-  if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-    stop("`ci_level` must be a numeric value between 0 and 1.",
-         call. = FALSE)
-  }
-  
-  if (is.null(res$kfs$alphahat)) {
-    stop("State estimates not found in `res$kfs$alphahat`.",
-         call. = FALSE)
-  }
-  
-  # ---- Extract estimates ----
-  alpha_hat <- res$kfs$alphahat
-  ar1 <- alpha_hat[, "arima1"]
-  
-  ar1_df <- data.frame(
-    time  = time(ar1),
-    ar1 = as.numeric(ar1)
-  )
-  
+
+  # ---- check ci_level only if ci is TRUE ----
   if (ci) {
-    ci_res <- stats::confint(res$kfs, level = ci_level)
-    ar1_df <- cbind(ar1_df, as.data.frame(ci_res$arima1))
+    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+        ci_level <= 0 || ci_level >= 1) {
+      stop("`ci_level` must be a numeric value between 0 and 1.",
+           call. = FALSE)
+    }
+  }
+
+  ar1_ts <- get_ar1_ts(res, ci = TRUE, ci_level = ci_level)
+
+  ar1_df <- data.frame(
+    time  = time(ar1_ts),
+    ar1 = as.numeric(ar1_ts[,"ar1"])
+  )
+
+  if (ci) {
+    ci_df = data.frame(
+      lwr = as.numeric(ar1_ts[,"lwr"]),
+      upr = as.numeric(ar1_ts[,"upr"])
+      )
+    ar1_df <- cbind(ar1_df, ci_df)
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
-  
+
   ar1_tidy <- tibble::as_tibble(ar1_df)
-  
+
   # ---- Plot ----
   p <- ggplot2::ggplot(
     ar1_tidy,
@@ -464,7 +456,7 @@ autoplot_ar1 <- function(res,
       x = "Time",
       y = ylab
     )
-  
+
   if (ci) {
     p <- p +
       ggplot2::geom_ribbon(
@@ -472,7 +464,7 @@ autoplot_ar1 <- function(res,
         alpha = 0.3
       )
   }
-  
+
   p
 }
 

@@ -12,7 +12,7 @@ test_that("autoplot_season checks inputs correctly", {
 
   expect_error(
     autoplot_season(NULL),
-    "`res` must be an object returned by tempssm"
+    "`res` must be an object of class 'tempssm'"
   )
 
   expect_error(
