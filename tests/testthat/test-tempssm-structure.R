@@ -4,7 +4,16 @@ test_that("tempssm object structure is consistent", {
 
   expect_named(
     res_tempssm,
-    c("model", "fit", "kfs", "data_temp","data_exogenous","ar_order","use_season","call"), ignore.order = TRUE)
+    c("model",
+      "fit",
+      "kfs",
+      "data_temp",
+      "data_exogenous",
+      "ar_order",
+      "use_season",
+      "call",
+      "converged"
+      ), ignore.order = TRUE)
 
   expect_s3_class(res_tempssm$model, "SSModel")
   expect_s3_class(res_tempssm$kfs, "KFS")

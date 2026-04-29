@@ -118,7 +118,7 @@ tempssm <- function(temp_data,
       ### ---- Model with no exogenous variables
       if(is.null(exo_data)){ 
 
-        exogenous_lab <- NULL
+        exo_name <- NULL
         
         #### ---- Build Model -------------------------------
         build_ssm <- SSModel(
@@ -165,13 +165,13 @@ tempssm <- function(temp_data,
         exo_data_checked <- tempssm::.tempssm_check_exo_ts(temp_data = temp_data,
                                                            exo_data = exo_data)
         
-        exogenous_lab <- colnames(exo_data_checked)
-        exogenous_mat <- as.matrix(exo_data_checked)
+        exo_name <- colnames(exo_data_checked)
+        exo_mat <- as.matrix(exo_data_checked)
         
         ## ---- Model definition -----------------------------------------------
         build_ssm <- SSModel(
           H = NA,
-          y ~ exogenous_mat +
+          y ~ exo_mat +
             SSMtrend(
               degree = 2,
               Q = c(list(0), list(NA))
@@ -193,7 +193,7 @@ tempssm <- function(temp_data,
           return(
             SSModel(
               H = exp(pars[H_idx]),
-              y ~ exogenous_mat + 
+              y ~ exo_mat + 
                 SSMtrend(degree = 2,
                          Q = c(list(0), 
                                list(exp(pars[1])))) +
@@ -216,7 +216,7 @@ tempssm <- function(temp_data,
       
       if(is.null(exo_data)){ # Model with no exogenous variables
         
-        exogenous_lab <- NULL
+        exo_name <- NULL
         
         #### ---- Model definition -------------------------------      
         build_ssm <- SSModel(
@@ -256,14 +256,14 @@ tempssm <- function(temp_data,
         exo_data_checked <- tempssm::.tempssm_check_exo_ts(temp_data = temp_data,
                                                            exo_data = exo_data)
         
-        exogenous_lab <- colnames(exo_data_checked)
-        exogenous_mat <- as.matrix(exo_data_checked)
+        exo_name <- colnames(exo_data_checked)
+        exo_mat <- as.matrix(exo_data_checked)
         
         
         ## ---- Model definition -----------------------------------------------
         build_ssm <- SSModel(
           H = NA,
-          y ~ exogenous_mat +
+          y ~ exo_mat +
             SSMtrend(
               degree = 2,
               Q = c(list(0), list(NA))
@@ -281,7 +281,7 @@ tempssm <- function(temp_data,
           return(
             SSModel(
               H = exp(pars[H_idx]),
-              y ~ exogenous_mat + 
+              y ~ exo_mat + 
                 SSMtrend(
                   degree = 2,
                   Q = c(list(0),list(exp(pars[1])))
@@ -334,15 +334,29 @@ tempssm <- function(temp_data,
       data_exogenous = exo_data,
       ar_order = ar_order,
       use_season = use_season,
-      call  = match.call()
+      call  = match.call(),
+      converged = fit2$optim.out$convergence == 0
     )
 
     class(out) <- "tempssm"
     return(out)
   },
   error = function(e) {
-    message("Warning(s): NA is returned. ", e$message)
-    NA
+    message("Warning(s): tempssm model did not converge", e$message)
+    
+    out <- list(
+      model = NULL,
+      fit = NULL,
+      kfs = NULL,
+      data_temp = temp_data,
+      data_exogenous = exo_data,
+      ar_order = ar_order,
+      use_season = use_season,
+      call = match.call(),
+      converged = FALSE
+    )
+    class(out) <- "tempssm"
+    return(out)
   }
   )# close tryCatch
 }
