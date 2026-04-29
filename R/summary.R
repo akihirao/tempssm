@@ -1,9 +1,9 @@
 #' Summary method for tempssm objects
 #'
 #' Provides a concise summary of a fitted linear Gaussian
-#' state-space model estimated by \code{lgssm()}.
+#' state-space model estimated by \code{tempssm()}.
 #'
-#' @param object An object of class \code{"tempssm"} returned by \code{lgssm()}.
+#' @param object An object of class \code{"tempssm"} returned by \code{tempssm()}.
 #' @param ... Additional arguments (currently not used).
 #'
 #' @return A list containing model diagnostics and summaries.
@@ -13,56 +13,51 @@
 #' @export
 summary.tempssm <- function(object, ...) {
 
-  model <- object$model
-  kfs   <- object$kfs
-  opt   <- object$fit$optim.out
-  pars <- object$fit$optim.out$par
+  opt  <- object$fit$optim.out
+  pars <- opt$par
   ar_order <- object$ar_order
   use_season <- object$use_season
 
-  if(use_season){
-    ar_idx <- 3:(2 + ar_order)
+  ## --- indices (as before) ----
+  if (use_season) {
+    ar_idx  <- 3:(2 + ar_order)
     var_idx <- 3 + ar_order
     H_idx   <- 4 + ar_order
-    
     Q_season_est <- exp(pars[2])
-    
-  }else{
-    ar_idx <- 2:(1 + ar_order)
+  } else {
+    ar_idx  <- 2:(1 + ar_order)
     var_idx <- 2 + ar_order
     H_idx   <- 3 + ar_order
-    
     Q_season_est <- NA
   }
 
+  ## --- likelihood & information criteria ---
+  ll  <- logLik(object)
+  k   <- attr(ll, "df")
+  aic <- AIC(object)
+
+  ## --- exogenous variables ---
   exo_data <- object$data_exogenous
-
-  if(is.null(exo_data)){
-    exogenous_variable <- NULL
-  }else{
-    exogenous_variable <- colnames(exo_data)
-  }
-
+  exogenous_variable <- if (is.null(exo_data)) NULL else colnames(exo_data)
   exogenous_coef_ci <- extract_exo_coef_ci(object)
-  k = length(opt$par) + length(exogenous_variable)
-  
+
   res <- list(
     call        = object$call,
-    logLik      = logLik(model),
+    logLik      = as.numeric(ll),
     k           = k,
-    AIC         = -2 * as.numeric(logLik(model)) + 2 * k,
+    AIC         = aic,
     convergence = opt$convergence == 0,
     variances   = list(
-      H = exp(pars[H_idx]),
-      Q_trend = exp(pars[1]),
-      Q_season = Q_season_est,    
-      Q_ar = exp(pars[var_idx])
+      H         = exp(pars[H_idx]),
+      Q_trend   = exp(pars[1]),
+      Q_season  = Q_season_est,
+      Q_ar      = exp(pars[var_idx])
     ),
     coef_ar = list(
       AR_order = ar_order,
-      AR_coef = KFAS::artransform(pars[ar_idx])
+      AR_coef  = KFAS::artransform(pars[ar_idx])
     ),
-    exogenous = exogenous_variable,
+    exogenous      = exogenous_variable,
     exogenous_coef = exogenous_coef_ci
   )
 
@@ -72,11 +67,12 @@ summary.tempssm <- function(object, ...) {
 
 
 
+
 #' Print method for summary of tempssm objects
 #'
 #' Prints a human-readable summary of a fitted
 #' linear Gaussian state-space model estimated by
-#' \code{lgssm()}.
+#' \code{tempssm()}.
 #'
 #' This method is automatically called when a
 #' \code{summary.tempssm} object is printed.

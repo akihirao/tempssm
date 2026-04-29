@@ -52,7 +52,7 @@ autoplot_level <- function(res,
                            ylab = "Temperature") {
 
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
   }
 
   # ---- check ci first ----
@@ -170,7 +170,7 @@ autoplot_drift <- function(res,
                            ylab = "Temperature") {
 
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
   }
 
   # ---- check ci first ----
@@ -288,7 +288,7 @@ autoplot_season <- function(res,
                             ylab = "Temperature") {
 
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
   }
 
   # ---- check ci first ----
@@ -406,7 +406,7 @@ autoplot_ar1 <- function(res,
                         ylab = "Temperature") {
 
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
   }
 
   # ---- check ci first ----

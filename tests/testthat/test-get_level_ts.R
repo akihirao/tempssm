@@ -23,11 +23,11 @@ test_that("get_level_ts checks inputs correctly", {
 
   expect_error(
     get_level_ts(NULL),
-    "`res` must be an object of class 'tempssm'"
+    "`res` must be an object of class 'tempssm'."
   )
 
   expect_error(
     get_level_ts(res_tempssm, ci = TRUE, ci_level = 1.2),
-    "`ci_level` must be a numeric value between 0 and 1"
+    "`ci_level` must be a numeric value between 0 and 1."
   )
 })

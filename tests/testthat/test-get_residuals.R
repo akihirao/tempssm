@@ -14,6 +14,6 @@ test_that("get_residuals checks input class", {
 
   expect_error(
     get_residuals("not a model"),
-    "`res` must be an object of class 'tempssm'"
+    "`res` must be an object of class 'tempssm'."
   )
 })

@@ -17,7 +17,7 @@ The input object \code{x}, invisibly.
 \description{
 Prints a human-readable summary of a fitted
 linear Gaussian state-space model estimated by
-\code{lgssm()}.
+\code{tempssm()}.
 }
 \details{
 This method is automatically called when a

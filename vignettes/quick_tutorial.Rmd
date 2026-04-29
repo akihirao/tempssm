@@ -169,12 +169,12 @@ summary(res_ar3)
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Extract AIC
-AIC_ar1 <- extract_AIC(res)
-AIC_ar2 <- extract_AIC(res_ar2)
-AIC_ar3 <- extract_AIC(res_ar3)
+AIC(res)
+AIC(res_ar2)
+AIC(res_ar3)
 
 AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
-                        AIC = c(AIC_ar1,AIC_ar2,AIC_ar3)) %>% 
+                        AIC = c(AIC(res),AIC(res_ar2),AIC(res_ar3))) %>% 
   mutate(delta_AIC = AIC - min(AIC))
 
 AIC_table_res %>% knitr::kable()
@@ -392,8 +392,8 @@ of model adequacy that balances goodness of fit against model
 complexity. Lower AIC values indicate a more parsimonious model with
 better support from the data.
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-AIC_without <- extract_AIC(res_without)
-AIC_with <- extract_AIC(res_with)
+AIC_without <- AIC(res_without)
+AIC_with <- AIC(res_with)
 
 models_AICs <- tibble(
   model = c("Without","With"),

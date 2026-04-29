@@ -7,7 +7,7 @@
 \method{summary}{tempssm}(object, ...)
 }
 \arguments{
-\item{object}{An object of class \code{"tempssm"} returned by \code{lgssm()}.}
+\item{object}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
 
 \item{...}{Additional arguments (currently not used).}
 }
@@ -16,5 +16,5 @@ A list containing model diagnostics and summaries.
 }
 \description{
 Provides a concise summary of a fitted linear Gaussian
-state-space model estimated by \code{lgssm()}.
+state-space model estimated by \code{tempssm()}.
 }

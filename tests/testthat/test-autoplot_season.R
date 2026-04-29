@@ -12,12 +12,12 @@ test_that("autoplot_season checks inputs correctly", {
 
   expect_error(
     autoplot_season(NULL),
-    "`res` must be an object of class 'tempssm'"
+    "`res` must be an object of class 'tempssm'."
   )
 
   expect_error(
     autoplot_season(res_tempssm, ci_level = 1.5),
-    "`ci_level` must be a numeric value between 0 and 1"
+    "`ci_level` must be a numeric value between 0 and 1."
   )
 
   expect_error(

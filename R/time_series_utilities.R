@@ -1,3 +1,286 @@
+#' Assign variable names to a ts object
+#'
+#' @description
+#' `set_ts_name()` assigns variable (column) names to a time series object
+#' of class \code{ts}. The function supports both univariate and multivariate
+#' time series and ensures that variable names are handled consistently within
+#' the \pkg{tempssm} framework.
+#'
+#' For univariate series, the input is converted to a single-column \code{ts}
+#' object with the specified name. For multivariate series, column names are
+#' assigned directly.
+#'
+#' @param ts_in
+#' A time series object of class \code{ts}. May be univariate or multivariate.
+#'
+#' @param label
+#' A character string or character vector specifying variable names.
+#' For a univariate series, must be a length-one character string.
+#' For a multivariate series, must be either length one (recycled) or the same
+#' length as the number of columns in \code{ts_in}.
+#'
+#' @details
+#' This function does not modify the time attributes of the input series
+#' (e.g., start time, frequency). It only assigns variable names while preserving
+#' the internal structure required by downstream functions such as
+#' \code{tempssm()}.
+#'
+#' @return
+#' A \code{ts} object with assigned variable names.
+#'
+#' @seealso
+#' \code{\link{trim_ts_overlap}},
+#' \code{\link{split_multi_ts}},
+#' \code{\link{tempssm}}
+#'
+#' @examples
+#' ## Univariate example
+#' ts_uni <- ts(
+#'   rnorm(12 * 10),
+#'   start = c(2000, 1),
+#'   frequency = 12
+#' )
+#'
+#' ts_uni_named <- set_ts_name(ts_uni, label = "temperature")
+#'
+#' ## Multivariate example
+#' ts_multi <- ts(
+#'   matrix(rnorm(240), ncol = 3),
+#'   start = c(2000, 1),
+#'   frequency = 12
+#' )
+#'
+#' ts_multi_named <- set_ts_name(
+#'   ts_multi,
+#'   label = c("precip", "solar", "wind")
+#' )
+#'
+#' @export
+set_ts_name <- function(ts_in, label) {
+  
+  if (!inherits(ts_in, "ts")) {
+    stop("`ts_in` must be an object of class `ts`.", call. = FALSE)
+  }
+  
+  n_col <- NCOL(ts_in)
+  
+  ## validate label
+  if (!is.character(label)) {
+    stop("`label` must be a character vector.", call. = FALSE)
+  }
+  
+  if (!(length(label) == 1L || length(label) == n_col)) {
+    stop(
+      "Length of `label` must be 1 or equal to the number of series in `ts_in`.",
+      call. = FALSE
+    )
+  }
+  
+  ## recycle label if needed
+  if (length(label) == 1L) {
+    label <- rep(label, n_col)
+  }
+  
+  ## ensure matrix form for ts
+  x <- if (is.null(dim(ts_in))) {
+    matrix(ts_in, ncol = 1)
+  } else {
+    ts_in
+  }
+  
+  ## assign column names
+  colnames(x) <- label
+  
+  ## reconstruct ts with preserved attributes
+  ts_out <- ts(
+    x,
+    start = start(ts_in),
+    frequency = frequency(ts_in)
+  )
+  
+  return(ts_out)
+}
+
+
+
+#' Trim and align temperature and exogenous time series over their shared period
+#'
+#' @description
+#' `trim_ts_overlap()` aligns a temperature time series and one or more exogenous
+#' time series by trimming them to their shared (overlapping) time period.
+#' The function returns the trimmed series as a named list of `ts` objects,
+#' with consistent variable labels applied for downstream modeling in
+#' \code{tempssm()}.
+#'
+#' Univariate `ts` objects are labeled using \code{set_ts_name()} to ensure a
+#' consistent handling of variable names within the \pkg{tempssm} framework.
+#'
+#' @param temp_ts
+#' A univariate \code{ts} object representing the temperature time series.
+#'
+#' @param exo_ts
+#' A multivariate or univariate \code{ts} object of exogenous variables.
+#' Each column represents a distinct exogenous covariate.
+#'
+#' @param temp_name
+#' Character string giving the variable name for the temperature series.
+#' This name is applied using \code{set_ts_name()}.
+#'
+#' @param exo_name
+#' Optional character vector giving variable names for the exogenous variables.
+#' If \code{NULL}, default names of the form \code{var1}, \code{var2}, \dots
+#' are assigned with a warning.
+#'
+#' @details
+#' The shared time window is determined using \code{ts.intersect()}, and both
+#' temperature and exogenous series are trimmed accordingly.
+#'
+#' For univariate series, variable names are assigned via
+#' \code{set_ts_name()} rather than \code{colnames()} in order to maintain
+#' internal consistency required by \code{tempssm()}.
+#'
+#' @return
+#' A named list with the following elements:
+#' \describe{
+#'   \item{temperature}{A univariate \code{ts} object of the trimmed temperature series.}
+#'   \item{exogenous}{A \code{ts} object of the trimmed exogenous variables.}
+#' }
+#'
+#' @seealso
+#' [ts.intersect()], [set_ts_name()], \code{\link{tempssm}}
+#'
+#' @examples
+#' temp_ts <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
+#' exo_ts  <- ts(matrix(rnorm(200), ncol = 2),
+#'               start = c(2001, 1), frequency = 12)
+#'
+#' trim_ts_overlap(
+#'   temp_ts,
+#'   exo_ts,
+#'   temp_name = "mean_temp",
+#'   exo_name  = c("precip", "solar")
+#' )
+#'
+#' @importFrom stats ts.intersect
+#' @export
+trim_ts_overlap <- function(
+    temp_ts,
+    exo_ts,
+    temp_name = "temp",
+    exo_name = NULL
+) {
+  
+  num_exo_variable <- NCOL(exo_ts)
+  
+  if (is.null(exo_name)) {
+    warning(
+      "`exo_name` is not supplied. Using default names: var1, var2, ..."
+    )
+    exo_name <- paste0("var", seq_len(num_exo_variable))
+  } else {
+    if (length(exo_name) != num_exo_variable) {
+      stop("Length of `exo_name` must equal number of exogenous variables")
+    }
+  }
+  
+  ## overlap
+  temp_exo_ts_overlap <- ts.intersect(temp_ts, exo_ts)
+  
+  temp_ts_overlap <- temp_exo_ts_overlap[, 1, drop = FALSE]
+  exo_ts_overlap  <- temp_exo_ts_overlap[, -1, drop = FALSE]
+  
+  ## labels
+    temp_ts_overlap <- set_ts_name(temp_ts_overlap,
+                                   label=temp_name)
+  
+  if(num_exo_variable==1){
+    exo_ts_overlap <- set_ts_name(exo_ts_overlap,
+                                    label=exo_name)
+  }else{
+    colnames(exo_ts_overlap) <- exo_name
+  }
+  
+  
+  ## output
+  out <- list(
+    temperature = temp_ts_overlap,
+    exogenous   = exo_ts_overlap
+  )
+  
+  return(out)
+}
+
+
+
+#' Split a multivariate ts object into univariate ts objects
+#'
+#' @description
+#' `split_multi_ts()` splits a multivariate \code{ts} object into a list of
+#' univariate \code{ts} objects, one for each variable (column).
+#'
+#' Each resulting univariate series preserves the original time attributes and
+#' is labeled using \code{set_ts_name()} with the corresponding column name.
+#' This ensures consistent handling of variable names within the
+#' \pkg{tempssm} framework.
+#'
+#' @param multi_ts
+#' A multivariate \code{ts} object.
+#' Each column represents a distinct variable.
+#'
+#' @details
+#' The function requires \code{multi_ts} to have valid column names.
+#' If a univariate \code{ts} object is supplied, the function stops with an error.
+#'
+#' @return
+#' A named list of univariate \code{ts} objects.
+#' Each list element corresponds to one column of \code{multi_ts}, and the list
+#' names are taken from \code{colnames(multi_ts)}.
+#'
+#' @seealso
+#' \code{\link{trim_ts_overlap}},
+#' \code{\link{set_ts_name}},
+#' \code{\link{tempssm}}
+#'
+#' @examples
+#' multi_ts <- ts(
+#'   matrix(rnorm(200), ncol = 2),
+#'   start = c(2001, 1),
+#'   frequency = 12
+#' )
+#' colnames(multi_ts) <- c("precip", "solar")
+#'
+#' split_multi_ts(multi_ts)
+#'
+#' @export
+split_multi_ts <- function(multi_ts) {
+  
+  num_variable <- NCOL(multi_ts)
+  
+  if (num_variable == 1) {
+    stop("This `ts` object is univariate and cannot be split.")
+  }
+  
+  if (is.null(colnames(multi_ts))) {
+    stop("`multi_ts` must have column names.")
+  }
+  
+  names_var <- colnames(multi_ts)
+  out <- vector("list", num_variable)
+  
+  for (i in seq_len(num_variable)) {
+    target_name <- names_var[i]
+    out[[i]] <- set_ts_name(
+      multi_ts[, i, drop = FALSE],
+      label = target_name
+    )
+  }
+  
+  names(out) <- names_var
+  return(out)
+}
+
+
+
 #' Convert a data frame of monthly temperature time series to a \code{ts} object
 #'
 #' @details
