@@ -12,7 +12,8 @@ test_that("tempssm object structure is consistent", {
       "ar_order",
       "use_season",
       "call",
-      "converged"
+      "converged",
+      "state_map"
       ), ignore.order = TRUE)
 
   expect_s3_class(res_tempssm$model, "SSModel")

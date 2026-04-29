@@ -258,7 +258,6 @@ Data obtained from the JMA website: https://www.jma.go.jp/jma/indexe.html
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 data(yamaguchi_sst) # load a ts object of SST off Niigata
 head(yamaguchi_sst)
-summary(yamaguchi_sst)
 ```
 
 ### Loading Dataset 2: PDO Index as an Exogenous Variable

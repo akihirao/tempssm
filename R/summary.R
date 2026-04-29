@@ -17,6 +17,7 @@ summary.tempssm <- function(object, ...) {
   pars <- opt$par
   ar_order <- object$ar_order
   use_season <- object$use_season
+  state_map <- object$state_map
 
   ## --- indices (as before) ----
   if (use_season) {
@@ -32,14 +33,14 @@ summary.tempssm <- function(object, ...) {
   }
 
   ## --- likelihood & information criteria ---
-  ll  <- logLik(object)
+  ll  <- logLik.tempssm(object)
   k   <- attr(ll, "df")
-  aic <- AIC(object)
+  aic <- AIC.tempssm(object)
 
   ## --- exogenous variables ---
   exo_data <- object$data_exogenous
   exogenous_variable <- if (is.null(exo_data)) NULL else colnames(exo_data)
-  exogenous_coef_ci <- extract_exo_coef_ci(object)
+  exogenous_coef <- get_exo_coef(object)
 
   res <- list(
     call        = object$call,
@@ -58,7 +59,7 @@ summary.tempssm <- function(object, ...) {
       AR_coef  = KFAS::artransform(pars[ar_idx])
     ),
     exogenous      = exogenous_variable,
-    exogenous_coef = exogenous_coef_ci
+    exogenous_coef = exogenous_coef
   )
 
   class(res) <- "summary.tempssm"

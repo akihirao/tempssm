@@ -27,3 +27,11 @@ Compute the Akaike Information Criterion (AIC) for a model fitted
 by \code{tempssm()}. This method extends the generic
 \code{\link[stats]{AIC}} function.
 }
+\examples{
+\dontrun{
+data(niigata_sst)
+res <- tempssm(niigata_sst)
+aic <- AIC(res)
+}
+
+}

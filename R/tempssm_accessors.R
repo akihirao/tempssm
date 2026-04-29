@@ -182,6 +182,11 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     }
   }
   
+  if (!res$use_season) {
+    stop("Seasonal component is not included in the model.", call. = FALSE)
+  }
+
+
   if (is.null(res$kfs$alphahat) || ! "sea_dummy1" %in% colnames(res$kfs$alphahat)) {
     stop("Seasonal component not found in the smoothing results.", call. = FALSE)
   }
@@ -374,46 +379,64 @@ get_params <- function(res){
 #' pdo_common <- niigata_sst_pdo[,"PDO]
 #' pdo_common <- set_ts_name(nao_common, label = "PDO")
 #' res <- ssm(temp_data = niigata_sst_common,exo_data = pdo_common)
-#' extract_exo_coef_ci(res)
+#' get_exo_coef_ci(res)
 #' }
 #'
 #' @importFrom utils head
 #' @export
-get_exo_coef = function(res, ci_level = 0.95) {
-  
+get_exo_coef <- function(res, ci_level = 0.95) {
+
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm.'", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
   }
-  
-  if (!is.numeric(ci_level) || ci_level <= 0 || ci_level >= 1) {
-    stop("'CI level' must be a numeric value between 0 and 1.", call. = FALSE)
+
+  if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+      ci_level <= 0 || ci_level >= 1) {
+    stop(
+      "`ci_level` must be a numeric value between 0 and 1.",
+      call. = FALSE
+    )
   }
-  
-  exo_vars <- colnames(res$data_exogenous)
-  kfs      <- res$kfs
-  
-  # No exogenous variables
-  if (is.null(exo_vars)) {
+
+  ## ---- handle non-convergence or no exogenous variables ----
+  if (isFALSE(res$converged)) {
     return(NULL)
   }
-  
-  n_exo <- length(exo_vars)
-  
-  # Extract smoothed state estimates
+
+  exo_vars <- res$state_map$exogenous
+  if (is.null(exo_vars) || length(exo_vars) == 0) {
+    return(NULL)
+  }
+
+  ## ---- extract states ----
+  kfs <- res$kfs
   alpha_hat <- kfs$alphahat
-  
-  # Exogenous coefficients are assumed to be the first states
-  beta_hat <- alpha_hat[1, seq_len(n_exo), drop = FALSE]
-  
-  # Confidence intervals
-  ci_obj <- stats::confint(kfs, level = ci_level)[seq_len(n_exo)]
-  ci_mat <- do.call(rbind, lapply(ci_obj, head, n = 1))
-  
+  state_names <- colnames(alpha_hat)
+
+  exo_idx <- match(exo_vars, state_names)
+  if (anyNA(exo_idx)) {
+    stop(
+      "Exogenous states listed in `state_map` were not found in model states.",
+      call. = FALSE
+    )
+  }
+
+  beta_hat <- alpha_hat[, exo_idx, drop = FALSE]
+
+  ## ---- confidence intervals ----
+  ci_all <- stats::confint(kfs, level = ci_level)
+  ci_exo <- ci_all[exo_idx]
+
+  ci_mat <- do.call(
+    rbind,
+    lapply(ci_exo, function(x) x[1, c("lwr", "upr")])
+  )
+
   data.frame(
     Variable    = exo_vars,
-    Coefficient = as.numeric(beta_hat),
-    lwr         = ci_mat[, "lwr"],
-    upr         = ci_mat[, "upr"],
+    Coefficient = as.numeric(beta_hat)[1],
+    lwr         = ci_mat[, "lwr"][1],
+    upr         = ci_mat[, "upr"][1],
     row.names   = NULL
   )
 }
