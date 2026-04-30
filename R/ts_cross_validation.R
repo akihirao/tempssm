@@ -1,3 +1,187 @@
+#' Generate rolling train/test splits for time series
+#'
+#' @description
+#' This function generates training and test splits for time series
+#' cross-validation using a rolling-origin (walk-forward) scheme.
+#' It is intended for model evaluation, including comparison between
+#' simple linear models and state space models.
+#'
+#' @param temp_data
+#' A univariate time series of class \code{ts} representing temperature data.
+#'
+#' @param exo_data
+#' Optional exogenous time series variable(s) of class \code{ts}.
+#' Must have the same length and frequency as \code{temp_data}.
+#'
+#' @param initial
+#' Initial length of the training set (number of observations).
+#' Default is 60.
+#'
+#' @param horizon
+#' Forecast horizon for the test set (number of observations).
+#' Default is 12.
+#'
+#' @param step
+#' Step size between successive folds (number of observations).
+#' Default is 12.
+#'
+#' @param fixed_window
+#' Logical; if \code{TRUE}, a fixed-length training window of size
+#' \code{initial} is used. If \code{FALSE}, an expanding training window
+#' is used. Default is \code{FALSE}.
+#'
+#' @param allow_partial
+#' Logical; if \code{TRUE}, include the final fold even if the remaining
+#' test period is shorter than \code{horizon}. Default is \code{FALSE}.
+#'
+#' @return
+#' A list of folds. Each element is a list containing:
+#' \describe{
+#'   \item{fold}{Fold index.}
+#'   \item{train_ts}{Training time series.}
+#'   \item{test_ts}{Test time series.}
+#'   \item{exo_train_ts}{Training exogenous time series (or \code{NULL}).}
+#'   \item{exo_test_ts}{Test exogenous time series (or \code{NULL}).}
+#'   \item{train_idx}{Index range of the training set (position-based).}
+#'   \item{test_idx}{Index range of the test set (position-based).}
+#'   \item{train_range}{Time range of the training set.}
+#'   \item{test_range}{Time range of the test set.}
+#' }
+#'
+#' @examples
+#' \dontrun{
+#' data(yamaguchi_sst)  # monthly SST near Yamaguchi Prefecture
+#' data(pdo)            # Pacific Decadal Oscillation
+#'
+#' # synchronize series
+#' common_ts <- ts.intersect(yamaguchi_sst, pdo)
+#' temp_ts <- common_ts[, "yamaguchi_sst"]
+#' pdo_ts  <- common_ts[, "pdo"]
+#' pdo_ts <- set_ts_name(pdo_ts, label="PDO") # label
+#'
+#' folds <- ts_train_test_split(
+#'   temp_data = temp_ts,
+#'   exo_data  = pdo_ts,
+#'   initial   = 60,
+#'   horizon   = 12,
+#'   step      = 12
+#' )
+#'
+#' # inspect first fold
+#' folds[[1]]$train_ts
+#' folds[[1]]$test_ts
+#' }
+#'
+#' @importFrom stats window time frequency
+#' @export
+ts_train_test_split <- function(temp_data,
+                                exo_data = NULL,
+                                initial = 60,
+                                horizon = 12,
+                                step = 12,
+                                fixed_window = FALSE,
+                                allow_partial = FALSE) {
+
+  ## ---- Input checks ---------------------------------------------------
+  if (!inherits(temp_data, "ts")) {
+    stop("`temp_data` must be a 'ts' object.", call. = FALSE)
+  }
+
+  if (!is.null(dim(temp_data)) && ncol(temp_data) != 1) {
+    stop("`temp_data` must be a univariate 'ts' object.", call. = FALSE)
+  }
+
+  freq <- frequency(temp_data)
+  if (freq <= 1) {
+    stop("`temp_data` must have frequency > 1.", call. = FALSE)
+  }
+
+  if (any(c(initial, horizon, step) < 1)) {
+    stop("`initial`, `horizon`, and `step` must be positive integers.",
+         call. = FALSE)
+  }
+
+  n <- length(temp_data)
+  if (initial >= n) {
+    stop("`initial` must be smaller than the length of the time series.",
+         call. = FALSE)
+  }
+
+  if (!is.null(exo_data)) {
+
+    n_exo <- NCOL(exo_data)
+
+    if (!inherits(exo_data, "ts")) {
+      stop("`exo_data` must be a 'ts' object.", call. = FALSE)
+    }
+    if (length(exo_data) != n) {
+      stop("`exo_data` must have the same length as `temp_data`.",
+           call. = FALSE)
+    }
+    if (frequency(exo_data) != freq) {
+      stop("`exo_data` must have the same frequency as `temp_data`.",
+           call. = FALSE)
+    }
+    if(is.null(colnames(exo_data))){
+      exo_data <- tempssm::set_ts_name(exo_data,level = paste0("var",seq_len(n_exo)))
+    }
+  }
+
+  ## ---- Utility: slice ts by index ------------------------------------
+  ts_slice <- function(x, i_start, i_end) {
+    if (is.null(x)) return(NULL)
+    window(
+      x,
+      start = time(x)[i_start],
+      end   = time(x)[i_end]
+    )
+  }
+
+  ## ---- Rolling split --------------------------------------------------
+  folds <- list()
+  k <- 1
+  train_end <- initial
+
+  while (TRUE) {
+
+    train_start <- if (fixed_window) {
+      max(1, train_end - initial + 1)
+    } else {
+      1
+    }
+
+    test_start <- train_end + 1
+    test_end   <- train_end + horizon
+
+    if (test_start > n) break
+
+    if (test_end > n) {
+      if (!allow_partial) break
+      test_end <- n
+    }
+
+    folds[[k]] <- list(
+      fold = k,
+      train_ts = ts_slice(temp_data, train_start, train_end),
+      test_ts  = ts_slice(temp_data, test_start, test_end),
+      exo_train_ts = ts_slice(exo_data, train_start, train_end),
+      exo_test_ts  = ts_slice(exo_data, test_start, test_end),
+      train_idx = c(train_start, train_end),
+      test_idx  = c(test_start, test_end),
+      train_range = time(temp_data)[c(train_start, train_end)],
+      test_range  = time(temp_data)[c(test_start, test_end)]
+    )
+
+    train_end <- train_end + step
+    if (train_end >= n) break
+    k <- k + 1
+  }
+
+  folds
+}
+
+
+
 #' Generate rolling-origin train/test splits for time series cross-validation
 #'
 #' This function splits a monthly time series (\code{frequency = 12})
