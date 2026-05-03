@@ -29,7 +29,6 @@ Imports:
     tseries,
     moments,
     patchwork,
-    future.apply,
     httr2
 Suggests:
     testthat (>= 3.0.0),
@@ -40,6 +39,7 @@ Suggests:
     cli,
     cowplot,
     future,
+    future.apply,
     parallelly
 VignetteBuilder: knitr
 Config/testthat/edition: 3

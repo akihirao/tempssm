@@ -1,3 +1,4 @@
+#' @importFrom stats start end
 #' @export
 print.tempssm <- function(x, ...) {
 
@@ -11,8 +12,8 @@ print.tempssm <- function(x, ...) {
   cat("  Length       :", length(temp_data), "\n")
   cat("  Frequency    :", frequency(temp_data), "\n")
   cat("  Start / End  :", 
-      paste(start(temp_data), collapse = "-"), " / ",
-      paste(end(temp_data), collapse = "-"), "\n\n")
+      paste(stats::start(temp_data), collapse = "-"), " / ",
+      paste(stats::end(temp_data), collapse = "-"), "\n\n")
 
   exo_data <- x$data_exogenous
   if(is.null(exo_data)){

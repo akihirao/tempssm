@@ -64,27 +64,10 @@ library(readr)
 library(dplyr)
 library(ggplot2)
 
-library(future)
-library(parallelly)
 
-has_future <- requireNamespace("future", quietly = TRUE)
+library(future.apply)
+plan(multisession)  # Windows / Mac / Linux 
 
-if (has_future) {
-  if (future::nbrOfWorkers() == 1) {
-
-    # minimqnized setting for vignette
-    workers <- min(2, future::availableCores())
-
-    if (future::supportsMulticore()) {
-      future::plan(future::multicore, workers = workers)
-    } else {
-      future::plan(future::multisession, workers = workers)
-    }
-
-  }
-} else {
-  message("future not available; running sequentially")
-}
 
 ```
 
@@ -339,10 +322,10 @@ res_without <- tempssm(yamaguchi_sst_trim,ar=2)
 summary(res_without)
 ```
 
-The fitted model converges successfully and includes a first-order
-autoregressive [AR(1)] component.
+The fitted model converges successfully and includes second-order
+autoregressive [AR(2)] component.
 Prior testing of autoregressive orders from AR(1) to AR(3) indicated
-that AR(1) provided the best model fit for both the baseline model and
+that AR(2) provided the best model fit for both the baseline model and
 the model including the exogenous PDO index.
 For brevity, the detailed results of this comparison are omitted here;
 interested users are encouraged to explore alternative AR orders within
@@ -390,6 +373,7 @@ Model selection criteria such as the AIC provide a quantitative measure
 of model adequacy that balances goodness of fit against model
 complexity. Lower AIC values indicate a more parsimonious model with
 better support from the data.
+
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 AIC_without <- AIC(res_without)
 AIC_with <- AIC(res_with)
@@ -522,62 +506,74 @@ folds_with <- ts_train_test_split(
   allow_partial = FALSE
   )
 
-## Performe tsCV for the model without the exogenous variable of NAO
-cv_meta_without <- rolling_origin_tsCV(folds_without,
-                                       fold_ids=seq(1:8), 
-                                       ar_order=1) 
-# Hold on a few minutes 
+#if(FALSE){
+# *****************************************
+# Executing time-series cross validation
+#
+#-------------------------------------------------- 
+# Model without the exogenous variable of PDA index
+# Single processing
+#cv_without_results <- ts_cv_run(folds_without, ar_order = 2, use_season = TRUE)
 
-cv_without <- map(cv_meta_without, pluck, "CV", .default = NULL)
+# Parallel processing
+cv_without_results <- future_lapply(
+  folds_without,
+  ts_cv_run_fold,
+  ar_order = 2,
+  use_season = TRUE,
+  future.seed = TRUE
+)
 
-cv_without_tidy <- cv_without %>%
-  map(~ as.data.frame(.x) %>%tibble::rownames_to_column(var = "set")) %>%
-  purrr::list_rbind(names_to = "cv_id") %>%
-  mutate(Model="Without") %>%
-  dplyr::relocate(Model,cv_id, set)  # 識別列を先頭に
+# Couputing assessment indexes
+metrics_without <- lapply(cv_without_results, compute_cv_metrics)
 
-print(cv_without_tidy)
-
-
-
-## Performe tsCV for the model with the exogenous variable of NAO
-cv_meta_with <- rolling_origin_tsCV(folds_with,
-                                    fold_ids=seq(1:8),
-                                    ar_order=1)
-# Hold on a few minutes 
-
-cv_with <- map(cv_meta_with, pluck, "CV", .default = NULL)
+# tidy summary
+cv_without_tbl <- ts_cv_collect(cv_without_results, metrics_without) %>%
+  mutate(Model="Without")
 
 
-cv_with_tidy <- cv_with %>%
-  map(~ as.data.frame(.x) %>%tibble::rownames_to_column(var = "set")) %>%
-  purrr::list_rbind(names_to = "cv_id") %>%
-  mutate(Model="With") %>%
-  dplyr::relocate(Model,cv_id, set)  # Reorder columns to place identifier variables first
+#-------------------------------------------------- 
+# Model with the exogenous variable of PDA index
+# Single processing
+#cv_with_results <- ts_cv_run(folds_with, ar_order = 2, use_season = TRUE)
 
-print(cv_with_tidy)
+# Parallel processing
+cv_with_results <- future_lapply(
+  folds_with,
+  ts_cv_run_fold,
+  ar_order = 2,
+  use_season = TRUE,
+  future.seed = TRUE
+)
 
-cv_tidy <- bind_rows(cv_without_tidy,cv_with_tidy)
-cv_tidy$Model <- factor(cv_tidy$Model,
-                        levels=c("Without","With"))
+# Couputing assessment indexes
+metrics_with <- lapply(cv_with_results, compute_cv_metrics)
 
-plot_MAE <- ggplot(data=cv_tidy,
-                   aes(x=Model,y=MAE)) +
+# tidy summary
+cv_with_tbl <- ts_cv_collect(cv_with_results, metrics_with) %>%
+  mutate(Model="With")
+#}
+
+cv_tbl <- bind_rows(cv_without_tbl, cv_with_tbl)
+
+
+plt_MAE <- ggplot(data=cv_tbl,
+                  aes(x=Model,y=MAE)) +
   geom_boxplot()
 
-plot_MAPE <- ggplot(data=cv_tidy,
-                   aes(x=Model,y=MAPE)) +
-  geom_boxplot()
-
-plot_MASE_naive <- ggplot(data=cv_tidy,
+plt_MASE_naive <- ggplot(data=cv_tbl,
                    aes(x=Model,y=MASE_naive)) +
   geom_boxplot()
 
-plot_MASE_snaive <- ggplot(data=cv_tidy,
-                   aes(x=Model,y=MASE_snaive)) +
+plt_MASE_seasonal <- ggplot(data=cv_tbl,
+                   aes(x=Model,y=MASE_seasonal)) +
   geom_boxplot()
 
-cowplot::plot_grid(plot_MAE,plot_MAPE,plot_MASE_naive,plot_MASE_snaive,nrow=1)
+
+plt_tsCV <- plt_MAE + plt_MASE_naive + plt_MASE_seasonal + patchwork::plot_layout(nrow=1)
+
+plot(plt_tsCV)
+
 ```
 
 Analysis of tsCV shows that the model with the exogenous variable is better than 
@@ -586,8 +582,8 @@ set to eigth to reduce execution time. Please ensure you perform a sufficient
 number of iterations during actual validation.
 
 Taken together, the results consistently support the inclusion of the
-NAO index as an exogenous variable in the state-space model.
-The NAO coefficient is statistically significant, indicating a clear
+PDO index as an exogenous variable in the state-space model.
+The PDO coefficient is statistically significant, indicating a clear
 local effect on temperature variability, while the improvement in AIC
 demonstrates enhanced overall model fit. Furthermore, time-series 
 cross-validation confirms that this improvement translates into 
