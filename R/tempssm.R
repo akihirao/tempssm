@@ -82,7 +82,7 @@ tempssm <- function(temp_data,
     }
   
     expected_len <- 2 + ar_order + 2
-    if (!is.numeric(inits) != expected_len) {
+    if (!is.numeric(inits) && length(inits) != expected_len) {
       stop(paste("inits must be length ", expected_len))
     }
   
