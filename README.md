@@ -34,11 +34,8 @@ devtools::install_github("akihirao/tempssm")
 devtools::install_github("akihirao/tempssm", build_vignettes=TRUE)
 ```
 
-# Quick Tutorial
-```r
-browseVignettes("tempssm")
-```
-https://github.com/akihirao/tempssm/blob/main/vignettes/quick_tutorial.md
+# Tutorial
+https://github.com/akihirao/tempssm/blob/main/vignettes/tutorial.pdf
 
 
 # Simple usage

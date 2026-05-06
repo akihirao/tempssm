@@ -1,9 +1,11 @@
-R package **tempssm** provides tools for state-space analysis of
-temperature time series. It provides tools for fitting linear Gaussian
-state-space models and conducting inference via Kalman filtering and
-smoothing, implemented using the KFAS R package (Helske, 2017).
+## Summary
 
-## Key features
+R package **tempssm** provides tools for state-space analysis of
+temperature time series, focusing on linear Gaussian state-space models
+estimated via Kalman filtering and smoothing as implemented in the KFAS
+package (Helske, 2017).
+
+### Key features
 
 - Designed for temperature time series with arbitrary seasonal
   frequencies; currently validated primarily on monthly data
@@ -16,17 +18,94 @@ smoothing, implemented using the KFAS R package (Helske, 2017).
   component (default: AR(1))
 - Implements time-series cross-validation for model evaluation
 
-## Input Data Format
+## Sate-space model in **tempssm**
 
-Input data for **tempssm** must be supplied as an R `ts` object, which
-represents a regularly spaced time series (see `?stats::ts` or
-<https://stat.ethz.ch/R-manual/R-devel/library/stats/html/ts.html>).
+We consider an extended version of the Basic Structural Time Series
+Model (BSTSM) to describe temperature time series with explicit
+long-term trend, seasonal variability, and auto-regressive component.
+The observation equation is given by
+``` math
+y_t = \alpha_t + v_t \tag{1}
+```
+where $`t`$ denotes the time index, $`y_t`$ is the observed temperature,
+$`\alpha_t`$ is the latent state, and $`v_t`$ is the observation error.
 
-To support data preparation, the package includes utility functions that
-convert external observational data into `ts` objects suitable for model
-fitting (see Appendix).
+The latent state is decomposed as
+``` math
+\alpha_t = \mu_t + s_t + r_t + E_t \tag{2}
+```
+where $`\mu_t`$ is the level (trend), $`s_t`$ the seasonal component,
+$`r_t`$ a stationary autoregressive component, and $`E_t`$ the
+contribution of exogenous variables.
 
-## To Install
+The level component follows a second-order stochastic process:
+``` math
+\mu_t = 2\mu_{t-1} - \mu_{t-2} + \zeta_t, \qquad \zeta_t \sim \mathcal{N}(0, \sigma_\zeta^2) \tag{3}
+```
+where $`\zeta_t`$ is the process error of level component.
+
+The seasonal component is modeled with a sum-to-zero constraint:
+``` math
+s_t = - \sum_{i=t-f}^{t-1} s_i + \omega_t, \qquad \omega_t \sim \mathcal{N}(0, \sigma_\omega^2) \tag{4}
+```
+where $`\omega_t`$ is the process error of seasonal component and $`f`$
+denotes the seasonal frequency (e.g., $`f=12`$ for monthly data). This
+formulation ensures that seasonal effects are identifiable and
+comparable across different temporal resolutions. By enforcing the
+sum-to-zero constraint over one full seasonal cycle, the seasonal
+component captures requiring deviations from the underlying trend
+without introducing long-term drift. If model without seasonal component
+was applied, the seasonal term $`s_t`$ is exluded.
+
+The autoregressive component follows an $`l`$th-order AR process:
+``` math
+r_t = \phi_1 r_{t-1} + \phi_2 r_{t-2} + \cdots + \phi_l r_{t-l} + \tau_t,
+\qquad \tau_t \sim \mathcal{N}(0, \sigma_\tau^2) \tag{5}
+```
+where $`\tau_t`$ is the process error of autoregressive component. The
+process error terms ($`\zeta_t`$, $`\omega_t`$, and $`\tau_t`$) are
+assumed to be mutually independent and normally distributed.
+
+The exogenous component is defined as
+``` math
+E_t = \beta_1 x_{1,t} + \beta_2 x_{2,t} + \cdots + \beta_m x_{m,t}. \tag{6}
+```
+The exogenous term $`E_t`$ represents the influence of external factors,
+which may include large-scale climate indices, regional environmental
+variables, or other physically motivated predictors relevant to the
+observed temperature time series. Each exogenous variable enters the
+model linearly through a time-invariant regression coefficient
+($`\beta_1`$, $`\beta_2`$, …, $`\beta_m`$) allowing both the magnitude
+and direction of its contribution to be estimated jointly with the state
+components.
+
+When applying the model to observational data, the total number of
+parameters to be estimated ($`k`$) depends on the order of
+autoregressive component and the number of exogenous variables included.
+For example, in a model with a second-order autoregressive component and
+no exogenous covariates, six parameters are estimated: the observation
+error variance, the process error variances for level, seasonal, and
+autoregressive components ($`v_t`$, $`\zeta_t`$, $`\omega_t`$, and
+$`\tau_t`$), and the first- and second-order autoregressive coefficients
+($`\phi_1`$ and $`\phi_2`$). In the general case with an $`l`$-order
+autoregressive component and $`m`$ exogenous variables, a total of
+$`k = 4 + l + m`$ parameters are estimated.
+
+The core implementation of parameter estimation procedure is based on
+the supplementary code provided by Baba et al. (2024). Parameter
+estimation is performed using a two-step optimization strategy
+recommended by Helske (2017). In the first step, model parameters are
+estimated using the Nelder-Mead method (Nelder & Mead, 1965) with
+user-specified initial values. In the second step, the parameter
+estimates obtained in the first step are used as initial values for
+further refinement using the BFGS algorithm (Shanno, 1970). The model
+execution function, ‘tempssm()’, returns both filtering and smoothing
+estimates. Unless otherwise stated, all figures presented in this study
+are based on the smoothed estimates.
+
+## How to use
+
+### To Install
 
 ``` r
 if(!require("devtools"))
@@ -34,7 +113,7 @@ if(!require("devtools"))
 devtools::install_github("akihirao/tempssm")
 ```
 
-## Set Ennvironment for Practices
+### Set Ennvironment
 
 ``` r
 ## Set libraries
@@ -52,11 +131,21 @@ library(future.apply)
 plan(multisession)  # Windows / Mac / Linux 
 ```
 
-## Practice I: Applying a Linear Gaussian State-Space Model
+### Input Data Format
 
-## to a Univariate Temperature Time Series
+Input data for **tempssm** must be supplied as an R `ts` object, which
+represents a regularly spaced time series (see `?stats::ts` or
+<https://stat.ethz.ch/R-manual/R-devel/library/stats/html/ts.html>).
 
-### Objective
+To support data preparation, the package includes utility functions that
+convert external observational data into `ts` objects suitable for model
+fitting (see Appendix).
+
+### Practice I: Applying a Linear Gaussian State-Space Model
+
+### to a Univariate Temperature Time Series
+
+#### Objective
 
 The objective of this practice is to demonstrate the basic application
 of a linear Gaussian state-space model to a univariate temperature time
@@ -64,7 +153,7 @@ series. This example serves as an introduction to the modeling framework
 and highlights the role of autoregressive dynamics without the inclusion
 of exogenous variables.
 
-### Loading the Dataset
+#### Loading the Dataset
 
 A sample sea surface temperature (SST) dataset is included in the
 package.
@@ -106,7 +195,7 @@ The dataset includes two missing observations. Even if missing
 observations was in your dataset included, there are retained and
 handled explicitly within the state-space modeling framework.
 
-### Plotting the Monthly SST Time Series
+#### Plotting the Monthly SST Time Series
 
 We begin by visualizing the monthly SST time series to examine its
 overall structure, including apparent trends, seasonal variability, and
@@ -122,9 +211,9 @@ plt_niigata_sst <- forecast::autoplot(niigata_sst) +
 plot(plt_niigata_sst)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](tutorial_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
-### Applying a Linear Gaussian State-Space Model
+#### Applying a Linear Gaussian State-Space Model
 
 Here, we apply linear Gaussian state-space models to the univariate SST
 time series and examine the effect of the autoregressive (AR) order on
@@ -224,7 +313,7 @@ summary(res_ar3)
     ##   Coefficient of AR2: 0.0118387 
     ##   Coefficient of AR3: -0.005368551
 
-### Model selection based on AIC
+#### Model selection based on AIC
 
 ``` r
 # Extract AIC
@@ -261,7 +350,7 @@ AIC_table_res %>% knitr::kable()
 
 AR1 model is better than the other models.
 
-### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
+#### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
 We visualize the estimated long-term evolution of temperature levels and
 their rates of change (drift) by extracting the corresponding latent
@@ -274,7 +363,7 @@ trend behavior to be examined more clearly.
 autoplot(res)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](tutorial_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 Rhe level component shows a persistent upward trend in sea surface
 temperature over the study period. The drift component indicates a
@@ -283,7 +372,7 @@ represent 95% confidence intervals for the estimated latent states,
 illustrating the uncertainty associated with the inferred long-term
 trend and its rate of change.
 
-### Simple Model Diagnostics
+#### Simple Model Diagnostics
 
 ``` r
 diag <- diagnose_residuals(res)
@@ -299,11 +388,12 @@ print(diag)
 plot_residual_diagnostics(res)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](tutorial_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
 Autocorrelation of residuals was not significant by Ljung-Box test (P \>
 0.05).
 
-### Estimated Parameters and Components
+#### Estimated Parameters and Components
 
 ``` r
 # Smoothing estimates
@@ -349,11 +439,11 @@ print(mean_drift_year)
 
 Average annual increase in SST is approximately 0.05 °C.
 
-## Practice II: Applying a Linear Gaussian State-Space Model
+### Practice II: Applying a Linear Gaussian State-Space Model
 
-## to a Temperature Time Series with an Exogenous Variable
+### to a Temperature Time Series with an Exogenous Variable
 
-### Objective
+#### Objective
 
 The objective of this practice is to investigate and quantify the
 influence of a large-scale climate mode on temperature variations.
@@ -361,7 +451,7 @@ Specifically, we examine the effect of the Pacific Decadal Oscillation
 (PDO) as an exogenous variable on SST observed off Yamaguchi Prefecture,
 Japan, within a state-space modeling framework.
 
-### Loading the Dataset 1: SST
+#### Loading the Dataset 1: SST
 
 A sample sea surface temperature (SST) dataset is included in the
 package.
@@ -384,7 +474,7 @@ head(yamaguchi_sst)
     ##           Jan      Feb      Mar      Apr      May      Jun
     ## 1982 14.85516 13.36500 13.55645 14.29933 17.72419 21.53000
 
-### Loading Dataset 2: PDO Index as an Exogenous Variable
+#### Loading Dataset 2: PDO Index as an Exogenous Variable
 
 - **Data**: Monthly Pacific Decadal Oscillation (PDO) index (JMA)  
 - **Period**: January 1901 to December 2025
@@ -408,7 +498,7 @@ head(pdo)
     ##          Jan     Feb     Mar     Apr     May     Jun
     ## 1901  1.0040  0.7403  0.9011 -0.0109 -0.2325 -0.6810
 
-### Intersecting the Temperature and PDO Time Series
+#### Intersecting the Temperature and PDO Time Series
 
 For state-space modeling with exogenous variables, all input time series
 must share a common and aligned time index. In this step, the
@@ -456,7 +546,7 @@ end(pdo_trim)
 
     ## [1] 2025   12
 
-### Plotting Time Series of Air Temperature and NAO Index
+#### Plotting Time Series of Air Temperature and NAO Index
 
 ``` r
 plt_yamaguchi_sst_trim <- forecast::autoplot(yamaguchi_sst_trim) +
@@ -474,9 +564,9 @@ plt_pdo <- forecast::autoplot(pdo_trim) +
 plt_yamaguchi_sst_trim + plt_pdo + patchwork::plot_layout(ncol=1)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](tutorial_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
-### Applying a Model Without an Exogenous Variable
+#### Applying a Model Without an Exogenous Variable
 
 We first fit a baseline state-space model that does not include any
 exogenous variables. This model serves as a reference case in which
@@ -522,7 +612,7 @@ This baseline model provides a useful benchmark for evaluating the
 additional explanatory power of the PDO index introduced in the
 following section.
 
-### Applying Model With an Exogenous Variable
+#### Applying Model With an Exogenous Variable
 
 ``` r
 res_with <- tempssm(temp_data = yamaguchi_sst_trim,
@@ -585,7 +675,7 @@ temperature variability.
 We next compare the overall goodness of fit between the two models using
 the Akaike Information Criterion (AIC).
 
-### Model comparison based on AICs
+#### Model comparison based on AICs
 
 Model selection criteria such as the AIC provide a quantitative measure
 of model adequacy that balances goodness of fit against model
@@ -628,7 +718,7 @@ for inference.
 To further assess the robustness and predictive performance of the
 models, we employ time-series cross-validation as described bellow.
 
-### Plotting Level and Drift Components with 95% CI
+#### Plotting Level and Drift Components with 95% CI
 
 ``` r
 plt_level_without_ts <- autoplot(res_without,
@@ -650,7 +740,7 @@ plt_level_drift_without_ts <- plt_level_without_ts +
 plot(plt_level_drift_without_ts)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](tutorial_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
 
 ``` r
 plt_level_with_ts <- autoplot(res_with,
@@ -672,11 +762,11 @@ plt_level_drift_with_ts <- plt_level_with_ts +
 plot(plt_level_drift_with_ts)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
+![](tutorial_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
 
 Gray areas in the above graph show 95% confidence interval.
 
-### Time Series Cross-Validation (tsCV)
+#### Time Series Cross-Validation (tsCV)
 
 Time series cross-validation (tsCV) approach evaluates model performance
 based on out-of-sample prediction errors while respecting the temporal
@@ -702,40 +792,41 @@ AIC is also reflected in out-of-sample predictive skill.
 # First training data: January 1982–December 2017;
 # First test data: one year starting from January 2018
 # 
-# Second training data: January 1875–December 1960;
-# Second test data: one year starting from January 1961
+# Second training data: January 1983–December 2018;
+# Second test data: one year starting from January 2019
 # ...
 # 
-# Eighth training data: January 1875–December 2020;
-# Eighth test data: one year starting from January 2021
+# Eighth training data: January 1989–December 2024;
+# Eighth test data: one year starting from January 2025
 #
-# These folds are automatically generated by the ts_cv_folds() function.
-# Generate training and test dataset
+# These folds are automatically generated by the ts_train_test_split() function.
 
+# Generate training and test dataset for model without PDO index
 folds_without <- ts_train_test_split(
   temp_data = yamaguchi_sst_trim,
   exo_data = NULL,
-  initial = 432, # 1032 monthly observations from Jan 1865 to Dec 1950
+  initial = 432, # 432 monthly observations from Jan 1982 to Dec 2017
   horizon = 12, # forecast 12 monthly time-series
   step = 12, # training data is moved by 12 months (1 years) steps
-  fixed_window = FALSE,
+  fixed_window = TRUE,
   allow_partial = FALSE
   )
 
+# Generate training and test dataset for model with PDO index
 folds_with <- ts_train_test_split(
   temp_data = yamaguchi_sst_trim,
   exo_data = pdo_trim,
-  initial = 432, # 1032 monthly observations from Jan 1865 to Dec 1950
+  initial = 432, # 432 monthly observations from Jan 1982 to Dec 2017
   horizon = 12, # forecast 12 monthly time-series
   step = 12, # training data is moved by 12 months (10 years) steps
-  fixed_window = FALSE,
+  fixed_window = TRUE,
   allow_partial = FALSE
   )
 
-#if(FALSE){
+
 # *****************************************
 # Executing time-series cross validation
-#
+
 #-------------------------------------------------- 
 # Model without the exogenous variable of PDA index
 # Single processing
@@ -801,7 +892,7 @@ plt_tsCV <- plt_MAE + plt_MASE_naive + plt_MASE_seasonal + patchwork::plot_layou
 plot(plt_tsCV)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](tutorial_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 Analysis of tsCV shows that the model with the exogenous variable is
 better than the model without one. In this tutorial, the number of tsCV
@@ -819,7 +910,29 @@ out-of-sample predictive performance.
 These complementary lines of evidence provide a robust and multifaceted
 justification for adopting the exogenous-variable model.
 
-## Appendix: Utility Functions
+# 4. References
+
+The statistical modeling framework implemented in `tempssm` is based on
+the methodology described in Baba et al. (2024), with implementation
+details adapted from the accompanying supplementary materials and code
+repository.
+
+Baba, S., Ishii, H., and Yoshiyama, T. (2024). Estimating sea
+temperature trends using a linear Gaussian state-space model in
+Jogashima, Kanagawa, Japan. *Bulletin of the Japanese Society of
+Fisheries Oceanography*, 88(3), 190–199. (In Japanese with an English
+abstract.) <https://doi.org/10.34423/jsfo.88.3_190>
+
+Baba, S. (2024). Supplementary code and test data for estimating sea
+temperature trends using a linear Gaussian state-space model. GitHub
+repository:
+<https://github.com/logics-of-blue/sea-temperature-trend-jogashima>
+
+Helske, J. (2017). KFAS: Exponential Family State Space Models in R.  
+*Journal of Statistical Software*, 78(10), 1–39.
+<https://doi.org/10.18637/jss.v078.i10>
+
+# Appendix: Utility Functions
 
 ### Utility function: `read_monthly_temp_ts()`
 
@@ -952,7 +1065,7 @@ niigata_sst_anomaly <- compute_temp_anomaly(niigata_sst)
 plot(niigata_sst_anomaly, ylab=expression(Anomaly~(degree*C))) 
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
+![](tutorial_files/figure-gfm/unnamed-chunk-21-1.png)<!-- -->
 
 ### Utility function: `compute_monthly_climatology()`
 
@@ -999,30 +1112,8 @@ plt_monthly_seasonal_cycle_niigata_sst <- ggplot(
 plot(plt_monthly_seasonal_cycle_niigata_sst)
 ```
 
-![](quick_tutorial_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
+![](tutorial_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 These utility functions are provided to support data preparation
 and　exploratory analysis and are not required for the core modeling
 functionality of tempssm.
-
-## References
-
-The statistical modeling framework implemented in `tempssm` is based on
-the methodology described in Baba et al. (2024), with implementation
-details adapted from the accompanying supplementary materials and code
-repository.
-
-Baba, S., Ishii, H., and Yoshiyama, T. (2024). Estimating sea
-temperature trends using a linear Gaussian state-space model in
-Jogashima, Kanagawa, Japan. *Bulletin of the Japanese Society of
-Fisheries Oceanography*, 88(3), 190–199. (In Japanese with an English
-abstract.) <https://doi.org/10.34423/jsfo.88.3_190>
-
-Baba, S. (2024). Supplementary code and test data for estimating sea
-temperature trends using a linear Gaussian state-space model. GitHub
-repository:
-<https://github.com/logics-of-blue/sea-temperature-trend-jogashima>
-
-Helske, J. (2017). KFAS: Exponential Family State Space Models in R.  
-*Journal of Statistical Software*, 78(10), 1–39.
-<https://doi.org/10.18637/jss.v078.i10>
