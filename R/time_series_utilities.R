@@ -707,6 +707,7 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #' provided by the Japan Meteorological Agency (JMA),
 #' and returns the data as a \code{zoo} object indexed by date.
 #'
+#' @importFrom magrittr %>%
 #' @importFrom readr read_csv
 #' @importFrom rlang .data
 #' @importFrom httr2
@@ -763,8 +764,8 @@ get_jma_sst_zoo <- function(sea_area_id) {
   )
 
   # ---- HTTP request ----
-  resp <- httr2::request(url) |>
-    httr2::req_user_agent(.user_agent()) |>
+  resp <- httr2::request(url) %>%
+    httr2::req_user_agent(.user_agent()) %>%
     httr2::req_error(body = function(resp) {
       paste0(
         "Failed to retrieve SST data for sea_area_id = '",
@@ -772,7 +773,7 @@ get_jma_sst_zoo <- function(sea_area_id) {
         "'.\nHTTP status: ",
         httr2::resp_status(resp)
       )
-    }) |>
+    }) %>%
     httr2::req_perform()
 
   # ---- parse ----
@@ -785,12 +786,12 @@ get_jma_sst_zoo <- function(sea_area_id) {
     stop("Retrieved data has unexpected format.", call. = FALSE)
   }
 
-  sst_tidy <- sst_raw |>
+  sst_tidy <- sst_raw %>%
     dplyr::slice(-dplyr::n())
 
   colnames(sst_tidy) <- c("Year", "Month", "Day", "areaNo", "flag", "Temp")
 
-  sst_tidy <- sst_tidy |>
+  sst_tidy <- sst_tidy %>%
     dplyr::mutate(
       Temp = as.numeric(.data$Temp),
       date = lubridate::make_date(
@@ -799,7 +800,7 @@ get_jma_sst_zoo <- function(sea_area_id) {
         day   = as.integer(.data$Day)
       ),
       Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
-    ) |>
+    ) %>%
     dplyr::select(.data$date, .data$Temp, .data$flag)
 
   zoo::zoo(
@@ -817,6 +818,7 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' provided by the Japan Meteorological Agency (JMA),
 #' and returns the monthly average data as a \code{ts} object.
 #'
+#' @importFrom magrittr %>%
 #' @importFrom readr read_csv
 #' @importFrom rlang .data
 #' @importFrom httr2
@@ -865,7 +867,7 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #'
 #' @export
 get_jma_sst_ts <- function(sea_area_id,
-                       na_prop_max = 1) {
+                           na_prop_max = 1) {
 
   if (!is.character(sea_area_id)) {
     sea_area_id <- as.character(sea_area_id)
@@ -878,8 +880,8 @@ get_jma_sst_ts <- function(sea_area_id,
   )
 
   # ---- HTTP request ----
-  resp <- httr2::request(url) |>
-    httr2::req_user_agent(.user_agent()) |>
+  resp <- httr2::request(url) %>%
+    httr2::req_user_agent(.user_agent()) %>%
     httr2::req_error(body = function(resp) {
       paste0(
         "Failed to retrieve SST data for sea_area_id = '",
@@ -887,7 +889,7 @@ get_jma_sst_ts <- function(sea_area_id,
         "'.\nHTTP status: ",
         httr2::resp_status(resp)
       )
-    }) |>
+    }) %>%
     httr2::req_perform()
 
   # ---- parse ----
@@ -900,12 +902,12 @@ get_jma_sst_ts <- function(sea_area_id,
     stop("Retrieved data has unexpected format.", call. = FALSE)
   }
 
-  sst_tidy <- sst_raw |>
+  sst_tidy <- sst_raw %>%
     dplyr::slice(-dplyr::n())
 
   colnames(sst_tidy) <- c("Year", "Month", "Day", "areaNo", "flag", "Temp")
 
-  sst_tidy <- sst_tidy |>
+  sst_tidy <- sst_tidy %>%
     dplyr::mutate(
       Temp = as.numeric(.data$Temp),
       date = lubridate::make_date(
@@ -914,7 +916,7 @@ get_jma_sst_ts <- function(sea_area_id,
         day   = as.integer(.data$Day)
       ),
       Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
-    ) |>
+    ) %>%
     dplyr::select(.data$date, .data$Temp, .data$flag)
 
   sst_zoo <- zoo::zoo(
@@ -922,11 +924,13 @@ get_jma_sst_ts <- function(sea_area_id,
     order.by = sst_tidy$date
   )
 
-  monthly_sst_ts <- tempssm::aggregate_daily_zoo_to_monthly_ts(sst_zoo,
-    na_prop_max = na_prop_max)
-  return(monthly_sst_ts)
-}
+  monthly_sst_ts <- tempssm::aggregate_daily_zoo_to_monthly_ts(
+    sst_zoo,
+    na_prop_max = na_prop_max
+  )
 
+  monthly_sst_ts
+}
 
 
 

@@ -59,197 +59,213 @@ tempssm <- function(temp_data,
                     maxit = NULL,
                     reltol = NULL,
                     use_season = TRUE
-                    ) {
+) {
   
   
-
+  
   tryCatch(
     {
-    ## ---- Input checks ---------------------------------------------------
-    y <- .tempssm_check_temp_ts(temp_data)
-    freq <- frequency(y)
-
-    ## ---- Default initial values -----------------------------------------
-    if (is.null(inits)) {
-      # log-variances and AR parameters (on unconstrained scale)
-      ar_rep_length_minus_one <- ar_order -1
-      ar_inits <- c(0.5,rep(0,ar_rep_length_minus_one))
-    
-      inits <- c(
-        -13,  # trend variance (log)
-        -7,  # seasonal variance (log)
-        ar_inits,  # AR coefficients     
-        -0.3,  # AR noise variance (log)
-        -5   # observation variance (log)
-      )
-    }
-  
-    expected_len <- 2 + ar_order + 2
-    if (!is.numeric(inits) && length(inits) != expected_len) {
-      stop(paste("inits must be length ", expected_len))
-    }
-  
-
-    ## ---- Default maxit value -----------------------------------------  
-    if (is.null(maxit)) {
-      maxit <- 5000
-    }
-  
-    ## ---- Default reltol value -----------------------------------------  
-    if (is.null(reltol)) {
-      reltol <- 1e-16
-    }
-  
-    
-    # index for parameters
-    if(use_season){ 
-      ar_idx <- 3:(2 + ar_order)
-      var_idx <- 3 + ar_order
-      H_idx <- 4 + ar_order
-    }else{
-      ar_idx <- 2:(1 + ar_order)
-      var_idx <- 2 + ar_order
-      H_idx <- 3 + ar_order
-    }
-
-    
-    ### ---- Model with no exogenous variables
-    if(is.null(exo_data)){ 
-
-      exo_name <- NULL
-      exo_mat <- NULL
-
-    }else{ # Model with exogenous variables
-       
-      exo_data_checked <- .tempssm_check_exo_ts(temp_data = temp_data,
-                                                exo_data = exo_data)
+      ## ---- Input checks ---------------------------------------------------
+      y <- .tempssm_check_temp_ts(temp_data)
+      freq <- frequency(y)
       
-      exo_name <- colnames(exo_data_checked)
-      exo_mat <- as.matrix(exo_data_checked)
-    } 
-
-    
-    #  ---- Define model -------------------------------------
-    build_ssm <- .define_build_model(y = y,
-                                     freq = freq,
-                                     use_season=use_season,
-                                     exo_mat = exo_mat,
-                                     ar_order = ar_order)  
-
-    ## ---- Parameter update function -------------------------------------
-    update_func_common <- .define_update_func(y = y,
-                                    freq = freq,
-                                    use_season = use_season,
-                                    exo_mat = exo_mat,
-                                    ar_order = ar_order,
-                                    ar_idx = ar_idx,
-                                    var_idx = var_idx,
-                                    H_idx = H_idx)
-    
-    ## ---- Optimization (two-step) ----------------------------------------
-    fit1 <- fitSSM(
-      build_ssm,
-      inits  = inits,
-      updatefn = update_func_common,
-      method = "Nelder-Mead",
-      control = list(maxit = maxit, reltol = reltol)
-    )
-    
-    fit2 <- fitSSM(
-      build_ssm,
-      inits  = fit1$optim.out$par,
-      updatefn = update_func_common,
-      method = "BFGS",
-      control = list(maxit = maxit, reltol = reltol)
-    )
-    
-    ## ---- Kalman filtering & smoothing -----------------------------------
-    kfs <- KFS(
-      fit2$model,
-      filtering = c("state", "mean"),
-      smoothing = c("state", "mean", "disturbance")
-    )
-
-
-    ## -- Adjust names of parameters ---------------
-    state_names <- character(ncol(kfs$alphahat))
-    
-    idx <- 1
-    
-    # exogenous
-    if (!is.null(exo_name)) {
-      state_names[idx:(idx + length(exo_name) - 1)] <- exo_name
-      idx <- idx + length(exo_name)
-    }
-    
-    # level
-    state_names[idx] <- "level"; idx <- idx + 1
-    
-    # slope
-    state_names[idx] <- "slope"; idx <- idx + 1
-    
-    # seasonal
-    if (use_season) {
-      n_season <- freq - 1
-      state_names[idx:(idx + n_season - 1)] <-
-        paste0("sea_dummy", seq_len(n_season))
-      idx <- idx + n_season
-    }
-    
-    # AR
-    if (ar_order > 0) {
-      state_names[idx:(idx + ar_order - 1)] <-
-        paste0("arima", seq_len(ar_order))
-    }
-    ## -- Adjust names of parameters ---------------
-    
+      if(!(is.numeric(ar_order) && 
+           length(ar_order) == 1 && 
+           !is.na(ar_order) && 
+           ar_order >= 1 && ar_order == floor(ar_order))){
         
-    ## ---- Output ---------------------------------------------------------
-    out <- list(
-      model = fit2$model,
-      fit   = fit2,
-      kfs   = kfs,
-      temp_data  = temp_data,
-      exogenous_data = exo_data,
-      ar_order = ar_order,
-      use_season = use_season,
-      call  = match.call(),
-      converged = fit2$optim.out$convergence == 0,
-      state_map = list(
-        exogenous = exo_name,
-        all       = state_names
+        stop("The argument `ar_order` must be an integer greater than or equal to 1.",
+             call. = FALSE)
+        
+      }
+      
+      if(ar_order > 4){
+        warning("An `ar_order` greater than 5 may be too large for estimating autoregressive components.",
+             call. = FALSE)
+        
+      }
+      
+      ## ---- Default initial values -----------------------------------------
+      if (is.null(inits)) {
+        # log-variances and AR parameters (on unconstrained scale)
+        ar_rep_length_minus_one <- ar_order -1
+        ar_inits <- c(0.5,rep(0,ar_rep_length_minus_one))
+        
+        inits <- c(
+          -13,  # trend variance (log)
+          -7,  # seasonal variance (log)
+          ar_inits,  # AR coefficients     
+          -0.3,  # AR noise variance (log)
+          -5   # observation variance (log)
         )
-    )
-
-    colnames(out$kfs$alphahat) <- state_names
-    class(out) <- "tempssm"
-    
-    return(out)
-    
-  },
-  error = function(e) {
-    message("Warning(s): tempssm model did not converge. ", e$message)
-    
-    out <- list(
-      model = NULL,
-      fit = NULL,
-      kfs = NULL,
-      temp_data = temp_data,
-      exogenous_data = exo_data,
-      ar_order = ar_order,
-      use_season = use_season,
-      call = match.call(),
-      converged = FALSE,
-      state_map = list(
-        exogenous = exo_name,
-        all       = state_names
+      }
+      
+      expected_len <- 2 + ar_order + 2
+      if (!is.numeric(inits) && length(inits) != expected_len) {
+        stop(paste("inits must be length ", expected_len))
+      }
+      
+      
+      ## ---- Default maxit value -----------------------------------------  
+      if (is.null(maxit)) {
+        maxit <- 5000
+      }
+      
+      ## ---- Default reltol value -----------------------------------------  
+      if (is.null(reltol)) {
+        reltol <- 1e-16
+      }
+      
+      
+      # index for parameters
+      if(use_season){ 
+        ar_idx <- 3:(2 + ar_order)
+        var_idx <- 3 + ar_order
+        H_idx <- 4 + ar_order
+      }else{
+        ar_idx <- 2:(1 + ar_order)
+        var_idx <- 2 + ar_order
+        H_idx <- 3 + ar_order
+      }
+      
+      
+      ### ---- Model with no exogenous variables
+      if(is.null(exo_data)){ 
+        
+        exo_name <- NULL
+        exo_mat <- NULL
+        
+      }else{ # Model with exogenous variables
+        
+        exo_data_checked <- .tempssm_check_exo_ts(temp_data = temp_data,
+                                                  exo_data = exo_data)
+        
+        exo_name <- colnames(exo_data_checked)
+        exo_mat <- as.matrix(exo_data_checked)
+      } 
+      
+      
+      #  ---- Define model -------------------------------------
+      build_ssm <- .define_build_model(y = y,
+                                       freq = freq,
+                                       use_season=use_season,
+                                       exo_mat = exo_mat,
+                                       ar_order = ar_order)  
+      
+      ## ---- Parameter update function -------------------------------------
+      update_func_common <- .define_update_func(y = y,
+                                                freq = freq,
+                                                use_season = use_season,
+                                                exo_mat = exo_mat,
+                                                ar_order = ar_order,
+                                                ar_idx = ar_idx,
+                                                var_idx = var_idx,
+                                                H_idx = H_idx)
+      
+      ## ---- Optimization (two-step) ----------------------------------------
+      fit1 <- fitSSM(
+        build_ssm,
+        inits  = inits,
+        updatefn = update_func_common,
+        method = "Nelder-Mead",
+        control = list(maxit = maxit, reltol = reltol)
       )
-    )
-    
-    colnames(out$kfs$alphahat) <- state_names
-    class(out) <- "tempssm"
-    return(out)
-  }
+      
+      fit2 <- fitSSM(
+        build_ssm,
+        inits  = fit1$optim.out$par,
+        updatefn = update_func_common,
+        method = "BFGS",
+        control = list(maxit = maxit, reltol = reltol)
+      )
+      
+      ## ---- Kalman filtering & smoothing -----------------------------------
+      kfs <- KFS(
+        fit2$model,
+        filtering = c("state", "mean"),
+        smoothing = c("state", "mean", "disturbance")
+      )
+      
+      
+      ## -- Adjust names of parameters ---------------
+      state_names <- character(ncol(kfs$alphahat))
+      
+      idx <- 1
+      
+      # exogenous
+      if (!is.null(exo_name)) {
+        state_names[idx:(idx + length(exo_name) - 1)] <- exo_name
+        idx <- idx + length(exo_name)
+      }
+      
+      # level
+      state_names[idx] <- "level"; idx <- idx + 1
+      
+      # slope
+      state_names[idx] <- "slope"; idx <- idx + 1
+      
+      # seasonal
+      if (use_season) {
+        n_season <- freq - 1
+        state_names[idx:(idx + n_season - 1)] <-
+          paste0("sea_dummy", seq_len(n_season))
+        idx <- idx + n_season
+      }
+      
+      # AR
+      if (ar_order > 0) {
+        state_names[idx:(idx + ar_order - 1)] <-
+          paste0("arima", seq_len(ar_order))
+      }
+      ## -- Adjust names of parameters ---------------
+      
+      
+      ## ---- Output ---------------------------------------------------------
+      out <- list(
+        model = fit2$model,
+        fit   = fit2,
+        kfs   = kfs,
+        temp_data  = temp_data,
+        exogenous_data = exo_data,
+        ar_order = ar_order,
+        use_season = use_season,
+        call  = match.call(),
+        converged = fit2$optim.out$convergence == 0,
+        state_map = list(
+          exogenous = exo_name,
+          all       = state_names
+        )
+      )
+      
+      colnames(out$kfs$alphahat) <- state_names
+      class(out) <- "tempssm"
+      
+      return(out)
+      
+    },
+    error = function(e) {
+      message("Warning(s): tempssm model did not converge. ", e$message)
+      
+      out <- list(
+        model = NULL,
+        fit = NULL,
+        kfs = NULL,
+        temp_data = temp_data,
+        exogenous_data = exo_data,
+        ar_order = ar_order,
+        use_season = use_season,
+        call = match.call(),
+        converged = FALSE,
+        state_map = list(
+          exogenous = exo_name,
+          all       = state_names
+        )
+      )
+      
+      colnames(out$kfs$alphahat) <- state_names
+      class(out) <- "tempssm"
+      return(out)
+    }
   )# close tryCatch
 }
 
@@ -295,10 +311,10 @@ tempssm <- function(temp_data,
 #'
 #' @keywords internal
 .define_build_model <- function(y = NULL,
-                             freq = freq,
-                             use_season, 
-                             exo_mat,
-                             ar_order = 1) {
+                                freq = freq,
+                                use_season, 
+                                exo_mat,
+                                ar_order = 1) {
   if(use_season && is.null(exo_mat)){
     
     build_ssm <- KFAS::SSModel(
@@ -427,7 +443,7 @@ tempssm <- function(temp_data,
                                 H_idx) {
   
   if(use_season && is.null(exo_mat)){
-  
+    
     update_func <- function(pars, model) {
       return(
         KFAS::SSModel(
@@ -448,7 +464,7 @@ tempssm <- function(temp_data,
         )
       )
     }
-
+    
   }else if(!use_season && is.null(exo_mat)){
     
     update_func <- function(pars, model) {
@@ -468,7 +484,7 @@ tempssm <- function(temp_data,
         )
       )
     }
-
+    
   }else if(use_season && !(is.null(exo_mat))){
     
     update_func <- function(pars, model) {
@@ -572,33 +588,33 @@ tempssm <- function(temp_data,
 #' @export
 .tempssm_check_exo_ts <- function(temp_data,
                                   exo_data) {
-
+  
   temp_data_checked <- .tempssm_check_temp_ts(temp_data,
-                                                       message=FALSE)
-
+                                              message=FALSE)
+  
   temp_freq <- frequency(temp_data_checked)
-
+  
   if (!inherits(exo_data, "ts")) {
     stop("The object 'exo_data' must be a 'ts' object.",
          call. = FALSE)
   }
-
+  
   exo_freq <- frequency(exo_data)
   if (!(exo_freq == temp_freq)) {
     stop("Frequency of 'exo_data' must be same that of 'temp_data'.",
          call. = FALSE)
   }
-
+  
   if (!(time(exo_freq) == time(temp_freq))) {
     stop("Time series of 'exo_data' must be same that of 'temp_data'.",
          call. = FALSE)
   }
-
+  
   if (is.null(colnames(exo_data))) {
-      stop("The object 'exo_data' must have column name(s).",
+    stop("The object 'exo_data' must have column name(s).",
          call. = FALSE)
   }
-
+  
   if ((dim(exo_data)[2]) > 1) {
     uni_multi <- "multivariate"
   }else{
@@ -606,6 +622,6 @@ tempssm <- function(temp_data,
   }
   
   message(paste0("The ts object 'exo_data' is ", uni_multi, " with frequency ", exo_freq, "."))
-
+  
   return(exo_data)
 }
