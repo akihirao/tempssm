@@ -568,7 +568,7 @@ folds_with <- ts_train_test_split(
 #cv_without_results <- ts_cv_run(folds_without, ar_order = 2, use_season = TRUE)
 
 # Parallel processing
-cv_without_results <- future_lapply(
+cv_without_results <- future.apply::future_lapply(
   folds_without,
   ts_cv_run_fold,
   ar_order = 2,
@@ -590,7 +590,7 @@ cv_without_tbl <- ts_cv_collect(cv_without_results, metrics_without) %>%
 #cv_with_results <- ts_cv_run(folds_with, ar_order = 2, use_season = TRUE)
 
 # Parallel processing
-cv_with_results <- future_lapply(
+cv_with_results <- future.apply::future_lapply(
   folds_with,
   ts_cv_run_fold,
   ar_order = 2,

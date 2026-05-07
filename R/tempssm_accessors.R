@@ -36,11 +36,11 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     stop("Level component not found in the smoothing results.", call. = FALSE)
   }
 
-  freq <- frequency(res$data_temp)
+  freq <- frequency(res$temp_data)
   
   level <- ts(
     res$kfs$alphahat[, "level"],
-    start = start(res$data_temp),
+    start = start(res$temp_data),
     frequency = freq
   )
 
@@ -58,7 +58,7 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
         lwr = ci_obj$level[, "lwr"],
         upr = ci_obj$level[, "upr"]
       ),
-      start = start(res$data_temp),
+      start = start(res$temp_data),
       frequency = freq
     )
   }
@@ -110,12 +110,12 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
          call. = FALSE)
   }
   
-  freq <- frequency(res$data_temp)
+  freq <- frequency(res$temp_data)
   scale <- freq
   
   drift <- ts(
     res$kfs$alphahat[, "slope"] * scale, #scaled per year
-    start = start(res$data_temp),
+    start = start(res$temp_data),
     frequency = freq
   )
   
@@ -134,7 +134,7 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
         lwr = ci_obj$slope[, "lwr"] * scale,#scaled per year 
         upr = ci_obj$slope[, "upr"] * scale #scaled per year
       ),
-      start = start(res$data_temp),
+      start = start(res$temp_data),
       frequency = freq
     )
   }
@@ -191,11 +191,11 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     stop("Seasonal component not found in the smoothing results.", call. = FALSE)
   }
   
-  freq <- frequency(res$data_temp)
+  freq <- frequency(res$temp_data)
 
   season <- ts(
     res$kfs$alphahat[, "sea_dummy1"],
-    start = start(res$data_temp),
+    start = start(res$temp_data),
     frequency = freq
   )
   
@@ -213,7 +213,7 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
         lwr = ci_obj$sea_dummy1[, "lwr"],
         upr = ci_obj$sea_dummy1[, "upr"]
       ),
-      start = start(res$data_temp),
+      start = start(res$temp_data),
       frequency = freq
     )
   }
@@ -264,11 +264,11 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     stop("First autoregressive component (AR1) not found in the smoothing results.", call. = FALSE)
   }
   
-  freq <- frequency(res$data_temp)
+  freq <- frequency(res$temp_data)
   
   ar1 <- ts(
     res$kfs$alphahat[, "arima1"],
-    start = start(res$data_temp),
+    start = start(res$temp_data),
     frequency = freq
   )
   
@@ -286,7 +286,7 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
         lwr = ci_obj$arima1[, "lwr"],
         upr = ci_obj$arima1[, "upr"]
       ),
-      start = start(res$data_temp),
+      start = start(res$temp_data),
       frequency = freq
     )
   }

@@ -6,7 +6,7 @@ print.tempssm <- function(x, ...) {
   cat("------------------\n")
 
   # Observed time series
-  temp_data <- x$data_temp
+  temp_data <- x$temp_data
   cat("Data:\n")
   cat("  Temperature time series data\n")
   cat("  Length       :", length(temp_data), "\n")
@@ -15,7 +15,7 @@ print.tempssm <- function(x, ...) {
       paste(stats::start(temp_data), collapse = "-"), " / ",
       paste(stats::end(temp_data), collapse = "-"), "\n\n")
 
-  exo_data <- x$data_exogenous
+  exo_data <- x$exogenous_data
   if(is.null(exo_data)){
     cat("  Exogenous variables: NULL\n")
     cat("\n\n")

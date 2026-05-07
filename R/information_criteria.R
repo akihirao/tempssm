@@ -40,11 +40,11 @@
   )
 
   df <- length(res$fit$optim.out$par)
-  if (!is.null(res$data_exogenous)) {
-    df <- df + ncol(res$data_exogenous)
+  if (!is.null(res$exogenous_data)) {
+    df <- df + ncol(res$exogenous_data)
   }
 
-  nobs <- length(res$data_temp)
+  nobs <- length(res$temp_data)
 
   list(
     logLik = ll,

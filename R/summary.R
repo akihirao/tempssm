@@ -38,7 +38,7 @@ summary.tempssm <- function(object, ...) {
   aic <- AIC.tempssm(object)
 
   ## --- exogenous variables ---
-  exo_data <- object$data_exogenous
+  exo_data <- object$exogenous_data
   exogenous_variable <- if (is.null(exo_data)) NULL else colnames(exo_data)
   exogenous_coef <- get_exo_coef(object)
 

@@ -289,6 +289,7 @@ ts_cv_run_fold <- function(fold,
   colnames(y_test_mts) <- "Temp"
 
   ## ---- fit model ------------------------------------------------------
+  
   res <- tryCatch(
     tempssm(
       temp_data = y_train_mts,
@@ -318,22 +319,18 @@ ts_cv_run_fold <- function(fold,
   #
   #y_pred <- tryCatch({
 
-    if (is.null(exo_train)) {
+    if (is.null(exo_train)) { # Model without exogenous variables
 
       y_pred <- stats::predict(
         train_model,
         n.ahead = length(y_test_mts)
       )
 
-    } else {
+    } else { # Model with exogenous variables
 
 
       ## ---- extract fitted parameters -------------------------------------
       pars <- res$fit$optim.out$par
-      
-      ar_idx  <- 3:(2 + ar_order)
-      var_idx <- 3 + ar_order
-      H_idx   <- 4 + ar_order
       
       num_exo <- dim(exo_train)[2]
       
@@ -349,24 +346,50 @@ ts_cv_run_fold <- function(fold,
       train_pars <- res_train$fit$optim.out$par
       
       exo_mat <- as.matrix(exo_test)
-      
-      y_pred <- stats::predict(
-        train_model,
-        newdata = SSModel(
-          H = exp(train_pars[H_idx]),
-          rep(NA, nrow(temp_exo_test)) ~ exo_mat + 
-            SSMtrend(degree = 2,
-                     Q = c(list(0), list(exp(train_pars[1])))) + 
-            SSMseasonal(sea.type = "dummy",
-                        period = freq,
-                        Q = exp(train_pars[2])) +
-            SSMarima(ar = artransform(train_pars[ar_idx]),
-                     d = 0,
-                     Q = exp(train_pars[var_idx])
-            ), data = temp_exo_test
+
+      if(use_season){ # model with seasonal component
+        
+        ar_idx  <- 3:(2 + ar_order)
+        var_idx <- 3 + ar_order
+        H_idx   <- 4 + ar_order
+        
+        y_pred <- stats::predict(
+          train_model,
+          newdata = SSModel(
+            H = exp(train_pars[H_idx]),
+            rep(NA, nrow(temp_exo_test)) ~ exo_mat + 
+              SSMtrend(degree = 2,
+                       Q = c(list(0), list(exp(train_pars[1])))) + 
+              SSMseasonal(sea.type = "dummy",
+                          period = freq,
+                          Q = exp(train_pars[2])) +
+              SSMarima(ar = artransform(train_pars[ar_idx]),
+                       d = 0,
+                       Q = exp(train_pars[var_idx])
+              ), data = temp_exo_test
+          )
         )
-      )
-      
+      }else{ #model without seasonal component
+        
+        ar_idx  <- 2:(1 + ar_order)
+        var_idx <- 2 + ar_order
+        H_idx   <- 3 + ar_order
+        
+        y_pred <- stats::predict(
+          train_model,
+          newdata = SSModel(
+            H = exp(train_pars[H_idx]),
+            rep(NA, nrow(temp_exo_test)) ~ exo_mat + 
+              SSMtrend(degree = 2,
+                       Q = c(list(0), list(exp(train_pars[1])))) + 
+              SSMarima(ar = artransform(train_pars[ar_idx]),
+                       d = 0,
+                       Q = exp(train_pars[var_idx])
+              ), data = temp_exo_test
+          )
+        )
+        
+      }
 
     }
 
