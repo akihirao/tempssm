@@ -61,7 +61,8 @@ tempssm <- function(temp_data,
                     use_season = TRUE
 ) {
   
-  
+  exo_name <- NULL
+  state_names <- character(0)
   
   tryCatch(
     {
@@ -80,7 +81,7 @@ tempssm <- function(temp_data,
       }
       
       if(ar_order > 4){
-        warning("An `ar_order` greater than 5 may be too large for estimating autoregressive components.",
+        warning("An `ar_order` greater than 4 may be too large for estimating autoregressive components.",
              call. = FALSE)
         
       }
@@ -101,7 +102,7 @@ tempssm <- function(temp_data,
       }
       
       expected_len <- 2 + ar_order + 2
-      if (!is.numeric(inits) && length(inits) != expected_len) {
+      if (!is.numeric(inits) || length(inits) != expected_len) {
         stop(paste("inits must be length ", expected_len))
       }
       
@@ -387,6 +388,7 @@ tempssm <- function(temp_data,
         )
     )
   }
+  return(build_ssm)
 }
 
 
