@@ -1,7 +1,3 @@
-#' Get current verbosity level
-#'
-#' Internal helper to retrieve the current verbosity setting.
-#'
 #' @keywords internal
 .get_verbosity <- function() {
   v <- Sys.getenv("TEMPSSM_VERBOSITY", "")
@@ -18,4 +14,18 @@
   }
   
   v
+}
+
+#' @keywords internal
+.tempssm_cli_inform <- function(..., .envir = parent.frame()) {
+  if (.get_verbosity() %in% c("inform", "debug")) {
+    cli::cli_inform(..., .envir = .envir)
+  }
+}
+
+#' @keywords internal
+.tempssm_cli_debug <- function(..., .envir = parent.frame()) {
+  if (.get_verbosity() == "debug") {
+    cli::cli_inform(..., .envir = .envir)
+  }
 }

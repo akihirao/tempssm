@@ -76,13 +76,18 @@ set_ts_name <- function(ts_in, label) {
     )
   }
   
+  ## inform: start operation
+  .tempssm_cli_debug("Assigning variable names to {.cls ts} object")
+  
   ## recycle label if needed
   if (length(label) == 1L) {
+    .tempssm_cli_debug("Recycling single label to {n_col} columns")
     label <- rep(label, n_col)
   }
   
   ## ensure matrix form for ts
   x <- if (is.null(dim(ts_in))) {
+    .tempssm_cli_debug("Converting univariate series to matrix form")
     matrix(ts_in, ncol = 1)
   } else {
     ts_in
@@ -96,6 +101,11 @@ set_ts_name <- function(ts_in, label) {
     x,
     start = start(ts_in),
     frequency = frequency(ts_in)
+  )
+  
+  ## inform: completion
+  .tempssm_cli_inform(
+    "Assigned {length(label)} variable name{?s} to time series"
   )
   
   return(ts_out)

@@ -1,7 +1,7 @@
 Package: tempssm
 Type: Package
 Title: Linear Gaussian State-Space Models for Temperature Time Series
-Version: 0.2.3
+Version: 0.2.3.1
 Authors@R: c(
     person(
       given="Akira", family="Hirao",
@@ -29,6 +29,7 @@ Imports:
     forecast,
     tseries,
     moments,
+    cli,
     patchwork,
     httr2
 Suggests:
@@ -37,7 +38,6 @@ Suggests:
     rmarkdown,
     purrr,
     vctrs   (>= 0.5.0),
-    cli,
     cowplot,
     future,
     future.apply,

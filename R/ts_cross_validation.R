@@ -82,49 +82,74 @@ ts_train_test_split <- function(temp_data,
                                 fixed_window = FALSE,
                                 allow_partial = FALSE) {
 
+  ## ---- Start message --------------------------------------------------
+  .tempssm_cli_inform(
+    "Creating rolling train/test data (initial={initial}, horizon={horizon}, step={step})"
+  )
+
   ## ---- Input checks ---------------------------------------------------
   if (!inherits(temp_data, "ts")) {
-    stop("`temp_data` must be a 'ts' object.", call. = FALSE)
+    cli::cli_abort("`temp_data` must be a {.cls ts} object.")
   }
 
   if (!is.null(dim(temp_data)) && ncol(temp_data) != 1) {
-    stop("`temp_data` must be a univariate 'ts' object.", call. = FALSE)
+    cli::cli_abort("`temp_data` must be a univariate {.cls ts} object.")
   }
 
   freq <- frequency(temp_data)
   if (freq <= 1) {
-    stop("`temp_data` must have frequency > 1.", call. = FALSE)
+    cli::cli_abort("`temp_data` must have frequency > 1.")
   }
 
   if (any(c(initial, horizon, step) < 1)) {
-    stop("`initial`, `horizon`, and `step` must be positive integers.",
-         call. = FALSE)
+    cli::cli_abort(
+      "`initial`, `horizon`, and `step` must be positive integers."
+    )
   }
 
   n <- length(temp_data)
   if (initial >= n) {
-    stop("`initial` must be smaller than the length of the time series.",
-         call. = FALSE)
+    cli::cli_abort(
+      "`initial` must be smaller than the length of the time series."
+    )
   }
 
+  .tempssm_cli_debug("Series length: {n}, frequency: {freq}")
+
+  ## ---- Exogenous checks ----------------------------------------------
   if (!is.null(exo_data)) {
 
     n_exo <- NCOL(exo_data)
 
     if (!inherits(exo_data, "ts")) {
-      stop("`exo_data` must be a 'ts' object.", call. = FALSE)
+      cli::cli_abort("`exo_data` must be a {.cls ts} object.")
     }
     if (length(exo_data) != n) {
-      stop("`exo_data` must have the same length as `temp_data`.",
-           call. = FALSE)
+      cli::cli_abort(
+        "`exo_data` must have the same length as `temp_data`."
+      )
     }
     if (frequency(exo_data) != freq) {
-      stop("`exo_data` must have the same frequency as `temp_data`.",
-           call. = FALSE)
+      cli::cli_abort(
+        "`exo_data` must have the same frequency as `temp_data`."
+      )
     }
-    if(is.null(colnames(exo_data))){
-      exo_data <- tempssm::set_ts_name(exo_data,level = paste0("var",seq_len(n_exo)))
+
+    if (is.null(colnames(exo_data))) {
+      cli::cli_warn(
+        "No column names in `exo_data`; assigning default names."
+      )
+      exo_data <- tempssm::set_ts_name(
+        exo_data,
+        label = paste0("var", seq_len(n_exo))
+      )
     }
+
+    .tempssm_cli_debug(
+      "Exogenous variables: {n_exo}"
+    )
+  } else {
+    .tempssm_cli_debug("No exogenous variables provided")
   }
 
   ## ---- Utility: slice ts by index ------------------------------------
@@ -160,6 +185,10 @@ ts_train_test_split <- function(temp_data,
       test_end <- n
     }
 
+    .tempssm_cli_debug(
+      "Fold {k}: train[{train_start}:{train_end}], test[{test_start}:{test_end}]"
+    )
+
     folds[[k]] <- list(
       fold = k,
       train_ts = ts_slice(temp_data, train_start, train_end),
@@ -177,7 +206,12 @@ ts_train_test_split <- function(temp_data,
     k <- k + 1
   }
 
-  folds
+  ## ---- Completion -----------------------------------------------------
+  .tempssm_cli_inform(
+    "Created {length(folds)} rolling fold{?s}"
+  )
+
+  return(folds)
 }
 
 
@@ -261,10 +295,14 @@ ts_cv_run_fold <- function(fold,
                            ar_order = 1,
                            use_season = TRUE) {
 
+  ## ---- Start ----------------------------------------------------------
+  .tempssm_cli_inform("Running CV for fold {fold$fold}")
+
   ## ---- basic checks ---------------------------------------------------
   if (!is.list(fold) || is.null(fold$train_ts) || is.null(fold$test_ts)) {
-    stop("`fold` must be a valid fold object from ts_train_test_split().",
-         call. = FALSE)
+    cli::cli_abort(
+      "`fold` must be a valid object from {.fn ts_train_test_split}."
+    )
   }
 
   y_train <- fold$train_ts
@@ -273,7 +311,11 @@ ts_cv_run_fold <- function(fold,
   exo_test  <- fold$exo_test_ts
   freq <- frequency(y_train)
 
-  ## ---- prepare training ts (matrix) ----------------------------------
+  .tempssm_cli_debug(
+    "Fold {fold$fold}: train length={length(y_train)}, test length={length(y_test)}"
+  )
+
+  ## ---- prepare training ts -------------------------------------------
   y_train_mts <- ts(
     as.matrix(y_train),
     start = start(y_train),
@@ -289,7 +331,8 @@ ts_cv_run_fold <- function(fold,
   colnames(y_test_mts) <- "Temp"
 
   ## ---- fit model ------------------------------------------------------
-  
+  .tempssm_cli_inform("Fitting model for fold {fold$fold}")
+
   res <- tryCatch(
     tempssm(
       temp_data = y_train_mts,
@@ -297,13 +340,23 @@ ts_cv_run_fold <- function(fold,
       ar_order  = ar_order,
       use_season = use_season
     ),
-    error = function(e) NULL
+    error = function(e) {
+      cli::cli_warn(
+        "Model fitting failed in fold {fold$fold}: {conditionMessage(e)}"
+      )
+      NULL
+    }
   )
 
-  train_model <- res$model
-  
-  # if model without exogenous variables was not converged
+  train_model <- if (!is.null(res)) res$model else NULL
+
+  ## ---- check convergence ---------------------------------------------
   if (is.null(res) || !isTRUE(res$converged)) {
+
+    cli::cli_warn(
+      "Model did not converge for fold {fold$fold}"
+    )
+
     return(list(
       fold      = fold$fold,
       converged = FALSE,
@@ -314,86 +367,105 @@ ts_cv_run_fold <- function(fold,
     ))
   }
 
-
   ## ---- prediction -----------------------------------------------------
-  #
-  #y_pred <- tryCatch({
+  .tempssm_cli_inform(
+    "Generating predictions for fold {fold$fold}"
+  )
 
-    if (is.null(exo_train)) { # Model without exogenous variables
+  if (is.null(exo_train)) {
+
+    ## ---- no exogenous -------------------------------------------------
+    .tempssm_cli_debug("Prediction without exogenous variables")
+
+    y_pred <- stats::predict(
+      train_model,
+      n.ahead = length(y_test_mts)
+    )
+
+  } else {
+
+    ## ---- with exogenous ----------------------------------------------
+    .tempssm_cli_debug("Prediction with exogenous variables")
+
+    pars <- res$fit$optim.out$par
+
+    temp_exo_test <- cbind(y_test_mts, exo_test)
+    colnames(temp_exo_test) <- c("Temp", colnames(exo_test))
+
+    res_train <- tempssm(
+      temp_data = y_train_mts,
+      exo_data = exo_train,
+      ar_order = ar_order
+    )
+
+    train_model <- res_train$model
+    train_pars  <- res_train$fit$optim.out$par
+
+    exo_mat <- as.matrix(exo_test)
+
+    if(use_season){
+
+      .tempssm_cli_debug("Using seasonal model for prediction")
+
+      ar_idx  <- 3:(2 + ar_order)
+      var_idx <- 3 + ar_order
+      H_idx   <- 4 + ar_order
 
       y_pred <- stats::predict(
         train_model,
-        n.ahead = length(y_test_mts)
+        newdata = SSModel(
+          H = exp(train_pars[H_idx]),
+          rep(NA, nrow(temp_exo_test)) ~ exo_mat + 
+            SSMtrend(
+              degree = 2,
+              Q = c(list(0), list(exp(train_pars[1])))
+            ) + 
+            SSMseasonal(
+              sea.type = "dummy",
+              period = freq,
+              Q = exp(train_pars[2])
+            ) +
+            SSMarima(
+              ar = artransform(train_pars[ar_idx]),
+              d = 0,
+              Q = exp(train_pars[var_idx])
+            ),
+          data = temp_exo_test
+        )
       )
 
-    } else { # Model with exogenous variables
+    } else {
 
+      .tempssm_cli_debug("Using non-seasonal model for prediction")
 
-      ## ---- extract fitted parameters -------------------------------------
-      pars <- res$fit$optim.out$par
-      
-      num_exo <- dim(exo_train)[2]
-      
-      temp_exo_test <- cbind(y_test_mts,
-                             exo_test)
-      colnames(temp_exo_test) <- c("Temp",colnames(exo_test))
-      
-      res_train<- tempssm(temp_data = y_train_mts,
-                          exo_data = exo_train,
-                          ar_order = ar_order)
-      
-      train_model <- res_train$model
-      train_pars <- res_train$fit$optim.out$par
-      
-      exo_mat <- as.matrix(exo_test)
+      ar_idx  <- 2:(1 + ar_order)
+      var_idx <- 2 + ar_order
+      H_idx   <- 3 + ar_order
 
-      if(use_season){ # model with seasonal component
-        
-        ar_idx  <- 3:(2 + ar_order)
-        var_idx <- 3 + ar_order
-        H_idx   <- 4 + ar_order
-        
-        y_pred <- stats::predict(
-          train_model,
-          newdata = SSModel(
-            H = exp(train_pars[H_idx]),
-            rep(NA, nrow(temp_exo_test)) ~ exo_mat + 
-              SSMtrend(degree = 2,
-                       Q = c(list(0), list(exp(train_pars[1])))) + 
-              SSMseasonal(sea.type = "dummy",
-                          period = freq,
-                          Q = exp(train_pars[2])) +
-              SSMarima(ar = artransform(train_pars[ar_idx]),
-                       d = 0,
-                       Q = exp(train_pars[var_idx])
-              ), data = temp_exo_test
-          )
+      y_pred <- stats::predict(
+        train_model,
+        newdata = SSModel(
+          H = exp(train_pars[H_idx]),
+          rep(NA, nrow(temp_exo_test)) ~ exo_mat + 
+            SSMtrend(
+              degree = 2,
+              Q = c(list(0), list(exp(train_pars[1])))
+            ) + 
+            SSMarima(
+              ar = artransform(train_pars[ar_idx]),
+              d = 0,
+              Q = exp(train_pars[var_idx])
+            ),
+          data = temp_exo_test
         )
-      }else{ #model without seasonal component
-        
-        ar_idx  <- 2:(1 + ar_order)
-        var_idx <- 2 + ar_order
-        H_idx   <- 3 + ar_order
-        
-        y_pred <- stats::predict(
-          train_model,
-          newdata = SSModel(
-            H = exp(train_pars[H_idx]),
-            rep(NA, nrow(temp_exo_test)) ~ exo_mat + 
-              SSMtrend(degree = 2,
-                       Q = c(list(0), list(exp(train_pars[1])))) + 
-              SSMarima(ar = artransform(train_pars[ar_idx]),
-                       d = 0,
-                       Q = exp(train_pars[var_idx])
-              ), data = temp_exo_test
-          )
-        )
-        
-      }
-
+      )
     }
+  }
 
-  #)}, error = function(e) NULL)
+  ## ---- completion -----------------------------------------------------
+  .tempssm_cli_inform(
+    "Completed fold {fold$fold} successfully"
+  )
 
   ## ---- return ---------------------------------------------------------
   list(
