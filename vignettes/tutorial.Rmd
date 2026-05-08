@@ -98,8 +98,18 @@ library(ggplot2)
 
 library(patchwork)
 
+# For parallel processing
+library(progressr)
 library(future.apply)
-plan(multisession)  # Windows / Mac / Linux 
+library(future)
+
+# enable parallel execution (optional)
+if (interactive()) {
+  plan(multisession)
+} else {
+  plan(sequential)
+}
+
 
 ```
 
@@ -564,17 +574,7 @@ folds_with <- ts_train_test_split(
 
 #-------------------------------------------------- 
 # Model without the exogenous variable of PDA index
-# Single processing
-#cv_without_results <- ts_cv_run(folds_without, ar_order = 2, use_season = TRUE)
-
-# Parallel processing
-cv_without_results <- future.apply::future_lapply(
-  folds_without,
-  ts_cv_run_fold,
-  ar_order = 2,
-  use_season = TRUE,
-  future.seed = TRUE
-)
+cv_without_results <- ts_cv_run(folds_without, ar_order = 2, use_season = TRUE)
 
 # Couputing assessment indexes
 metrics_without <- lapply(cv_without_results, compute_cv_metrics)
@@ -586,17 +586,7 @@ cv_without_tbl <- ts_cv_collect(cv_without_results, metrics_without) %>%
 
 #-------------------------------------------------- 
 # Model with the exogenous variable of PDA index
-# Single processing
-#cv_with_results <- ts_cv_run(folds_with, ar_order = 2, use_season = TRUE)
-
-# Parallel processing
-cv_with_results <- future.apply::future_lapply(
-  folds_with,
-  ts_cv_run_fold,
-  ar_order = 2,
-  use_season = TRUE,
-  future.seed = TRUE
-)
+cv_with_results <- ts_cv_run(folds_with, ar_order = 2, use_season = TRUE)
 
 # Couputing assessment indexes
 metrics_with <- lapply(cv_with_results, compute_cv_metrics)

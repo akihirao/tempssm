@@ -4,19 +4,35 @@
 \alias{ts_cv_run}
 \title{Run time series cross-validation over multiple folds}
 \usage{
-ts_cv_run(folds, fold_ids = NULL, ar_order = 1, use_season = TRUE)
+ts_cv_run(
+  folds,
+  ar_order = 1,
+  use_season = TRUE,
+  parallel = TRUE,
+  workers = future::availableCores(),
+  progress = TRUE
+)
 }
 \arguments{
 \item{folds}{A list of fold objects returned by \code{ts_train_test_split()}.}
-
-\item{fold_ids}{Integer vector specifying which folds to run.
-Default is \code{NULL}, which runs all folds.}
 
 \item{ar_order}{Integer specifying the order of the autoregressive (AR) component
 used in \code{tempssm()}. Default is 1.}
 
 \item{use_season}{Logical; if \code{TRUE}, include a seasonal component in the model.
 Default is \code{TRUE}.}
+
+\item{parallel}{Logical; if \code{TRUE}, folds are evaluated in parallel using the
+\pkg{future.apply} framework. If \code{FALSE}, folds are processed
+sequentially. Default is \code{TRUE}.}
+
+\item{workers}{Integer specifying the number of parallel workers to use when
+\code{parallel = TRUE}. The default uses all available cores as
+returned by \code{\link[future]{availableCores}}.}
+
+\item{progress}{Logical; if \code{TRUE}, a progress bar is displayed during execution
+using the \pkg{progressr} package. If \code{FALSE}, no progress bar
+is shown. Default is \code{TRUE}.}
 }
 \value{
 A list of cross-validation results. Each element corresponds to one

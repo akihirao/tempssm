@@ -480,7 +480,6 @@ ts_cv_run_fold <- function(fold,
 
 
 
-
 #' Run time series cross-validation over multiple folds
 #'
 #' @description
@@ -491,10 +490,6 @@ ts_cv_run_fold <- function(fold,
 #' @param folds
 #' A list of fold objects returned by \code{ts_train_test_split()}.
 #'
-#' @param fold_ids
-#' Integer vector specifying which folds to run.
-#' Default is \code{NULL}, which runs all folds.
-#'
 #' @param ar_order
 #' Integer specifying the order of the autoregressive (AR) component
 #' used in \code{tempssm()}. Default is 1.
@@ -503,55 +498,100 @@ ts_cv_run_fold <- function(fold,
 #' Logical; if \code{TRUE}, include a seasonal component in the model.
 #' Default is \code{TRUE}.
 #'
+#' @param parallel
+#' Logical; if \code{TRUE}, folds are evaluated in parallel using the
+#' \pkg{future.apply} framework. If \code{FALSE}, folds are processed
+#' sequentially. Default is \code{TRUE}.
+#'
+#' @param workers
+#' Integer specifying the number of parallel workers to use when
+#' \code{parallel = TRUE}. The default uses all available cores as
+#' returned by \code{\link[future]{availableCores}}.
+#'
+#' @param progress
+#' Logical; if \code{TRUE}, a progress bar is displayed during execution
+#' using the \pkg{progressr} package. If \code{FALSE}, no progress bar
+#' is shown. Default is \code{TRUE}.
+#'
 #' @return
 #' A list of cross-validation results. Each element corresponds to one
 #' fold and contains the output of \code{ts_cv_run_fold()}.
 #'
 #' @export
-ts_cv_run <- function(folds,
-                      fold_ids = NULL,
-                      ar_order = 1,
-                      use_season = TRUE) {
-
-  ## ---- basic checks ---------------------------------------------------
-  if (!is.list(folds) || length(folds) == 0) {
-    stop("`folds` must be a non-empty list returned by ts_train_test_split().",
-         call. = FALSE)
+ts_cv_run <- function(
+  folds,
+  ar_order = 1,
+  use_season = TRUE,
+  parallel = TRUE,
+  workers = future::availableCores(),
+  progress = TRUE
+) {
+  
+  ## ---- input check ----------------------------------------------------
+  if (!is.list(folds)) {
+    cli::cli_abort("`folds` must be a list of fold objects.")
   }
-
-  if (!is.logical(use_season) || length(use_season) != 1) {
-    stop("`use_season` must be a single logical value.",
-         call. = FALSE)
-  }
-
+  
   n_folds <- length(folds)
-
-  if (is.null(fold_ids)) {
-    fold_ids <- seq_len(n_folds)
+  
+  .tempssm_cli_inform(
+    "Running cross-validation on {n_folds} fold{?s}"
+  )
+  
+  ## ---- plan -----------------------------------------------------------
+  if (parallel) {
+    future::plan(future::multisession, workers = workers)
+    .tempssm_cli_debug("Parallel execution with {workers} workers")
+  } else {
+    future::plan(future::sequential)
+    .tempssm_cli_debug("Sequential execution")
   }
-
-  if (!is.numeric(fold_ids) ||
-      any(fold_ids < 1) ||
-      any(fold_ids > n_folds)) {
-    stop("`fold_ids` must contain valid fold indices.",
-         call. = FALSE)
-  }
-
-  ## ---- run CV ---------------------------------------------------------
-  results <- vector("list", length(fold_ids))
-  names(results) <- paste0("fold", fold_ids)
-
-  for (i in seq_along(fold_ids)) {
-    idx <- fold_ids[i]
-    results[[i]] <- ts_cv_run_fold(
-      fold = folds[[idx]],
+  
+  ## ---- runner function -----------------------------------------------
+  run_one <- function(f) {
+    ts_cv_run_fold(
+      fold = f,
       ar_order = ar_order,
       use_season = use_season
     )
   }
-
-  results
+  
+  ## ---- execution ------------------------------------------------------
+  if (progress) {
+    
+    res <- progressr::with_progress({
+      
+      p <- progressr::progressor(along = folds)
+      
+      future.apply::future_lapply(
+        folds,
+        function(f) {
+          out <- run_one(f)
+          p()
+          out
+        },
+        future.seed = TRUE
+      )
+      
+    })
+    
+  } else {
+    
+    res <- future.apply::future_lapply(
+      folds,
+      run_one,
+      future.seed = TRUE
+    )
+  }
+  
+  ## ---- completion -----------------------------------------------------
+  .tempssm_cli_inform(
+    "Completed cross-validation over {n_folds} fold{?s}"
+  )
+  
+  return(res)
 }
+
 
 
 
