@@ -22,3 +22,4 @@ A univariate or multivairate \code{ts} object.
 \description{
 Check ts object of exogenous variable(s) for applying \code{tempssm()}
 }
+\keyword{internal}

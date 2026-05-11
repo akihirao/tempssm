@@ -57,57 +57,57 @@
 #'
 #' @export
 set_ts_name <- function(ts_in, label) {
-  
+
+  ## ---- input check ----------------------------------------------------
   if (!inherits(ts_in, "ts")) {
-    stop("`ts_in` must be an object of class `ts`.", call. = FALSE)
-  }
-  
-  n_col <- NCOL(ts_in)
-  
-  ## validate label
-  if (!is.character(label)) {
-    stop("`label` must be a character vector.", call. = FALSE)
-  }
-  
-  if (!(length(label) == 1L || length(label) == n_col)) {
-    stop(
-      "Length of `label` must be 1 or equal to the number of series in `ts_in`.",
-      call. = FALSE
+    cli::cli_abort(
+      "`ts_in` must be an object of class {.cls ts}."
     )
   }
-  
-  ## inform: start operation
+
+  n_col <- NCOL(ts_in)
+
+  if (!is.character(label)) {
+    cli::cli_abort("`label` must be a character vector.")
+  }
+
+  if (!(length(label) == 1L || length(label) == n_col)) {
+    cli::cli_abort(
+      "Length of {.arg label} must be 1 or equal to the number of series in {.arg ts_in}."
+    )
+  }
+
   .tempssm_cli_debug("Assigning variable names to {.cls ts} object")
-  
-  ## recycle label if needed
+
+  ## ---- recycle label --------------------------------------------------
   if (length(label) == 1L) {
-    .tempssm_cli_debug("Recycling single label to {n_col} columns")
+    .tempssm_cli_debug("Recycling label to {n_col} column{?s}")
     label <- rep(label, n_col)
   }
-  
-  ## ensure matrix form for ts
+
+  ## ---- ensure matrix form --------------------------------------------
   x <- if (is.null(dim(ts_in))) {
     .tempssm_cli_debug("Converting univariate series to matrix form")
     matrix(ts_in, ncol = 1)
   } else {
     ts_in
   }
-  
-  ## assign column names
+
+  ## ---- assign names ---------------------------------------------------
   colnames(x) <- label
-  
-  ## reconstruct ts with preserved attributes
-  ts_out <- ts(
+
+  ## ---- reconstruct ts -------------------------------------------------
+  ts_out <- stats::ts(
     x,
-    start = start(ts_in),
-    frequency = frequency(ts_in)
+    start = stats::start(ts_in),
+    frequency = stats::frequency(ts_in)
   )
-  
-  ## inform: completion
+
+  ## ---- inform ---------------------------------------------------------
   .tempssm_cli_inform(
     "Assigned {length(label)} variable name{?s} to time series"
   )
-  
+
   return(ts_out)
 }
 
@@ -179,47 +179,72 @@ trim_ts_overlap <- function(
     temp_name = "temp",
     exo_name = NULL
 ) {
-  
+
+  ## ---- basic checks ---------------------------------------------------
+  if (!inherits(temp_ts, "ts")) {
+    cli::cli_abort("`temp_ts` must be an object of class {.cls ts}.")
+  }
+
+  if (!inherits(exo_ts, "ts")) {
+    cli::cli_abort("`exo_ts` must be an object of class {.cls ts}.")
+  }
+
   num_exo_variable <- NCOL(exo_ts)
-  
+
+  ## ---- exo name handling ----------------------------------------------
   if (is.null(exo_name)) {
-    warning(
-      "`exo_name` is not supplied. Using default names: var1, var2, ..."
+    cli::cli_warn(
+      "`exo_name` not supplied; assigning default names: var1, var2, ..."
     )
     exo_name <- paste0("var", seq_len(num_exo_variable))
   } else {
     if (length(exo_name) != num_exo_variable) {
-      stop("Length of `exo_name` must equal number of exogenous variables")
+      cli::cli_abort(
+        "Length of {.arg exo_name} must equal the number of exogenous variables."
+      )
     }
   }
-  
-  ## overlap
-  temp_exo_ts_overlap <- ts.intersect(temp_ts, exo_ts)
-  
+
+  .tempssm_cli_debug(
+    "Trimming time series overlap (temp length={length(temp_ts)}, exo vars={num_exo_variable})"
+  )
+
+  ## ---- overlap --------------------------------------------------------
+  temp_exo_ts_overlap <- stats::ts.intersect(temp_ts, exo_ts)
+
+  if (is.null(temp_exo_ts_overlap)) {
+    cli::cli_abort(
+      "No overlapping time period found between {.arg temp_ts} and {.arg exo_ts}."
+    )
+  }
+
   temp_ts_overlap <- temp_exo_ts_overlap[, 1, drop = FALSE]
   exo_ts_overlap  <- temp_exo_ts_overlap[, -1, drop = FALSE]
-  
-  ## labels
-    temp_ts_overlap <- set_ts_name(temp_ts_overlap,
-                                   label=temp_name)
-  
-  if(num_exo_variable==1){
-    exo_ts_overlap <- set_ts_name(exo_ts_overlap,
-                                    label=exo_name)
-  }else{
+
+  .tempssm_cli_debug("Overlap length: {NROW(temp_ts_overlap)}")
+
+  ## ---- labels ---------------------------------------------------------
+  temp_ts_overlap <- set_ts_name(temp_ts_overlap, label = temp_name)
+
+  if (num_exo_variable == 1) {
+    exo_ts_overlap <- set_ts_name(exo_ts_overlap, label = exo_name)
+  } else {
     colnames(exo_ts_overlap) <- exo_name
   }
-  
-  
-  ## output
+
+  ## ---- output ---------------------------------------------------------
   out <- list(
     temperature = temp_ts_overlap,
     exogenous   = exo_ts_overlap
   )
-  
+
+  ## ---- inform ---------------------------------------------------------
+  .tempssm_cli_inform(
+    "Trimmed series to {NROW(temp_ts_overlap)} overlapping observation{?s}"
+  )
+
   return(out)
 }
-
 
 
 #' Split a multivariate ts object into univariate ts objects
@@ -263,29 +288,55 @@ trim_ts_overlap <- function(
 #'
 #' @export
 split_multi_ts <- function(multi_ts) {
-  
+
+  ## ---- input checks ---------------------------------------------------
+  if (!inherits(multi_ts, "ts")) {
+    cli::cli_abort(
+      "`multi_ts` must be an object of class {.cls ts}."
+    )
+  }
+
   num_variable <- NCOL(multi_ts)
-  
+
   if (num_variable == 1) {
-    stop("This `ts` object is univariate and cannot be split.")
+    cli::cli_abort(
+      "`multi_ts` must be multivariate; a univariate series cannot be split."
+    )
   }
-  
+
   if (is.null(colnames(multi_ts))) {
-    stop("`multi_ts` must have column names.")
+    cli::cli_abort(
+      "`multi_ts` must have column names."
+    )
   }
-  
+
   names_var <- colnames(multi_ts)
+
+  .tempssm_cli_debug(
+    "Splitting multivariate ts with {num_variable} variable{?s}"
+  )
+
+  ## ---- split ----------------------------------------------------------
   out <- vector("list", num_variable)
-  
+
   for (i in seq_len(num_variable)) {
     target_name <- names_var[i]
+
+    .tempssm_cli_debug("Processing variable: {target_name}")
+
     out[[i]] <- set_ts_name(
       multi_ts[, i, drop = FALSE],
       label = target_name
     )
   }
-  
+
   names(out) <- names_var
+
+  ## ---- inform ---------------------------------------------------------
+  .tempssm_cli_inform(
+    "Split time series into {num_variable} univariate series"
+  )
+
   return(out)
 }
 
@@ -353,46 +404,64 @@ split_multi_ts <- function(multi_ts) {
 #' @export
 convert_monthly_df_to_ts <- function(df) {
 
-  # Check required columns
-  required_cols <- c("Date", "Temp")
-  if (!all(required_cols %in% names(df))) {
-    stop(
-      "The data frame must contain the following columns: ",
-      paste(required_cols, collapse = ", "),
-      call. = FALSE
+  ## ---- input check ----------------------------------------------------
+  if (!is.data.frame(df)) {
+    cli::cli_abort(
+      "`df` must be a data frame."
     )
   }
 
-  # Ensure Date is of class Date
-  if (!inherits(df$Date, "Date")) {
-    stop("The 'Date' column must be of class Date.", call. = FALSE)
+  required_cols <- c("Date", "Temp")
+
+  if (!all(required_cols %in% names(df))) {
+    cli::cli_abort(
+      "The data frame must contain columns: {paste(required_cols, collapse = ', ')}."
+    )
   }
 
-  # Sort by Date to ensure correct temporal order
+  if (!inherits(df$Date, "Date")) {
+    cli::cli_abort(
+      "The {.col Date} column must be of class {.cls Date}."
+    )
+  }
+
+  .tempssm_cli_debug("Validating input data frame with {nrow(df)} rows")
+
+  ## ---- sort -----------------------------------------------------------
   df <- df[order(df$Date), ]
 
-  # Check regular monthly spacing
+  ## ---- check regularity ----------------------------------------------
   ym_index <- as.integer(format(df$Date, "%Y")) * 12 +
               as.integer(format(df$Date, "%m"))
 
   if (any(diff(ym_index) != 1)) {
-    warning(
-      "The input data do not form a strictly regular monthly time series. ",
-      "Some months may be missing.",
-      call. = FALSE
+    cli::cli_warn(
+      "Input data are not strictly monthly; some months may be missing."
     )
   }
 
-  # Create ts object (monthly)
-  ts(
+  ## ---- construct ts ---------------------------------------------------
+  start_year  <- as.integer(format(df$Date[1], "%Y"))
+  start_month <- as.integer(format(df$Date[1], "%m"))
+
+  .tempssm_cli_debug(
+    "Creating ts object starting at {start_year}-{start_month}"
+  )
+
+  ts_out <- stats::ts(
     as.numeric(df$Temp),
-    start = c(
-      as.integer(format(df$Date[1], "%Y")),
-      as.integer(format(df$Date[1], "%m"))
-    ),
+    start = c(start_year, start_month),
     frequency = 12
   )
+
+  ## ---- inform ---------------------------------------------------------
+  .tempssm_cli_inform(
+    "Converted data frame to monthly time series with {length(ts_out)} observation{?s}"
+  )
+
+  return(ts_out)
 }
+
 
 
 #' Read and convert a monthly temperature CSV file to a \code{ts} object
@@ -444,29 +513,70 @@ convert_monthly_df_to_ts <- function(df) {
 #' @export
 read_monthly_temp_ts <- function(csv) {
 
-  raw_data <- readr::read_csv(csv)
+  ## ---- input check ----------------------------------------------------
+  if (!is.character(csv) || length(csv) != 1) {
+    cli::cli_abort("`csv` must be a file path (character scalar).")
+  }
 
-  message(
-    "Columns in the input file: ",
-    paste(names(raw_data), collapse = ", ")
+  if (!file.exists(csv)) {
+    cli::cli_abort("File does not exist: {csv}")
+  }
+
+  .tempssm_cli_debug("Reading CSV file: {csv}")
+
+  ## ---- read -----------------------------------------------------------
+  raw_data <- tryCatch(
+    readr::read_csv(csv, show_col_types = FALSE),
+    error = function(e) {
+      cli::cli_abort("Failed to read CSV file: {conditionMessage(e)}")
+    }
   )
 
+  .tempssm_cli_debug(
+    "Columns in input: {paste(names(raw_data), collapse = ', ')}"
+  )
+
+  ## ---- column check ---------------------------------------------------
   required_cols <- c("Year", "Month", "Temp")
+
   if (!all(required_cols %in% names(raw_data))) {
-    stop(
-      "The CSV file must contain columns: ",
-      paste(required_cols, collapse = ", "),
-      call. = FALSE
+    cli::cli_abort(
+      "The CSV file must contain columns: {paste(required_cols, collapse = ', ')}."
     )
   }
 
-  ts(
-    as.matrix(raw_data$Temp),
-    start = c(raw_data$Year[1], raw_data$Month[1]),
+  ## ---- basic validation -----------------------------------------------
+  if (nrow(raw_data) == 0) {
+    cli::cli_abort("The input CSV file contains no rows.")
+  }
+
+  ## ---- optional warning -----------------------------------------------
+  if (any(raw_data$Month < 1 | raw_data$Month > 12, na.rm = TRUE)) {
+    cli::cli_warn("Detected invalid month values outside 1-12.")
+  }
+
+  ## ---- construct ts ---------------------------------------------------
+  start_year  <- raw_data$Year[1]
+  start_month <- raw_data$Month[1]
+
+  .tempssm_cli_debug(
+    "Creating ts object starting at {start_year}-{start_month}"
+  )
+
+  ts_out <- stats::ts(
+    as.numeric(raw_data$Temp),
+    start = c(start_year, start_month),
     frequency = 12
   )
 
+  ## ---- inform ---------------------------------------------------------
+  .tempssm_cli_inform(
+    "Loaded monthly temperature series with {length(ts_out)} observation{?s}"
+  )
+
+  return(ts_out)
 }
+
 
 
 
@@ -474,12 +584,12 @@ read_monthly_temp_ts <- function(csv) {
 #'
 #' @param zoo_obj A \code{zoo} object with daily observations.
 #'   The index must be of class \code{Date} or \code{POSIXt}.
-#'   
+#'
 #' @param var A character string specifying the name of the variable
 #'   to be aggregated (default: \code{"Temp"}).
-#'   
+#'
 #' @param na.rm Logical; should missing values be removed before averaging?
-#' 
+#'
 #' @param na_prop_max Maximum allowed proportion of NA values within a month.
 #'   If the proportion of missing values exceeds this threshold, the monthly
 #'   mean is set to NA. Default is \code{1} (no additional filtering).
@@ -497,66 +607,97 @@ read_monthly_temp_ts <- function(csv) {
 #'
 #' @export
 aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
-                                 var = "Temp",
-                                 na.rm = TRUE,
-                                 na_prop_max = 1) {
-  
+                                              var = "Temp",
+                                              na.rm = TRUE,
+                                              na_prop_max = 1) {
+
+  ## ---- input check ----------------------------------------------------
   if (!inherits(zoo_obj, "zoo")) {
-    stop("Input must be a zoo object.", call. = FALSE)
+    cli::cli_abort("Input must be a {.cls zoo} object.")
   }
-  
+
   if (!var %in% colnames(zoo_obj)) {
-    stop(
-      paste0("Variable '", var, "' not found in the zoo object."),
-      call. = FALSE
+    cli::cli_abort(
+      "Variable {.val {var}} not found in the zoo object."
     )
   }
-  
+
   if (!is.numeric(na_prop_max) || na_prop_max < 0 || na_prop_max > 1) {
-    stop("na_prop_max must be between 0 and 1.", call. = FALSE)
+    cli::cli_abort("`na_prop_max` must be between 0 and 1.")
   }
-  
+
   idx <- zoo::index(zoo_obj)
   if (!inherits(idx, c("Date", "POSIXt"))) {
-    stop("Index of the zoo object must be Date or POSIXt.", call. = FALSE)
+    cli::cli_abort(
+      "Index of the zoo object must be {.cls Date} or {.cls POSIXt}."
+    )
   }
-  
-  # --- custom monthly summary ---
+
+  .tempssm_cli_debug(
+    "Aggregating daily zoo data to monthly ts (var={var})"
+  )
+
+  ## ---- custom monthly summary ----------------------------------------
   monthly_fun <- function(x) {
-    
-    # Check for all of NA in a month
+
     if (all(is.na(x))) {
       return(NA_real_)
     }
-    
+
     na_prop <- mean(is.na(x))
-    
+
     if (na_prop > na_prop_max) {
       return(NA_real_)
     }
-    
+
     mean(x, na.rm = na.rm)
   }
-  
+
+  ## ---- aggregation ----------------------------------------------------
   zoo_monthly <- stats::aggregate(
     zoo_obj[, var, drop = FALSE],
     zoo::as.yearmon,
     monthly_fun
   )
-  
+
+  if (NROW(zoo_monthly) == 0) {
+    cli::cli_abort(
+      "No valid observations available after aggregation."
+    )
+  }
+
+  ## ---- construct ts ---------------------------------------------------
   ym_start <- stats::start(zoo_monthly)
-  
-  ts_monthly <- ts(
+
+  start_year  <- as.integer(format(ym_start, "%Y"))
+  start_month <- as.integer(format(ym_start, "%m"))
+
+  .tempssm_cli_debug(
+    "Creating monthly ts starting at {start_year}-{start_month}"
+  )
+
+  ts_monthly <- stats::ts(
     zoo::coredata(zoo_monthly),
-    start = c(
-      as.integer(format(ym_start, "%Y")),
-      as.integer(format(ym_start, "%m"))
-    ),
+    start = c(start_year, start_month),
     frequency = 12
   )
-  
+
   colnames(ts_monthly) <- var
-  ts_monthly
+
+  ## ---- optional warning (data quality) -------------------------------
+  na_ratio <- mean(is.na(ts_monthly))
+  if (na_ratio > 0.3) {
+    cli::cli_warn(
+      "More than 30% of aggregated monthly values are missing."
+    )
+  }
+
+  ## ---- inform ---------------------------------------------------------
+  .tempssm_cli_inform(
+    "Aggregated daily data to monthly series with {NROW(ts_monthly)} observation{?s}"
+  )
+
+  return(ts_monthly)
 }
 
 
@@ -566,7 +707,7 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
 #' @param temp_ts Monthly temperature time series of class \code{ts}.
 #'   The time series must have a frequency of 12 (monthly data).
 #'
-#' @return A tibble with one row per month (January–December) containing
+#' @return A tibble with one row per month (January-December) containing
 #'   the climatological mean temperature.
 #'
 #' @importFrom stats cycle
@@ -586,25 +727,35 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
 #' @export
 compute_monthly_climatology <- function(temp_ts){
 
+  ## ---- input check ----------------------------------------------------
   if (!inherits(temp_ts, "ts")) {
-    stop("Input must be a 'ts' object.", call. = FALSE)
+    cli::cli_abort("Input must be a {.cls ts} object.")
   }
 
-  if (frequency(temp_ts) != 12) {
-    stop("Time series must be monthly (frequency = 12).", call. = FALSE)
+  if (stats::frequency(temp_ts) != 12) {
+    cli::cli_abort("Time series must be monthly (frequency = 12).")
   }
 
+  .tempssm_cli_debug(
+    "Computing monthly climatology for {length(temp_ts)} observations"
+  )
+
+  ## ---- compute --------------------------------------------------------
   temp  <- as.numeric(temp_ts)
-  month <- factor(cycle(temp_ts), levels = 1:12)
+  month <- factor(stats::cycle(temp_ts), levels = 1:12)
 
   monthly_mean <- tapply(temp, month, mean, na.rm = TRUE)
 
-  tibble(
+  ## ---- output ---------------------------------------------------------
+  out <- tibble::tibble(
     Month = 1:12,
     Temperature = as.numeric(monthly_mean)
   )
-}
 
+  .tempssm_cli_debug("Computed climatology for 12 months")
+
+  return(out)
+}
 
 
 #' Compute monthly temperature anomalies
@@ -643,57 +794,91 @@ compute_monthly_climatology <- function(temp_ts){
 #' # Full-period climatology
 #' anom_all <- compute_temp_anomaly(temp_ts)
 #'
-#' # Baseline climatology (1981–2010)
+#' # Baseline climatology (1981-2010)
 #' anom_base <- compute_temp_anomaly(temp_ts, baseline = c(1981, 2010))
-#' 
+#'
 #' @export
 compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 
+  ## ---- input check ----------------------------------------------------
   if (!inherits(temp_ts, "ts")) {
-    stop("Input must be a 'ts' object.", call. = FALSE)
+    cli::cli_abort("Input must be a {.cls ts} object.")
   }
 
-  if (frequency(temp_ts) != 12) {
-    stop("Time series must be monthly (frequency = 12).", call. = FALSE)
+  if (stats::frequency(temp_ts) != 12) {
+    cli::cli_abort("Time series must be monthly (frequency = 12).")
   }
 
-  ## ---- Select baseline period --------------------------------------------
+  ## ---- baseline selection ---------------------------------------------
   if (is.null(baseline)) {
 
+    .tempssm_cli_debug("Using full period for climatology")
     ts_base <- temp_ts
 
   } else {
 
     if (!is.numeric(baseline) || length(baseline) != 2) {
-      stop("baseline must be a numeric vector of length 2 (start_year, end_year).",
-           call. = FALSE)
+      cli::cli_abort(
+        "`baseline` must be a numeric vector of length 2 (start_year, end_year)."
+      )
     }
 
-    ts_base <- window(
+    .tempssm_cli_debug(
+      "Using baseline period: {baseline[1]}-{baseline[2]}"
+    )
+
+    ## ---- baseline validation --------------------------------------------
+    ts_start <- stats::start(temp_ts)[1]
+    ts_end   <- stats::end(temp_ts)[1]
+
+    if (baseline[1] > baseline[2]) {
+      cli::cli_abort("`baseline` start year must be <= end year.")
+    }
+
+    if (baseline[2] < ts_start || baseline[1] > ts_end) {
+      cli::cli_abort(
+        "No data available in the specified baseline period."
+      )
+    }
+
+    # Check for overlap
+    if (max(baseline[1], ts_start) > min(baseline[2], ts_end)) {
+      cli::cli_abort("No data available in the specified baseline period.")
+    }
+
+    ts_base <- stats::window(
       temp_ts,
       start = c(baseline[1], 1),
       end   = c(baseline[2], 12)
     )
 
     if (length(ts_base) == 0) {
-      stop("No data available in the specified baseline period.",
-           call. = FALSE)
+      cli::cli_abort(
+        "No data available in the specified baseline period."
+      )
     }
   }
 
-  ## ---- Monthly climatology -----------------------------------------------
+  ## ---- climatology ----------------------------------------------------
+  .tempssm_cli_debug("Computing monthly climatology")
+
   clim_tbl <- tempssm::compute_monthly_climatology(ts_base)
   clim_vec <- clim_tbl$Temperature
 
-  clim <- clim_vec[cycle(temp_ts)]
+  clim <- clim_vec[stats::cycle(temp_ts)]
 
-  ## ---- Anomaly -----------------------------------------------------------
-  ts(
+  ## ---- anomaly --------------------------------------------------------
+  .tempssm_cli_debug("Computing anomalies")
+
+  ts_out <- stats::ts(
     as.numeric(temp_ts) - clim,
-    start = start(temp_ts),
-    frequency = frequency(temp_ts)
+    start = stats::start(temp_ts),
+    frequency = stats::frequency(temp_ts)
   )
+
+  return(ts_out)
 }
+
 
 
 
@@ -763,9 +948,12 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #' @export
 get_jma_sst_zoo <- function(sea_area_id) {
 
+  ## ---- input handling -------------------------------------------------
   if (!is.character(sea_area_id)) {
     sea_area_id <- as.character(sea_area_id)
   }
+
+  .tempssm_cli_debug("Fetching JMA SST data (area_id={sea_area_id})")
 
   url <- paste0(
     "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area",
@@ -773,29 +961,41 @@ get_jma_sst_zoo <- function(sea_area_id) {
     ".txt"
   )
 
-  # ---- HTTP request ----
-  resp <- httr2::request(url) %>%
-    httr2::req_user_agent(.user_agent()) %>%
-    httr2::req_error(body = function(resp) {
-      paste0(
-        "Failed to retrieve SST data for sea_area_id = '",
-        sea_area_id,
-        "'.\nHTTP status: ",
-        httr2::resp_status(resp)
+  ## ---- HTTP request ---------------------------------------------------
+  resp <- tryCatch(
+    httr2::request(url) %>%
+      httr2::req_user_agent(.user_agent()) %>%
+      httr2::req_error(body = function(resp) {
+        paste0(
+          "Failed to retrieve SST data for sea_area_id = '",
+          sea_area_id,
+          "'. HTTP status: ",
+          httr2::resp_status(resp)
+        )
+      }) %>%
+      httr2::req_perform(),
+    error = function(e) {
+      cli::cli_abort(
+        "Failed to access JMA SST endpoint: {conditionMessage(e)}"
       )
-    }) %>%
-    httr2::req_perform()
+    }
+  )
 
-  # ---- parse ----
+  .tempssm_cli_debug("HTTP request successful")
+
+  ## ---- parse ----------------------------------------------------------
   sst_raw <- readr::read_csv(
     httr2::resp_body_raw(resp),
     show_col_types = FALSE
   )
 
   if (nrow(sst_raw) < 2) {
-    stop("Retrieved data has unexpected format.", call. = FALSE)
+    cli::cli_abort("Retrieved data has unexpected or empty format.")
   }
 
+  .tempssm_cli_debug("Raw data rows: {nrow(sst_raw)}")
+
+  ## ---- clean ----------------------------------------------------------
   sst_tidy <- sst_raw %>%
     dplyr::slice(-dplyr::n())
 
@@ -813,10 +1013,26 @@ get_jma_sst_zoo <- function(sea_area_id) {
     ) %>%
     dplyr::select(.data$date, .data$Temp, .data$flag)
 
-  zoo::zoo(
+  ## ---- data quality check ---------------------------------------------
+  na_ratio <- mean(is.na(sst_tidy$Temp))
+  if (na_ratio > 0.3) {
+    cli::cli_warn(
+      "More than 30% of SST values are missing in retrieved data."
+    )
+  }
+
+  ## ---- construct zoo --------------------------------------------------
+  out <- zoo::zoo(
     x = data.frame(Temp = sst_tidy$Temp),
     order.by = sst_tidy$date
   )
+
+  ## ---- inform ---------------------------------------------------------
+  .tempssm_cli_inform(
+    "Retrieved SST data with {nrow(sst_tidy)} observation{?s} for area {sea_area_id}"
+  )
+
+  return(out)
 }
 
 
@@ -879,9 +1095,16 @@ get_jma_sst_zoo <- function(sea_area_id) {
 get_jma_sst_ts <- function(sea_area_id,
                            na_prop_max = 1) {
 
+  ## ---- input handling -------------------------------------------------
   if (!is.character(sea_area_id)) {
     sea_area_id <- as.character(sea_area_id)
   }
+
+  if (!is.numeric(na_prop_max) || na_prop_max < 0 || na_prop_max > 1) {
+    cli::cli_abort("`na_prop_max` must be between 0 and 1.")
+  }
+
+  .tempssm_cli_debug("Fetching JMA SST (monthly) for area_id={sea_area_id}")
 
   url <- paste0(
     "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area",
@@ -889,29 +1112,41 @@ get_jma_sst_ts <- function(sea_area_id,
     ".txt"
   )
 
-  # ---- HTTP request ----
-  resp <- httr2::request(url) %>%
-    httr2::req_user_agent(.user_agent()) %>%
-    httr2::req_error(body = function(resp) {
-      paste0(
-        "Failed to retrieve SST data for sea_area_id = '",
-        sea_area_id,
-        "'.\nHTTP status: ",
-        httr2::resp_status(resp)
+  ## ---- HTTP request ---------------------------------------------------
+  resp <- tryCatch(
+    httr2::request(url) %>%
+      httr2::req_user_agent(.user_agent()) %>%
+      httr2::req_error(body = function(resp) {
+        paste0(
+          "Failed to retrieve SST data for sea_area_id = '",
+          sea_area_id,
+          "'. HTTP status: ",
+          httr2::resp_status(resp)
+        )
+      }) %>%
+      httr2::req_perform(),
+    error = function(e) {
+      cli::cli_abort(
+        "Failed to access JMA SST endpoint: {conditionMessage(e)}"
       )
-    }) %>%
-    httr2::req_perform()
+    }
+  )
 
-  # ---- parse ----
+  .tempssm_cli_debug("HTTP request successful")
+
+  ## ---- parse ----------------------------------------------------------
   sst_raw <- readr::read_csv(
     httr2::resp_body_raw(resp),
     show_col_types = FALSE
   )
 
   if (nrow(sst_raw) < 2) {
-    stop("Retrieved data has unexpected format.", call. = FALSE)
+    cli::cli_abort("Retrieved data has unexpected or empty format.")
   }
 
+  .tempssm_cli_debug("Raw daily rows: {nrow(sst_raw)}")
+
+  ## ---- clean ----------------------------------------------------------
   sst_tidy <- sst_raw %>%
     dplyr::slice(-dplyr::n())
 
@@ -929,18 +1164,36 @@ get_jma_sst_ts <- function(sea_area_id,
     ) %>%
     dplyr::select(.data$date, .data$Temp, .data$flag)
 
+  ## ---- data quality check ---------------------------------------------
+  na_ratio_daily <- mean(is.na(sst_tidy$Temp))
+  if (na_ratio_daily > 0.3) {
+    cli::cli_warn(
+      "More than 30% of daily SST values are missing."
+    )
+  }
+
+  ## ---- zoo conversion -------------------------------------------------
   sst_zoo <- zoo::zoo(
     x = data.frame(Temp = sst_tidy$Temp),
     order.by = sst_tidy$date
   )
+
+  ## ---- monthly aggregation --------------------------------------------
+  .tempssm_cli_debug("Aggregating daily data to monthly time series")
 
   monthly_sst_ts <- tempssm::aggregate_daily_zoo_to_monthly_ts(
     sst_zoo,
     na_prop_max = na_prop_max
   )
 
-  monthly_sst_ts
+  ## ---- inform ---------------------------------------------------------
+  .tempssm_cli_inform(
+    "Retrieved and aggregated SST data to {length(monthly_sst_ts)} monthly observation{?s} (area {sea_area_id})"
+  )
+
+  return(monthly_sst_ts)
 }
+
 
 
 
@@ -966,16 +1219,31 @@ get_jma_sst_ts <- function(sea_area_id,
 #' @export
 lm_ts <- function(temp_data) {
 
+  ## ---- input check ----------------------------------------------------
   if (!inherits(temp_data, "ts")) {
-    stop("`temp_data` must be a 'ts' object.", call. = FALSE)
+    cli::cli_abort(
+      "`temp_data` must be a {.cls ts} object."
+    )
   }
 
-  if (!is.null(dim(temp_data)) && ncol(temp_data) != 1) {
-    stop("`temp_data` must be a univariate 'ts' object.", call. = FALSE)
+  if (!is.null(dim(temp_data)) && NCOL(temp_data) != 1) {
+    cli::cli_abort(
+      "`temp_data` must be a univariate {.cls ts} object."
+    )
   }
 
+  n <- length(temp_data)
+
+  .tempssm_cli_debug(
+    "Fitting linear model to time series (n={n})"
+  )
+
+  ## ---- model ----------------------------------------------------------
   y <- as.numeric(temp_data)
-  x <- time(temp_data)
+  x <- stats::time(temp_data)
 
-  lm(y ~ x)
+  fit <- stats::lm(y ~ x)
+
+  return(fit)
 }
+

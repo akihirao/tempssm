@@ -526,18 +526,18 @@ ts_cv_run <- function(
   workers = future::availableCores(),
   progress = TRUE
 ) {
-  
+
   ## ---- input check ----------------------------------------------------
   if (!is.list(folds)) {
     cli::cli_abort("`folds` must be a list of fold objects.")
   }
-  
+
   n_folds <- length(folds)
-  
+
   .tempssm_cli_inform(
     "Running cross-validation on {n_folds} fold{?s}"
   )
-  
+
   ## ---- plan -----------------------------------------------------------
   if (parallel) {
     future::plan(future::multisession, workers = workers)
@@ -546,7 +546,7 @@ ts_cv_run <- function(
     future::plan(future::sequential)
     .tempssm_cli_debug("Sequential execution")
   }
-  
+
   ## ---- runner function -----------------------------------------------
   run_one <- function(f) {
     ts_cv_run_fold(
@@ -555,14 +555,14 @@ ts_cv_run <- function(
       use_season = use_season
     )
   }
-  
+
   ## ---- execution ------------------------------------------------------
   if (progress) {
-    
+
     res <- progressr::with_progress({
-      
+
       p <- progressr::progressor(along = folds)
-      
+
       future.apply::future_lapply(
         folds,
         function(f) {
@@ -572,23 +572,23 @@ ts_cv_run <- function(
         },
         future.seed = TRUE
       )
-      
+
     })
-    
+
   } else {
-    
+
     res <- future.apply::future_lapply(
       folds,
       run_one,
       future.seed = TRUE
     )
   }
-  
+
   ## ---- completion -----------------------------------------------------
   .tempssm_cli_inform(
     "Completed cross-validation over {n_folds} fold{?s}"
   )
-  
+
   return(res)
 }
 
@@ -607,17 +607,35 @@ ts_cv_run <- function(
 #' @export
 compute_mae <- function(y_pred, y_true) {
 
+  ## ---- fast exit ------------------------------------------------------
   if (is.null(y_pred) || is.null(y_true)) {
     return(NA_real_)
   }
 
+  ## ---- input check ----------------------------------------------------
   if (length(y_pred) != length(y_true)) {
-    stop("`y_pred` and `y_true` must have the same length.",
-         call. = FALSE)
+    cli::cli_abort(
+      "`y_pred` and `y_true` must have the same length."
+    )
   }
 
-  mean(abs(as.numeric(y_true) - as.numeric(y_pred)), na.rm = TRUE)
+  .tempssm_cli_debug(
+    "Computing MAE for {length(y_pred)} observation{?s}"
+  )
+
+  ## ---- compute --------------------------------------------------------
+  mae <- mean(
+    abs(as.numeric(y_true) - as.numeric(y_pred)),
+    na.rm = TRUE
+  )
+
+  .tempssm_cli_debug(
+    "MAE computed: {round(mae, 4)}"
+  )
+
+  return(mae)
 }
+
 
 
 #' Compute Mean Absolute Scaled Error (MASE)
@@ -646,30 +664,51 @@ compute_mase <- function(y_pred,
 
   method <- match.arg(method)
 
+  ## ---- fast exit ------------------------------------------------------
   if (is.null(y_pred) || is.null(y_true)) {
     return(NA_real_)
   }
 
+  ## ---- input check ----------------------------------------------------
   if (!inherits(y_train, "ts")) {
-    stop("`y_train` must be a 'ts' object.",
-         call. = FALSE)
+    cli::cli_abort(
+      "`y_train` must be a {.cls ts} object."
+    )
   }
 
+  .tempssm_cli_debug(
+    "Computing MASE (method = {method})"
+  )
+
+  ## ---- MAE ------------------------------------------------------------
   mae <- compute_mae(y_pred, y_true)
+
   if (is.na(mae)) {
     return(NA_real_)
   }
 
+  ## ---- scaling factor -------------------------------------------------
   Q <- tryCatch(
-    scale_Q(y_train, method = method),
-    error = function(e) NA_real_
+    .scale_Q(y_train, method = method),
+    error = function(e) {
+      .tempssm_cli_debug(
+        "Failed to compute scaling factor Q"
+      )
+      NA_real_
+    }
   )
 
   if (is.na(Q) || Q == 0) {
+    .tempssm_cli_debug("Invalid scaling factor (Q is NA or zero)")
     return(NA_real_)
   }
 
-  mae / Q
+  ## ---- result ---------------------------------------------------------
+  mase <- mae / Q
+
+  .tempssm_cli_debug("MASE computed: {round(mase, 4)}")
+
+  return(mase)
 }
 
 
@@ -729,29 +768,39 @@ compute_cv_metrics <- function(cv_result) {
 #' @export
 ts_cv_collect <- function(cv_results, metrics) {
 
+  ## ---- input check ----------------------------------------------------
   if (!is.list(cv_results) || !is.list(metrics)) {
-    stop("`cv_results` and `metrics` must both be lists.", call. = FALSE)
+    cli::cli_abort(
+      "`cv_results` and `.arg metrics` must both be lists."
+    )
   }
 
   if (length(cv_results) != length(metrics)) {
-    stop("`cv_results` and `metrics` must have the same length.",
-         call. = FALSE)
+    cli::cli_abort(
+      "`cv_results` and `.arg metrics` must have the same length."
+    )
   }
 
-  tibble::tibble(
+  n <- length(cv_results)
+
+  .tempssm_cli_debug(
+    "Collecting cross-validation results for {n} fold{?s}"
+  )
+
+  ## ---- build tibble ---------------------------------------------------
+  out <- tibble::tibble(
     fold = as.numeric(lapply(cv_results, function(x) x$fold)),
     converged = as.numeric(lapply(cv_results, function(x) x$converged)),
     MAE = as.numeric(lapply(metrics, function(x) x$MAE)),
     MASE_naive = as.numeric(lapply(metrics, function(x) x$MASE_naive)),
     MASE_seasonal = as.numeric(lapply(metrics, function(x) x$MASE_seasonal))
   )
+
+  return(out)
 }
 
 
 
-
-#################################################################
-#################################################################
 
 #' Calculate scale coefficient Q for MASE
 #'
@@ -780,52 +829,60 @@ ts_cv_collect <- function(cv_results, metrics) {
 #'
 #' @examples
 #' ts_data <- ts(rnorm(120), frequency = 12)
-#' scale_Q(ts_data, method = "naive")
-#' scale_Q(ts_data, method = "seasonal")
+#' .scale_Q(ts_data, method = "naive")
+#' .scale_Q(ts_data, method = "seasonal")
 #'
 #' @export
-scale_Q <- function(train_ts, method = c("naive", "seasonal")) {
+#' @keywords internal
+.scale_Q <- function(train_ts, method = c("naive", "seasonal")) {
 
   method <- match.arg(method)
 
+  ## ---- input check ----------------------------------------------------
   if (!inherits(train_ts, "ts")) {
-    stop("train_ts must be a 'ts' object.", call. = FALSE)
+    cli::cli_abort(
+      "`train_ts` must be a {.cls ts} object."
+    )
   }
 
   y <- as.numeric(train_ts)
   n <- length(y)
 
+  .tempssm_cli_debug(
+    "Computing scale Q (method = {method}, n = {n})"
+  )
+
+  ## ---- naive scaling --------------------------------------------------
   if (method == "naive") {
 
     if (n < 2) {
-      stop("At least two observations are required for naive scaling.",
-           call. = FALSE)
+      cli::cli_abort(
+        "At least two observations are required for naive scaling."
+      )
     }
 
     Q <- mean(abs(diff(y)), na.rm = TRUE)
 
   } else {  # seasonal
 
-    m <- frequency(train_ts)
+    m <- stats::frequency(train_ts)
 
     if (m <= 1) {
-      stop("Seasonal scaling requires a ts object with frequency > 1.",
-           call. = FALSE)
+      cli::cli_abort(
+        "Seasonal scaling requires a {.cls ts} object with frequency > 1."
+      )
     }
 
     if (n <= m) {
-      stop("Time series is too short for seasonal scaling.",
-           call. = FALSE)
+      cli::cli_abort(
+        "Time series is too short for seasonal scaling."
+      )
     }
 
     Q <- mean(abs(y[(m + 1):n] - y[1:(n - m)]), na.rm = TRUE)
   }
 
+  .tempssm_cli_debug("Scale Q computed: {round(Q, 4)}")
+
   return(Q)
 }
-
-
-
-
-
-

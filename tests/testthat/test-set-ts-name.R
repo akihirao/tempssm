@@ -73,12 +73,11 @@ test_that("vector ts input is safely converted to single-column ts", {
 })
 
 
-
 test_that("non-ts input triggers error", {
 
   expect_error(
     set_ts_name(rnorm(10), label = "x"),
-    "`ts_in` must be an object of class `ts`"
+    "must be an object of class"
   )
 })
 
@@ -103,11 +102,7 @@ test_that("invalid label length triggers error", {
 
   expect_error(
     set_ts_name(ts_multi, label = c("a", "b", "c")),
-    "Length of `label` must be 1 or equal"
+    "Length of"
   )
 })
-
-
-
-
 

@@ -41,7 +41,7 @@ temp_ts <- ts(
 # Full-period climatology
 anom_all <- compute_temp_anomaly(temp_ts)
 
-# Baseline climatology (1981–2010)
+# Baseline climatology (1981-2010)
 anom_base <- compute_temp_anomaly(temp_ts, baseline = c(1981, 2010))
 
 }

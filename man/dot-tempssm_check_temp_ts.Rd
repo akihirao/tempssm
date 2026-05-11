@@ -4,15 +4,12 @@
 \alias{.tempssm_check_temp_ts}
 \title{Check ts object of temperature time series for applying \code{tempssm()}}
 \usage{
-.tempssm_check_temp_ts(temp_data, message = TRUE)
+.tempssm_check_temp_ts(temp_data)
 }
 \arguments{
 \item{temp_data}{A temperature time series of class \code{ts}.
 The series can have any arbitrary frequency of 2 or higher.
 For example, a frequency of 12 represents a monthly \code{ts} object.}
-
-\item{message}{Logical; Whether Masseage is showed. 
-Default to TRUE.}
 }
 \value{
 A univariate \code{ts} object.
@@ -20,3 +17,4 @@ A univariate \code{ts} object.
 \description{
 Check ts object of temperature time series for applying \code{tempssm()}
 }
+\keyword{internal}

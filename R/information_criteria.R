@@ -1,82 +1,104 @@
-# ---- internal helper: validate tempssm object ----
+######################################
+#' @keywords internal
 .validate_tempssm_for_ic <- function(res) {
 
+  ## ---- class check ----------------------------------------------------
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    cli::cli_abort(
+      "`res` must be an object of class {.cls tempssm}."
+    )
   }
 
+  ## ---- convergence check ----------------------------------------------
   if (!isTRUE(res$converged)) {
-    stop(
-      "Information criteria are not available because the model did not converge.",
-      call. = FALSE
+    cli::cli_abort(
+      "Information criteria are not available because the model did not converge."
     )
   }
 
+  ## ---- component check ------------------------------------------------
   if (is.null(res$model) || is.null(res$fit)) {
-    stop(
-      "Information criteria are not available because the fitted model is missing.",
-      call. = FALSE
+    cli::cli_abort(
+      "Information criteria are not available because the fitted model is missing."
     )
   }
 
-  invisible(res)
+  ## ---- debug message --------------------------------------------------
+  .tempssm_cli_debug("Validated tempssm object for information criteria")
+
+  return(invisible(res))
 }
 
 
 
-# ---- internal helper: logLik core definition ----
+######################################
+#' @keywords internal
 .internal_logLik_tempssm <- function(res) {
 
+  ## ---- validation ----------------------------------------------------
   .validate_tempssm_for_ic(res)
 
+  ## ---- logLik extraction ---------------------------------------------
   ll <- tryCatch(
     as.numeric(stats::logLik(res$model)),
     error = function(e) {
-      stop(
-        "Failed to extract log-likelihood from the fitted model.",
-        call. = FALSE
+      cli::cli_abort(
+        "Failed to extract log-likelihood from the fitted model."
       )
     }
   )
 
+  ## ---- degrees of freedom --------------------------------------------
   df <- length(res$fit$optim.out$par)
+
   if (!is.null(res$exogenous_data)) {
     df <- df + ncol(res$exogenous_data)
   }
 
+  ## ---- number of observations ----------------------------------------
   nobs <- length(res$temp_data)
 
-  list(
+  ## ---- debug message --------------------------------------------------
+  .tempssm_cli_debug(
+    "Computed logLik components: logLik={round(ll, 3)}, df={df}, nobs={nobs}"
+  )
+
+  ## ---- return --------------------------------------------------------
+  return(list(
     logLik = ll,
     df     = df,
     nobs   = nobs
-  )
+  ))
 }
-
-
-
-
 
 
 
 
 ######################################
-# internal helper for log-likeliihod
+#' @keywords internal
 .get_loglik_tempssm <- function(res) {
 
+  ## ---- basic check ----------------------------------------------------
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    cli::cli_abort(
+      "`res` must be an object of class {.cls tempssm}."
+    )
   }
 
+  ## ---- logLik extraction ---------------------------------------------
   loglik <- tryCatch(
-    as.numeric(logLik(res$model)),
+    as.numeric(stats::logLik(res$model)),
     error = function(e) {
-      stop("Failed to extract log-likelihood from the fitted model.",
-           call. = FALSE)
+      cli::cli_abort(
+        "Failed to extract log-likelihood from the fitted model."
+      )
     }
   )
 
-  loglik
+  ## ---- debug (optional, lightweight) ---------------------------------
+  .tempssm_cli_debug("Extracted log-likelihood: {round(loglik, 3)}")
+
+  return(loglik)
 }
 
 

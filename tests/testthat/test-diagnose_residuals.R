@@ -30,6 +30,6 @@ test_that("diagnose_residuals checks input class", {
 
   expect_error(
     diagnose_residuals(NULL),
-    "`res` must be an object of class 'tempssm'"
+    "`res` must be an object of class <tempssm>."
   )
 })

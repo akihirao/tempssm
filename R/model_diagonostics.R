@@ -14,7 +14,9 @@
 get_residuals <- function(res) {
 
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    cli::cli_abort(
+      "`res` must be an object of class {.cls tempssm}."
+    )
   }
 
   r <- stats::rstandard(res$kfs, type = "recursive")
@@ -54,7 +56,9 @@ get_residuals <- function(res) {
 diagnose_residuals <- function(res, JB_test = FALSE) {
 
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    cli::cli_abort(
+      "`res` must be an object of class {.cls tempssm}."
+    )
   }
 
   r <- get_residuals(res)

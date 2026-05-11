@@ -12,7 +12,7 @@ compute_monthly_climatology(temp_ts)
 The time series must have a frequency of 12 (monthly data).}
 }
 \value{
-A tibble with one row per month (January–December) containing
+A tibble with one row per month (January-December) containing
   the climatological mean temperature.
 }
 \description{

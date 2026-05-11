@@ -51,43 +51,53 @@ autoplot_level <- function(res,
                            ci_level = 0.95,
                            ylab = "Temperature") {
 
+  ## ---- input checks ---------------------------------------------------
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    cli::cli_abort(
+      "`res` must be an object of class {.cls tempssm}."
+    )
   }
 
-  # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
-    stop("`ci` must be a single logical value.", call. = FALSE)
+    cli::cli_abort("`ci` must be a single logical value.")
   }
 
-  # ---- check ci_level only if ci is TRUE ----
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
         ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
-           call. = FALSE)
+      cli::cli_abort(
+        "`ci_level` must be a numeric value between 0 and 1."
+      )
     }
   }
 
+  .tempssm_cli_debug(
+    "Creating level plot (ci={ci}, ci_level={ci_level})"
+  )
+
+  ## ---- extract data ---------------------------------------------------
   level_ts <- get_level_ts(res, ci = TRUE, ci_level = ci_level)
 
   level_df <- data.frame(
     time  = time(level_ts),
-    level = as.numeric(level_ts[,"level"])
+    level = as.numeric(level_ts[, "level"])
   )
 
   if (ci) {
-    ci_df = data.frame(
-      lwr = as.numeric(level_ts[,"lwr"]),
-      upr = as.numeric(level_ts[,"upr"])
-      )
+    .tempssm_cli_debug("Including confidence intervals in plot")
+
+    ci_df <- data.frame(
+      lwr = as.numeric(level_ts[, "lwr"]),
+      upr = as.numeric(level_ts[, "upr"])
+    )
+
     level_df <- cbind(level_df, ci_df)
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
 
   level_tidy <- tibble::as_tibble(level_df)
 
-  # ---- Plot ----
+  ## ---- plotting -------------------------------------------------------
   p <- ggplot2::ggplot(
     level_tidy,
     ggplot2::aes(x = .data$time, y = .data$level)
@@ -111,7 +121,9 @@ autoplot_level <- function(res,
       )
   }
 
-  p
+  .tempssm_cli_debug("Level plot created successfully")
+
+  return(p)
 }
 
 
@@ -170,23 +182,31 @@ autoplot_drift <- function(res,
                            ylab = "Temperature") {
 
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    cli::cli_abort(
+      "`res` must be an object of class {.cls tempssm}."
+    )
   }
 
   # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
-    stop("`ci` must be a single logical value.", call. = FALSE)
+    cli::cli_abort("`ci` must be a single logical value.")
   }
 
   # ---- check ci_level only if ci is TRUE ----
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
         ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
-           call. = FALSE)
+      cli::cli_abort(
+        "`ci_level` must be a numeric value between 0 and 1."
+      )
     }
   }
 
+  .tempssm_cli_debug(
+    "Creating drift plot (ci={ci}, ci_level={ci_level})"
+  )
+
+  ## ---- extract data ---------------------------------------------------
   drift_ts <- get_drift_ts(res, ci = TRUE, ci_level = ci_level)
 
   drift_df <- data.frame(
@@ -195,6 +215,8 @@ autoplot_drift <- function(res,
   )
 
   if (ci) {
+    .tempssm_cli_debug("Including confidence intervals in plot")
+
     ci_df = data.frame(
       lwr = as.numeric(drift_ts[,"lwr"]),
       upr = as.numeric(drift_ts[,"upr"])
@@ -229,7 +251,9 @@ autoplot_drift <- function(res,
       )
   }
 
-  p
+  .tempssm_cli_debug("Drift plot created successfully")
+
+  return(p)
 }
 
 
@@ -288,23 +312,31 @@ autoplot_season <- function(res,
                             ylab = "Temperature") {
 
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    cli::cli_abort(
+      "`res` must be an object of class {.cls tempssm}."
+    )
   }
 
   # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
-    stop("`ci` must be a single logical value.", call. = FALSE)
+    cli::cli_abort("`ci` must be a single logical value.")
   }
 
   # ---- check ci_level only if ci is TRUE ----
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
         ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
-           call. = FALSE)
+      cli::cli_abort(
+        "`ci_level` must be a numeric value between 0 and 1."
+      )
     }
   }
 
+  .tempssm_cli_debug(
+    "Creating season plot (ci={ci}, ci_level={ci_level})"
+  )
+
+  ## ---- extract data ---------------------------------------------------
   season_ts <- get_season_ts(res, ci = TRUE, ci_level = ci_level)
 
   season_df <- data.frame(
@@ -313,6 +345,8 @@ autoplot_season <- function(res,
   )
 
   if (ci) {
+    .tempssm_cli_debug("Including confidence intervals in plot")
+
     ci_df = data.frame(
       lwr = as.numeric(season_ts[,"lwr"]),
       upr = as.numeric(season_ts[,"upr"])
@@ -347,7 +381,9 @@ autoplot_season <- function(res,
       )
   }
 
-  p
+  .tempssm_cli_debug("Seasonal plot created successfully")
+
+  return(p)
 }
 
 
@@ -406,23 +442,31 @@ autoplot_ar1 <- function(res,
                         ylab = "Temperature") {
 
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    cli::cli_abort(
+      "`res` must be an object of class {.cls tempssm}."
+    )
   }
 
   # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
-    stop("`ci` must be a single logical value.", call. = FALSE)
+    cli::cli_abort("`ci` must be a single logical value.")
   }
 
   # ---- check ci_level only if ci is TRUE ----
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
         ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
-           call. = FALSE)
+      cli::cli_abort(
+        "`ci_level` must be a numeric value between 0 and 1."
+      )
     }
   }
 
+  .tempssm_cli_debug(
+    "Creating ar1 plot (ci={ci}, ci_level={ci_level})"
+  )
+
+  ## ---- extract data ---------------------------------------------------
   ar1_ts <- get_ar1_ts(res, ci = TRUE, ci_level = ci_level)
 
   ar1_df <- data.frame(
@@ -431,6 +475,8 @@ autoplot_ar1 <- function(res,
   )
 
   if (ci) {
+    .tempssm_cli_debug("Including confidence intervals in plot")
+
     ci_df = data.frame(
       lwr = as.numeric(ar1_ts[,"lwr"]),
       upr = as.numeric(ar1_ts[,"upr"])
@@ -465,45 +511,70 @@ autoplot_ar1 <- function(res,
       )
   }
 
-  p
+  .tempssm_cli_debug("AR1 plot created successfully")
+
+  return(p)
 }
 
 
 
-#' Function to plot time series of monthly temperature and temperature deviation
-#'
-#' @import ggplot2
-#'
-#' @param ts temperature time series object
-#'
-#' @encoding UTF-8
-#'
-#' @export
-#'
-plot_temp_dev <- function(ts){
 
-  stopifnot(frequency(ts) == 12)  # check for monthly time series
+#' Plot monthly temperature and temperature anomalies
+#'
+#' @description
+#' Plots a monthly temperature time series together with its corresponding
+#' temperature anomalies (deviations from monthly climatology).
+#'
+#' The anomalies are computed by subtracting the long-term monthly mean
+#' for each calendar month from the observed temperature.
+#'
+#' @param ts
+#' A univariate time series object of class \code{ts} with monthly frequency
+#' (i.e., \code{frequency(ts) == 12}).
+#'
+#' @details
+#' The function first computes the monthly climatological mean across all years,
+#' and then calculates anomalies as deviations from these monthly averages.
+#'
+#' @return
+#' A \code{ggplot2} plot object showing the temperature anomaly time series.
+#'
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#' p <- plot_temp_dev(niigata_sst)
+#' print(p)
+#' }
+#'
+#' @importFrom forecast autoplot
+#' @importFrom ggplot2 labs ggtitle
+#' @export
+plot_temp_dev <- function(ts) {
+
+  if (!inherits(ts, "ts")) {
+    cli::cli_abort("`ts` must be an object of class {.cls ts}.")
+  }
+
+  if (frequency(ts) != 12) {
+    cli::cli_abort("`ts` must be a monthly series with frequency 12.")
+  }
 
   temp <- as.numeric(ts)
   mnum <- cycle(ts)
   mfac <- factor(mnum, levels = 1:12)
-  monthly_ave_temp <- tapply(temp, mfac, function(v) mean(v, na.rm = TRUE))
 
+  monthly_ave_temp <- tapply(temp, mfac, function(v) mean(v, na.rm = TRUE))
   clim <- monthly_ave_temp[as.integer(mfac)]
   anom <- temp - clim
 
-  ts_dev <- cbind(Temp=ts, Dev=anom)
+  ts_dev <- cbind(Temp = ts, Dev = anom)
 
+  dev_plot <- forecast::autoplot(ts_dev[, "Dev"]) +
+    ggplot2::labs(
+      y = expression(Temperature~(degree*C)),
+      x = "Time"
+    ) +
+    ggplot2::ggtitle("Temperature anomalies")
 
-  temp_plot <- forecast::autoplot(ts_dev[,"Temp"]) +
-  labs(y = expression(Temperature~(degree*C)), x = "Time") +
-  ggtitle("Temperature")
-
-  dev_plot <- forecast::autoplot(ts_dev[,"Dev"]) +
-  labs(y = expression(Temperature~(degree*C)), x = "Time") +
-  ggtitle("Temperature anomalies")
-
-  plot(dev_plot)
-
-  
+  return(dev_plot)
 }

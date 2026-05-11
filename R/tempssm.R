@@ -561,38 +561,42 @@ tempssm <- function(temp_data,
 #'   The series can have any arbitrary frequency of 2 or higher.
 #'   For example, a frequency of 12 represents a monthly \code{ts} object.
 #'
-#' @param message Logical; Whether Masseage is showed. 
-#' Default to TRUE.
-#'
 #' @return A univariate \code{ts} object.
 #'
 #' @export
-.tempssm_check_temp_ts <- function(temp_data,
-                                   message=TRUE) {
+#' @keywords internal
+.tempssm_check_temp_ts <- function(temp_data) {
   
+  ## ---- type check -----------------------------------------------------
   if (!inherits(temp_data, "ts")) {
-    stop("The object 'temp_data' must be a 'ts' object.",
-         call. = FALSE)
+    cli::cli_abort(
+      "The object {.arg temp_data} must be a {.cls ts} object."
+    )
   }
   
-  freq = frequency(temp_data)
+  ## ---- frequency check ------------------------------------------------
+  freq <- frequency(temp_data)
+  
   if (freq <= 1) {
-    stop("The procedure requires a ts object with frequency > 1.",
-         call. = FALSE)
+    cli::cli_abort(
+      "The procedure requires a {.cls ts} object with frequency > 1."
+    )
   }
   
+  ## ---- univariate check ----------------------------------------------
   if (!is.null(dim(temp_data)) && NCOL(temp_data) != 1) {
-    stop("The object 'temp_data' must be univariate.",
-         call. = FALSE)
+    cli::cli_abort(
+      "The object {.arg temp_data} must be univariate."
+    )
   }
   
-  if(message){
-    message("The ts object 'temp_data' is univariate with frequency ", freq, ".")
-  }
+  ## ---- debug message --------------------------------------------------
+  .tempssm_cli_debug(
+    "Validated temp_data: univariate ts with frequency {freq}"
+  )
   
   return(temp_data)
 }
-
 
 
 #' Check ts object of exogenous variable(s) for applying \code{tempssm()}
@@ -609,42 +613,51 @@ tempssm <- function(temp_data,
 #' @return A univariate or multivairate \code{ts} object.
 #'
 #' @export
+#' @keywords internal
 .tempssm_check_exo_ts <- function(temp_data,
                                   exo_data) {
   
-  temp_data_checked <- .tempssm_check_temp_ts(temp_data,
-                                              message=FALSE)
-  
+  ## ---- check temp_data -----------------------------------------------
+  temp_data_checked <- .tempssm_check_temp_ts(temp_data)
   temp_freq <- frequency(temp_data_checked)
   
+  ## ---- type check -----------------------------------------------------
   if (!inherits(exo_data, "ts")) {
-    stop("The object 'exo_data' must be a 'ts' object.",
-         call. = FALSE)
+    cli::cli_abort(
+      "The object {.arg exo_data} must be a {.cls ts} object."
+    )
   }
   
+  ## ---- frequency check ------------------------------------------------
   exo_freq <- frequency(exo_data)
-  if (!(exo_freq == temp_freq)) {
-    stop("Frequency of 'exo_data' must be same that of 'temp_data'.",
-         call. = FALSE)
+  if (exo_freq != temp_freq) {
+    cli::cli_abort(
+      "Frequency of {.arg exo_data} must match that of {.arg temp_data}."
+    )
   }
   
-  if (!(time(exo_freq) == time(temp_freq))) {
-    stop("Time series of 'exo_data' must be same that of 'temp_data'.",
-         call. = FALSE)
+  ## ---- time index check ----------------------------------------------
+  if (!all(time(exo_data) == time(temp_data_checked))) {
+    cli::cli_abort(
+      "Time index of {.arg exo_data} must match that of {.arg temp_data}."
+    )
   }
   
+  ## ---- column names check --------------------------------------------
   if (is.null(colnames(exo_data))) {
-    stop("The object 'exo_data' must have column name(s).",
-         call. = FALSE)
+    cli::cli_abort(
+      "The object {.arg exo_data} must have column name(s)."
+    )
   }
   
-  if ((dim(exo_data)[2]) > 1) {
-    uni_multi <- "multivariate"
-  }else{
-    uni_multi <- "univariate"
-  }
+  ## ---- debug message --------------------------------------------------
+  n_col <- NCOL(exo_data)
+  uni_multi <- if (n_col > 1) "multivariate" else "univariate"
   
-  message(paste0("The ts object 'exo_data' is ", uni_multi, " with frequency ", exo_freq, "."))
+  .tempssm_cli_debug(
+    "Validated exo_data: {uni_multi} ts with {n_col} variable{?s}, frequency {exo_freq}"
+  )
   
   return(exo_data)
 }
+
