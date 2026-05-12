@@ -40,42 +40,47 @@ https://github.com/akihirao/tempssm/blob/main/vignettes/tutorial.pdf
 
 # Simple usage
 
-### 1. Load the library and example data
-This example provides monthly sea surface temerature (SST) off Niigata, 
-Japan (from Feb 2002 to Dec 2023).
+## 1. Load the package and example data
+
+This example uses monthly sea surface temperature (SST) data off Niigata, Japan (February 2002–December 2023).
 
 ```r
 library(tempssm)
-data(niigata_sst) # SST (from Feb 2002 to Dec 2023)
+data(niigata_sst)
 ```
 
-### 2. Execute the state-space modelling    
+## 2. Fit a state-space model    
 The function `tempssm()` fits a state-space model to the monthly temperature
 time series using a Gaussian structural model. 
 
 ```r
-res <- tempssm(hogehoge_ts) # An order of autoregressive coefficinets is set to 1 (AR1) as default
+res <- tempssm(hogehoge_ts) # AR(1) is used by default
 ```
-The returned object `res` is an S3 object of class `'tempssm`, which contains the fitted state-space model results. The object `res` can be analyzed using methods such as `summary()` and `plot()`.
+The returned object `res` is an S3 object of class `'tempssm`. You can inspect the results with standard methods.
 
 ```r
 summary(res)  # summarise results
-plot(res) # plot results
+autoplot(res) # plot results
 ```
 
-# Example Data
 
-The package includes some example datasets for demonstration and testing of state-space temperature analyses. Most of the esamples are provided in `.rda` format.
+## 3. Using your own data
+### 3.1 Quick example
+If you already have a ts object, you can pass it directly:
 ```r
-data(fuji_temp)    # ts object of monthly air temperature at the summit of Mt. Fuji, Japan
-data(hmo_temp)     # ts object of monthly air temperature at the Hohenpeissenberg Meteorological Observatory (HMO), Germany
+res <- tempssm(my_ts)
 ```
 
-# How to Prepare Original Dataset
 
-For monthly temperature data, prepare a CSV file with a header row.
-By default, the column names should be `Year`, `Month`, and `Temp`.
+### 3.2 Preparing your own dataset
 
+#### CSV format 
+Prepare a CSV file of monthly temperature time series with the following columns:
+- Year
+- Month
+- Temp
+
+Example:
 ```text
 Year,Month,Temp
 2010,8,13.6
@@ -87,23 +92,11 @@ Year,Month,Temp
 * Use NA for missing temperature values, and always keep the corresponding Year and Month entries.
 * The CSV file must be comma-separated and UTF-8 encoded.
 
-If the CSV file is named `hogehoge.csv`, load the data and convert it to a time series object using the following commands:
-
+#### Convert CSV to a time series
 ```r
-hogehoge_ts <- tempssm::monthly_temp_csv2ts("hogehoge.csv")
+my_ts <- tempssm::monthly_temp_csv2ts("hogehoge.csv")
 ```
-The function `monthly_temp_csv2ts()` internally uses the base R function [`ts()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/ts) to create a time series object. Users may alternatively convert their data manually using `ts()` if finer control over the time series structure is required.  
-
-Additionaly, an example of csv format is included in inst/extdata in this package. It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan (elevation 1,840 m; 43.6766°N, 142.9423°E). The data originate from the Monitoring Sites 1000 Project conducted by the Ministry of the Environment of Japan (KOZ01.zip, downladed from https://www.biodic.go.jp/moni1000/findings/data/index.html).
-```r
-path <- system.file("extdata", "example_monthly_temp.csv", package = "tempssm")
-akadake_temp_info <- readr::read_csv(path)
-head(akadake_temp_info)
-
-# conver from data frame to monthly ts object
-akadake_temp <- monthly_temp_csv2ts(akadake_temp_info)
-```
-
+The function `monthly_temp_csv2ts()` internally uses the base R function [`ts()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/ts) to create a time series object. You may alternatively construct a ts object manually if you need finer control. 
 
 # References
 Baba, S., Ishii, H., and Yoshiyama, T. (2024).  
