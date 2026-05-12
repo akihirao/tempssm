@@ -1,10 +1,8 @@
 # tempssm
 
-The `tempssm` R package provides tools for fitting and analyzing 
-linear Gaussian state-space models to temperature time series, 
-with a focus on climate and environmental applications.
-It implements linear Gaussian state-space models and performs inference using
-Kalman filtering and smoothing.
+The `tempssm` R package provides tools for state-space analysis of temperature 
+time series, focusing on linear Gaussian state-space models estimated via Kalman 
+filtering and smoothing as implmented in the `KFAS` package (Helske, 2017).
 
 The package was previously named `ThermoSSM` and has been renamed to `tempssm`.
 
@@ -14,13 +12,15 @@ https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 
 ### Key features
 
-- Designed for temperature time series data with **arbitrary seasonal frequency**;
-  currently **validated mainly on monthly data**
-- Applies **linear Gaussian state-space models** to estimate latent states
-  using Kalman filtering and smoothing
-- Represents temperature dynamics as a sum of interpretable latent components:
-  long-term trend, seasonal cycle, autoregressive structure,
+- Designed for temperature time series with **arbitrary seasonal frequency**;
+  currently **validated primarily on monthly data**
+- Estimates latent states using **linear Gaussian state-space models** combined 
+  with Kalman filtering and smoothing
+- Models temperature dynamics as a sum of interpretable latent components, 
+  including a long-term trend (level), seasonal cucle, autoregressive structure,
   and optional exogenous effects
+- Allows users to specify an arbitrary order of the autoregressive component
+  (default: AR(1))
 - Implements **time-series cross-validation** for model evaluation
 
 
@@ -40,7 +40,38 @@ https://github.com/akihirao/tempssm/blob/main/vignettes/tutorial.pdf
 
 # Simple usage
 
-### 1. Prepare a CSV file  
+### 1. Load the library and example data
+This example provides monthly sea surface temerature (SST) off Niigata, 
+Japan (from Feb 2002 to Dec 2023).
+
+```r
+library(tempssm)
+data(niigata_sst) # SST (from Feb 2002 to Dec 2023)
+```
+
+### 2. Execute the state-space modelling    
+The function `tempssm()` fits a state-space model to the monthly temperature
+time series using a Gaussian structural model. 
+
+```r
+res <- tempssm(hogehoge_ts) # An order of autoregressive coefficinets is set to 1 (AR1) as default
+```
+The returned object `res` is an S3 object of class `'tempssm`, which contains the fitted state-space model results. The object `res` can be analyzed using methods such as `summary()` and `plot()`.
+
+```r
+summary(res)  # summarise results
+plot(res) # plot results
+```
+
+# Example Data
+
+The package includes some example datasets for demonstration and testing of state-space temperature analyses. Most of the esamples are provided in `.rda` format.
+```r
+data(fuji_temp)    # ts object of monthly air temperature at the summit of Mt. Fuji, Japan
+data(hmo_temp)     # ts object of monthly air temperature at the Hohenpeissenberg Meteorological Observatory (HMO), Germany
+```
+
+# How to Prepare Original Dataset
 
 For monthly temperature data, prepare a CSV file with a header row.
 By default, the column names should be `Year`, `Month`, and `Temp`.
@@ -56,39 +87,14 @@ Year,Month,Temp
 * Use NA for missing temperature values, and always keep the corresponding Year and Month entries.
 * The CSV file must be comma-separated and UTF-8 encoded.
 
-### 2. Load the CSV file into R and covert it to a time series oject     
-
 If the CSV file is named `hogehoge.csv`, load the data and convert it to a time series object using the following commands:
 
 ```r
-library(tempssm)
-
-hogehoge_ts <- monthly_temp_csv2ts("hogehoge.csv")
+hogehoge_ts <- tempssm::monthly_temp_csv2ts("hogehoge.csv")
 ```
-The function `monthly_temp_csv2ts()` internally uses the base R function [`ts()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/ts) to create a time series object. Users may alternatively convert their data manually using `ts()` if finer control over the time series structure is required.
+The function `monthly_temp_csv2ts()` internally uses the base R function [`ts()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/ts) to create a time series object. Users may alternatively convert their data manually using `ts()` if finer control over the time series structure is required.  
 
-### 3. Execute the state-space modelling    
-The function `tempssm()` fits a state-space model to the monthly temperature
-time series using a Gaussian structural model.
-
-```r
-res <- tempssm(hogehoge_ts)
-
-summary(res)  # summarise results
-plot(res) # plot results
-```
-The returned object `res` is an S3 object of class `'tempssm`, which contains the fitted state-space model results. The object `res` can be analyzed using methods such as `summary()` and `plot()`.
-
-
-# Example Data
-
-The package includes four example datasets for demonstration and testing of state-space temperature analyses. Three out of the four datasets are provided in `.rda` format.
-```r
-data(niigata_sst)  # ts object of monthly sea surface temperature off Niigata, Japan
-data(fuji_temp)    # ts object of monthly air temperature at the summit of Mt. Fuji, Japan
-data(hmo_temp)     # ts object of monthly air temperature at the Hohenpeissenberg Meteorological Observatory (HMO), Germany
-```
-The fourth dataset is provided in .csv format and included in inst/extdata. It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan (elevation 1,840 m; 43.6766°N, 142.9423°E). The data originate from the Monitoring Sites 1000 Project conducted by the Ministry of the Environment of Japan (KOZ01.zip, downladed from https://www.biodic.go.jp/moni1000/findings/data/index.html).
+Additionaly, an example of csv format is included in inst/extdata in this package. It contains a monthly temperature time series measured at Mount Akadake, Hokkaido, Japan (elevation 1,840 m; 43.6766°N, 142.9423°E). The data originate from the Monitoring Sites 1000 Project conducted by the Ministry of the Environment of Japan (KOZ01.zip, downladed from https://www.biodic.go.jp/moni1000/findings/data/index.html).
 ```r
 path <- system.file("extdata", "example_monthly_temp.csv", package = "tempssm")
 akadake_temp_info <- readr::read_csv(path)
@@ -97,6 +103,7 @@ head(akadake_temp_info)
 # conver from data frame to monthly ts object
 akadake_temp <- monthly_temp_csv2ts(akadake_temp_info)
 ```
+
 
 # References
 Baba, S., Ishii, H., and Yoshiyama, T. (2024).  

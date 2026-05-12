@@ -1,5 +1,5 @@
 ---
-title: "tempssm: State-space modeling of temperature time series in R"
+title: "tempssm: State-space modeling for temperature time series in R"
 author: "Akira Hirao"
 date: "`r Sys.Date()`"
 output:
