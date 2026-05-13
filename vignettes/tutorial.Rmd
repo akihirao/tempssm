@@ -10,7 +10,7 @@ output:
 #  md_document:
 #    variant: gfm+tex_math_dollars
 vignette: >
-  %\VignetteIndexEntry{"Quick tutorial for linear Gaussian state-space analysis of temperature time series with ThermoSST"}
+  %\VignetteIndexEntry{"Tutorial for state-space analysis of temperature time series with tempssm"}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -635,6 +635,55 @@ These complementary lines of evidence provide a robust and
 multifaceted justification for adopting the exogenous-variable model.
 
 
+# Using your own data
+
+## Quick example
+
+`my_ts` is a user-supplied `ts` object. You can pass it directly:
+
+```{r, eval = FALSE}
+## example of ts object (not run)
+## my_ts <- ts(rnorm(100), frequency = 12)
+res <- tempssm(my_ts)
+```
+
+## Preparing your own dataset
+
+### CSV format
+Prepare a CSV fine of monthly temperature time series with the following columns:
+- Year
+- Month
+- Temp
+
+Example:
+```text
+Year,Month,Temp
+2010,8,13.6
+2010,9,6.8
+2010,10,NA
+2010,11,-1.4
+...
+```
+
+* Use NA for missing temperature values, and always keep the corresponding Year and Month entries.
+* The SCV file must be comma-separated and UTR-8 encoded.
+
+
+### Convert CSV to a time series
+
+An included example CSV file is available inst/extdata.
+The example dataset contains monthly temperature observations from Mt. Akadake, Hokkaido, Japan (1,840 m).  The data originate from the Monitoring Sites 1000 Project by the Ministry of the Environment of Japan (KOZ01.zip, downloaded from https://www.biodic.go.jp/moni1000/findings/data/index.html).    
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+path <- system.file("extdata", "example_monthly_temp.csv", package = "tempssm")
+akadake_temp <- tempssm::read_monthly_temp_ts(path)
+head(akadake_temp)
+```
+
+The function of `read_monthly_temp_ts()` internally uses the base R function [`ts()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/ts) to create a time series object. You may alternatively construct a ts object manually if you need finer control.
+
+
+
 # References
 
 The statistical modeling framework implemented in `tempssm`
@@ -660,6 +709,7 @@ Helske, J. (2017).
 KFAS: Exponential Family State Space Models in R.   
 *Journal of Statistical Software*, 78(10), 1–39.
 https://doi.org/10.18637/jss.v078.i10
+
 
 
 # Appendix: Utility Functions

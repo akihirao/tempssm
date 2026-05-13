@@ -28,10 +28,8 @@ https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 ```r
 if(!require("devtools"))
 	install.packages("devtools")
-devtools::install_github("akihirao/tempssm")
 
-# install with vignettes
-devtools::install_github("akihirao/tempssm", build_vignettes=TRUE)
+devtools::install_github("akihirao/tempssm")
 ```
 
 # Tutorial
@@ -93,10 +91,10 @@ Year,Month,Temp
 * The CSV file must be comma-separated and UTF-8 encoded.
 
 #### Convert CSV to a time series
-```r
-my_ts <- tempssm::monthly_temp_csv2ts("hogehoge.csv")
+```{r, eval = FALSE}
+my_ts <- tempssm::read_monthly_temp_ts("hogehoge.csv")
 ```
-The function `monthly_temp_csv2ts()` internally uses the base R function [`ts()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/ts) to create a time series object. You may alternatively construct a ts object manually if you need finer control. 
+The function `read_monthly_temp_ts()` internally uses the base R function [`ts()`](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/ts) to create a time series object. You may alternatively construct a ts object manually if you need finer control. 
 
 # References
 Baba, S., Ishii, H., and Yoshiyama, T. (2024).  
