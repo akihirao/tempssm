@@ -14,7 +14,7 @@ Description: Linear Gaussian state-space analysis of temperature time series.
     and uncertainty estimation using Kalman filtering and smoothing.
 License: GPL-2 | GPL-3
 Encoding: UTF-8
-URL: https://github.com/akihirao/tempssm
+URL: https://github.com/akihirao/tempssm, https://akihirao.github.io/tempssm/
 BugReports: https://github.com/akihirao/tempssm/issues
 LazyData: true
 Imports:
