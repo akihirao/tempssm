@@ -105,6 +105,9 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
 #' @param save Logical; if TRUE, plots are saved.
 #' @param prefix Character prefix for file names.
 #'
+#' @return
+#' Invisibly returns NULL. Called for its side effects (plots).
+#'
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)

@@ -115,6 +115,10 @@
 #' with the generic interface.
 #'
 #' @method logLik tempssm
+#'
+#' @return
+#' A numeric value representing the log-likelihood.
+#'
 #' @export
 logLik.tempssm <- function(object, ...) {
 

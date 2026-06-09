@@ -488,6 +488,9 @@ convert_monthly_df_to_ts <- function(df) {
 #'
 #' @encoding UTF-8
 #'
+#' @return
+#' \code{ts} object representing the monthly time series
+#'
 #' @examples
 #' ## Create a temporary CSV file with monthly temperature data
 #' tmp_csv <- tempfile(fileext = ".csv")
