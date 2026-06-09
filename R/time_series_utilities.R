@@ -908,13 +908,7 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #' @importFrom magrittr %>%
 #' @importFrom readr read_csv
 #' @importFrom rlang .data
-#' @importFrom httr2
-#'   request
-#'   req_user_agent
-#'   req_error
-#'   req_perform
-#'   resp_body_raw
-#'   resp_status
+#' @importFrom httr2 request req_user_agent req_error req_perform resp_body_raw resp_status
 #' @import dplyr
 #' @import zoo
 #' @import lubridate
@@ -1050,13 +1044,7 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' @importFrom magrittr %>%
 #' @importFrom readr read_csv
 #' @importFrom rlang .data
-#' @importFrom httr2
-#'   request
-#'   req_user_agent
-#'   req_error
-#'   req_perform
-#'   resp_body_raw
-#'   resp_status
+#' @importFrom httr2 request req_user_agent req_error req_perform resp_body_raw resp_status
 #' @import dplyr
 #' @import zoo
 #' @import lubridate

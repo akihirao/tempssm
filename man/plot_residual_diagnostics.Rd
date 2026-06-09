@@ -13,6 +13,9 @@ plot_residual_diagnostics(res, save = FALSE, prefix = "residuals")
 
 \item{prefix}{Character prefix for file names.}
 }
+\value{
+Invisibly returns NULL. Called for its side effects (plots).
+}
 \description{
 Plot residual diagnostics for tempssm models
 }

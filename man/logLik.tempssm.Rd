@@ -14,6 +14,9 @@
 These are currently ignored but are included for compatibility
 with the generic interface.}
 }
+\value{
+A numeric value representing the log-likelihood.
+}
 \description{
 Log-likelihood method for tempssm objects (S3 method)
 }

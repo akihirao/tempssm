@@ -11,6 +11,9 @@ read_monthly_temp_ts(csv)
 \item{csv}{A character string specifying the path to a CSV file
 containing monthly temperature data.}
 }
+\value{
+\code{ts} object representing the monthly time series
+}
 \description{
 Read and convert a monthly temperature CSV file to a \code{ts} object
 }
