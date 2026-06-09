@@ -26,8 +26,8 @@ The series may have any arbitrary frequency of 2 or higher,
 but it must be the same as that of \code{temp_data}.
 The default is \code{NULL} when fitting a model without exogenous variables.}
 
-\item{ar_order}{Integer specifying the order of the autoregressive (AR) 
-component in the error structure (e.g., 2 for AR(2), 3 for AR(3)). 
+\item{ar_order}{Integer specifying the order of the autoregressive (AR)
+component in the error structure (e.g., 2 for AR(2), 3 for AR(3)).
 Defaults to 1.}
 
 \item{inits}{Optional numeric vector of initial parameter values.
@@ -39,7 +39,7 @@ If \code{NULL}, default value of 5000 is used.}
 \item{reltol}{Optional numeric of reltol.
 If \code{NULL}, default value of 1e-16 is used.}
 
-\item{use_season}{Logical; Should seasonal component be considered. 
+\item{use_season}{Logical; Should seasonal component be considered.
 Default to TRUE.}
 }
 \value{

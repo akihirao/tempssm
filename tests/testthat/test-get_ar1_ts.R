@@ -1,7 +1,6 @@
-#tests/testthat/test-get_ar1_ts.R
+# tests/testthat/test-get_ar1_ts.R
 
 test_that("get_ar1_ts returns a ts object", {
-
   ts_obj <- get_ar1_ts(res_tempssm)
 
   expect_s3_class(ts_obj, "ts")
@@ -10,7 +9,6 @@ test_that("get_ar1_ts returns a ts object", {
 
 
 test_that("get_ar1_ts returns CI columns when ci = TRUE", {
-
   ts_ci <- get_ar1_ts(res_tempssm, ci = TRUE)
 
   expect_s3_class(ts_ci, "ts")
@@ -18,9 +16,7 @@ test_that("get_ar1_ts returns CI columns when ci = TRUE", {
 })
 
 
-
 test_that("get_ar1_ts checks inputs correctly", {
-
   expect_error(
     get_ar1_ts(NULL),
     "`res` must be an object of class 'tempssm'."

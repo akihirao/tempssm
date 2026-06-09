@@ -1,7 +1,6 @@
 # test-convert_monthly_df_to_ts.R
 
 test_that("convert_monthly_df_to_ts works for valid input", {
-
   df <- data.frame(
     Date = seq(as.Date("2001-01-01"), by = "month", length.out = 12),
     Temp = rnorm(12)
@@ -17,9 +16,8 @@ test_that("convert_monthly_df_to_ts works for valid input", {
 
 
 test_that("warning is issued when months are missing", {
-
   df <- data.frame(
-    Date = as.Date(c("2001-01-01", "2001-03-01")),  # Feb missing
+    Date = as.Date(c("2001-01-01", "2001-03-01")), # Feb missing
     Temp = c(10, 12)
   )
 
@@ -31,7 +29,6 @@ test_that("warning is issued when months are missing", {
 
 
 test_that("missing required columns triggers error", {
-
   df <- data.frame(
     Date = as.Date("2001-01-01")
   )
@@ -44,7 +41,6 @@ test_that("missing required columns triggers error", {
 
 
 test_that("non-Date column triggers error", {
-
   df <- data.frame(
     Date = "2001-01-01",
     Temp = 10
@@ -58,7 +54,6 @@ test_that("non-Date column triggers error", {
 
 
 test_that("non-data.frame input triggers error", {
-
   expect_error(
     convert_monthly_df_to_ts(NULL),
     "must be a data frame"
@@ -67,7 +62,6 @@ test_that("non-data.frame input triggers error", {
 
 
 test_that("start time is correctly set", {
-
   df <- data.frame(
     Date = seq(as.Date("1995-05-01"), by = "month", length.out = 6),
     Temp = rnorm(6)
@@ -79,9 +73,7 @@ test_that("start time is correctly set", {
 })
 
 
-
 test_that("NA values are allowed", {
-
   df <- data.frame(
     Date = seq(as.Date("2001-01-01"), by = "month", length.out = 3),
     Temp = c(10, NA, 12)
@@ -91,15 +83,3 @@ test_that("NA values are allowed", {
 
   expect_true(anyNA(ts_out))
 })
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,10 +1,10 @@
 # test-tempssm-structure.R
 
 test_that("tempssm object structure is consistent", {
-
   expect_named(
     res_tempssm,
-    c("model",
+    c(
+      "model",
       "fit",
       "kfs",
       "temp_data",
@@ -14,7 +14,9 @@ test_that("tempssm object structure is consistent", {
       "call",
       "converged",
       "state_map"
-      ), ignore.order = TRUE)
+    ),
+    ignore.order = TRUE
+  )
 
   expect_s3_class(res_tempssm$model, "SSModel")
   expect_s3_class(res_tempssm$kfs, "KFS")

@@ -58,14 +58,14 @@ simple linear models and state space models.
 }
 \examples{
 \dontrun{
-data(yamaguchi_sst)  # monthly SST near Yamaguchi Prefecture
-data(pdo)            # Pacific Decadal Oscillation
+data(yamaguchi_sst) # monthly SST near Yamaguchi Prefecture
+data(pdo) # Pacific Decadal Oscillation
 
 # synchronize series
 common_ts <- ts.intersect(yamaguchi_sst, pdo)
 temp_ts <- common_ts[, "yamaguchi_sst"]
-pdo_ts  <- common_ts[, "pdo"]
-pdo_ts <- set_ts_name(pdo_ts, label="PDO") # label
+pdo_ts <- common_ts[, "pdo"]
+pdo_ts <- set_ts_name(pdo_ts, label = "PDO") # label
 
 folds <- ts_train_test_split(
   temp_data = temp_ts,

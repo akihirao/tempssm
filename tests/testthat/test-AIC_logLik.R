@@ -1,4 +1,4 @@
-#test-AIC_logLik.R
+# test-AIC_logLik.R
 
 test_that("AIC and logLik are consistent", {
   ll <- logLik(res_tempssm)

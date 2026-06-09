@@ -52,7 +52,6 @@ autoplot.tempssm <- function(object,
                              ci = TRUE,
                              ci_level = 0.95,
                              ...) {
-
   # ---- Component mapping ----
   plotters <- list(
     level  = autoplot_level,
@@ -63,10 +62,10 @@ autoplot.tempssm <- function(object,
 
   # ---- Validate component ----
   if (!is.null(component)) {
-
     if (!is.character(component) || length(component) != 1) {
       stop("`component` must be a single character string.",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
 
     if (!component %in% names(plotters)) {
@@ -86,17 +85,16 @@ autoplot.tempssm <- function(object,
         ...
       )
     )
-    
   }
 
   # ---- All components ----
   plots <- lapply(
     plotters,
-    function(f){
+    function(f) {
       f(object, ci = ci, ci_level = ci_level, ...)
-      }
-    )
-  
+    }
+  )
+
   # Combine using patchwork
   patchwork::wrap_plots(plots, ncol = 1)
 }

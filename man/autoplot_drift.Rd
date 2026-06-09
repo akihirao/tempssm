@@ -15,7 +15,7 @@ as a shaded ribbon.}
 \item{ci_level}{Numeric confidence level between 0 and 1.
 Defaults to \code{0.95}, corresponding to a 95\% confidence interval.}
 
-\item{ylab}{Character string giving label of y-axis. 
+\item{ylab}{Character string giving label of y-axis.
 Defalut is "temperature".}
 }
 \value{

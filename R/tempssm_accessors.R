@@ -19,16 +19,16 @@
 #' level_ts <- get_level_ts(res)
 #' }
 get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
-
   if (!inherits(res, "tempssm")) {
     stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
   }
 
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-        ci_level <= 0 || ci_level >= 1) {
+      ci_level <= 0 || ci_level >= 1) {
       stop("`ci_level` must be a numeric value between 0 and 1.",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
   }
 
@@ -37,19 +37,20 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   }
 
   freq <- frequency(res$temp_data)
-  
+
   level <- ts(
     res$kfs$alphahat[, "level"],
     start = start(res$temp_data),
     frequency = freq
   )
 
-  if(ci){
+  if (ci) {
     ci_obj <- stats::confint(res$kfs, level = ci_level)
 
     if (!"level" %in% names(ci_obj)) {
       stop("Level component not found in confidence intervals.",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
 
     level <- ts(
@@ -64,7 +65,6 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   }
   level
 }
-
 
 
 #' Extract the smoothed drift (slope) component as a time series
@@ -92,56 +92,56 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' drift <- get_drift_ts(res)
 #' }
 get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
-  
   if (!inherits(res, "tempssm")) {
     stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
   }
-  
+
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-        ci_level <= 0 || ci_level >= 1) {
+      ci_level <= 0 || ci_level >= 1) {
       stop("`ci_level` must be a numeric value between 0 and 1.",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
   }
-  
+
   if (is.null(res$kfs$alphahat) || !"slope" %in% colnames(res$kfs$alphahat)) {
     stop("Drift (slope) component not found in smoothing results.",
-         call. = FALSE)
+      call. = FALSE
+    )
   }
-  
+
   freq <- frequency(res$temp_data)
   scale <- freq
-  
+
   drift <- ts(
-    res$kfs$alphahat[, "slope"] * scale, #scaled per year
+    res$kfs$alphahat[, "slope"] * scale, # scaled per year
     start = start(res$temp_data),
     frequency = freq
   )
-  
+
   if (ci) {
-    
     ci_obj <- stats::confint(res$kfs, level = ci_level)
-    
+
     if (!"slope" %in% names(ci_obj)) {
       stop("Slope component not found in confidence intervals.",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
-    
+
     drift <- ts(
       cbind(
         drift = drift,
-        lwr = ci_obj$slope[, "lwr"] * scale,#scaled per year 
-        upr = ci_obj$slope[, "upr"] * scale #scaled per year
+        lwr = ci_obj$slope[, "lwr"] * scale, # scaled per year
+        upr = ci_obj$slope[, "upr"] * scale # scaled per year
       ),
       start = start(res$temp_data),
       frequency = freq
     )
   }
-  
+
   drift
 }
-
 
 
 #' Extract the smoothed seasonal component as a time series
@@ -169,28 +169,28 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' season_ts <- get_season_ts(res)
 #' }
 get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
-  
   if (!inherits(res, "tempssm")) {
     stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
   }
-  
+
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-        ci_level <= 0 || ci_level >= 1) {
+      ci_level <= 0 || ci_level >= 1) {
       stop("`ci_level` must be a numeric value between 0 and 1.",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
   }
-  
+
   if (!res$use_season) {
     stop("Seasonal component is not included in the model.", call. = FALSE)
   }
 
 
-  if (is.null(res$kfs$alphahat) || ! "sea_dummy1" %in% colnames(res$kfs$alphahat)) {
+  if (is.null(res$kfs$alphahat) || !"sea_dummy1" %in% colnames(res$kfs$alphahat)) {
     stop("Seasonal component not found in the smoothing results.", call. = FALSE)
   }
-  
+
   freq <- frequency(res$temp_data)
 
   season <- ts(
@@ -198,15 +198,16 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     start = start(res$temp_data),
     frequency = freq
   )
-  
-  if(ci){
+
+  if (ci) {
     ci_obj <- stats::confint(res$kfs, level = ci_level)
-    
+
     if (!"sea_dummy1" %in% names(ci_obj)) {
       stop("Seasonal component not found in confidence intervals.",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
-    
+
     season <- ts(
       cbind(
         season = season,
@@ -219,7 +220,6 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   }
   season
 }
-
 
 
 #' Extract the smoothed first autoregressive component (AR1) as a time series
@@ -247,39 +247,40 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' ar1_ts <- get_ar1_ts(res)
 #' }
 get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
-  
   if (!inherits(res, "tempssm")) {
     stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
   }
-  
+
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-        ci_level <= 0 || ci_level >= 1) {
+      ci_level <= 0 || ci_level >= 1) {
       stop("`ci_level` must be a numeric value between 0 and 1.",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
   }
-  
-  if (is.null(res$kfs$alphahat) || ! "arima1" %in% colnames(res$kfs$alphahat)) {
+
+  if (is.null(res$kfs$alphahat) || !"arima1" %in% colnames(res$kfs$alphahat)) {
     stop("First autoregressive component (AR1) not found in the smoothing results.", call. = FALSE)
   }
-  
+
   freq <- frequency(res$temp_data)
-  
+
   ar1 <- ts(
     res$kfs$alphahat[, "arima1"],
     start = start(res$temp_data),
     frequency = freq
   )
-  
-  if(ci){
+
+  if (ci) {
     ci_obj <- stats::confint(res$kfs, level = ci_level)
-    
+
     if (!"arima1" %in% names(ci_obj)) {
       stop("First Autoregressive (AR1) component not found in confidence intervals.",
-           call. = FALSE)
+        call. = FALSE
+      )
     }
-    
+
     ar1 <- ts(
       cbind(
         ar1 = ar1,
@@ -292,7 +293,6 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   }
   ar1
 }
-
 
 
 #' Extract estimated parameters in the fitted models
@@ -308,39 +308,37 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' params <- get_params(res)
 #' }
 #' @export
-get_params <- function(res){
-
+get_params <- function(res) {
   if (!inherits(res, "tempssm")) {
     stop("`res` must be an object of class 'tempssm.'", call. = FALSE)
   }
-  
+
   model <- res$model
   pars <- res$fit$optim.out$par
   ar_order <- res$ar_order
   use_season <- res$use_season
 
-  if(use_season){
-    ar_idx  <- 3:(2 + ar_order)
+  if (use_season) {
+    ar_idx <- 3:(2 + ar_order)
     var_idx <- 3 + ar_order
-    H_idx   <- 4 + ar_order
+    H_idx <- 4 + ar_order
 
     Q_season_est <- exp(pars[2])
-
-  }else{
-    ar_idx  <- 2:(1 + ar_order)
+  } else {
+    ar_idx <- 2:(1 + ar_order)
     var_idx <- 2 + ar_order
-    H_idx   <- 3 + ar_order
+    H_idx <- 3 + ar_order
 
     Q_season_est <- NA
   }
 
-  params = list(
+  params <- list(
     H = exp(pars[H_idx]), # observed error
-    Q_trend  = exp(pars[1]),# process error for level component
+    Q_trend = exp(pars[1]), # process error for level component
     Q_season = Q_season_est, # process error for seasonal component
-    Q_ar = exp(pars[var_idx]),# process error for AR
-    ARs = KFAS::artransform(pars[ar_idx])# the AR(s) coefficient
-    )
+    Q_ar = exp(pars[var_idx]), # process error for AR
+    ARs = KFAS::artransform(pars[ar_idx]) # the AR(s) coefficient
+  )
 
   return(params)
 }
@@ -375,23 +373,22 @@ get_params <- function(res){
 #' data(pdo)
 #  niigata_sst_pdo <- ts.intersect(niigata_sst,pdo)
 #' colnames(niigata_sst_pdo) <- c("Temp", "PDO")
-#' niigata_sst_common <- niigata_sst_pdo[,"Temp]
-#' pdo_common <- niigata_sst_pdo[,"PDO]
+#' niigata_sst_common <- niigata_sst_pdo[, "Temp"]
+#' pdo_common <- niigata_sst_pdo[, "PDO"]
 #' pdo_common <- set_ts_name(nao_common, label = "PDO")
-#' res <- ssm(temp_data = niigata_sst_common,exo_data = pdo_common)
+#' res <- ssm(temp_data = niigata_sst_common, exo_data = pdo_common)
 #' get_exo_coef_ci(res)
 #' }
 #'
 #' @importFrom utils head
 #' @export
 get_exo_coef <- function(res, ci_level = 0.95) {
-
   if (!inherits(res, "tempssm")) {
     stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
   }
 
   if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
+    ci_level <= 0 || ci_level >= 1) {
     stop(
       "`ci_level` must be a numeric value between 0 and 1.",
       call. = FALSE
@@ -440,5 +437,3 @@ get_exo_coef <- function(res, ci_level = 0.95) {
     row.names   = NULL
   )
 }
-
-

@@ -12,7 +12,6 @@
 #' }
 #' @export
 get_residuals <- function(res) {
-
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
@@ -22,7 +21,6 @@ get_residuals <- function(res) {
   r <- stats::rstandard(res$kfs, type = "recursive")
   r[is.finite(r)]
 }
-
 
 
 #' Residual diagnostics for tempssm models
@@ -54,7 +52,6 @@ get_residuals <- function(res) {
 #' }
 #' @export
 diagnose_residuals <- function(res, JB_test = FALSE) {
-
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
@@ -98,7 +95,6 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
 }
 
 
-
 #' Plot residual diagnostics for tempssm models
 #'
 #' @param res An object of class "tempssm".
@@ -120,7 +116,6 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
 plot_residual_diagnostics <- function(res,
                                       save = FALSE,
                                       prefix = "residuals") {
-
   r <- get_residuals(res)
 
   # Standard residual plot

@@ -50,7 +50,6 @@ autoplot_level <- function(res,
                            ci = TRUE,
                            ci_level = 0.95,
                            ylab = "Temperature") {
-
   ## ---- input checks ---------------------------------------------------
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
@@ -64,7 +63,7 @@ autoplot_level <- function(res,
 
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-        ci_level <= 0 || ci_level >= 1) {
+      ci_level <= 0 || ci_level >= 1) {
       cli::cli_abort(
         "`ci_level` must be a numeric value between 0 and 1."
       )
@@ -127,7 +126,6 @@ autoplot_level <- function(res,
 }
 
 
-
 #' Plot the estimated drift (slope) component from a tempssm model
 #'
 #' @description
@@ -141,9 +139,9 @@ autoplot_level <- function(res,
 #' @param ci
 #' Logical; if TRUE (default), pointwise confidence intervals are shown
 #' as a shaded ribbon.
-#' 
+#'
 #' @param ylab
-#' Character string giving label of y-axis. 
+#' Character string giving label of y-axis.
 #' Defalut is "temperature".
 #'
 #' @param ci_level
@@ -180,7 +178,6 @@ autoplot_drift <- function(res,
                            ci = TRUE,
                            ci_level = 0.95,
                            ylab = "Temperature") {
-
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
@@ -195,7 +192,7 @@ autoplot_drift <- function(res,
   # ---- check ci_level only if ci is TRUE ----
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-        ci_level <= 0 || ci_level >= 1) {
+      ci_level <= 0 || ci_level >= 1) {
       cli::cli_abort(
         "`ci_level` must be a numeric value between 0 and 1."
       )
@@ -211,16 +208,16 @@ autoplot_drift <- function(res,
 
   drift_df <- data.frame(
     time  = time(drift_ts),
-    drift = as.numeric(drift_ts[,"drift"])
+    drift = as.numeric(drift_ts[, "drift"])
   )
 
   if (ci) {
     .tempssm_cli_debug("Including confidence intervals in plot")
 
-    ci_df = data.frame(
-      lwr = as.numeric(drift_ts[,"lwr"]),
-      upr = as.numeric(drift_ts[,"upr"])
-      )
+    ci_df <- data.frame(
+      lwr = as.numeric(drift_ts[, "lwr"]),
+      upr = as.numeric(drift_ts[, "upr"])
+    )
     drift_df <- cbind(drift_df, ci_df)
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
@@ -255,7 +252,6 @@ autoplot_drift <- function(res,
 
   return(p)
 }
-
 
 
 #' Plot the estimated seasonal component from a tempssm model
@@ -310,7 +306,6 @@ autoplot_season <- function(res,
                             ci = TRUE,
                             ci_level = 0.95,
                             ylab = "Temperature") {
-
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
@@ -325,7 +320,7 @@ autoplot_season <- function(res,
   # ---- check ci_level only if ci is TRUE ----
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-        ci_level <= 0 || ci_level >= 1) {
+      ci_level <= 0 || ci_level >= 1) {
       cli::cli_abort(
         "`ci_level` must be a numeric value between 0 and 1."
       )
@@ -340,17 +335,17 @@ autoplot_season <- function(res,
   season_ts <- get_season_ts(res, ci = TRUE, ci_level = ci_level)
 
   season_df <- data.frame(
-    time  = time(season_ts),
-    season = as.numeric(season_ts[,"season"])
+    time = time(season_ts),
+    season = as.numeric(season_ts[, "season"])
   )
 
   if (ci) {
     .tempssm_cli_debug("Including confidence intervals in plot")
 
-    ci_df = data.frame(
-      lwr = as.numeric(season_ts[,"lwr"]),
-      upr = as.numeric(season_ts[,"upr"])
-      )
+    ci_df <- data.frame(
+      lwr = as.numeric(season_ts[, "lwr"]),
+      upr = as.numeric(season_ts[, "upr"])
+    )
     season_df <- cbind(season_df, ci_df)
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
@@ -385,7 +380,6 @@ autoplot_season <- function(res,
 
   return(p)
 }
-
 
 
 #' Plot the estimated autoregressive component from a tempssm model
@@ -437,10 +431,9 @@ autoplot_season <- function(res,
 #' autoplot_ar1(res, ci_level = 0.9)
 #' }
 autoplot_ar1 <- function(res,
-                        ci = TRUE,
-                        ci_level = 0.95,
-                        ylab = "Temperature") {
-
+                         ci = TRUE,
+                         ci_level = 0.95,
+                         ylab = "Temperature") {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
@@ -455,7 +448,7 @@ autoplot_ar1 <- function(res,
   # ---- check ci_level only if ci is TRUE ----
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-        ci_level <= 0 || ci_level >= 1) {
+      ci_level <= 0 || ci_level >= 1) {
       cli::cli_abort(
         "`ci_level` must be a numeric value between 0 and 1."
       )
@@ -470,17 +463,17 @@ autoplot_ar1 <- function(res,
   ar1_ts <- get_ar1_ts(res, ci = TRUE, ci_level = ci_level)
 
   ar1_df <- data.frame(
-    time  = time(ar1_ts),
-    ar1 = as.numeric(ar1_ts[,"ar1"])
+    time = time(ar1_ts),
+    ar1 = as.numeric(ar1_ts[, "ar1"])
   )
 
   if (ci) {
     .tempssm_cli_debug("Including confidence intervals in plot")
 
-    ci_df = data.frame(
-      lwr = as.numeric(ar1_ts[,"lwr"]),
-      upr = as.numeric(ar1_ts[,"upr"])
-      )
+    ci_df <- data.frame(
+      lwr = as.numeric(ar1_ts[, "lwr"]),
+      upr = as.numeric(ar1_ts[, "upr"])
+    )
     ar1_df <- cbind(ar1_df, ci_df)
     ci_lab <- paste0(round(ci_level * 100), "% CI")
   }
@@ -517,8 +510,6 @@ autoplot_ar1 <- function(res,
 }
 
 
-
-
 #' Plot monthly temperature and temperature anomalies
 #'
 #' @description
@@ -550,7 +541,6 @@ autoplot_ar1 <- function(res,
 #' @importFrom ggplot2 labs ggtitle
 #' @export
 plot_temp_dev <- function(ts) {
-
   if (!inherits(ts, "ts")) {
     cli::cli_abort("`ts` must be an object of class {.cls ts}.")
   }
@@ -571,7 +561,7 @@ plot_temp_dev <- function(ts) {
 
   dev_plot <- forecast::autoplot(ts_dev[, "Dev"]) +
     ggplot2::labs(
-      y = expression(Temperature~(degree*C)),
+      y = expression(Temperature ~ (degree * C)),
       x = "Time"
     ) +
     ggplot2::ggtitle("Temperature anomalies")

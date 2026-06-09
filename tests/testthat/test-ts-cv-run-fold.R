@@ -1,8 +1,6 @@
 # test-ts-cv-run-fold.R
 
 test_that("ts_cv_run_fold works without exogenous variables", {
-
-
   folds <- ts_train_test_split(
     temp_data = temp_ts_test,
     initial   = 60,
@@ -23,7 +21,6 @@ test_that("ts_cv_run_fold works without exogenous variables", {
 
 
 test_that("ts_cv_run_fold errors on invalid fold", {
-
   expect_error(
     ts_cv_run_fold(NULL)
   )

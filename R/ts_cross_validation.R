@@ -50,14 +50,14 @@
 #'
 #' @examples
 #' \dontrun{
-#' data(yamaguchi_sst)  # monthly SST near Yamaguchi Prefecture
-#' data(pdo)            # Pacific Decadal Oscillation
+#' data(yamaguchi_sst) # monthly SST near Yamaguchi Prefecture
+#' data(pdo) # Pacific Decadal Oscillation
 #'
 #' # synchronize series
 #' common_ts <- ts.intersect(yamaguchi_sst, pdo)
 #' temp_ts <- common_ts[, "yamaguchi_sst"]
-#' pdo_ts  <- common_ts[, "pdo"]
-#' pdo_ts <- set_ts_name(pdo_ts, label="PDO") # label
+#' pdo_ts <- common_ts[, "pdo"]
+#' pdo_ts <- set_ts_name(pdo_ts, label = "PDO") # label
 #'
 #' folds <- ts_train_test_split(
 #'   temp_data = temp_ts,
@@ -81,7 +81,6 @@ ts_train_test_split <- function(temp_data,
                                 step = 12,
                                 fixed_window = FALSE,
                                 allow_partial = FALSE) {
-
   ## ---- Start message --------------------------------------------------
   .tempssm_cli_inform(
     "Creating rolling train/test data (initial={initial}, horizon={horizon}, step={step})"
@@ -118,7 +117,6 @@ ts_train_test_split <- function(temp_data,
 
   ## ---- Exogenous checks ----------------------------------------------
   if (!is.null(exo_data)) {
-
     n_exo <- NCOL(exo_data)
 
     if (!inherits(exo_data, "ts")) {
@@ -154,7 +152,9 @@ ts_train_test_split <- function(temp_data,
 
   ## ---- Utility: slice ts by index ------------------------------------
   ts_slice <- function(x, i_start, i_end) {
-    if (is.null(x)) return(NULL)
+    if (is.null(x)) {
+      return(NULL)
+    }
     window(
       x,
       start = time(x)[i_start],
@@ -168,7 +168,6 @@ ts_train_test_split <- function(temp_data,
   train_end <- initial
 
   while (TRUE) {
-
     train_start <- if (fixed_window) {
       max(1, train_end - initial + 1)
     } else {
@@ -176,7 +175,7 @@ ts_train_test_split <- function(temp_data,
     }
 
     test_start <- train_end + 1
-    test_end   <- train_end + horizon
+    test_end <- train_end + horizon
 
     if (test_start > n) break
 
@@ -192,13 +191,13 @@ ts_train_test_split <- function(temp_data,
     folds[[k]] <- list(
       fold = k,
       train_ts = ts_slice(temp_data, train_start, train_end),
-      test_ts  = ts_slice(temp_data, test_start, test_end),
+      test_ts = ts_slice(temp_data, test_start, test_end),
       exo_train_ts = ts_slice(exo_data, train_start, train_end),
-      exo_test_ts  = ts_slice(exo_data, test_start, test_end),
+      exo_test_ts = ts_slice(exo_data, test_start, test_end),
       train_idx = c(train_start, train_end),
-      test_idx  = c(test_start, test_end),
+      test_idx = c(test_start, test_end),
       train_range = time(temp_data)[c(train_start, train_end)],
-      test_range  = time(temp_data)[c(test_start, test_end)]
+      test_range = time(temp_data)[c(test_start, test_end)]
     )
 
     train_end <- train_end + step
@@ -213,8 +212,6 @@ ts_train_test_split <- function(temp_data,
 
   return(folds)
 }
-
-
 
 
 #' Run time series cross-validation for a single fold
@@ -294,7 +291,6 @@ ts_train_test_split <- function(temp_data,
 ts_cv_run_fold <- function(fold,
                            ar_order = 1,
                            use_season = TRUE) {
-
   ## ---- Start ----------------------------------------------------------
   .tempssm_cli_inform("Running CV for fold {fold$fold}")
 
@@ -306,9 +302,9 @@ ts_cv_run_fold <- function(fold,
   }
 
   y_train <- fold$train_ts
-  y_test  <- fold$test_ts
+  y_test <- fold$test_ts
   exo_train <- fold$exo_train_ts
-  exo_test  <- fold$exo_test_ts
+  exo_test <- fold$exo_test_ts
   freq <- frequency(y_train)
 
   .tempssm_cli_debug(
@@ -336,8 +332,8 @@ ts_cv_run_fold <- function(fold,
   res <- tryCatch(
     tempssm(
       temp_data = y_train_mts,
-      exo_data  = exo_train,
-      ar_order  = ar_order,
+      exo_data = exo_train,
+      ar_order = ar_order,
       use_season = use_season
     ),
     error = function(e) {
@@ -352,7 +348,6 @@ ts_cv_run_fold <- function(fold,
 
   ## ---- check convergence ---------------------------------------------
   if (is.null(res) || !isTRUE(res$converged)) {
-
     cli::cli_warn(
       "Model did not converge for fold {fold$fold}"
     )
@@ -373,7 +368,6 @@ ts_cv_run_fold <- function(fold,
   )
 
   if (is.null(exo_train)) {
-
     ## ---- no exogenous -------------------------------------------------
     .tempssm_cli_debug("Prediction without exogenous variables")
 
@@ -381,9 +375,7 @@ ts_cv_run_fold <- function(fold,
       train_model,
       n.ahead = length(y_test_mts)
     )
-
   } else {
-
     ## ---- with exogenous ----------------------------------------------
     .tempssm_cli_debug("Prediction with exogenous variables")
 
@@ -399,27 +391,26 @@ ts_cv_run_fold <- function(fold,
     )
 
     train_model <- res_train$model
-    train_pars  <- res_train$fit$optim.out$par
+    train_pars <- res_train$fit$optim.out$par
 
     exo_mat <- as.matrix(exo_test)
 
-    if(use_season){
-
+    if (use_season) {
       .tempssm_cli_debug("Using seasonal model for prediction")
 
-      ar_idx  <- 3:(2 + ar_order)
+      ar_idx <- 3:(2 + ar_order)
       var_idx <- 3 + ar_order
-      H_idx   <- 4 + ar_order
+      H_idx <- 4 + ar_order
 
       y_pred <- stats::predict(
         train_model,
         newdata = SSModel(
           H = exp(train_pars[H_idx]),
-          rep(NA, nrow(temp_exo_test)) ~ exo_mat + 
+          rep(NA, nrow(temp_exo_test)) ~ exo_mat +
             SSMtrend(
               degree = 2,
               Q = c(list(0), list(exp(train_pars[1])))
-            ) + 
+            ) +
             SSMseasonal(
               sea.type = "dummy",
               period = freq,
@@ -433,24 +424,22 @@ ts_cv_run_fold <- function(fold,
           data = temp_exo_test
         )
       )
-
     } else {
-
       .tempssm_cli_debug("Using non-seasonal model for prediction")
 
-      ar_idx  <- 2:(1 + ar_order)
+      ar_idx <- 2:(1 + ar_order)
       var_idx <- 2 + ar_order
-      H_idx   <- 3 + ar_order
+      H_idx <- 3 + ar_order
 
       y_pred <- stats::predict(
         train_model,
         newdata = SSModel(
           H = exp(train_pars[H_idx]),
-          rep(NA, nrow(temp_exo_test)) ~ exo_mat + 
+          rep(NA, nrow(temp_exo_test)) ~ exo_mat +
             SSMtrend(
               degree = 2,
               Q = c(list(0), list(exp(train_pars[1])))
-            ) + 
+            ) +
             SSMarima(
               ar = artransform(train_pars[ar_idx]),
               d = 0,
@@ -477,7 +466,6 @@ ts_cv_run_fold <- function(fold,
     model     = train_model
   )
 }
-
 
 
 #' Run time series cross-validation over multiple folds
@@ -526,7 +514,6 @@ ts_cv_run <- function(
   workers = future::availableCores(),
   progress = TRUE
 ) {
-
   ## ---- input check ----------------------------------------------------
   if (!is.list(folds)) {
     cli::cli_abort("`folds` must be a list of fold objects.")
@@ -558,9 +545,7 @@ ts_cv_run <- function(
 
   ## ---- execution ------------------------------------------------------
   if (progress) {
-
     res <- progressr::with_progress({
-
       p <- progressr::progressor(along = folds)
 
       future.apply::future_lapply(
@@ -572,11 +557,8 @@ ts_cv_run <- function(
         },
         future.seed = TRUE
       )
-
     })
-
   } else {
-
     res <- future.apply::future_lapply(
       folds,
       run_one,
@@ -593,8 +575,6 @@ ts_cv_run <- function(
 }
 
 
-
-
 ## ---- Assessment Index -------------------------------------------
 
 
@@ -606,7 +586,6 @@ ts_cv_run <- function(
 #' @return Numeric scalar giving MAE.
 #' @export
 compute_mae <- function(y_pred, y_true) {
-
   ## ---- fast exit ------------------------------------------------------
   if (is.null(y_pred) || is.null(y_true)) {
     return(NA_real_)
@@ -637,7 +616,6 @@ compute_mae <- function(y_pred, y_true) {
 }
 
 
-
 #' Compute Mean Absolute Scaled Error (MASE)
 #'
 #' @description
@@ -661,7 +639,6 @@ compute_mase <- function(y_pred,
                          y_true,
                          y_train,
                          method = c("naive", "seasonal")) {
-
   method <- match.arg(method)
 
   ## ---- fast exit ------------------------------------------------------
@@ -712,7 +689,6 @@ compute_mase <- function(y_pred,
 }
 
 
-
 #' Compute forecast accuracy metrics for a CV fold
 #'
 #' @param cv_result A single result returned by \code{ts_cv_run_fold()}.
@@ -720,7 +696,6 @@ compute_mase <- function(y_pred,
 #' @return A named list of accuracy metrics.
 #' @export
 compute_cv_metrics <- function(cv_result) {
-
   if (!isTRUE(cv_result$converged)) {
     return(list(
       MAE = NA_real_,
@@ -747,7 +722,6 @@ compute_cv_metrics <- function(cv_result) {
 }
 
 
-
 #' Collect time series cross-validation results into a tibble
 #'
 #' @description
@@ -767,7 +741,6 @@ compute_cv_metrics <- function(cv_result) {
 #' @importFrom tibble tibble
 #' @export
 ts_cv_collect <- function(cv_results, metrics) {
-
   ## ---- input check ----------------------------------------------------
   if (!is.list(cv_results) || !is.list(metrics)) {
     cli::cli_abort(
@@ -798,8 +771,6 @@ ts_cv_collect <- function(cv_results, metrics) {
 
   return(out)
 }
-
-
 
 
 #' Calculate scale coefficient Q for MASE
@@ -835,7 +806,6 @@ ts_cv_collect <- function(cv_results, metrics) {
 #' @export
 #' @keywords internal
 .scale_Q <- function(train_ts, method = c("naive", "seasonal")) {
-
   method <- match.arg(method)
 
   ## ---- input check ----------------------------------------------------
@@ -854,7 +824,6 @@ ts_cv_collect <- function(cv_results, metrics) {
 
   ## ---- naive scaling --------------------------------------------------
   if (method == "naive") {
-
     if (n < 2) {
       cli::cli_abort(
         "At least two observations are required for naive scaling."
@@ -862,8 +831,7 @@ ts_cv_collect <- function(cv_results, metrics) {
     }
 
     Q <- mean(abs(diff(y)), na.rm = TRUE)
-
-  } else {  # seasonal
+  } else { # seasonal
 
     m <- stats::frequency(train_ts)
 

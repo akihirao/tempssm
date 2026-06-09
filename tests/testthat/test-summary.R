@@ -2,7 +2,6 @@
 
 # test for summary object
 test_that("summary.tempssm returns a valid summary object", {
-
   s <- summary(res_tempssm)
 
   expect_s3_class(s, "summary.tempssm")
@@ -12,7 +11,6 @@ test_that("summary.tempssm returns a valid summary object", {
 
 # test for structure
 test_that("summary contains expected components", {
-
   s <- summary(res_tempssm)
 
   expected_names <- c(
@@ -32,9 +30,8 @@ test_that("summary contains expected components", {
 
 
 test_that("summary uses logLik() and AIC() methods consistently", {
-
-  s   <- summary(res_tempssm)
-  ll  <- logLik(res_tempssm)
+  s <- summary(res_tempssm)
+  ll <- logLik(res_tempssm)
   aic <- AIC(res_tempssm)
 
   expect_equal(s$logLik, as.numeric(ll))
@@ -43,9 +40,7 @@ test_that("summary uses logLik() and AIC() methods consistently", {
 })
 
 
-
 test_that("print.summary.tempssm works and returns object invisibly", {
-
   s <- summary(res_tempssm)
 
   expect_no_error(print(s))
@@ -55,9 +50,7 @@ test_that("print.summary.tempssm works and returns object invisibly", {
 })
 
 
-
 test_that("print.summary.tempssm outputs expected text", {
-
   s <- summary(res_tempssm)
 
   output <- capture.output(print(s))
@@ -67,9 +60,7 @@ test_that("print.summary.tempssm outputs expected text", {
 })
 
 
-
 test_that("summary handles non-seasonal model", {
-
   data(niigata_sst)
 
   res <- tempssm(niigata_sst, use_season = FALSE)
@@ -79,9 +70,7 @@ test_that("summary handles non-seasonal model", {
 })
 
 
-
 test_that("summary contains valid AR coefficients", {
-
   s <- summary(res_tempssm)
 
   expect_true(is.list(s$coef_ar))
@@ -91,9 +80,7 @@ test_that("summary contains valid AR coefficients", {
 
 
 test_that("summary handles no exogenous variables", {
-
   s <- summary(res_tempssm)
 
   expect_true(is.null(s$exogenous) || is.character(s$exogenous))
 })
-

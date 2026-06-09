@@ -1,5 +1,4 @@
 test_that("autoplot_level returns a ggplot object", {
-
   p1 <- autoplot_level(res_tempssm)
   p2 <- autoplot_level(res_tempssm, ci = FALSE)
 
@@ -9,7 +8,6 @@ test_that("autoplot_level returns a ggplot object", {
 
 
 test_that("autoplot_level checks inputs correctly", {
-
   expect_error(
     autoplot_level(NULL),
     "`res` must be an object of class <tempssm>."
@@ -25,4 +23,3 @@ test_that("autoplot_level checks inputs correctly", {
     "`ci` must be a single logical value"
   )
 })
-

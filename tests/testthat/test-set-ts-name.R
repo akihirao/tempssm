@@ -1,5 +1,4 @@
 test_that("set_ts_name works for univariate ts", {
-
   ts_uni <- ts(
     rnorm(120),
     start = c(2000, 1),
@@ -20,7 +19,6 @@ test_that("set_ts_name works for univariate ts", {
 
 
 test_that("set_ts_name works for multivariate ts with matching labels", {
-
   ts_multi <- ts(
     matrix(rnorm(240), ncol = 3),
     start = c(1990, 1),
@@ -41,7 +39,6 @@ test_that("set_ts_name works for multivariate ts with matching labels", {
 
 
 test_that("single label is recycled for multivariate ts", {
-
   ts_multi <- ts(
     matrix(rnorm(120), ncol = 4),
     start = c(2010, 1),
@@ -58,7 +55,6 @@ test_that("single label is recycled for multivariate ts", {
 
 
 test_that("vector ts input is safely converted to single-column ts", {
-
   ts_vec <- ts(
     rnorm(60),
     start = c(2005, 1),
@@ -74,7 +70,6 @@ test_that("vector ts input is safely converted to single-column ts", {
 
 
 test_that("non-ts input triggers error", {
-
   expect_error(
     set_ts_name(rnorm(10), label = "x"),
     "must be an object of class"
@@ -83,7 +78,6 @@ test_that("non-ts input triggers error", {
 
 
 test_that("non-character label triggers error", {
-
   ts_uni <- ts(rnorm(12), frequency = 12)
 
   expect_error(
@@ -94,7 +88,6 @@ test_that("non-character label triggers error", {
 
 
 test_that("invalid label length triggers error", {
-
   ts_multi <- ts(
     matrix(rnorm(100), ncol = 2),
     frequency = 12
@@ -105,4 +98,3 @@ test_that("invalid label length triggers error", {
     "Length of"
   )
 })
-

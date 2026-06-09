@@ -1,7 +1,6 @@
 #' @importFrom stats start end
 #' @export
 print.tempssm <- function(x, ...) {
-
   cat("tempssm model fit\n")
   cat("------------------\n")
 
@@ -11,22 +10,26 @@ print.tempssm <- function(x, ...) {
   cat("  Temperature time series data\n")
   cat("  Length       :", length(temp_data), "\n")
   cat("  Frequency    :", frequency(temp_data), "\n")
-  cat("  Start / End  :", 
-      paste(stats::start(temp_data), collapse = "-"), " / ",
-      paste(stats::end(temp_data), collapse = "-"), "\n\n")
+  cat(
+    "  Start / End  :",
+    paste(stats::start(temp_data), collapse = "-"), " / ",
+    paste(stats::end(temp_data), collapse = "-"), "\n\n"
+  )
 
   exo_data <- x$exogenous_data
-  if(is.null(exo_data)){
+  if (is.null(exo_data)) {
     cat("  Exogenous variables: NULL\n")
     cat("\n\n")
-  }else{
-  cat("  Exogenous variable(s)\n")
-  cat("  No. variables:", length(colnames(exo_data)), "\n")
-  cat("  Length       :", length(exo_data), "\n")
-  cat("  Frequency    :", frequency(exo_data), "\n")
-  cat("  Start / End  :", 
+  } else {
+    cat("  Exogenous variable(s)\n")
+    cat("  No. variables:", length(colnames(exo_data)), "\n")
+    cat("  Length       :", length(exo_data), "\n")
+    cat("  Frequency    :", frequency(exo_data), "\n")
+    cat(
+      "  Start / End  :",
       paste(start(exo_data), collapse = "-"), " / ",
-      paste(end(exo_data), collapse = "-"), "\n\n")
+      paste(end(exo_data), collapse = "-"), "\n\n"
+    )
   }
 
   # Convergence information

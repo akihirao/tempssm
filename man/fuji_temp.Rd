@@ -33,8 +33,10 @@ July 1937 to December 2025. Missing values, if any, are encoded as
 }
 \examples{
 data(fuji_temp)
-plot(fuji_temp, ylab = "Temperature (°C)",
-     main = "Monthly mean air temperature at the summit of Mt. Fuji")
+plot(fuji_temp,
+  ylab = "Temperature (°C)",
+  main = "Monthly mean air temperature at the summit of Mt. Fuji"
+)
 
 }
 \keyword{datasets}

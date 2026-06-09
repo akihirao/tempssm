@@ -12,8 +12,7 @@
 #' @importFrom stats logLik
 #' @export
 summary.tempssm <- function(object, ...) {
-
-  opt  <- object$fit$optim.out
+  opt <- object$fit$optim.out
   pars <- opt$par
   ar_order <- object$ar_order
   use_season <- object$use_season
@@ -21,20 +20,20 @@ summary.tempssm <- function(object, ...) {
 
   ## --- indices (as before) ----
   if (use_season) {
-    ar_idx  <- 3:(2 + ar_order)
+    ar_idx <- 3:(2 + ar_order)
     var_idx <- 3 + ar_order
-    H_idx   <- 4 + ar_order
+    H_idx <- 4 + ar_order
     Q_season_est <- exp(pars[2])
   } else {
-    ar_idx  <- 2:(1 + ar_order)
+    ar_idx <- 2:(1 + ar_order)
     var_idx <- 2 + ar_order
-    H_idx   <- 3 + ar_order
+    H_idx <- 3 + ar_order
     Q_season_est <- NA
   }
 
   ## --- likelihood & information criteria ---
-  ll  <- logLik.tempssm(object)
-  k   <- attr(ll, "df")
+  ll <- logLik.tempssm(object)
+  k <- attr(ll, "df")
   aic <- AIC.tempssm(object)
 
   ## --- exogenous variables ---
@@ -43,12 +42,12 @@ summary.tempssm <- function(object, ...) {
   exogenous_coef <- get_exo_coef(object)
 
   res <- list(
-    call        = object$call,
-    logLik      = as.numeric(ll),
-    k           = k,
-    AIC         = aic,
+    call = object$call,
+    logLik = as.numeric(ll),
+    k = k,
+    AIC = aic,
     convergence = opt$convergence == 0,
-    variances   = list(
+    variances = list(
       H         = exp(pars[H_idx]),
       Q_trend   = exp(pars[1]),
       Q_season  = Q_season_est,
@@ -58,15 +57,13 @@ summary.tempssm <- function(object, ...) {
       AR_order = ar_order,
       AR_coef  = KFAS::artransform(pars[ar_idx])
     ),
-    exogenous      = exogenous_variable,
+    exogenous = exogenous_variable,
     exogenous_coef = exogenous_coef
   )
 
   class(res) <- "summary.tempssm"
   res
 }
-
-
 
 
 #' Print method for summary of tempssm objects
@@ -86,7 +83,6 @@ summary.tempssm <- function(object, ...) {
 #' @method print summary.tempssm
 #' @export
 print.summary.tempssm <- function(x, ...) {
-
   cat("tempssm summary\n")
   cat("-----------------\n")
 
@@ -116,19 +112,18 @@ print.summary.tempssm <- function(x, ...) {
   cat("\n")
   cat("Components of auto-regression:\n")
   cat("  Order of AR:", x$coef_ar$AR_order, "\n")
-  for(i in 1:x$coef_ar$AR_order){
+  for (i in 1:x$coef_ar$AR_order) {
     if (!is.null(x$coef_ar$AR_coef[i])) {
-      cat(paste0("  Coefficient of AR",i,":"), x$coef_ar$AR_coef[i], "\n")
+      cat(paste0("  Coefficient of AR", i, ":"), x$coef_ar$AR_coef[i], "\n")
     }
   }
 
   if (!is.null(x$exogenous_coef)) {
-  cat("Exogenous variable\t",x$exogenous_coef$Variable, "\n")
-  cat("Estimated coefficient\t", x$exogenous_coef$Coefficient, "\n")
-  cat("Lower CI\t", x$exogenous_coef$lwr, "\n")
-  cat("Upper CI\t", x$exogenous_coef$upr, "\n\n")
+    cat("Exogenous variable\t", x$exogenous_coef$Variable, "\n")
+    cat("Estimated coefficient\t", x$exogenous_coef$Coefficient, "\n")
+    cat("Lower CI\t", x$exogenous_coef$lwr, "\n")
+    cat("Upper CI\t", x$exogenous_coef$upr, "\n\n")
   }
-  
+
   invisible(x)
 }
-

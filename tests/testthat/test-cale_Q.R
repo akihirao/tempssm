@@ -1,7 +1,6 @@
 # test-cale_Q.R
 
 test_that("scale_Q works for naive method", {
-
   ts_data <- ts(c(1, 2, 3, 5))
 
   Q <- .scale_Q(ts_data, method = "naive")
@@ -13,9 +12,9 @@ test_that("scale_Q works for naive method", {
 
 
 test_that("scale_Q works for seasonal method", {
-
   ts_data <- ts(c(1, 2, 3, 4, 2, 3, 4, 5),
-                frequency = 4)
+    frequency = 4
+  )
 
   Q <- .scale_Q(ts_data, method = "seasonal")
 
@@ -23,14 +22,13 @@ test_that("scale_Q works for seasonal method", {
   m <- 4
   n <- length(y)
 
-  expected <- mean(abs(y[(m+1):n] - y[1:(n-m)]))
+  expected <- mean(abs(y[(m + 1):n] - y[1:(n - m)]))
 
   expect_equal(Q, expected)
 })
 
 
 test_that("scale_Q handles NA values with na.rm", {
-
   ts_data <- ts(c(1, NA, 3, 5))
 
   Q <- .scale_Q(ts_data, method = "naive")
@@ -40,7 +38,6 @@ test_that("scale_Q handles NA values with na.rm", {
 
 
 test_that("non-ts input triggers error", {
-
   expect_error(
     .scale_Q(1:10),
     "must be a"
@@ -49,7 +46,6 @@ test_that("non-ts input triggers error", {
 
 
 test_that("naive method requires at least 2 observations", {
-
   ts_data <- ts(1)
 
   expect_error(
@@ -60,7 +56,6 @@ test_that("naive method requires at least 2 observations", {
 
 
 test_that("seasonal method requires frequency > 1", {
-
   ts_data <- ts(1:10, frequency = 1)
 
   expect_error(
@@ -71,7 +66,6 @@ test_that("seasonal method requires frequency > 1", {
 
 
 test_that("seasonal method requires enough observations", {
-
   ts_data <- ts(1:4, frequency = 4)
 
   expect_error(
@@ -82,7 +76,6 @@ test_that("seasonal method requires enough observations", {
 
 
 test_that("invalid method triggers error", {
-
   ts_data <- ts(1:10)
 
   expect_error(
@@ -93,7 +86,6 @@ test_that("invalid method triggers error", {
 
 
 test_that("constant series returns zero Q", {
-
   ts_data <- ts(rep(5, 10), frequency = 1)
 
   Q <- .scale_Q(ts_data, method = "naive")
@@ -102,9 +94,7 @@ test_that("constant series returns zero Q", {
 })
 
 
-
 test_that("scale_Q returns scalar", {
-
   ts_data <- ts(1:10)
 
   Q <- .scale_Q(ts_data)

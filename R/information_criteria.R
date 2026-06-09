@@ -1,7 +1,6 @@
 ######################################
 #' @keywords internal
 .validate_tempssm_for_ic <- function(res) {
-
   ## ---- class check ----------------------------------------------------
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
@@ -30,11 +29,9 @@
 }
 
 
-
 ######################################
 #' @keywords internal
 .internal_logLik_tempssm <- function(res) {
-
   ## ---- validation ----------------------------------------------------
   .validate_tempssm_for_ic(res)
 
@@ -72,12 +69,9 @@
 }
 
 
-
-
 ######################################
 #' @keywords internal
 .get_loglik_tempssm <- function(res) {
-
   ## ---- basic check ----------------------------------------------------
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
@@ -102,7 +96,6 @@
 }
 
 
-
 #' Log-likelihood method for tempssm objects (S3 method)
 #'
 #' @param object
@@ -121,7 +114,6 @@
 #'
 #' @export
 logLik.tempssm <- function(object, ...) {
-
   info <- .internal_logLik_tempssm(object)
 
   structure(
@@ -131,7 +123,6 @@ logLik.tempssm <- function(object, ...) {
     nobs  = info$nobs
   )
 }
-
 
 
 #' AIC method for tempssm objects (S3 method)
@@ -169,11 +160,9 @@ logLik.tempssm <- function(object, ...) {
 #' @method AIC tempssm
 #' @export
 AIC.tempssm <- function(object, ..., k = 2) {
-
   ll <- logLik.tempssm(object)
   -2 * as.numeric(ll) + k * attr(ll, "df")
 }
-
 
 
 #' Extract the Akaike Information Criterion (AIC)

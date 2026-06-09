@@ -57,7 +57,6 @@
 #'
 #' @export
 set_ts_name <- function(ts_in, label) {
-
   ## ---- input check ----------------------------------------------------
   if (!inherits(ts_in, "ts")) {
     cli::cli_abort(
@@ -112,7 +111,6 @@ set_ts_name <- function(ts_in, label) {
 }
 
 
-
 #' Trim and align temperature and exogenous time series over their shared period
 #'
 #' @description
@@ -161,8 +159,9 @@ set_ts_name <- function(ts_in, label) {
 #'
 #' @examples
 #' temp_ts <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
-#' exo_ts  <- ts(matrix(rnorm(200), ncol = 2),
-#'               start = c(2001, 1), frequency = 12)
+#' exo_ts <- ts(matrix(rnorm(200), ncol = 2),
+#'   start = c(2001, 1), frequency = 12
+#' )
 #'
 #' trim_ts_overlap(
 #'   temp_ts,
@@ -174,12 +173,11 @@ set_ts_name <- function(ts_in, label) {
 #' @importFrom stats ts.intersect
 #' @export
 trim_ts_overlap <- function(
-    temp_ts,
-    exo_ts,
-    temp_name = "temp",
-    exo_name = NULL
+  temp_ts,
+  exo_ts,
+  temp_name = "temp",
+  exo_name = NULL
 ) {
-
   ## ---- basic checks ---------------------------------------------------
   if (!inherits(temp_ts, "ts")) {
     cli::cli_abort("`temp_ts` must be an object of class {.cls ts}.")
@@ -219,7 +217,7 @@ trim_ts_overlap <- function(
   }
 
   temp_ts_overlap <- temp_exo_ts_overlap[, 1, drop = FALSE]
-  exo_ts_overlap  <- temp_exo_ts_overlap[, -1, drop = FALSE]
+  exo_ts_overlap <- temp_exo_ts_overlap[, -1, drop = FALSE]
 
   .tempssm_cli_debug("Overlap length: {NROW(temp_ts_overlap)}")
 
@@ -288,7 +286,6 @@ trim_ts_overlap <- function(
 #'
 #' @export
 split_multi_ts <- function(multi_ts) {
-
   ## ---- input checks ---------------------------------------------------
   if (!inherits(multi_ts, "ts")) {
     cli::cli_abort(
@@ -339,7 +336,6 @@ split_multi_ts <- function(multi_ts) {
 
   return(out)
 }
-
 
 
 #' Convert a data frame of monthly temperature time series to a \code{ts} object
@@ -403,7 +399,6 @@ split_multi_ts <- function(multi_ts) {
 #'
 #' @export
 convert_monthly_df_to_ts <- function(df) {
-
   ## ---- input check ----------------------------------------------------
   if (!is.data.frame(df)) {
     cli::cli_abort(
@@ -432,7 +427,7 @@ convert_monthly_df_to_ts <- function(df) {
 
   ## ---- check regularity ----------------------------------------------
   ym_index <- as.integer(format(df$Date, "%Y")) * 12 +
-              as.integer(format(df$Date, "%m"))
+    as.integer(format(df$Date, "%m"))
 
   if (any(diff(ym_index) != 1)) {
     cli::cli_warn(
@@ -441,7 +436,7 @@ convert_monthly_df_to_ts <- function(df) {
   }
 
   ## ---- construct ts ---------------------------------------------------
-  start_year  <- as.integer(format(df$Date[1], "%Y"))
+  start_year <- as.integer(format(df$Date[1], "%Y"))
   start_month <- as.integer(format(df$Date[1], "%m"))
 
   .tempssm_cli_debug(
@@ -461,7 +456,6 @@ convert_monthly_df_to_ts <- function(df) {
 
   return(ts_out)
 }
-
 
 
 #' Read and convert a monthly temperature CSV file to a \code{ts} object
@@ -515,7 +509,6 @@ convert_monthly_df_to_ts <- function(df) {
 #'
 #' @export
 read_monthly_temp_ts <- function(csv) {
-
   ## ---- input check ----------------------------------------------------
   if (!is.character(csv) || length(csv) != 1) {
     cli::cli_abort("`csv` must be a file path (character scalar).")
@@ -559,7 +552,7 @@ read_monthly_temp_ts <- function(csv) {
   }
 
   ## ---- construct ts ---------------------------------------------------
-  start_year  <- raw_data$Year[1]
+  start_year <- raw_data$Year[1]
   start_month <- raw_data$Month[1]
 
   .tempssm_cli_debug(
@@ -579,8 +572,6 @@ read_monthly_temp_ts <- function(csv) {
 
   return(ts_out)
 }
-
-
 
 
 #' Convert a daily zoo object to a monthly \code{ts} object
@@ -613,7 +604,6 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
                                               var = "Temp",
                                               na.rm = TRUE,
                                               na_prop_max = 1) {
-
   ## ---- input check ----------------------------------------------------
   if (!inherits(zoo_obj, "zoo")) {
     cli::cli_abort("Input must be a {.cls zoo} object.")
@@ -642,7 +632,6 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
 
   ## ---- custom monthly summary ----------------------------------------
   monthly_fun <- function(x) {
-
     if (all(is.na(x))) {
       return(NA_real_)
     }
@@ -672,7 +661,7 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
   ## ---- construct ts ---------------------------------------------------
   ym_start <- stats::start(zoo_monthly)
 
-  start_year  <- as.integer(format(ym_start, "%Y"))
+  start_year <- as.integer(format(ym_start, "%Y"))
   start_month <- as.integer(format(ym_start, "%m"))
 
   .tempssm_cli_debug(
@@ -704,7 +693,6 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
 }
 
 
-
 #' Compute monthly climatology (mean seasonal cycle)
 #'
 #' @param temp_ts Monthly temperature time series of class \code{ts}.
@@ -726,10 +714,9 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
 #' )
 #'
 #' monthly_climatology <- compute_monthly_climatology(temp_ts)
-#' 
+#'
 #' @export
-compute_monthly_climatology <- function(temp_ts){
-
+compute_monthly_climatology <- function(temp_ts) {
   ## ---- input check ----------------------------------------------------
   if (!inherits(temp_ts, "ts")) {
     cli::cli_abort("Input must be a {.cls ts} object.")
@@ -744,7 +731,7 @@ compute_monthly_climatology <- function(temp_ts){
   )
 
   ## ---- compute --------------------------------------------------------
-  temp  <- as.numeric(temp_ts)
+  temp <- as.numeric(temp_ts)
   month <- factor(stats::cycle(temp_ts), levels = 1:12)
 
   monthly_mean <- tapply(temp, month, mean, na.rm = TRUE)
@@ -802,7 +789,6 @@ compute_monthly_climatology <- function(temp_ts){
 #'
 #' @export
 compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
-
   ## ---- input check ----------------------------------------------------
   if (!inherits(temp_ts, "ts")) {
     cli::cli_abort("Input must be a {.cls ts} object.")
@@ -814,12 +800,9 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 
   ## ---- baseline selection ---------------------------------------------
   if (is.null(baseline)) {
-
     .tempssm_cli_debug("Using full period for climatology")
     ts_base <- temp_ts
-
   } else {
-
     if (!is.numeric(baseline) || length(baseline) != 2) {
       cli::cli_abort(
         "`baseline` must be a numeric vector of length 2 (start_year, end_year)."
@@ -832,7 +815,7 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 
     ## ---- baseline validation --------------------------------------------
     ts_start <- stats::start(temp_ts)[1]
-    ts_end   <- stats::end(temp_ts)[1]
+    ts_end <- stats::end(temp_ts)[1]
 
     if (baseline[1] > baseline[2]) {
       cli::cli_abort("`baseline` start year must be <= end year.")
@@ -881,8 +864,6 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 
   return(ts_out)
 }
-
-
 
 
 # internal utilities ------------------------------------
@@ -944,7 +925,6 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #'
 #' @export
 get_jma_sst_zoo <- function(sea_area_id) {
-
   ## ---- input handling -------------------------------------------------
   if (!is.character(sea_area_id)) {
     sea_area_id <- as.character(sea_area_id)
@@ -1033,7 +1013,6 @@ get_jma_sst_zoo <- function(sea_area_id) {
 }
 
 
-
 #' Retrieve daily mean sea-surface temperature as a monthly ts object from JMA
 #'
 #' This function downloads publicly available daily mean
@@ -1085,7 +1064,6 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' @export
 get_jma_sst_ts <- function(sea_area_id,
                            na_prop_max = 1) {
-
   ## ---- input handling -------------------------------------------------
   if (!is.character(sea_area_id)) {
     sea_area_id <- as.character(sea_area_id)
@@ -1186,8 +1164,6 @@ get_jma_sst_ts <- function(sea_area_id,
 }
 
 
-
-
 #' Fit a simple linear model to a temperature time series
 #'
 #' @description
@@ -1209,7 +1185,6 @@ get_jma_sst_ts <- function(sea_area_id,
 #'
 #' @export
 lm_ts <- function(temp_data) {
-
   ## ---- input check ----------------------------------------------------
   if (!inherits(temp_data, "ts")) {
     cli::cli_abort(
@@ -1237,4 +1212,3 @@ lm_ts <- function(temp_data) {
 
   return(fit)
 }
-

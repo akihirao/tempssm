@@ -1,5 +1,4 @@
 test_that("autoplot_season returns a ggplot object", {
-
   p1 <- autoplot_season(res_tempssm)
   p2 <- autoplot_season(res_tempssm, ci = FALSE)
 
@@ -9,7 +8,6 @@ test_that("autoplot_season returns a ggplot object", {
 
 
 test_that("autoplot_season checks inputs correctly", {
-
   expect_error(
     autoplot_season(NULL),
     "`res` must be an object of class <tempssm>."
@@ -25,4 +23,3 @@ test_that("autoplot_season checks inputs correctly", {
     "`ci` must be a single logical value"
   )
 })
-

@@ -1,5 +1,4 @@
 test_that("autoplot.tempssm works for all components", {
-
   p1 <- autoplot(res_tempssm, component = "level")
   expect_s3_class(p1, "ggplot")
 

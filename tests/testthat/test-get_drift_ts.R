@@ -1,7 +1,6 @@
-#tests/testthat/test-get_drift_ts.R
+# tests/testthat/test-get_drift_ts.R
 
 test_that("get_drift_ts returns a ts object", {
-
   ts_obj <- get_drift_ts(res_tempssm)
 
   expect_s3_class(ts_obj, "ts")
@@ -10,7 +9,6 @@ test_that("get_drift_ts returns a ts object", {
 
 
 test_that("get_drift_ts returns CI columns when ci = TRUE", {
-
   ts_ci <- get_drift_ts(res_tempssm, ci = TRUE)
 
   expect_s3_class(ts_ci, "ts")
@@ -19,7 +17,6 @@ test_that("get_drift_ts returns CI columns when ci = TRUE", {
 
 
 test_that("get_drift_ts checks inputs correctly", {
-
   expect_error(
     get_drift_ts(NULL),
     "`res` must be an object of class 'tempssm'."

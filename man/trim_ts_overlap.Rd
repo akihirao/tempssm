@@ -46,8 +46,9 @@ internal consistency required by \code{tempssm()}.
 }
 \examples{
 temp_ts <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
-exo_ts  <- ts(matrix(rnorm(200), ncol = 2),
-              start = c(2001, 1), frequency = 12)
+exo_ts <- ts(matrix(rnorm(200), ncol = 2),
+  start = c(2001, 1), frequency = 12
+)
 
 trim_ts_overlap(
   temp_ts,

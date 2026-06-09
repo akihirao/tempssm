@@ -1,5 +1,4 @@
 test_that("trim_ts_overlap and split_multi_ts work together", {
-
   ## setup
   temp_ts <- ts(
     rnorm(120),
@@ -42,6 +41,4 @@ test_that("trim_ts_overlap and split_multi_ts work together", {
 
   expect_equal(colnames(split_exo[[1]]), "precip")
   expect_equal(colnames(split_exo[[2]]), "solar")
-
 })
-
