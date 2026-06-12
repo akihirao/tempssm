@@ -23,3 +23,19 @@ linear Gaussian state-space model estimated by
 This method is automatically called when a
 \code{summary.tempssm} object is printed.
 }
+\examples{
+\dontrun{
+data(niigata_sst)
+
+# fit model and compute summary
+res <- tempssm(niigata_sst)
+s <- summary(res)
+
+# print summary (explicit)
+print(s)
+
+# equivalent (implicit print)
+s
+}
+
+}

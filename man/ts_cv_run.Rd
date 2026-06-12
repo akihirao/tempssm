@@ -37,6 +37,36 @@ is shown. Default is \code{TRUE}.}
 \value{
 A list of cross-validation results. Each element corresponds to one
 fold and contains the output of \code{ts_cv_run_fold()}.
+
+#' @examples
+\dontrun{
+data(yamaguchi_sst)
+
+# 1. create train/test splits
+folds <- ts_train_test_split(
+  temp_data = yamaguchi_sst,
+  initial   = 60,
+  horizon   = 12,
+  step      = 12
+)
+
+# 2. run cross-validation across all folds
+cv_results <- ts_cv_run(
+  folds,
+  ar_order = 1,
+  use_season = TRUE,
+  parallel = TRUE
+)
+
+# inspect first fold result
+cv_results[[1]]
+
+# predicted vs observed for first fold
+cbind(
+  observed = as.numeric(cv_results[[1]]$y_test),
+  predicted = as.numeric(cv_results[[1]]$y_pred)
+)
+}
 }
 \description{
 Apply \code{ts_cv_run_fold()} to multiple train/test splits and

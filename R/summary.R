@@ -10,6 +10,24 @@
 #'
 #' @method summary tempssm
 #' @importFrom stats logLik
+#'
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#'
+#' # fit model
+#' res <- tempssm(niigata_sst)
+#'
+#' # compute summary
+#' s <- summary(res)
+#'
+#' s
+#'
+#' # access components programmatically
+#' s$AIC
+#' s$variances
+#' }
+#'
 #' @export
 summary.tempssm <- function(object, ...) {
   opt <- object$fit$optim.out
@@ -81,6 +99,22 @@ summary.tempssm <- function(object, ...) {
 #' @return The input object \code{x}, invisibly.
 #'
 #' @method print summary.tempssm
+#'
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#'
+#' # fit model and compute summary
+#' res <- tempssm(niigata_sst)
+#' s <- summary(res)
+#'
+#' # print summary (explicit)
+#' print(s)
+#'
+#' # equivalent (implicit print)
+#' s
+#' }
+#'
 #' @export
 print.summary.tempssm <- function(x, ...) {
   cat("tempssm summary\n")

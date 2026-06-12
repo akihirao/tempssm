@@ -15,3 +15,25 @@ A named list of accuracy metrics.
 \description{
 Compute forecast accuracy metrics for a CV fold
 }
+\examples{
+\dontrun{
+data(yamaguchi_sst)
+
+# 1. create train/test splits
+folds <- ts_train_test_split(
+  temp_data = yamaguchi_sst,
+  initial   = 60,
+  horizon   = 12,
+  step      = 12
+)
+
+# 2. run cross-validation on a single fold
+res <- ts_cv_run_fold(folds[[1]])
+
+# 3. compute evaluation metrics
+metrics <- compute_cv_metrics(res)
+
+metrics
+}
+
+}

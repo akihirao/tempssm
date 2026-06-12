@@ -19,3 +19,28 @@ A \code{tibble} where each row represents a cross-validation fold.
 Combine cross-validation results and evaluation metrics into
 a tidy \code{tibble} with one row per fold.
 }
+\examples{
+\dontrun{
+data(yamaguchi_sst)
+
+# 1. create train/test splits
+folds <- ts_train_test_split(
+  temp_data = yamaguchi_sst,
+  initial   = 60,
+  horizon   = 12,
+  step      = 12
+)
+
+# 2. run cross-validation over all folds
+cv_results <- ts_cv_run(folds)
+
+# 3. compute metrics for each fold
+metrics <- lapply(cv_results, compute_cv_metrics)
+
+# 4. collect results into a tidy tibble
+cv_summary <- ts_cv_collect(cv_results, metrics)
+
+cv_summary
+}
+
+}

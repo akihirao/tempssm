@@ -20,3 +20,25 @@ A numeric value representing the log-likelihood.
 \description{
 Log-likelihood method for tempssm objects (S3 method)
 }
+\examples{
+\dontrun{
+data(niigata_sst)
+
+# fit model
+res <- tempssm(niigata_sst)
+
+# extract log-likelihood
+ll <- logLik(res)
+
+ll
+
+# access attributes
+attr(ll, "df")    # number of parameters
+attr(ll, "nobs")  # number of observations
+}
+
+}
+\seealso{
+\code{\link{AIC.tempssm}} for computing AIC,
+\code{\link{get_aic}} as a convenience wrapper.
+}

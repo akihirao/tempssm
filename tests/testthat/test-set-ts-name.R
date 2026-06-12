@@ -98,3 +98,47 @@ test_that("invalid label length triggers error", {
     "Length of"
   )
 })
+
+
+test_that("1-column matrix ts is handled correctly", {
+  ts_mat <- ts(
+    matrix(rnorm(24), ncol = 1),
+    start = c(2000, 1),
+    frequency = 12
+  )
+
+  ts_named <- set_ts_name(ts_mat, label = "temp")
+
+  expect_equal(NCOL(ts_named), 1)
+  expect_equal(colnames(ts_named), "temp")
+})
+
+
+test_that("label length equals number of columns is accepted exactly", {
+  ts_multi <- ts(
+    matrix(rnorm(60), ncol = 3),
+    frequency = 12
+  )
+
+  labels <- c("a", "b", "c")
+
+  ts_named <- set_ts_name(ts_multi, labels)
+
+  expect_equal(colnames(ts_named), labels)
+})
+
+
+test_that("existing column names are overwritten", {
+  ts_multi <- ts(
+    matrix(rnorm(60), ncol = 2),
+    frequency = 12
+  )
+  colnames(ts_multi) <- c("old1", "old2")
+
+  ts_named <- set_ts_name(ts_multi, c("new1", "new2"))
+
+  expect_equal(colnames(ts_named), c("new1", "new2"))
+})
+
+
+

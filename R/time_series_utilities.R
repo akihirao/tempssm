@@ -210,7 +210,7 @@ trim_ts_overlap <- function(
   ## ---- overlap --------------------------------------------------------
   temp_exo_ts_overlap <- stats::ts.intersect(temp_ts, exo_ts)
 
-  if (is.null(temp_exo_ts_overlap)) {
+  if (is.null(temp_exo_ts_overlap) || NROW(temp_exo_ts_overlap) == 0) {
     cli::cli_abort(
       "No overlapping time period found between {.arg temp_ts} and {.arg exo_ts}."
     )
@@ -1163,52 +1163,3 @@ get_jma_sst_ts <- function(sea_area_id,
   return(monthly_sst_ts)
 }
 
-
-#' Fit a simple linear model to a temperature time series
-#'
-#' @description
-#' Fit a linear regression model to a univariate temperature time series.
-#' This function is intended as a simple baseline for comparison with
-#' state space models.
-#'
-#' @param temp_data
-#' A univariate time series of class \code{ts}.
-#'
-#' @importFrom stats lm
-#'
-#' @return
-#' An object of class \code{"lm"} containing the fitted linear model.
-#'
-#' @details
-#' The model regresses temperature values on time using ordinary least
-#' squares. No seasonal or autocorrelation structure is modeled.
-#'
-#' @export
-lm_ts <- function(temp_data) {
-  ## ---- input check ----------------------------------------------------
-  if (!inherits(temp_data, "ts")) {
-    cli::cli_abort(
-      "`temp_data` must be a {.cls ts} object."
-    )
-  }
-
-  if (!is.null(dim(temp_data)) && NCOL(temp_data) != 1) {
-    cli::cli_abort(
-      "`temp_data` must be a univariate {.cls ts} object."
-    )
-  }
-
-  n <- length(temp_data)
-
-  .tempssm_cli_debug(
-    "Fitting linear model to time series (n={n})"
-  )
-
-  ## ---- model ----------------------------------------------------------
-  y <- as.numeric(temp_data)
-  x <- stats::time(temp_data)
-
-  fit <- stats::lm(y ~ x)
-
-  return(fit)
-}

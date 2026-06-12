@@ -68,4 +68,71 @@ test_that("trim_ts_overlap handles multivariate exogenous series", {
 })
 
 
+test_that("errors when temp_ts is not ts", {
+  exo_ts <- ts(rnorm(12), frequency = 12)
 
+  expect_error(
+    trim_ts_overlap(rnorm(12), exo_ts),
+    "must be an object of class"
+  )
+})
+
+test_that("errors when exo_ts is not ts", {
+  expect_error(
+    trim_ts_overlap(temp_ts_test, rnorm(12)),
+    "must be an object of class"
+  )
+})
+
+
+
+test_that("temp_name is correctly assigned", {
+  exo_ts <- ts(rnorm(120), start = c(2000,1), frequency=12)
+
+  res <- trim_ts_overlap(
+    temp_ts_test,
+    exo_ts,
+    temp_name = "temperature_test",
+    exo_name = "x"
+  )
+
+  expect_equal(colnames(res$temperature), "temperature_test")
+})
+
+
+test_that("overlap period is correctly computed", {
+  temp_ts <- ts(rnorm(120), start = c(2000,1), frequency=12)
+  exo_ts  <- ts(rnorm(60),  start = c(2005,1), frequency=12)
+
+  res <- trim_ts_overlap(temp_ts, exo_ts, exo_name = "x")
+
+  expect_equal(start(res$temperature), c(2005,1))
+  expect_equal(end(res$temperature), end(exo_ts))
+})
+
+
+test_that("single exogenous variable uses set_ts_name", {
+  exo_ts <- ts(rnorm(120), start = c(2000,1), frequency=12)
+
+  res <- trim_ts_overlap(
+    temp_ts_test,
+    exo_ts,
+    exo_name = "x"
+  )
+
+  expect_equal(colnames(res$exogenous), "x")
+})
+
+
+test_that("multivariate exogenous uses direct colnames assignment", {
+  exo_ts <- ts(matrix(rnorm(240), ncol=2),
+               start = c(2000,1), frequency=12)
+
+  res <- trim_ts_overlap(
+    temp_ts_test,
+    exo_ts,
+    exo_name = c("a", "b")
+  )
+
+  expect_equal(colnames(res$exogenous), c("a","b"))
+})

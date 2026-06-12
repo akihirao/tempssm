@@ -18,3 +18,21 @@ A list containing model diagnostics and summaries.
 Provides a concise summary of a fitted linear Gaussian
 state-space model estimated by \code{tempssm()}.
 }
+\examples{
+\dontrun{
+data(niigata_sst)
+
+# fit model
+res <- tempssm(niigata_sst)
+
+# compute summary
+s <- summary(res)
+
+s
+
+# access components programmatically
+s$AIC
+s$variances
+}
+
+}
