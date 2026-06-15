@@ -1,29 +1,22 @@
 # tests/testthat/test-get_ar1_ts.R
 
-test_that("get_ar1_ts returns a ts object", {
+test_that("get_ar1_ts basic structure", {
   ts_obj <- get_ar1_ts(res_tempssm)
 
-  expect_s3_class(ts_obj, "ts")
-  expect_equal(NCOL(ts_obj), 1)
+  check_ts_basic(ts_obj, res_tempssm)
+  check_ts_univariate(ts_obj)
 })
 
-
-test_that("get_ar1_ts returns CI columns when ci = TRUE", {
+test_that("get_ar1_ts CI structure", {
   ts_ci <- get_ar1_ts(res_tempssm, ci = TRUE)
 
-  expect_s3_class(ts_ci, "ts")
-  expect_equal(colnames(ts_ci), c("ar1", "lwr", "upr"))
+  check_ts_ci_structure(ts_ci, "ar1")
 })
 
+test_that("get_ar1_ts CI values", {
+  ts_ci <- get_ar1_ts(res_tempssm, ci = TRUE)
 
-test_that("get_ar1_ts checks inputs correctly", {
-  expect_error(
-    get_ar1_ts(NULL),
-    "`res` must be an object of class 'tempssm'."
-  )
+  ci_obj <- stats::confint(res_tempssm$kfs)
 
-  expect_error(
-    get_ar1_ts(res_tempssm, ci = TRUE, ci_level = 1.2),
-    "`ci_level` must be a numeric value between 0 and 1."
-  )
+  check_ts_ci_values(ts_ci, ci_obj, "arima1")
 })

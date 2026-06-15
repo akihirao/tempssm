@@ -37,8 +37,13 @@ is shown. Default is \code{TRUE}.}
 \value{
 A list of cross-validation results. Each element corresponds to one
 fold and contains the output of \code{ts_cv_run_fold()}.
-
-#' @examples
+}
+\description{
+Apply \code{ts_cv_run_fold()} to multiple train/test splits and
+collect the results. This function orchestrates time series
+cross-validation but does not compute evaluation metrics.
+}
+\examples{
 \dontrun{
 data(yamaguchi_sst)
 
@@ -67,9 +72,5 @@ cbind(
   predicted = as.numeric(cv_results[[1]]$y_pred)
 )
 }
-}
-\description{
-Apply \code{ts_cv_run_fold()} to multiple train/test splits and
-collect the results. This function orchestrates time series
-cross-validation but does not compute evaluation metrics.
+
 }

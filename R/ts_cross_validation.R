@@ -81,6 +81,7 @@ ts_train_test_split <- function(temp_data,
                                 step = 12,
                                 fixed_window = FALSE,
                                 allow_partial = FALSE) {
+
   ## ---- Start message --------------------------------------------------
   .tempssm_cli_inform(
     "Creating rolling train/test data (initial={initial}, horizon={horizon}, step={step})"
@@ -96,70 +97,50 @@ ts_train_test_split <- function(temp_data,
   }
 
   freq <- frequency(temp_data)
+
   if (freq <= 1) {
     cli::cli_abort("`temp_data` must have frequency > 1.")
   }
 
   if (any(c(initial, horizon, step) < 1)) {
-    cli::cli_abort(
-      "`initial`, `horizon`, and `step` must be positive integers."
-    )
+    cli::cli_abort("`initial`, `horizon`, and `step` must be positive integers.")
   }
 
   n <- length(temp_data)
+
   if (initial >= n) {
-    cli::cli_abort(
-      "`initial` must be smaller than the length of the time series."
-    )
+    cli::cli_abort("`initial` must be smaller than the length of the time series.")
   }
 
   .tempssm_cli_debug("Series length: {n}, frequency: {freq}")
 
   ## ---- Exogenous checks ----------------------------------------------
   if (!is.null(exo_data)) {
-    n_exo <- NCOL(exo_data)
 
     if (!inherits(exo_data, "ts")) {
       cli::cli_abort("`exo_data` must be a {.cls ts} object.")
     }
+
     if (length(exo_data) != n) {
-      cli::cli_abort(
-        "`exo_data` must have the same length as `temp_data`."
-      )
+      cli::cli_abort("`exo_data` must have the same length as `temp_data`.")
     }
+
     if (frequency(exo_data) != freq) {
-      cli::cli_abort(
-        "`exo_data` must have the same frequency as `temp_data`."
-      )
+      cli::cli_abort("`exo_data` must have the same frequency as `temp_data`.")
     }
 
     if (is.null(colnames(exo_data))) {
-      cli::cli_warn(
-        "No column names in `exo_data`; assigning default names."
-      )
+      cli::cli_warn("No column names in `exo_data`; assigning default names.")
       exo_data <- tempssm::set_ts_name(
         exo_data,
-        label = paste0("var", seq_len(n_exo))
+        label = paste0("var", seq_len(NCOL(exo_data)))
       )
     }
 
-    .tempssm_cli_debug(
-      "Exogenous variables: {n_exo}"
-    )
+    .tempssm_cli_debug("Exogenous variables: {NCOL(exo_data)}")
+
   } else {
     .tempssm_cli_debug("No exogenous variables provided")
-  }
-
-  ## ---- Utility: slice ts by index ------------------------------------
-  ts_slice <- function(x, i_start, i_end) {
-    if (is.null(x)) {
-      return(NULL)
-    }
-    window(
-      x,
-      start = time(x)[i_start],
-      end   = time(x)[i_end]
-    )
   }
 
   ## ---- Rolling split --------------------------------------------------
@@ -168,6 +149,7 @@ ts_train_test_split <- function(temp_data,
   train_end <- initial
 
   while (TRUE) {
+
     train_start <- if (fixed_window) {
       max(1, train_end - initial + 1)
     } else {
@@ -175,7 +157,7 @@ ts_train_test_split <- function(temp_data,
     }
 
     test_start <- train_end + 1
-    test_end <- train_end + horizon
+    test_end   <- train_end + horizon
 
     if (test_start > n) break
 
@@ -190,18 +172,22 @@ ts_train_test_split <- function(temp_data,
 
     folds[[k]] <- list(
       fold = k,
-      train_ts = ts_slice(temp_data, train_start, train_end),
-      test_ts = ts_slice(temp_data, test_start, test_end),
-      exo_train_ts = ts_slice(exo_data, train_start, train_end),
-      exo_test_ts = ts_slice(exo_data, test_start, test_end),
+      train_ts = .ts_slice(temp_data, train_start, train_end),
+      test_ts  = .ts_slice(temp_data, test_start, test_end),
+
+      exo_train_ts = .ts_slice(exo_data, train_start, train_end),
+      exo_test_ts  = .ts_slice(exo_data, test_start, test_end),
+
       train_idx = c(train_start, train_end),
-      test_idx = c(test_start, test_end),
+      test_idx  = c(test_start, test_end),
+
       train_range = time(temp_data)[c(train_start, train_end)],
-      test_range = time(temp_data)[c(test_start, test_end)]
+      test_range  = time(temp_data)[c(test_start, test_end)]
     )
 
     train_end <- train_end + step
     if (train_end >= n) break
+
     k <- k + 1
   }
 
@@ -211,6 +197,31 @@ ts_train_test_split <- function(temp_data,
   )
 
   return(folds)
+}
+
+
+# internal: slice ts object by index range
+.ts_slice <- function(x, i_start, i_end) {
+
+  if (is.null(x)) {
+    return(NULL)
+  }
+
+  if (!inherits(x, "ts")) {
+    cli::cli_abort("Input must be a {.cls ts} object.")
+  }
+
+  n <- length(x)
+
+  if (i_start < 1 || i_end > n || i_start > i_end) {
+    cli::cli_abort("Invalid slice indices for time series.")
+  }
+
+  stats::window(
+    x,
+    start = stats::time(x)[i_start],
+    end   = stats::time(x)[i_end]
+  )
 }
 
 
@@ -514,7 +525,7 @@ ts_cv_run_fold <- function(fold,
 #' A list of cross-validation results. Each element corresponds to one
 #' fold and contains the output of \code{ts_cv_run_fold()}.
 #'
-#' #' @examples
+#' @examples
 #' \dontrun{
 #' data(yamaguchi_sst)
 #'
@@ -623,7 +634,9 @@ ts_cv_run <- function(
 #' @param y_true Observed values.
 #'
 #' @return Numeric scalar giving MAE.
-#' @export
+#'
+#' @keywords internal
+#' @noRd
 .compute_mae <- function(y_pred, y_true) {
   ## ---- fast exit ------------------------------------------------------
   if (is.null(y_pred) || is.null(y_true)) {
@@ -673,7 +686,8 @@ ts_cv_run <- function(
 #' Another look at measures of forecast accuracy.
 #' International Journal of Forecasting, 22(4), 679–688.
 #'
-#' @export
+#' @keywords internal
+#' @noRd
 .compute_mase <- function(y_pred,
                          y_true,
                          y_train,
@@ -858,23 +872,33 @@ ts_cv_collect <- function(cv_results, metrics) {
 }
 
 
-#' Calculate scale coefficient Q for MASE
+
+#' Compute scale coefficient Q for MASE
 #'
-#' This function computes the scale coefficient \eqn{Q} used in the
-#' Mean Absolute Scaled Error (MASE). The scale is based on in-sample
-#' naive or seasonal naive forecasts.
+#' @description
+#' Compute the scaling coefficient \eqn{Q} used in the Mean Absolute
+#' Scaled Error (MASE). The scaling is based on in-sample naive or
+#' seasonal naive differences of the training time series.
 #'
-#' For the naive method, \eqn{Q} is defined as the mean absolute
-#' first difference:
-#' \deqn{Q = \frac{1}{n-1} \sum_{t=2}^{n} |y_t - y_{t-1}|}
+#' @details
+#' The scale coefficient \eqn{Q} is defined as follows:
 #'
-#' For the seasonal method, \eqn{Q} is defined as the mean absolute
-#' seasonal difference with period \eqn{m = frequency(train_ts)}:
-#' \deqn{Q = \frac{1}{n-m} \sum_{t=m+1}^{n} |y_t - y_{t-m}|}
+#' For the naive method:
+#' \deqn{
+#' Q = \frac{1}{n-1} \sum_{t=2}^{n} |y_t - y_{t-1}|
+#' }
 #'
-#' @param train_ts A \code{ts} object containing the training time series.
+#' For the seasonal method (with period \eqn{m = frequency(train_ts)}):
+#' \deqn{
+#' Q = \frac{1}{n-m} \sum_{t=m+1}^{n} |y_t - y_{t-m}|
+#' }
+#'
+#' This function is primarily intended for internal use within the
+#' \pkg{tempssm} package to support the computation of MASE.
+#'
+#' @param train_ts A univariate time series object of class \code{ts}.
 #' @param method Character string specifying the scaling method.
-#'   Either \code{"naive"} or \code{"seasonal"}.
+#'   Must be either \code{"naive"} or \code{"seasonal"}.
 #'
 #' @return A numeric scalar representing the scale coefficient \eqn{Q}.
 #'
@@ -883,13 +907,8 @@ ts_cv_collect <- function(cv_results, metrics) {
 #' Another look at measures of forecast accuracy.
 #' \emph{International Journal of Forecasting}, 22(4), 679–688.
 #'
-#' @examples
-#' ts_data <- ts(rnorm(120), frequency = 12)
-#' .scale_Q(ts_data, method = "naive")
-#' .scale_Q(ts_data, method = "seasonal")
-#'
-#' @export
 #' @keywords internal
+#' @noRd
 .scale_Q <- function(train_ts, method = c("naive", "seasonal")) {
   method <- match.arg(method)
 
