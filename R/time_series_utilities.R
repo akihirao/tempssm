@@ -924,7 +924,7 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
       ),
       Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
     ) %>%
-    dplyr::select(.data$date, .data$Temp, .data$flag)
+    dplyr::select(date, Temp, flag)
 
   sst_tidy
 }
