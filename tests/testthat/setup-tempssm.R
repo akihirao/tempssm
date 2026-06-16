@@ -40,10 +40,15 @@ res_tempssm_exo <- tempssm(
 
 
 # ---- small ts dataset -----------------------------------
-temp_ts_small <- ts(rnorm(48), frequency = 12)
+temp_ts_small <- ts(rnorm(48),
+  start = c(2000, 1),
+  frequency = 12
+)
 
 exo_ts_small <- ts(
   matrix(rnorm(48), ncol = 1),
+  start = c(2000, 1),
   frequency = 12
 )
-tempssm::set_ts_name(exo_ts_small, label = c("var1"))
+
+exo_ts_small <- tempssm::set_ts_name(exo_ts_small, label = c("var1"))
