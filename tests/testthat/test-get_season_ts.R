@@ -3,7 +3,6 @@
 # ---- basic & CI --------------------------------------------------------
 
 test_that("get_season_ts basic and CI behaviour", {
-
   # basic
   ts_obj <- get_season_ts(res_tempssm)
   check_ts_basic(ts_obj, res_tempssm)
@@ -22,7 +21,6 @@ test_that("get_season_ts basic and CI behaviour", {
 # ---- seasonal-specific logic -------------------------------------------
 
 test_that("get_season_ts requires seasonal model", {
-
   bad_res <- res_tempssm
   bad_res$use_season <- FALSE
 
@@ -36,7 +34,6 @@ test_that("get_season_ts requires seasonal model", {
 # ---- smoothing structure ------------------------------------------------
 
 test_that("get_season_ts validates smoothing components", {
-
   # alphahat NULL
   bad_res1 <- res_tempssm
   bad_res1$kfs$alphahat <- NULL
@@ -61,7 +58,6 @@ test_that("get_season_ts validates smoothing components", {
 # ---- CI structure errors -----------------------------------------------
 
 test_that("get_season_ts validates CI content", {
-
   bad_res <- res_tempssm
 
   testthat::local_mocked_bindings(

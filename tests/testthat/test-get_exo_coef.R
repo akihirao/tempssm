@@ -1,7 +1,6 @@
 # tests/testthat/test-get_exo_coef.R
 
 test_that("get_exo_coef returns data.frame with correct structure", {
-
   if (is.null(res_tempssm_exo$exogenous_data)) skip("no exogenous variables")
 
   df <- get_exo_coef(res_tempssm_exo)
@@ -16,7 +15,6 @@ test_that("get_exo_coef returns data.frame with correct structure", {
 
 
 test_that("get_exo_coef returns numeric columns", {
-
   if (is.null(res_tempssm_exo$exogenous_data)) skip()
 
   df <- get_exo_coef(res_tempssm_exo)
@@ -27,9 +25,7 @@ test_that("get_exo_coef returns numeric columns", {
 })
 
 
-
 test_that("returns NULL when model did not converge", {
-
   bad_res <- res_tempssm_exo
   bad_res$converged <- FALSE
 
@@ -38,7 +34,6 @@ test_that("returns NULL when model did not converge", {
 
 
 test_that("coefficient matches alphahat", {
-
   if (is.null(res_tempssm_exo$exogenous_data)) skip()
 
   df <- get_exo_coef(res_tempssm_exo)
@@ -55,7 +50,6 @@ test_that("coefficient matches alphahat", {
 
 
 test_that("get_exo_coef checks inputs", {
-
   expect_error(
     get_exo_coef(NULL),
     "`res` must be an object of class"
@@ -66,4 +60,3 @@ test_that("get_exo_coef checks inputs", {
     "`ci_level` must be a numeric value between 0 and 1"
   )
 })
-

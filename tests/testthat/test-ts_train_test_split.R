@@ -1,7 +1,6 @@
 # tests/testthat/test-ts_slice.R
 
 test_that("ts_train_test_split returns list of folds", {
-
   folds <- ts_train_test_split(temp_ts_test)
 
   expect_type(folds, "list")
@@ -12,7 +11,6 @@ test_that("ts_train_test_split returns list of folds", {
 
 
 test_that("number of folds matches expected", {
-
   n <- length(temp_ts_test)
   initial <- 60
   horizon <- 12
@@ -32,23 +30,23 @@ test_that("number of folds matches expected", {
 
 
 test_that("each fold has required elements", {
-
   folds <- ts_train_test_split(temp_ts_test)
 
   f1 <- folds[[1]]
 
   expect_named(
     f1,
-    c("fold","train_ts","test_ts",
-      "exo_train_ts","exo_test_ts",
-      "train_idx","test_idx",
-      "train_range","test_range")
+    c(
+      "fold", "train_ts", "test_ts",
+      "exo_train_ts", "exo_test_ts",
+      "train_idx", "test_idx",
+      "train_range", "test_range"
+    )
   )
 })
 
 
 test_that("train and test indices are consistent", {
-
   folds <- ts_train_test_split(temp_ts_test)
 
   f1 <- folds[[1]]
@@ -64,7 +62,6 @@ test_that("train and test indices are consistent", {
 
 
 test_that("train and test lengths match indices", {
-
   folds <- ts_train_test_split(temp_ts_test)
 
   f <- folds[[1]]
@@ -82,17 +79,18 @@ test_that("train and test lengths match indices", {
 
 
 test_that("fixed vs expanding window works correctly", {
-
   f_exp <- ts_train_test_split(temp_ts_test,
-                               fixed_window = FALSE)
+    fixed_window = FALSE
+  )
 
   f_fix <- ts_train_test_split(temp_ts_test,
-                               fixed_window = TRUE)
+    fixed_window = TRUE
+  )
 
   # expanding → 長くなる
   expect_true(
     length(f_exp[[2]]$train_ts) >
-    length(f_exp[[1]]$train_ts)
+      length(f_exp[[1]]$train_ts)
   )
 
   # fixed → 一定
@@ -104,7 +102,6 @@ test_that("fixed vs expanding window works correctly", {
 
 
 test_that("allow_partial changes final fold", {
-
   f1 <- ts_train_test_split(
     temp_ts_test,
     allow_partial = FALSE
@@ -120,7 +117,6 @@ test_that("allow_partial changes final fold", {
 
 
 test_that("works with exogenous variables", {
-
   folds <- ts_train_test_split(
     temp_ts_test,
     exo_data = exo_ts_test
@@ -138,9 +134,7 @@ test_that("works with exogenous variables", {
 })
 
 
-
 test_that("exo_data is NULL when not provided", {
-
   folds <- ts_train_test_split(temp_ts_test)
 
   expect_null(folds[[1]]$exo_train_ts)

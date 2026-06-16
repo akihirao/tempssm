@@ -53,7 +53,6 @@ test_that("CI output preserves time attributes", {
 
 
 test_that("errors when level component is missing", {
-
   bad_res <- res_tempssm
   bad_res$kfs$alphahat <- NULL
 
@@ -65,10 +64,9 @@ test_that("errors when level component is missing", {
 
 
 test_that("errors when level column is missing in alphahat", {
-
   bad_res <- res_tempssm
   bad_res$kfs$alphahat <- matrix(rnorm(10), ncol = 1)
-  colnames(bad_res$kfs$alphahat) <- "trend"  # no existence of "level"
+  colnames(bad_res$kfs$alphahat) <- "trend" # no existence of "level"
   expect_error(
     get_level_ts(bad_res),
     "Level component not found"
@@ -76,9 +74,7 @@ test_that("errors when level column is missing in alphahat", {
 })
 
 
-
 test_that("errors when level missing in confidence intervals", {
-
   bad_res <- res_tempssm
 
   original_confint <- stats::confint
@@ -113,4 +109,3 @@ test_that("ci_level boundary values", {
   expect_error(get_level_ts(res_tempssm, ci = TRUE, ci_level = 0))
   expect_error(get_level_ts(res_tempssm, ci = TRUE, ci_level = 1))
 })
-

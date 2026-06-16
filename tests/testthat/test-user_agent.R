@@ -1,7 +1,6 @@
 # tests/testthat/test-user_agent.R
 
 test_that(".user_agent returns default value when option not set", {
-
   withr::local_options(list(tempssm.user_agent = NULL))
 
   ua <- tempssm:::.user_agent()
@@ -14,9 +13,7 @@ test_that(".user_agent returns default value when option not set", {
 })
 
 
-
 test_that("default user agent contains package version", {
-
   withr::local_options(list(tempssm.user_agent = NULL))
 
   ua <- tempssm:::.user_agent()

@@ -69,7 +69,6 @@
 }
 
 
-
 #' Log-likelihood method for tempssm objects (S3 method)
 #'
 #' @param object
@@ -103,8 +102,8 @@
 #' ll
 #'
 #' # access attributes
-#' attr(ll, "df")    # number of parameters
-#' attr(ll, "nobs")  # number of observations
+#' attr(ll, "df") # number of parameters
+#' attr(ll, "nobs") # number of observations
 #' }
 #'
 #' @export

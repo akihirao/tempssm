@@ -1,7 +1,6 @@
 # tests/testthat/test-ts_CV_pipeline.R
 
 test_that("lightweight CV pipeline works", {
-
   folds <- ts_train_test_split(
     temp_data = temp_ts_small,
     initial = 24,

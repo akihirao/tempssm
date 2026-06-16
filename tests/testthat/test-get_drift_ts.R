@@ -33,7 +33,6 @@ test_that("get_drift_ts preserves time attributes", {
 
 
 test_that("CI is scaled by frequency", {
-
   freq <- frequency(res_tempssm$temp_data)
 
   ts_ci <- get_drift_ts(res_tempssm, ci = TRUE)
@@ -61,7 +60,6 @@ test_that("CI output has correct structure", {
 
 
 test_that("errors when slope is missing in alphahat", {
-
   bad_res <- res_tempssm
   bad_res$kfs$alphahat <- matrix(rnorm(10), ncol = 1)
   colnames(bad_res$kfs$alphahat) <- "level"
@@ -73,9 +71,7 @@ test_that("errors when slope is missing in alphahat", {
 })
 
 
-
 test_that("errors when smoothing results are missing", {
-
   bad_res <- res_tempssm
   bad_res$kfs$alphahat <- NULL
 
@@ -86,9 +82,7 @@ test_that("errors when smoothing results are missing", {
 })
 
 
-
 test_that("errors when slope missing in confidence intervals", {
-
   bad_res <- res_tempssm
 
   testthat::local_mocked_bindings(
@@ -103,7 +97,6 @@ test_that("errors when slope missing in confidence intervals", {
 })
 
 
-
 test_that("ci = FALSE returns univariate ts", {
   ts_obj <- get_drift_ts(res_tempssm, ci = FALSE)
 
@@ -115,5 +108,3 @@ test_that("ci_level boundary values", {
   expect_error(get_drift_ts(res_tempssm, ci = TRUE, ci_level = 0))
   expect_error(get_drift_ts(res_tempssm, ci = TRUE, ci_level = 1))
 })
-
-

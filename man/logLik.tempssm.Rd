@@ -33,8 +33,8 @@ ll <- logLik(res)
 ll
 
 # access attributes
-attr(ll, "df")    # number of parameters
-attr(ll, "nobs")  # number of observations
+attr(ll, "df") # number of parameters
+attr(ll, "nobs") # number of observations
 }
 
 }

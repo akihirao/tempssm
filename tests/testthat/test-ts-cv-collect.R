@@ -1,7 +1,6 @@
 # tests/testthat/test-ts-cv-collect.R
 
 test_that("ts_cv_collect returns a tibble", {
-
   cv_results <- list(
     list(fold = 1, converged = TRUE),
     list(fold = 2, converged = FALSE)
@@ -20,7 +19,6 @@ test_that("ts_cv_collect returns a tibble", {
 
 
 test_that("ts_cv_collect returns correct column names", {
-
   cv_results <- list(
     list(fold = 1, converged = TRUE)
   )
@@ -39,7 +37,6 @@ test_that("ts_cv_collect returns correct column names", {
 
 
 test_that("values are correctly extracted", {
-
   cv_results <- list(
     list(fold = 1, converged = TRUE),
     list(fold = 2, converged = FALSE)
@@ -53,13 +50,12 @@ test_that("values are correctly extracted", {
   res <- ts_cv_collect(cv_results, metrics)
 
   expect_equal(res$fold, c(1, 2))
-  expect_equal(res$converged, c(1, 0))  # as.numeric(TRUE/FALSE)
+  expect_equal(res$converged, c(1, 0)) # as.numeric(TRUE/FALSE)
   expect_equal(res$MAE, c(10, 20))
 })
 
 
 test_that("outputs are numeric", {
-
   cv_results <- list(
     list(fold = 1, converged = TRUE)
   )
@@ -76,7 +72,6 @@ test_that("outputs are numeric", {
 
 
 test_that("errors when inputs are not lists", {
-
   expect_error(
     ts_cv_collect(1, list()),
     "must both be lists"
@@ -90,8 +85,7 @@ test_that("errors when inputs are not lists", {
 
 
 test_that("errors when lengths differ", {
-
-  cv_results <- list(list(fold=1, converged=TRUE))
+  cv_results <- list(list(fold = 1, converged = TRUE))
   metrics <- list()
 
   expect_error(
@@ -102,7 +96,6 @@ test_that("errors when lengths differ", {
 
 
 test_that("handles NA values", {
-
   cv_results <- list(
     list(fold = 1, converged = TRUE)
   )
@@ -115,4 +108,3 @@ test_that("handles NA values", {
 
   expect_true(is.na(res$MAE))
 })
-

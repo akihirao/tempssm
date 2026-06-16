@@ -1162,4 +1162,3 @@ get_jma_sst_ts <- function(sea_area_id,
 
   return(monthly_sst_ts)
 }
-

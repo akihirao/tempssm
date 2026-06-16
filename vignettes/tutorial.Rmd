@@ -142,8 +142,10 @@ and missing observations.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 plt_niigata_sst <- forecast::autoplot(niigata_sst) +
-  ggplot2::labs(y = expression(Temperature~(degree*C)), 
-       x = "Time") +
+  ggplot2::labs(
+    y = expression(Temperature ~ (degree * C)),
+    x = "Time"
+  ) +
   ggplot2::ggtitle("Monthly SST off Niigata, Japan") +
   ggplot2::theme_classic()
 
@@ -186,7 +188,7 @@ plt_drift <- forecast::autoplot(res, component = c("drift"))
 plt_season <- forecast::autoplot(res, component = c("season"))
 plt_ar1 <- forecast::autoplot(res, component = c("ar1"))
 
-plt_level + plt_drift + plt_season + plt_ar1 + patchwork::plot_layout(ncol=2, nrow=2)
+plt_level + plt_drift + plt_season + plt_ar1 + patchwork::plot_layout(ncol = 2, nrow = 2)
 ```
 
 The level component shows a persistent upward trend in sea surface
@@ -218,14 +220,14 @@ Autocorrelation of residuals was not significant by Ljung-Box test (P > 0.05).
 alpha_hat <- res$kfs$alphahat
 head(alpha_hat)
 
-#　Smoothing estimate of level component
+# 　Smoothing estimate of level component
 level_ts <- get_level_ts(res)
 
-#　Smoothing estimate of drift component
+# 　Smoothing estimate of drift component
 drift_ts <- get_drift_ts(res)
 
 # Average drift rate per year across the full period
-mean_drift_year <- mean(drift_ts) 
+mean_drift_year <- mean(drift_ts)
 print(mean_drift_year)
 ```
  

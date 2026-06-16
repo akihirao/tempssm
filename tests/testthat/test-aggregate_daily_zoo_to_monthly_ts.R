@@ -12,7 +12,7 @@ test_that("aggregate_daily_zoo_to_monthly_ts works for valid input", {
 
   expect_s3_class(res, "ts")
   expect_equal(frequency(res), 12)
-  expect_true(length(res) >= 2)  # 2 months
+  expect_true(length(res) >= 2) # 2 months
   expect_equal(colnames(res), "Temp")
 })
 
@@ -72,7 +72,6 @@ test_that("errors when index is not Date/POSIXt", {
 })
 
 
-
 test_that("na.rm works correctly in aggregation", {
   dates <- seq.Date(as.Date("2001-01-01"), by = "day", length.out = 30)
 
@@ -86,11 +85,10 @@ test_that("na.rm works correctly in aggregation", {
 })
 
 
-
 test_that("warns when many NA in aggregated result", {
   dates <- seq.Date(as.Date("2001-01-01"), by = "day", length.out = 60)
 
-  vals <- c(rep(NA, 40), rnorm(20))  # 66% NA
+  vals <- c(rep(NA, 40), rnorm(20)) # 66% NA
 
   zoo_obj <- zoo::zoo(data.frame(Temp = vals), order.by = dates)
 
@@ -99,13 +97,3 @@ test_that("warns when many NA in aggregated result", {
     "More than 30%"
   )
 })
-
-
-
-
-
-
-
-
-
-

@@ -24,14 +24,12 @@ test_that("read_monthly_temp_ts works for valid CSV", {
 
 
 test_that("errors when csv is not character scalar", {
-
   expect_error(read_monthly_temp_ts(123))
-  expect_error(read_monthly_temp_ts(c("a","b")))
+  expect_error(read_monthly_temp_ts(c("a", "b")))
 })
 
 
 test_that("errors when file does not exist", {
-
   expect_error(
     read_monthly_temp_ts("nonexistent_file.csv"),
     "File does not exist"
@@ -73,7 +71,6 @@ test_that("errors when CSV has no rows", {
 })
 
 
-
 test_that("warns when month values are invalid", {
   tmp <- tempfile(fileext = ".csv")
 
@@ -91,8 +88,3 @@ test_that("warns when month values are invalid", {
     "invalid month"
   )
 })
-
-
-
-
-

@@ -139,6 +139,3 @@ test_that("existing column names are overwritten", {
 
   expect_equal(colnames(ts_named), c("new1", "new2"))
 })
-
-
-

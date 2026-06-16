@@ -81,7 +81,6 @@ ts_train_test_split <- function(temp_data,
                                 step = 12,
                                 fixed_window = FALSE,
                                 allow_partial = FALSE) {
-
   ## ---- Start message --------------------------------------------------
   .tempssm_cli_inform(
     "Creating rolling train/test data (initial={initial}, horizon={horizon}, step={step})"
@@ -116,7 +115,6 @@ ts_train_test_split <- function(temp_data,
 
   ## ---- Exogenous checks ----------------------------------------------
   if (!is.null(exo_data)) {
-
     if (!inherits(exo_data, "ts")) {
       cli::cli_abort("`exo_data` must be a {.cls ts} object.")
     }
@@ -138,7 +136,6 @@ ts_train_test_split <- function(temp_data,
     }
 
     .tempssm_cli_debug("Exogenous variables: {NCOL(exo_data)}")
-
   } else {
     .tempssm_cli_debug("No exogenous variables provided")
   }
@@ -149,7 +146,6 @@ ts_train_test_split <- function(temp_data,
   train_end <- initial
 
   while (TRUE) {
-
     train_start <- if (fixed_window) {
       max(1, train_end - initial + 1)
     } else {
@@ -157,7 +153,7 @@ ts_train_test_split <- function(temp_data,
     }
 
     test_start <- train_end + 1
-    test_end   <- train_end + horizon
+    test_end <- train_end + horizon
 
     if (test_start > n) break
 
@@ -173,16 +169,13 @@ ts_train_test_split <- function(temp_data,
     folds[[k]] <- list(
       fold = k,
       train_ts = .ts_slice(temp_data, train_start, train_end),
-      test_ts  = .ts_slice(temp_data, test_start, test_end),
-
+      test_ts = .ts_slice(temp_data, test_start, test_end),
       exo_train_ts = .ts_slice(exo_data, train_start, train_end),
-      exo_test_ts  = .ts_slice(exo_data, test_start, test_end),
-
+      exo_test_ts = .ts_slice(exo_data, test_start, test_end),
       train_idx = c(train_start, train_end),
-      test_idx  = c(test_start, test_end),
-
+      test_idx = c(test_start, test_end),
       train_range = time(temp_data)[c(train_start, train_end)],
-      test_range  = time(temp_data)[c(test_start, test_end)]
+      test_range = time(temp_data)[c(test_start, test_end)]
     )
 
     train_end <- train_end + step
@@ -202,7 +195,6 @@ ts_train_test_split <- function(temp_data,
 
 # internal: slice ts object by index range
 .ts_slice <- function(x, i_start, i_end) {
-
   if (is.null(x)) {
     return(NULL)
   }
@@ -596,7 +588,6 @@ ts_cv_run <- function(
   ## ---- execution ------------------------------------------------------
 
   if (progress && requireNamespace("progressr", quietly = TRUE)) {
-
     res <- progressr::with_progress({
       p <- progressr::progressor(along = folds)
 
@@ -610,9 +601,7 @@ ts_cv_run <- function(
         future.seed = TRUE
       )
     })
-
   } else {
-
     if (progress) {
       cli::cli_warn(
         "progressr not installed; running without progress bar"
@@ -699,9 +688,9 @@ ts_cv_run <- function(
 #' @keywords internal
 #' @noRd
 .compute_mase <- function(y_pred,
-                         y_true,
-                         y_train,
-                         method = c("naive", "seasonal")) {
+                          y_true,
+                          y_train,
+                          method = c("naive", "seasonal")) {
   method <- match.arg(method)
 
   ## ---- fast exit ------------------------------------------------------
@@ -880,7 +869,6 @@ ts_cv_collect <- function(cv_results, metrics) {
 
   return(out)
 }
-
 
 
 #' Compute scale coefficient Q for MASE

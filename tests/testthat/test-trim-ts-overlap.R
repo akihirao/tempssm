@@ -3,8 +3,9 @@
 test_that("trim_ts_overlap works for valid input", {
   set.seed(123)
 
-  exo_ts  <- ts(matrix(rnorm(120), ncol = 1),
-                start = c(2000, 1), frequency = 12)
+  exo_ts <- ts(matrix(rnorm(120), ncol = 1),
+    start = c(2000, 1), frequency = 12
+  )
 
   res <- trim_ts_overlap(
     temp_ts_test,
@@ -23,7 +24,7 @@ test_that("trim_ts_overlap works for valid input", {
 
 test_that("trim_ts_overlap trims to overlapping period", {
   # length(temp_ts_test): 120
-  exo_ts  <- ts(rnorm(50),  start = c(2000, 1), frequency = 12)
+  exo_ts <- ts(rnorm(50), start = c(2000, 1), frequency = 12)
 
   res <- trim_ts_overlap(temp_ts_test, exo_ts, exo_name = c("x1"))
 
@@ -32,8 +33,9 @@ test_that("trim_ts_overlap trims to overlapping period", {
 
 
 test_that("trim_ts_overlap assigns default exo names with warning", {
-  exo_ts  <- ts(matrix(rnorm(120), ncol = 1),
-                start = c(2000, 1), frequency = 12)
+  exo_ts <- ts(matrix(rnorm(120), ncol = 1),
+    start = c(2000, 1), frequency = 12
+  )
 
   expect_warning(
     res <- trim_ts_overlap(temp_ts_test, exo_ts)
@@ -44,8 +46,9 @@ test_that("trim_ts_overlap assigns default exo names with warning", {
 
 
 test_that("trim_ts_overlap errors on incorrect exo_name length", {
-  exo_ts  <- ts(matrix(rnorm(200), ncol = 2),
-                start = c(2000, 1), frequency = 12)
+  exo_ts <- ts(matrix(rnorm(200), ncol = 2),
+    start = c(2000, 1), frequency = 12
+  )
 
   expect_error(
     trim_ts_overlap(temp_ts_test, exo_ts, exo_name = "x1")
@@ -53,10 +56,10 @@ test_that("trim_ts_overlap errors on incorrect exo_name length", {
 })
 
 
-
 test_that("trim_ts_overlap handles multivariate exogenous series", {
-  exo_ts  <- ts(matrix(rnorm(300), ncol = 3),
-                start = c(2000, 1), frequency = 12)
+  exo_ts <- ts(matrix(rnorm(300), ncol = 3),
+    start = c(2000, 1), frequency = 12
+  )
 
   res <- trim_ts_overlap(
     temp_ts_test,
@@ -85,9 +88,8 @@ test_that("errors when exo_ts is not ts", {
 })
 
 
-
 test_that("temp_name is correctly assigned", {
-  exo_ts <- ts(rnorm(120), start = c(2000,1), frequency=12)
+  exo_ts <- ts(rnorm(120), start = c(2000, 1), frequency = 12)
 
   res <- trim_ts_overlap(
     temp_ts_test,
@@ -101,18 +103,18 @@ test_that("temp_name is correctly assigned", {
 
 
 test_that("overlap period is correctly computed", {
-  temp_ts <- ts(rnorm(120), start = c(2000,1), frequency=12)
-  exo_ts  <- ts(rnorm(60),  start = c(2005,1), frequency=12)
+  temp_ts <- ts(rnorm(120), start = c(2000, 1), frequency = 12)
+  exo_ts <- ts(rnorm(60), start = c(2005, 1), frequency = 12)
 
   res <- trim_ts_overlap(temp_ts, exo_ts, exo_name = "x")
 
-  expect_equal(start(res$temperature), c(2005,1))
+  expect_equal(start(res$temperature), c(2005, 1))
   expect_equal(end(res$temperature), end(exo_ts))
 })
 
 
 test_that("single exogenous variable uses set_ts_name", {
-  exo_ts <- ts(rnorm(120), start = c(2000,1), frequency=12)
+  exo_ts <- ts(rnorm(120), start = c(2000, 1), frequency = 12)
 
   res <- trim_ts_overlap(
     temp_ts_test,
@@ -125,8 +127,9 @@ test_that("single exogenous variable uses set_ts_name", {
 
 
 test_that("multivariate exogenous uses direct colnames assignment", {
-  exo_ts <- ts(matrix(rnorm(240), ncol=2),
-               start = c(2000,1), frequency=12)
+  exo_ts <- ts(matrix(rnorm(240), ncol = 2),
+    start = c(2000, 1), frequency = 12
+  )
 
   res <- trim_ts_overlap(
     temp_ts_test,
@@ -134,5 +137,5 @@ test_that("multivariate exogenous uses direct colnames assignment", {
     exo_name = c("a", "b")
   )
 
-  expect_equal(colnames(res$exogenous), c("a","b"))
+  expect_equal(colnames(res$exogenous), c("a", "b"))
 })

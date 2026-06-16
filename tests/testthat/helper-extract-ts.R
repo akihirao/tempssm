@@ -31,8 +31,10 @@ check_ts_ci_values <- function(ts_ci, ci_obj, key, scale = 1) {
 # ---- error helper ------------------------------------------------------
 
 check_invalid_input <- function(fun, res) {
-  testthat::expect_error(fun("not a model"),
-                        "`res` must be an object of class")
+  testthat::expect_error(
+    fun("not a model"),
+    "`res` must be an object of class"
+  )
 
   testthat::expect_error(
     fun(res, ci = TRUE, ci_level = 1.2),

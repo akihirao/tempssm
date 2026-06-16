@@ -6,8 +6,8 @@ set.seed(123)
 
 temp_ts_test <- ts(
   10 +
-    seq(0, 1, length.out = 120) +  # weak trend
-    rep(rnorm(12, 0, 0.5), 10) +  # seasonal cycle
+    seq(0, 1, length.out = 120) + # weak trend
+    rep(rnorm(12, 0, 0.5), 10) + # seasonal cycle
     rnorm(120, 0, 0.3),
   start = c(2000, 1),
   frequency = 12
@@ -29,7 +29,7 @@ exo_ts_test <- ts(
 )
 
 
-tempssm::set_ts_name(exo_ts_test, label=c("var1"))
+tempssm::set_ts_name(exo_ts_test, label = c("var1"))
 
 # ---- model with exogenous variables -----------------------------------
 
@@ -39,12 +39,11 @@ res_tempssm_exo <- tempssm(
 )
 
 
-
 # ---- small ts dataset -----------------------------------
 temp_ts_small <- ts(rnorm(48), frequency = 12)
 
 exo_ts_small <- ts(
-    matrix(rnorm(48), ncol = 1),
-    frequency = 12
-  )
-tempssm::set_ts_name(exo_ts_small, label=c("var1"))
+  matrix(rnorm(48), ncol = 1),
+  frequency = 12
+)
+tempssm::set_ts_name(exo_ts_small, label = c("var1"))

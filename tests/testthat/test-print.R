@@ -1,7 +1,6 @@
 # test-print.R
 
 test_that("print.tempssm basic output structure", {
-
   output <- capture.output(print(res_tempssm))
 
   expect_true(any(grepl("tempssm model fit", output)))
@@ -12,7 +11,6 @@ test_that("print.tempssm basic output structure", {
 
 
 test_that("print.tempssm displays correct time series info", {
-
   output <- capture.output(print(res_tempssm))
 
   expect_true(any(grepl(paste(length(res_tempssm$temp_data)), output)))
@@ -21,8 +19,7 @@ test_that("print.tempssm displays correct time series info", {
 
 
 test_that("print.tempssm handles exogenous data correctly", {
-
-  res <- res_tempssm_exo  # setupで用意
+  res <- res_tempssm_exo # setupで用意
 
   output <- capture.output(print(res))
 
@@ -32,7 +29,6 @@ test_that("print.tempssm handles exogenous data correctly", {
 
 
 test_that("print.tempssm shows NULL exogenous correctly", {
-
   res <- res_tempssm
   res$exogenous_data <- NULL
 
@@ -43,7 +39,6 @@ test_that("print.tempssm shows NULL exogenous correctly", {
 
 
 test_that("print.tempssm reflects convergence status", {
-
   res <- res_tempssm
   res$fit$optim.out$convergence <- 1
 
@@ -54,7 +49,6 @@ test_that("print.tempssm reflects convergence status", {
 
 
 test_that("print.tempssm prints logLik as numeric", {
-
   output <- capture.output(print(res_tempssm))
 
   expect_true(any(grepl("LogLik", output)))
@@ -65,7 +59,6 @@ test_that("print.tempssm prints logLik as numeric", {
 
 
 test_that("print.tempssm does not modify object", {
-
   res_copy <- res_tempssm
 
   print(res_copy)
@@ -75,7 +68,6 @@ test_that("print.tempssm does not modify object", {
 
 
 test_that("print.tempssm returns invisibly", {
-
   expect_invisible(out <- print(res_tempssm))
   expect_identical(out, res_tempssm)
 })

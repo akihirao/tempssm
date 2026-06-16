@@ -1,7 +1,6 @@
 # tests/testthat/test-split_multi_ts.R
 
 test_that("split_multi_ts splits multivariate ts correctly", {
-
   set.seed(123)
 
   multi_ts <- ts(
@@ -23,7 +22,6 @@ test_that("split_multi_ts splits multivariate ts correctly", {
 
 
 test_that("each split series is univariate ts", {
-
   multi_ts <- ts(
     matrix(rnorm(300), ncol = 3),
     start = c(2000, 1),
@@ -38,7 +36,6 @@ test_that("each split series is univariate ts", {
 
 
 test_that("split_multi_ts errors for non-ts input", {
-
   expect_error(split_multi_ts(NULL))
   expect_error(split_multi_ts("not ts"))
   expect_error(split_multi_ts(1:10))
@@ -46,7 +43,6 @@ test_that("split_multi_ts errors for non-ts input", {
 
 
 test_that("split_multi_ts errors for univariate ts", {
-
   x <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
 
   expect_error(split_multi_ts(x))
@@ -54,7 +50,6 @@ test_that("split_multi_ts errors for univariate ts", {
 
 
 test_that("split_multi_ts preserves variable names", {
-
   multi_ts <- ts(
     matrix(rnorm(200), ncol = 2),
     start = c(2000, 1),
@@ -68,9 +63,7 @@ test_that("split_multi_ts preserves variable names", {
 })
 
 
-
 test_that("each split series preserves time attributes", {
-
   multi_ts <- ts(
     matrix(rnorm(120), ncol = 2),
     start = c(1995, 1),
@@ -86,7 +79,6 @@ test_that("each split series preserves time attributes", {
 
 
 test_that("each split ts has correct column name", {
-
   multi_ts <- ts(
     matrix(rnorm(120), ncol = 2),
     frequency = 12
@@ -101,7 +93,6 @@ test_that("each split ts has correct column name", {
 
 
 test_that("all elements are ts of length matching original", {
-
   multi_ts <- ts(
     matrix(rnorm(240), ncol = 3),
     frequency = 12
@@ -115,7 +106,6 @@ test_that("all elements are ts of length matching original", {
 
 
 test_that("order of variables is preserved", {
-
   multi_ts <- ts(
     matrix(rnorm(120), ncol = 3),
     frequency = 12
@@ -129,7 +119,6 @@ test_that("order of variables is preserved", {
 
 
 test_that("handles more than 2 variables", {
-
   multi_ts <- ts(
     matrix(rnorm(300), ncol = 5),
     frequency = 12
