@@ -595,7 +595,8 @@ tempssm <- function(temp_data,
 #' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
 #'   The series may have any arbitrary frequency of 2 or higher,
 #'   but it must be the same as that of \code{temp_data}.
-#'   The default is \code{NULL} when fitting a model without exogenous variables.
+#'   The default is \code{NULL} when fitting a model without exogenous 
+#'   variables.
 #'
 #' @return A univariate or multivairate \code{ts} object.
 #'

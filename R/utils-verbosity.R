@@ -27,6 +27,7 @@
 }
 
 #' @keywords internal
+#' @noRd
 .tempssm_cli_debug <- function(..., .envir = parent.frame()) {
   if (.get_verbosity() == "debug") {
     cli::cli_inform(..., .envir = .envir)

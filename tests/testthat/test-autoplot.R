@@ -8,7 +8,6 @@ test_that("autoplot.tempssm works for all components", {
 
 
 test_that("autoplot works for each component", {
-
   components <- c("level", "drift", "season", "ar1")
 
   for (comp in components) {
@@ -19,7 +18,6 @@ test_that("autoplot works for each component", {
 
 
 test_that("invalid component throws error", {
-
   expect_error(
     autoplot(res_tempssm, component = "invalid"),
     "must be one of"
@@ -28,7 +26,6 @@ test_that("invalid component throws error", {
 
 
 test_that("component must be single character", {
-
   expect_error(
     autoplot(res_tempssm, component = 1),
     "must be a single character"
@@ -42,7 +39,6 @@ test_that("component must be single character", {
 
 
 test_that("ci argument is passed correctly", {
-
   called_ci <- NULL
 
   mockery::stub(
@@ -61,7 +57,6 @@ test_that("ci argument is passed correctly", {
 
 
 test_that("ci_level is passed correctly", {
-
   called_level <- NULL
 
   mockery::stub(
@@ -79,9 +74,7 @@ test_that("ci_level is passed correctly", {
 })
 
 
-
 test_that("additional arguments are passed", {
-
   called_args <- NULL
 
   mockery::stub(
@@ -97,5 +90,3 @@ test_that("additional arguments are passed", {
 
   expect_true("some_arg" %in% names(called_args))
 })
-
-

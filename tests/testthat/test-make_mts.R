@@ -48,6 +48,6 @@ test_that(".make_mts handles NA values", {
 
   res <- .make_mts(y)
 
-  expect_true(any(is.na(res)))
+  expect_true(anyNA(res))
   expect_equal(as.numeric(res), as.numeric(y))
 })

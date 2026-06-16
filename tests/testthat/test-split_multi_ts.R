@@ -59,7 +59,7 @@ test_that("split_multi_ts preserves variable names", {
 
   res <- split_multi_ts(multi_ts)
 
-  expect_equal(names(res), c("temp", "rain"))
+  expect_named(res, c("temp", "rain"))
 })
 
 
@@ -114,7 +114,7 @@ test_that("order of variables is preserved", {
 
   res <- split_multi_ts(multi_ts)
 
-  expect_identical(names(res), c("z", "x", "y"))
+  expect_named(res, c("z", "x", "y"))
 })
 
 

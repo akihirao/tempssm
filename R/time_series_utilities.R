@@ -21,8 +21,8 @@
 #'
 #' @details
 #' This function does not modify the time attributes of the input series
-#' (e.g., start time, frequency). It only assigns variable names while preserving
-#' the internal structure required by downstream functions such as
+#' (e.g., start time, frequency). It only assigns variable names while 
+#' preserving the internal structure required by downstream functions such as
 #' \code{tempssm()}.
 #'
 #' @return
@@ -114,8 +114,10 @@ set_ts_name <- function(ts_in, label) {
 #' Trim and align temperature and exogenous time series over their shared period
 #'
 #' @description
-#' `trim_ts_overlap()` aligns a temperature time series and one or more exogenous
-#' time series by trimming them to their shared (overlapping) time period.
+#' `trim_ts_overlap()` aligns a temperature time series and one or more 
+#' exogenous time series by trimming them to their shared (overlapping) time 
+#' period.
+#' 
 #' The function returns the trimmed series as a named list of `ts` objects,
 #' with consistent variable labels applied for downstream modeling in
 #' \code{tempssm()}.
@@ -906,7 +908,7 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
     cli::cli_abort("Retrieved data has unexpected or empty format.")
   }
 
-  ## remove last row (END or footer)
+  ## remove last row
   sst_tidy <- sst_raw %>%
     dplyr::slice(-dplyr::n())
 
@@ -924,7 +926,7 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
       ),
       Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
     ) %>%
-    dplyr::select(date, Temp, flag)
+    dplyr::select(dplyr::all_of(c("date", "Temp", "flag")))
 
   sst_tidy
 }

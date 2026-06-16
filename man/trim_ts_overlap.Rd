@@ -27,8 +27,10 @@ A named list with the following elements:
 }
 }
 \description{
-`trim_ts_overlap()` aligns a temperature time series and one or more exogenous
-time series by trimming them to their shared (overlapping) time period.
+`trim_ts_overlap()` aligns a temperature time series and one or more 
+exogenous time series by trimming them to their shared (overlapping) time 
+period.
+
 The function returns the trimmed series as a named list of `ts` objects,
 with consistent variable labels applied for downstream modeling in
 \code{tempssm()}.

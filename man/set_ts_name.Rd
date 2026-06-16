@@ -29,8 +29,8 @@ assigned directly.
 }
 \details{
 This function does not modify the time attributes of the input series
-(e.g., start time, frequency). It only assigns variable names while preserving
-the internal structure required by downstream functions such as
+(e.g., start time, frequency). It only assigns variable names while 
+preserving the internal structure required by downstream functions such as
 \code{tempssm()}.
 }
 \examples{
