@@ -1,3 +1,386 @@
+#' Convert univariate ts to matrix-style ts (mts)
+#'
+#' Internal helper to convert a univariate \code{ts} object into a
+#' matrix-valued \code{ts} (mts) with a single column named "Temp".
+#' This format is required for consistency with \code{tempssm()}.
+#'
+#' @param y A univariate time series of class \code{ts}.
+#'
+#' @return A matrix-valued \code{ts} object with one column named "Temp".
+#'
+#' @keywords internal
+#' @noRd
+.make_mts <- function(y) {
+  mts <- ts(
+    as.matrix(y),
+    start = start(y),
+    frequency = frequency(y)
+  )
+  colnames(mts) <- "Temp"
+  mts
+}
+
+
+#' Safely fit tempssm model with error handling
+#'
+#' Internal helper function to fit a \code{tempssm} model while
+#' gracefully handling errors. If model fitting fails, a warning
+#' is issued and \code{NULL} is returned.
+#'
+#' @param y_train A matrix-valued \code{ts} object used for training.
+#' @param exo_train Optional \code{ts} object of exogenous variables.
+#' @param ar_order Integer; autoregressive order.
+#' @param use_season Logical; whether to include a seasonal component.
+#' @param fold_id Identifier for the current cross-validation fold.
+#'
+#' @return A \code{tempssm} object if successful, otherwise \code{NULL}.
+#'
+#' @keywords internal
+#' @noRd
+.fit_tempssm_safe <- function(y_train,
+                              exo_train,
+                              ar_order,
+                              use_season,
+                              fold_id) {
+  tryCatch(
+    tempssm(
+      temp_data = y_train,
+      exo_data = exo_train,
+      ar_order = ar_order,
+      use_season = use_season
+    ),
+    error = function(e) {
+      cli::cli_warn(
+        "Model fitting failed in fold {fold_id}: {conditionMessage(e)}"
+      )
+      NULL
+    }
+  )
+}
+
+
+#' Handle non-converged tempssm results in CV fold
+#'
+#' Internal helper to check convergence of a fitted \code{tempssm} model
+#' within a cross-validation fold. If the model did not converge or fitting
+#' failed, a warning is issued and a standardized result list is returned.
+#'
+#' @param res A \code{tempssm} object or \code{NULL}.
+#' @param fold A fold object containing at least \code{fold}.
+#' @param y_train Training time series.
+#' @param y_test Test time series.
+#'
+#' @return If non-converged, a list with \code{converged = FALSE}.
+#'   Otherwise, \code{NULL}.
+#'
+#' @keywords internal
+#' @noRd
+.handle_non_convergence <- function(res, fold, y_train, y_test) {
+  if (is.null(res) || !isTRUE(res$converged)) {
+    cli::cli_warn("Model did not converge for fold {fold$fold}")
+
+    return(list(
+      fold      = fold$fold,
+      converged = FALSE,
+      y_train   = y_train,
+      y_test    = y_test,
+      y_pred    = NULL,
+      model     = if (!is.null(res)) res$model else NULL
+    ))
+  }
+  NULL
+}
+
+
+#' Generate forecasts without exogenous variables
+#'
+#' Internal helper to produce forecasts from a fitted model when
+#' no exogenous variables are present. This function simply calls
+#' \code{stats::predict()} with \code{n.ahead}.
+#'
+#' @param model A fitted model object (typically \code{SSModel} from \code{tempssm}).
+#' @param h Integer; forecast horizon.
+#'
+#' @return An object returned by \code{stats::predict()}.
+#'
+#' @keywords internal
+#' @noRd
+.predict_no_exo <- function(model, h) {
+  stats::predict(model, n.ahead = h)
+}
+
+
+#' Generate predictions with exogenous variables for CV fold
+#'
+#' Internal helper to generate forecasts for a test period when
+#' exogenous variables are present. The function refits a
+#' \code{tempssm} model on the training data, reconstructs a
+#' state-space model for the test period using estimated parameters,
+#' and applies \code{predict()}.
+#'
+#' The test-period state-space model is constructed via
+#' \code{.build_newdata_ssm()}.
+#'
+#' @param res A fitted \code{tempssm} object (currently unused but kept
+#'   for interface consistency).
+#' @param y_train_mts Training data as matrix-valued \code{ts}.
+#' @param y_test_mts Test data as matrix-valued \code{ts}.
+#' @param exo_train Exogenous training data (\code{ts}).
+#' @param exo_test Exogenous test data (\code{ts}).
+#' @param ar_order Integer; autoregressive order.
+#' @param use_season Logical; whether to include a seasonal component.
+#'
+#' @return An object returned by \code{stats::predict()}.
+#'
+#' @keywords internal
+#' @noRd
+.predict_with_exo <- function(res, y_train_mts, y_test_mts,
+                              exo_train, exo_test,
+                              ar_order, use_season) {
+  res_train <- tempssm(
+    temp_data = y_train_mts,
+    exo_data = exo_train,
+    ar_order = ar_order,
+    use_season = use_season
+  )
+
+  train_model <- res_train$model
+  train_pars <- res_train$fit$optim.out$par
+  freq <- frequency(y_train_mts)
+
+  temp_exo_test <- cbind(y_test_mts, exo_test)
+  colnames(temp_exo_test) <- c("Temp", colnames(exo_test))
+  exo_mat <- as.matrix(exo_test)
+
+  newdata <- .build_newdata_ssm(
+    train_pars,
+    exo_mat,
+    temp_exo_test,
+    freq,
+    ar_order,
+    use_season
+  )
+
+  stats::predict(train_model, newdata = newdata)
+}
+
+
+#' Build SSModel for prediction with exogenous variables
+#'
+#' Internal helper to construct a \code{KFAS::SSModel} object for
+#' the test period using estimated parameters. This is used when
+#' generating forecasts with exogenous variables in cross-validation.
+#'
+#' The function maps a parameter vector (on unconstrained scale)
+#' to a fully specified state-space model, applying appropriate
+#' transformations:
+#' \itemize{
+#'   \item Variances are exponentiated to ensure positivity
+#'   \item AR coefficients are transformed using \code{artransform()}
+#' }
+#'
+#' The model structure depends on whether a seasonal component is included.
+#'
+#' @param pars Numeric vector of model parameters.
+#' @param exo_mat Matrix of exogenous variables for the test period.
+#' @param data A matrix-valued \code{ts} object combining response and exogenous data.
+#' @param freq Integer; seasonal frequency.
+#' @param ar_order Integer; autoregressive order.
+#' @param use_season Logical; whether to include a seasonal component.
+#'
+#' @return A \code{KFAS::SSModel} object.
+#'
+#' @keywords internal
+#' @noRd
+.build_newdata_ssm <- function(pars,
+                               exo_mat,
+                               data,
+                               freq,
+                               ar_order,
+                               use_season) {
+  if (use_season) {
+    ar_idx <- 3:(2 + ar_order)
+    var_idx <- 3 + ar_order
+    H_idx <- 4 + ar_order
+
+    SSModel(
+      H = exp(pars[H_idx]),
+      rep(NA, nrow(data)) ~ exo_mat +
+        SSMtrend(
+          degree = 2,
+          Q = c(list(0), list(exp(pars[1])))
+        ) +
+        SSMseasonal(
+          sea.type = "dummy",
+          period = freq,
+          Q = exp(pars[2])
+        ) +
+        SSMarima(
+          ar = artransform(pars[ar_idx]),
+          d = 0,
+          Q = exp(pars[var_idx])
+        ),
+      data = data
+    )
+  } else {
+    ar_idx <- 2:(1 + ar_order)
+    var_idx <- 2 + ar_order
+    H_idx <- 3 + ar_order
+
+    SSModel(
+      H = exp(pars[H_idx]),
+      rep(NA, nrow(data)) ~ exo_mat +
+        SSMtrend(
+          degree = 2,
+          Q = c(list(0), list(exp(pars[1])))
+        ) +
+        SSMarima(
+          ar = artransform(pars[ar_idx]),
+          d = 0,
+          Q = exp(pars[var_idx])
+        ),
+      data = data
+    )
+  }
+}
+
+
+#' Run time series cross-validation for a single fold
+#'
+#' @description
+#' Fits a state space model using \code{tempssm()} on a single
+#' training/test split generated by \code{ts_train_test_split()},
+#' and produces forecasts for the corresponding test period.
+#'
+#' This function is primarily used internally by
+#' \code{ts_cv_run()} as part of the cross-validation workflow.
+#' However, it is also exported for advanced users who wish to
+#' inspect or debug model behavior on individual folds.
+#'
+#' For most use cases, users should call \code{ts_cv_run()}
+#' instead of using this function directly.
+#'
+#' For models without exogenous variables, forecasts are generated using
+#' \code{predict(..., n.ahead = h)}. When exogenous variables are
+#' present, a new \code{SSModel} object is constructed for the test
+#' period using the estimated parameters.
+#'
+#' \strong{Note:} The current implementation for models with
+#' exogenous variables relies on explicit reconstruction of
+#' \code{SSModel()}, and may be sensitive to model specification.
+#' This part is subject to future improvement.
+#'
+#' @param fold
+#' A single fold object returned by \code{ts_train_test_split()}.
+#'
+#' @param ar_order
+#' Integer specifying the AR order. Default is 1.
+#'
+#' @param use_season
+#' Logical; whether to include a seasonal component. Default is \code{TRUE}.
+#'
+#' @return
+#' A list with the following components:
+#' \describe{
+#'   \item{fold}{Fold index.}
+#'   \item{converged}{Logical indicating whether model fitting succeeded.}
+#'   \item{y_train}{Training time series (\code{ts}).}
+#'   \item{y_test}{Test time series (\code{ts}).}
+#'   \item{y_pred}{Predicted values for the test period (object returned by \code{predict}).}
+#'   \item{model}{Fitted model object returned by \code{tempssm()} (or \code{NULL} if failed).}
+#' }
+#'
+#' @details
+#' When no exogenous variables are supplied, forecasts are obtained
+#' directly via \code{predict()} with \code{n.ahead}. In this case,
+#' future exogenous effects are implicitly treated as zero.
+#'
+#' When exogenous variables are present, forecasts depend on the
+#' provided test-period covariates. Users should ensure that
+#' \code{exo_test_ts} represents realistic or observed future values.
+#'
+#' @seealso
+#' \code{\link{ts_cv_run}} for running cross-validation over all folds.
+#'
+#' @examples
+#' \dontrun{
+#' data(yamaguchi_sst)
+#'
+#' # create folds (no exogenous variables)
+#' folds <- ts_train_test_split(
+#'   temp_data = yamaguchi_sst,
+#'   initial   = 60,
+#'   horizon   = 12,
+#'   step      = 12
+#' )
+#'
+# run CV on first fold (useful for debugging / inspection)
+#' res <- ts_cv_run_fold(folds[[1]])
+#'
+#' # inspect predictions
+#' res$y_pred
+#'
+#' # compare observed vs predicted
+#' cbind(
+#'   observed = as.numeric(res$y_test),
+#'   predicted = as.numeric(res$y_pred)
+#' )
+#' }
+#'
+#' @export
+ts_cv_run_fold <- function(fold,
+                           ar_order = 1,
+                           use_season = TRUE) {
+  .tempssm_cli_inform("Running CV for fold {fold$fold}")
+
+  if (!is.list(fold) || is.null(fold$train_ts) || is.null(fold$test_ts)) {
+    cli::cli_abort("`fold` must be valid.")
+  }
+
+  y_train <- fold$train_ts
+  y_test <- fold$test_ts
+
+  y_train_mts <- .make_mts(y_train)
+  y_test_mts <- .make_mts(y_test)
+
+  res <- .fit_tempssm_safe(
+    y_train_mts,
+    fold$exo_train_ts,
+    ar_order,
+    use_season,
+    fold$fold
+  )
+
+  fail <- .handle_non_convergence(res, fold, y_train, y_test)
+  if (!is.null(fail)) {
+    return(fail)
+  }
+
+  if (is.null(fold$exo_train_ts)) {
+    y_pred <- .predict_no_exo(res$model, length(y_test_mts))
+  } else {
+    y_pred <- .predict_with_exo(
+      res,
+      y_train_mts,
+      y_test_mts,
+      fold$exo_train_ts,
+      fold$exo_test_ts,
+      ar_order,
+      use_season
+    )
+  }
+
+  list(
+    fold      = fold$fold,
+    converged = TRUE,
+    y_train   = y_train,
+    y_test    = y_test,
+    y_pred    = y_pred,
+    model     = res$model
+  )
+}
+
+
 #' Generate rolling train/test splits for time series
 #'
 #' @description
@@ -216,268 +599,6 @@ ts_train_test_split <- function(temp_data,
   )
 }
 
-
-#' Run time series cross-validation for a single fold
-#'
-#' @description
-#' Fits a state space model using \code{tempssm()} on a single
-#' training/test split generated by \code{ts_train_test_split()},
-#' and produces forecasts for the corresponding test period.
-#'
-#' This function is primarily used internally by
-#' \code{ts_cv_run()} as part of the cross-validation workflow.
-#' However, it is also exported for advanced users who wish to
-#' inspect or debug model behavior on individual folds.
-#'
-#' For most use cases, users should call \code{ts_cv_run()}
-#' instead of using this function directly.
-#'
-#' For models without exogenous variables, forecasts are generated using
-#' \code{predict(..., n.ahead = h)}. When exogenous variables are
-#' present, a new \code{SSModel} object is constructed for the test
-#' period using the estimated parameters.
-#'
-#' \strong{Note:} The current implementation for models with
-#' exogenous variables relies on explicit reconstruction of
-#' \code{SSModel()}, and may be sensitive to model specification.
-#' This part is subject to future improvement.
-#'
-#' @param fold
-#' A single fold object returned by \code{ts_train_test_split()}.
-#'
-#' @param ar_order
-#' Integer specifying the AR order. Default is 1.
-#'
-#' @param use_season
-#' Logical; whether to include a seasonal component. Default is \code{TRUE}.
-#'
-#' @return
-#' A list with the following components:
-#' \describe{
-#'   \item{fold}{Fold index.}
-#'   \item{converged}{Logical indicating whether model fitting succeeded.}
-#'   \item{y_train}{Training time series (\code{ts}).}
-#'   \item{y_test}{Test time series (\code{ts}).}
-#'   \item{y_pred}{Predicted values for the test period (object returned by \code{predict}).}
-#'   \item{model}{Fitted model object returned by \code{tempssm()} (or \code{NULL} if failed).}
-#' }
-#'
-#' @details
-#' When no exogenous variables are supplied, forecasts are obtained
-#' directly via \code{predict()} with \code{n.ahead}. In this case,
-#' future exogenous effects are implicitly treated as zero.
-#'
-#' When exogenous variables are present, forecasts depend on the
-#' provided test-period covariates. Users should ensure that
-#' \code{exo_test_ts} represents realistic or observed future values.
-#'
-#' @seealso
-#' \code{\link{ts_cv_run}} for running cross-validation over all folds.
-#'
-#' @examples
-#' \dontrun{
-#' data(yamaguchi_sst)
-#'
-#' # create folds (no exogenous variables)
-#' folds <- ts_train_test_split(
-#'   temp_data = yamaguchi_sst,
-#'   initial   = 60,
-#'   horizon   = 12,
-#'   step      = 12
-#' )
-#'
-# run CV on first fold (useful for debugging / inspection)
-#' res <- ts_cv_run_fold(folds[[1]])
-#'
-#' # inspect predictions
-#' res$y_pred
-#'
-#' # compare observed vs predicted
-#' cbind(
-#'   observed = as.numeric(res$y_test),
-#'   predicted = as.numeric(res$y_pred)
-#' )
-#' }
-#'
-#' @export
-ts_cv_run_fold <- function(fold,
-                           ar_order = 1,
-                           use_season = TRUE) {
-  ## ---- Start ----------------------------------------------------------
-  .tempssm_cli_inform("Running CV for fold {fold$fold}")
-
-  ## ---- basic checks ---------------------------------------------------
-  if (!is.list(fold) || is.null(fold$train_ts) || is.null(fold$test_ts)) {
-    cli::cli_abort(
-      "`fold` must be a valid object from {.fn ts_train_test_split}."
-    )
-  }
-
-  y_train <- fold$train_ts
-  y_test <- fold$test_ts
-  exo_train <- fold$exo_train_ts
-  exo_test <- fold$exo_test_ts
-  freq <- frequency(y_train)
-
-  .tempssm_cli_debug(
-    "Fold {fold$fold}: train length={length(y_train)}, test length={length(y_test)}"
-  )
-
-  ## ---- prepare training ts -------------------------------------------
-  y_train_mts <- ts(
-    as.matrix(y_train),
-    start = start(y_train),
-    frequency = freq
-  )
-  colnames(y_train_mts) <- "Temp"
-
-  y_test_mts <- ts(
-    as.matrix(y_test),
-    start = start(y_test),
-    frequency = freq
-  )
-  colnames(y_test_mts) <- "Temp"
-
-  ## ---- fit model ------------------------------------------------------
-  .tempssm_cli_inform("Fitting model for fold {fold$fold}")
-
-  res <- tryCatch(
-    tempssm(
-      temp_data = y_train_mts,
-      exo_data = exo_train,
-      ar_order = ar_order,
-      use_season = use_season
-    ),
-    error = function(e) {
-      cli::cli_warn(
-        "Model fitting failed in fold {fold$fold}: {conditionMessage(e)}"
-      )
-      NULL
-    }
-  )
-
-  train_model <- if (!is.null(res)) res$model else NULL
-
-  ## ---- check convergence ---------------------------------------------
-  if (is.null(res) || !isTRUE(res$converged)) {
-    cli::cli_warn(
-      "Model did not converge for fold {fold$fold}"
-    )
-
-    return(list(
-      fold      = fold$fold,
-      converged = FALSE,
-      y_train   = y_train,
-      y_test    = y_test,
-      y_pred    = NULL,
-      model     = train_model
-    ))
-  }
-
-  ## ---- prediction -----------------------------------------------------
-  .tempssm_cli_inform(
-    "Generating predictions for fold {fold$fold}"
-  )
-
-  if (is.null(exo_train)) {
-    ## ---- no exogenous -------------------------------------------------
-    .tempssm_cli_debug("Prediction without exogenous variables")
-
-    y_pred <- stats::predict(
-      train_model,
-      n.ahead = length(y_test_mts)
-    )
-  } else {
-    ## ---- with exogenous ----------------------------------------------
-    .tempssm_cli_debug("Prediction with exogenous variables")
-
-    pars <- res$fit$optim.out$par
-
-    temp_exo_test <- cbind(y_test_mts, exo_test)
-    colnames(temp_exo_test) <- c("Temp", colnames(exo_test))
-
-    res_train <- tempssm(
-      temp_data = y_train_mts,
-      exo_data = exo_train,
-      ar_order = ar_order
-    )
-
-    train_model <- res_train$model
-    train_pars <- res_train$fit$optim.out$par
-
-    exo_mat <- as.matrix(exo_test)
-
-    if (use_season) {
-      .tempssm_cli_debug("Using seasonal model for prediction")
-
-      ar_idx <- 3:(2 + ar_order)
-      var_idx <- 3 + ar_order
-      H_idx <- 4 + ar_order
-
-      y_pred <- stats::predict(
-        train_model,
-        newdata = SSModel(
-          H = exp(train_pars[H_idx]),
-          rep(NA, nrow(temp_exo_test)) ~ exo_mat +
-            SSMtrend(
-              degree = 2,
-              Q = c(list(0), list(exp(train_pars[1])))
-            ) +
-            SSMseasonal(
-              sea.type = "dummy",
-              period = freq,
-              Q = exp(train_pars[2])
-            ) +
-            SSMarima(
-              ar = artransform(train_pars[ar_idx]),
-              d = 0,
-              Q = exp(train_pars[var_idx])
-            ),
-          data = temp_exo_test
-        )
-      )
-    } else {
-      .tempssm_cli_debug("Using non-seasonal model for prediction")
-
-      ar_idx <- 2:(1 + ar_order)
-      var_idx <- 2 + ar_order
-      H_idx <- 3 + ar_order
-
-      y_pred <- stats::predict(
-        train_model,
-        newdata = SSModel(
-          H = exp(train_pars[H_idx]),
-          rep(NA, nrow(temp_exo_test)) ~ exo_mat +
-            SSMtrend(
-              degree = 2,
-              Q = c(list(0), list(exp(train_pars[1])))
-            ) +
-            SSMarima(
-              ar = artransform(train_pars[ar_idx]),
-              d = 0,
-              Q = exp(train_pars[var_idx])
-            ),
-          data = temp_exo_test
-        )
-      )
-    }
-  }
-
-  ## ---- completion -----------------------------------------------------
-  .tempssm_cli_inform(
-    "Completed fold {fold$fold} successfully"
-  )
-
-  ## ---- return ---------------------------------------------------------
-  list(
-    fold      = fold$fold,
-    converged = TRUE,
-    y_train   = y_train,
-    y_test    = y_test,
-    y_pred    = y_pred,
-    model     = train_model
-  )
-}
 
 
 #' Run time series cross-validation over multiple folds

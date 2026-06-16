@@ -1,4 +1,4 @@
-# test-summary.R
+# tests/testthat/test-summary.R
 
 # test for summary object
 test_that("summary.tempssm returns a valid summary object", {

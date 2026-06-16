@@ -879,6 +879,181 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 }
 
 
+#' Parse JMA SST CSV raw data into tidy format
+#'
+#' Internal helper to parse raw CSV data retrieved from the JMA SST
+#' endpoint. The function converts the raw content into a tidy data
+#' frame with proper date handling and missing value treatment.
+#'
+#' @param raw A raw vector containing CSV data.
+#'
+#' @return A data frame with columns:
+#' \describe{
+#'   \item{date}{Date object}
+#'   \item{Temp}{Numeric temperature (NA for missing values)}
+#'   \item{flag}{Original flag column}
+#' }
+#'
+#' @keywords internal
+#' @noRd
+.parse_jma_csv <- function(raw) {
+  sst_raw <- readr::read_csv(
+    raw,
+    show_col_types = FALSE
+  )
+
+  if (nrow(sst_raw) < 2) {
+    cli::cli_abort("Retrieved data has unexpected or empty format.")
+  }
+
+  ## remove last row (END or footer)
+  sst_tidy <- sst_raw %>%
+    dplyr::slice(-dplyr::n())
+
+  colnames(sst_tidy) <- c(
+    "Year", "Month", "Day", "areaNo", "flag", "Temp"
+  )
+
+  sst_tidy <- sst_tidy %>%
+    dplyr::mutate(
+      Temp = as.numeric(.data$Temp),
+      date = lubridate::make_date(
+        year  = as.integer(.data$Year),
+        month = as.integer(.data$Month),
+        day   = as.integer(.data$Day)
+      ),
+      Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
+    ) %>%
+    dplyr::select(.data$date, .data$Temp, .data$flag)
+
+  sst_tidy
+}
+
+
+#' Construct JMA SST endpoint URL
+#'
+#' Internal helper to generate the HTTP endpoint URL for retrieving
+#' JMA sea-surface temperature data based on a sea area ID.
+#'
+#' @param sea_area_id Character string or numeric JMA sea area ID.
+#'
+#' @return A character string representing the full URL.
+#'
+#' @details
+#' This function performs only string construction and does not validate
+#' the existence or accessibility of the endpoint.
+#'
+#' @keywords internal
+#' @noRd
+.build_jma_url <- function(sea_area_id) {
+  paste0(
+    "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area",
+    sea_area_id,
+    ".txt"
+  )
+}
+
+
+#' Fetch raw SST data from JMA endpoint
+#'
+#' Internal helper to perform an HTTP request to the JMA SST endpoint
+#' and return the raw response body. This function encapsulates
+#' request construction, User-Agent handling, and error management.
+#'
+#' The returned value is a raw vector intended to be parsed by
+#' \code{.parse_jma_csv()}.
+#'
+#' @param sea_area_id Character string or numeric JMA sea area ID.
+#'
+#' @return A raw vector containing CSV data retrieved from the endpoint.
+#'
+#' @details
+#' This function is responsible only for data retrieval and does not
+#' perform any parsing or validation of the content.
+#'
+#' @keywords internal
+#' @noRd
+.fetch_jma_raw <- function(sea_area_id) {
+  if (!is.character(sea_area_id)) {
+    sea_area_id <- as.character(sea_area_id)
+  }
+
+  url <- .build_jma_url(sea_area_id)
+
+  .tempssm_cli_debug("Fetching JMA SST data (area_id={sea_area_id})")
+
+  resp <- tryCatch(
+    httr2::request(url) %>%
+      httr2::req_user_agent(.user_agent()) %>%
+      httr2::req_error(body = function(resp) {
+        paste0(
+          "Failed to retrieve SST data for sea_area_id = '",
+          sea_area_id,
+          "'. HTTP status: ",
+          httr2::resp_status(resp)
+        )
+      }) %>%
+      httr2::req_perform(),
+    error = function(e) {
+      cli::cli_abort(
+        "Failed to access JMA SST endpoint: {conditionMessage(e)}"
+      )
+    }
+  )
+
+  .tempssm_cli_debug("HTTP request successful")
+
+  httr2::resp_body_raw(resp)
+}
+
+
+#' Check proportion of missing values and issue warning
+#'
+#' Internal helper to compute the proportion of missing values in a vector
+#' and issue a warning if it exceeds a specified threshold.
+#'
+#' @param x A numeric vector.
+#' @param threshold Numeric threshold for the proportion of missing values.
+#'   A warning is triggered if \code{mean(is.na(x))} exceeds this value.
+#' @param msg Character string; warning message to display.
+#'
+#' @return Invisibly returns \code{NULL}. This function is called for its
+#'   side effect (issuing a warning).
+#'
+#' @keywords internal
+#' @noRd
+.check_na_ratio <- function(x, threshold = 0.3, msg) {
+  na_ratio <- mean(is.na(x))
+
+  if (na_ratio > threshold) {
+    cli::cli_warn(msg)
+  }
+}
+
+
+#' Convert tidy SST data to zoo object
+#'
+#' Internal helper to construct a \code{zoo} time series object from
+#' a tidy data frame containing SST observations. The function maps
+#' the \code{Temp} column to values and the \code{date} column to the
+#' time index.
+#'
+#' @param sst_tidy A data frame containing at least two columns:
+#'   \code{date} (Date) and \code{Temp} (numeric).
+#'
+#' @return A \code{zoo} object with a single column named \code{Temp}
+#'   indexed by \code{date}.
+#'
+#' @keywords internal
+#' @noRd
+.build_sst_zoo <- function(sst_tidy) {
+  zoo::zoo(
+    x = data.frame(Temp = sst_tidy$Temp),
+    order.by = sst_tidy$date
+  )
+}
+
+
 #' Retrieve daily mean sea-surface temperature as a zoo object from JMA
 #'
 #' This function downloads publicly available daily mean
@@ -925,91 +1100,22 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #'
 #' @export
 get_jma_sst_zoo <- function(sea_area_id) {
-  ## ---- input handling -------------------------------------------------
-  if (!is.character(sea_area_id)) {
-    sea_area_id <- as.character(sea_area_id)
-  }
+  raw <- .fetch_jma_raw(sea_area_id)
 
-  .tempssm_cli_debug("Fetching JMA SST data (area_id={sea_area_id})")
+  sst_tidy <- .parse_jma_csv(raw)
 
-  url <- paste0(
-    "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area",
-    sea_area_id,
-    ".txt"
+  .check_na_ratio(
+    sst_tidy$Temp,
+    msg = "More than 30% of SST values are missing in retrieved data."
   )
 
-  ## ---- HTTP request ---------------------------------------------------
-  resp <- tryCatch(
-    httr2::request(url) %>%
-      httr2::req_user_agent(.user_agent()) %>%
-      httr2::req_error(body = function(resp) {
-        paste0(
-          "Failed to retrieve SST data for sea_area_id = '",
-          sea_area_id,
-          "'. HTTP status: ",
-          httr2::resp_status(resp)
-        )
-      }) %>%
-      httr2::req_perform(),
-    error = function(e) {
-      cli::cli_abort(
-        "Failed to access JMA SST endpoint: {conditionMessage(e)}"
-      )
-    }
-  )
+  out <- .build_sst_zoo(sst_tidy)
 
-  .tempssm_cli_debug("HTTP request successful")
-
-  ## ---- parse ----------------------------------------------------------
-  sst_raw <- readr::read_csv(
-    httr2::resp_body_raw(resp),
-    show_col_types = FALSE
-  )
-
-  if (nrow(sst_raw) < 2) {
-    cli::cli_abort("Retrieved data has unexpected or empty format.")
-  }
-
-  .tempssm_cli_debug("Raw data rows: {nrow(sst_raw)}")
-
-  ## ---- clean ----------------------------------------------------------
-  sst_tidy <- sst_raw %>%
-    dplyr::slice(-dplyr::n())
-
-  colnames(sst_tidy) <- c("Year", "Month", "Day", "areaNo", "flag", "Temp")
-
-  sst_tidy <- sst_tidy %>%
-    dplyr::mutate(
-      Temp = as.numeric(.data$Temp),
-      date = lubridate::make_date(
-        year  = as.integer(.data$Year),
-        month = as.integer(.data$Month),
-        day   = as.integer(.data$Day)
-      ),
-      Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
-    ) %>%
-    dplyr::select(.data$date, .data$Temp, .data$flag)
-
-  ## ---- data quality check ---------------------------------------------
-  na_ratio <- mean(is.na(sst_tidy$Temp))
-  if (na_ratio > 0.3) {
-    cli::cli_warn(
-      "More than 30% of SST values are missing in retrieved data."
-    )
-  }
-
-  ## ---- construct zoo --------------------------------------------------
-  out <- zoo::zoo(
-    x = data.frame(Temp = sst_tidy$Temp),
-    order.by = sst_tidy$date
-  )
-
-  ## ---- inform ---------------------------------------------------------
   .tempssm_cli_inform(
     "Retrieved SST data with {nrow(sst_tidy)} observation{?s} for area {sea_area_id}"
   )
 
-  return(out)
+  out
 }
 
 
@@ -1034,7 +1140,7 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' For example, "138" corresponding to the coastal sea off southern Ibaraki.
 #' A list of sea area IDs and their corresponding regions is available at:
 #' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
-
+#'
 #' @param na_prop_max Maximum allowed proportion of NA values within a month.
 #'   If the proportion of missing values exceeds this threshold, the monthly
 #'   mean is set to NA. Default is \code{1} (no additional filtering).
@@ -1062,92 +1168,22 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' }
 #'
 #' @export
-get_jma_sst_ts <- function(sea_area_id,
-                           na_prop_max = 1) {
-  ## ---- input handling -------------------------------------------------
-  if (!is.character(sea_area_id)) {
-    sea_area_id <- as.character(sea_area_id)
-  }
-
+get_jma_sst_ts <- function(sea_area_id, na_prop_max = 1) {
   if (!is.numeric(na_prop_max) || na_prop_max < 0 || na_prop_max > 1) {
     cli::cli_abort("`na_prop_max` must be between 0 and 1.")
   }
 
-  .tempssm_cli_debug("Fetching JMA SST (monthly) for area_id={sea_area_id}")
+  raw <- .fetch_jma_raw(sea_area_id)
 
-  url <- paste0(
-    "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area",
-    sea_area_id,
-    ".txt"
+  sst_tidy <- .parse_jma_csv(raw)
+
+  .check_na_ratio(
+    sst_tidy$Temp,
+    msg = "More than 30% of daily SST values are missing."
   )
 
-  ## ---- HTTP request ---------------------------------------------------
-  resp <- tryCatch(
-    httr2::request(url) %>%
-      httr2::req_user_agent(.user_agent()) %>%
-      httr2::req_error(body = function(resp) {
-        paste0(
-          "Failed to retrieve SST data for sea_area_id = '",
-          sea_area_id,
-          "'. HTTP status: ",
-          httr2::resp_status(resp)
-        )
-      }) %>%
-      httr2::req_perform(),
-    error = function(e) {
-      cli::cli_abort(
-        "Failed to access JMA SST endpoint: {conditionMessage(e)}"
-      )
-    }
-  )
+  sst_zoo <- .build_sst_zoo(sst_tidy)
 
-  .tempssm_cli_debug("HTTP request successful")
-
-  ## ---- parse ----------------------------------------------------------
-  sst_raw <- readr::read_csv(
-    httr2::resp_body_raw(resp),
-    show_col_types = FALSE
-  )
-
-  if (nrow(sst_raw) < 2) {
-    cli::cli_abort("Retrieved data has unexpected or empty format.")
-  }
-
-  .tempssm_cli_debug("Raw daily rows: {nrow(sst_raw)}")
-
-  ## ---- clean ----------------------------------------------------------
-  sst_tidy <- sst_raw %>%
-    dplyr::slice(-dplyr::n())
-
-  colnames(sst_tidy) <- c("Year", "Month", "Day", "areaNo", "flag", "Temp")
-
-  sst_tidy <- sst_tidy %>%
-    dplyr::mutate(
-      Temp = as.numeric(.data$Temp),
-      date = lubridate::make_date(
-        year  = as.integer(.data$Year),
-        month = as.integer(.data$Month),
-        day   = as.integer(.data$Day)
-      ),
-      Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
-    ) %>%
-    dplyr::select(.data$date, .data$Temp, .data$flag)
-
-  ## ---- data quality check ---------------------------------------------
-  na_ratio_daily <- mean(is.na(sst_tidy$Temp))
-  if (na_ratio_daily > 0.3) {
-    cli::cli_warn(
-      "More than 30% of daily SST values are missing."
-    )
-  }
-
-  ## ---- zoo conversion -------------------------------------------------
-  sst_zoo <- zoo::zoo(
-    x = data.frame(Temp = sst_tidy$Temp),
-    order.by = sst_tidy$date
-  )
-
-  ## ---- monthly aggregation --------------------------------------------
   .tempssm_cli_debug("Aggregating daily data to monthly time series")
 
   monthly_sst_ts <- tempssm::aggregate_daily_zoo_to_monthly_ts(
@@ -1155,10 +1191,9 @@ get_jma_sst_ts <- function(sea_area_id,
     na_prop_max = na_prop_max
   )
 
-  ## ---- inform ---------------------------------------------------------
   .tempssm_cli_inform(
     "Retrieved and aggregated SST data to {length(monthly_sst_ts)} monthly observation{?s} (area {sea_area_id})"
   )
 
-  return(monthly_sst_ts)
+  monthly_sst_ts
 }
