@@ -3,7 +3,7 @@
 #' Provides a concise summary of a fitted linear Gaussian
 #' state-space model estimated by \code{tempssm()}.
 #'
-#' @param object An object of class \code{"tempssm"} returned 
+#' @param object An object of class \code{"tempssm"} returned
 #' by \code{tempssm()}.
 #' @param ... Additional arguments (currently not used).
 #'

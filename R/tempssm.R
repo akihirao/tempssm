@@ -1,4 +1,4 @@
-#' Base function for fitting a linear Gaussian state-space model to temperature 
+#' Base function for fitting a linear Gaussian state-space model to temperature
 #' time series
 #'
 #' This function estimates a linear Gaussian state-space model (SSM)
@@ -13,7 +13,7 @@
 #'
 #' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
 #'   The series may have any arbitrary frequency of 2 or higher,
-#'   but it must be the same as that of \code{temp_data}. The default is 
+#'   but it must be the same as that of \code{temp_data}. The default is
 #'   \code{NULL} when fitting a model without exogenous variables.
 #'
 #' @param ar_order Integer specifying the order of the autoregressive (AR)
@@ -125,7 +125,7 @@ tempssm <- function(temp_data,
 
       .tempssm_cli_debug(
         "Optimization settings: maxit={maxit}, reltol={reltol}"
-        )
+      )
 
       ## ---- Parameter indexing ------------------------------------------
       if (use_season) {
@@ -157,7 +157,7 @@ tempssm <- function(temp_data,
 
         .tempssm_cli_debug(
           "Exogenous variables: {paste(exo_name, collapse = ', ')}"
-          )
+        )
       }
 
       ## ---- Model definition --------------------------------------------

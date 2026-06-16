@@ -1,11 +1,11 @@
 #' Monthly mean sea surface temperature off Niigata, Japan
 #'
-#' Monthly mean sea surface temperature (SST; °C) time series observed at a 
-#' fixed coastal station near Niigata City Aquarium, Japan (37-55N, 139-02E 
-#' in dd-mm / ddd-mm format). The dataset is provided as a univariate \code{ts} 
-#' object and is intended as an example for state-space analysis of monthly 
+#' Monthly mean sea surface temperature (SST; °C) time series observed at a
+#' fixed coastal station near Niigata City Aquarium, Japan (37-55N, 139-02E
+#' in dd-mm / ddd-mm format). The dataset is provided as a univariate \code{ts}
+#' object and is intended as an example for state-space analysis of monthly
 #' temperature time series.
-#' 
+#'
 #' @format A univariate \code{ts} object with frequency 12 (monthly data),
 #' starting in February 2002 and ending in December 2023.
 #'
@@ -19,9 +19,9 @@
 #' @source
 #' Japan Oceanographic Data Center, Hydrographic and Oceanographic Department,
 #' Japan Coast Guard. Original daily SST data were obtained from
-#' \url{https://www.jodc.go.jp/jodcweb/JDOSS/index.html} and aggregated into 
+#' \url{https://www.jodc.go.jp/jodcweb/JDOSS/index.html} and aggregated into
 #' monthly means.
-#' 
+#'
 #' @examples
 #' data(niigata_sst)
 #' plot(niigata_sst)

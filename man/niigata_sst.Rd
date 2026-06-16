@@ -9,18 +9,20 @@ A univariate \code{ts} object with frequency 12 (monthly data),
 starting in February 2002 and ending in December 2023.
 }
 \source{
-Japan Oceanographic Data Center (JODC), Hydrographic and Oceanographic Department,
+Japan Oceanographic Data Center, Hydrographic and Oceanographic Department,
 Japan Coast Guard. Original daily SST data were obtained from
-\url{https://www.jodc.go.jp/jodcweb/JDOSS/index.html} and aggregated into monthly means.
+\url{https://www.jodc.go.jp/jodcweb/JDOSS/index.html} and aggregated into
+monthly means.
 }
 \usage{
 niigata_sst
 }
 \description{
-Monthly mean sea surface temperature (SST; °C) time series observed at a fixed
-coastal station near Niigata City Aquarium, Japan (37-55N, 139-02E in dd-mm / ddd-mm format).
-The dataset is provided as a univariate \code{ts} object and is intended as an
-example for state-space analysis of monthly temperature time series.
+Monthly mean sea surface temperature (SST; °C) time series observed at a
+fixed coastal station near Niigata City Aquarium, Japan (37-55N, 139-02E
+in dd-mm / ddd-mm format). The dataset is provided as a univariate \code{ts}
+object and is intended as an example for state-space analysis of monthly
+temperature time series.
 }
 \details{
 The variable name is unified as \code{Temp} for consistency with other

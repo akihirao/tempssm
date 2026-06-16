@@ -23,8 +23,8 @@ For example, a frequency of 12 represents a monthly \code{ts} object.}
 
 \item{exo_data}{A data set of exogenous variable(s) of class \code{ts}.
 The series may have any arbitrary frequency of 2 or higher,
-but it must be the same as that of \code{temp_data}.
-The default is \code{NULL} when fitting a model without exogenous variables.}
+but it must be the same as that of \code{temp_data}. The default is
+\code{NULL} when fitting a model without exogenous variables.}
 
 \item{ar_order}{Integer specifying the order of the autoregressive (AR)
 component in the error structure (e.g., 2 for AR(2), 3 for AR(3)).

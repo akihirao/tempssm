@@ -7,7 +7,8 @@
 \method{summary}{tempssm}(object, ...)
 }
 \arguments{
-\item{object}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
+\item{object}{An object of class \code{"tempssm"} returned
+by \code{tempssm()}.}
 
 \item{...}{Additional arguments (currently not used).}
 }
