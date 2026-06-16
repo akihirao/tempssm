@@ -1,4 +1,5 @@
 #' @keywords internal
+#' @noRd
 .get_verbosity <- function() {
   v <- Sys.getenv("TEMPSSM_VERBOSITY", "")
 
@@ -16,7 +17,9 @@
   v
 }
 
+
 #' @keywords internal
+#' @noRd
 .tempssm_cli_inform <- function(..., .envir = parent.frame()) {
   if (.get_verbosity() %in% c("inform", "debug")) {
     cli::cli_inform(..., .envir = .envir)

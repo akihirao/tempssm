@@ -1,4 +1,5 @@
-#' Base function for fitting a linear Gaussian state-space model to temperature time series
+#' Base function for fitting a linear Gaussian state-space model to temperature 
+#' time series
 #'
 #' This function estimates a linear Gaussian state-space model (SSM)
 #' for monthly temperature time series using Kalman filtering and smoothing.
@@ -12,8 +13,8 @@
 #'
 #' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
 #'   The series may have any arbitrary frequency of 2 or higher,
-#'   but it must be the same as that of \code{temp_data}.
-#'   The default is \code{NULL} when fitting a model without exogenous variables.
+#'   but it must be the same as that of \code{temp_data}. The default is 
+#'   \code{NULL} when fitting a model without exogenous variables.
 #'
 #' @param ar_order Integer specifying the order of the autoregressive (AR)
 #' component in the error structure (e.g., 2 for AR(2), 3 for AR(3)).
@@ -122,7 +123,9 @@ tempssm <- function(temp_data,
         reltol <- 1e-16
       }
 
-      .tempssm_cli_debug("Optimization settings: maxit={maxit}, reltol={reltol}")
+      .tempssm_cli_debug(
+        "Optimization settings: maxit={maxit}, reltol={reltol}"
+        )
 
       ## ---- Parameter indexing ------------------------------------------
       if (use_season) {
@@ -152,7 +155,9 @@ tempssm <- function(temp_data,
         exo_name <- colnames(exo_data_checked)
         exo_mat <- as.matrix(exo_data_checked)
 
-        .tempssm_cli_debug("Exogenous variables: {paste(exo_name, collapse = ', ')}")
+        .tempssm_cli_debug(
+          "Exogenous variables: {paste(exo_name, collapse = ', ')}"
+          )
       }
 
       ## ---- Model definition --------------------------------------------
@@ -325,6 +330,7 @@ tempssm <- function(temp_data,
 #' via \code{SSMarima()} with coefficients initialized to zero.
 #'
 #' @keywords internal
+#' @noRd
 .define_build_model <- function(y = NULL,
                                 freq = freq,
                                 use_season,
@@ -442,6 +448,7 @@ tempssm <- function(temp_data,
 #' numerical optimization without reconstructing external inputs.
 #'
 #' @keywords internal
+#' @noRd
 .define_update_func <- function(y = NULL,
                                 freq = freq,
                                 use_season,

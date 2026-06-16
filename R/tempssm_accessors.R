@@ -186,9 +186,17 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     stop("Seasonal component is not included in the model.", call. = FALSE)
   }
 
-
-  if (is.null(res$kfs$alphahat) || !"sea_dummy1" %in% colnames(res$kfs$alphahat)) {
-    stop("Seasonal component not found in the smoothing results.", call. = FALSE)
+  
+  alphahat <- res$kfs$alphahat
+  
+  has_alphahat <- !is.null(alphahat)
+  has_season   <- "sea_dummy1" %in% colnames(alphahat)
+  
+  if (!(has_alphahat && has_season)) {
+    stop(
+      "Seasonal component not found in the smoothing results.",
+      call. = FALSE
+    )
   }
 
   freq <- frequency(res$temp_data)
@@ -260,8 +268,17 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     }
   }
 
-  if (is.null(res$kfs$alphahat) || !"arima1" %in% colnames(res$kfs$alphahat)) {
-    stop("First autoregressive component (AR1) not found in the smoothing results.", call. = FALSE)
+  alphahat <- res$kfs$alphahat
+  
+  has_alphahat <- !is.null(alphahat)
+  has_ar1   <- "arima1" %in% colnames(alphahat)
+  
+  
+  if (!(has_alphahat) || !(has_ar1)) {
+    stop(
+      paste("First autoregressive component (AR1) not found",
+            "in the smoothing results."),
+      call. = FALSE)
   }
 
   freq <- frequency(res$temp_data)
@@ -276,7 +293,9 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     ci_obj <- stats::confint(res$kfs, level = ci_level)
 
     if (!"arima1" %in% names(ci_obj)) {
-      stop("First Autoregressive (AR1) component not found in confidence intervals.",
+      stop(
+        paste("First Autoregressive (AR1) component not found",
+        "in confidence intervals."),
         call. = FALSE
       )
     }

@@ -27,7 +27,7 @@
 #' data(yamaguchi_sst)
 #' plot(yamaguchi_sst,
 #'   ylab = "Temperature (°C)",
-#'   main = "Daily mean sea surface temperature off southern Yamaguchi Prefecture"
+#'   main = "Daily mean sea surface temperature off southern Yamaguchi Pref."
 #' )
 #'
 "yamaguchi_sst"

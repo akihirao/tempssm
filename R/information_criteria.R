@@ -1,5 +1,6 @@
 ######################################
 #' @keywords internal
+#' @noRd
 .validate_tempssm_for_ic <- function(res) {
   ## ---- class check ----------------------------------------------------
   if (!inherits(res, "tempssm")) {
@@ -11,14 +12,20 @@
   ## ---- convergence check ----------------------------------------------
   if (!isTRUE(res$converged)) {
     cli::cli_abort(
-      "Information criteria are not available because the model did not converge."
+      paste(
+        "Information criteria are not available",
+        "because the model did not converge."
+      )
     )
   }
 
   ## ---- component check ------------------------------------------------
   if (is.null(res$model) || is.null(res$fit)) {
     cli::cli_abort(
-      "Information criteria are not available because the fitted model is missing."
+      paste(
+        "Information criteria are not available",
+        "because the fitted model is missing."
+      )
     )
   }
 
@@ -31,6 +38,7 @@
 
 ######################################
 #' @keywords internal
+#' @noRd
 .internal_logLik_tempssm <- function(res) {
   ## ---- validation ----------------------------------------------------
   .validate_tempssm_for_ic(res)
