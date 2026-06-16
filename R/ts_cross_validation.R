@@ -562,7 +562,7 @@ ts_cv_run <- function(
   use_season = TRUE,
   parallel = TRUE,
   workers = future::availableCores(),
-  progress = TRUE
+  progress = FALSE
 ) {
   ## ---- input check ----------------------------------------------------
   if (!is.list(folds)) {
@@ -594,7 +594,9 @@ ts_cv_run <- function(
   }
 
   ## ---- execution ------------------------------------------------------
-  if (progress) {
+
+  if (progress && requireNamespace("progressr", quietly = TRUE)) {
+
     res <- progressr::with_progress({
       p <- progressr::progressor(along = folds)
 
@@ -608,7 +610,15 @@ ts_cv_run <- function(
         future.seed = TRUE
       )
     })
+
   } else {
+
+    if (progress) {
+      cli::cli_warn(
+        "progressr not installed; running without progress bar"
+      )
+    }
+
     res <- future.apply::future_lapply(
       folds,
       run_one,

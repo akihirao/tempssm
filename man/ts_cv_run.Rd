@@ -10,7 +10,7 @@ ts_cv_run(
   use_season = TRUE,
   parallel = TRUE,
   workers = future::availableCores(),
-  progress = TRUE
+  progress = FALSE
 )
 }
 \arguments{

@@ -69,32 +69,6 @@
 }
 
 
-######################################
-#' @keywords internal
-.get_loglik_tempssm <- function(res) {
-  ## ---- basic check ----------------------------------------------------
-  if (!inherits(res, "tempssm")) {
-    cli::cli_abort(
-      "`res` must be an object of class {.cls tempssm}."
-    )
-  }
-
-  ## ---- logLik extraction ---------------------------------------------
-  loglik <- tryCatch(
-    as.numeric(stats::logLik(res$model)),
-    error = function(e) {
-      cli::cli_abort(
-        "Failed to extract log-likelihood from the fitted model."
-      )
-    }
-  )
-
-  ## ---- debug (optional, lightweight) ---------------------------------
-  .tempssm_cli_debug("Extracted log-likelihood: {round(loglik, 3)}")
-
-  return(loglik)
-}
-
 
 #' Log-likelihood method for tempssm objects (S3 method)
 #'

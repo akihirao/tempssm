@@ -544,8 +544,8 @@ tempssm <- function(temp_data,
 #'
 #' @return A univariate \code{ts} object.
 #'
-#' @export
 #' @keywords internal
+#' @noRd
 .tempssm_check_temp_ts <- function(temp_data) {
   ## ---- type check -----------------------------------------------------
   if (!inherits(temp_data, "ts")) {
@@ -592,8 +592,8 @@ tempssm <- function(temp_data,
 #'
 #' @return A univariate or multivairate \code{ts} object.
 #'
-#' @export
 #' @keywords internal
+#' @noRd
 .tempssm_check_exo_ts <- function(temp_data,
                                   exo_data) {
   ## ---- check temp_data -----------------------------------------------

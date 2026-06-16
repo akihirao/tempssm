@@ -1,6 +1,3 @@
-#' @importFrom ggplot2 autoplot
-NULL
-
 #' Autoplot method for tempssm objects
 #'
 #' @description
@@ -71,7 +68,7 @@ autoplot.tempssm <- function(object,
     if (!component %in% names(plotters)) {
       stop(
         "`component` must be one of: ",
-        paste(names(plotters), collapse = ", "),
+        paste0(names(plotters), collapse = ", "),
         call. = FALSE
       )
     }
