@@ -1,4 +1,4 @@
-#' North Atlantic Oscillation：NAO (Hurrell)
+#' North Atlantic Oscillation: NAO (Hurrell)
 #'
 #' The winter (December thru March) station-based index of the NAO is based on
 #' the difference of normalized sea level pressure (SLP) between Lisbon, Portugal

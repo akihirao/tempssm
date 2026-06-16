@@ -3,7 +3,7 @@
 \docType{data}
 \name{nao}
 \alias{nao}
-\title{North Atlantic Oscillation：NAO (Hurrell)}
+\title{North Atlantic Oscillation: NAO (Hurrell)}
 \format{
 A \code{ts} object with:
 \describe{
