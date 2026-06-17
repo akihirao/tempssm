@@ -207,41 +207,44 @@
   var_idx <- param_idx_list$var
   H_idx <- param_idx_list$H
   
+  ## ---- Transform parameters -------------------------------------------
+  trans <- .transform_parameters(pars, ar_idx, var_idx, H_idx, use_season)
+  
   ## ---- Build model -------
   if (use_season) {
 
     SSModel(
-      H = exp(pars[H_idx]),
+      H = trans$H,
       rep(NA, nrow(data)) ~ exo_mat +
         SSMtrend(
           degree = 2,
-          Q = c(list(0), list(exp(pars[1])))
+          Q = c(list(0), list(trans$trend_var))
         ) +
         SSMseasonal(
           sea.type = "dummy",
           period = freq,
-          Q = exp(pars[2])
+          Q = trans$season_var
         ) +
         SSMarima(
-          ar = artransform(pars[ar_idx]),
+          ar = trans$ar_coefs,
           d = 0,
-          Q = exp(pars[var_idx])
+          Q = trans$ar_var
         ),
       data = data
     )
   } else {
 
     SSModel(
-      H = exp(pars[H_idx]),
+      H = trans$H,
       rep(NA, nrow(data)) ~ exo_mat +
         SSMtrend(
           degree = 2,
-          Q = c(list(0), list(exp(pars[1])))
+          Q = c(list(0), list(trans$trend_var))
         ) +
         SSMarima(
-          ar = artransform(pars[ar_idx]),
+          ar = trans$ar_coefs,
           d = 0,
-          Q = exp(pars[var_idx])
+          Q = trans$ar_var
         ),
       data = data
     )

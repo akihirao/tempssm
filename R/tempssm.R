@@ -40,6 +40,49 @@
 }
 
 
+#' Transform unconstrained parameters to constrained values
+#'
+#' Internal helper to apply standard transformations to the parameter vector
+#' used in state-space model optimization. This centralizes the logic for
+#' exponentiating variance parameters and transforming autoregressive
+#' coefficients to ensure stationarity.
+#'
+#' @param pars Numeric vector of unconstrained parameters
+#' @param ar_idx Integer vector of indices for AR coefficients
+#' @param var_idx Integer index for AR process variance parameter
+#' @param H_idx Integer index for observation variance parameter
+#' @param use_season Logical; whether seasonal component is included
+#'
+#' @return A named list containing transformed parameters:
+#' \describe{
+#'   \item{trend_var}{Positive trend variance: exp(pars[1])}
+#'   \item{season_var}{Positive seasonal variance if use_season=TRUE, else NULL}
+#'   \item{ar_coefs}{Stationary AR coefficients via KFAS::artransform()}
+#'   \item{ar_var}{Positive AR process variance}
+#'   \item{H}{Positive observation variance}
+#' }
+#'
+#' @details
+#' All variance parameters are exponentiated to ensure positivity.
+#' AR coefficients are transformed using \code{KFAS::artransform()} to
+#' ensure the autoregressive process satisfies stationarity constraints.
+#'
+#' This function centralizes the transformation logic to avoid duplication
+#' across \code{.define_update_func()} and \code{.build_newdata_ssm()}.
+#'
+#' @keywords internal
+#' @noRd
+.transform_parameters <- function(pars, ar_idx, var_idx, H_idx, use_season) {
+  list(
+    trend_var = exp(pars[1]),
+    season_var = if (use_season) exp(pars[2]) else NULL,
+    ar_coefs = KFAS::artransform(pars[ar_idx]),
+    ar_var = exp(pars[var_idx]),
+    H = exp(pars[H_idx])
+  )
+}
+
+
 #' Base function for fitting a linear Gaussian state-space model to temperature
 #' time series
 #'
@@ -516,82 +559,86 @@ tempssm <- function(temp_data,
                                 H_idx) {
   if (use_season && is.null(exo_mat)) {
     update_func <- function(pars, model) {
+      trans <- .transform_parameters(pars, ar_idx, var_idx, H_idx, use_season)
       return(
         KFAS::SSModel(
           y ~
             SSMtrend(
               degree = 2,
-              Q = c(list(0), list(exp(pars[1])))
+              Q = c(list(0), list(trans$trend_var))
             ) +
             SSMseasonal(
               sea.type = "dummy",
               period = freq,
-              Q = exp(pars[2])
+              Q = trans$season_var
             ) +
             SSMarima(
-              ar = artransform(pars[ar_idx]),
+              ar = trans$ar_coefs,
               d = 0,
-              Q = exp(pars[var_idx])
+              Q = trans$ar_var
             ),
-          H = exp(pars[H_idx])
+          H = trans$H
         )
       )
     }
   } else if (!use_season && is.null(exo_mat)) {
     update_func <- function(pars, model) {
+      trans <- .transform_parameters(pars, ar_idx, var_idx, H_idx, use_season)
       return(
         KFAS::SSModel(
           y ~
             SSMtrend(
               degree = 2,
-              Q = c(list(0), list(exp(pars[1])))
+              Q = c(list(0), list(trans$trend_var))
             ) +
             SSMarima(
-              ar = artransform(pars[ar_idx]),
+              ar = trans$ar_coefs,
               d = 0,
-              Q = exp(pars[var_idx])
+              Q = trans$ar_var
             ),
-          H = exp(pars[H_idx])
+          H = trans$H
         )
       )
     }
   } else if (use_season && !(is.null(exo_mat))) {
     update_func <- function(pars, model) {
+      trans <- .transform_parameters(pars, ar_idx, var_idx, H_idx, use_season)
       return(
         KFAS::SSModel(
-          H = exp(pars[H_idx]),
+          H = trans$H,
           y ~ exo_mat +
             SSMtrend(
               degree = 2,
-              Q = c(list(0), list(exp(pars[1])))
+              Q = c(list(0), list(trans$trend_var))
             ) +
             SSMseasonal(
               sea.type = "dummy",
               period = freq,
-              Q = exp(pars[2])
+              Q = trans$season_var
             ) +
             SSMarima(
-              ar = artransform(pars[ar_idx]),
+              ar = trans$ar_coefs,
               d = 0,
-              Q = exp(pars[var_idx])
+              Q = trans$ar_var
             )
         )
       )
     }
   } else if (!use_season && !(is.null(exo_mat))) {
     update_func <- function(pars, model) {
+      trans <- .transform_parameters(pars, ar_idx, var_idx, H_idx, use_season)
       return(
         KFAS::SSModel(
-          H = exp(pars[H_idx]),
+          H = trans$H,
           y ~ exo_mat +
             SSMtrend(
               degree = 2,
-              Q = c(list(0), list(exp(pars[1])))
+              Q = c(list(0), list(trans$trend_var))
             ) +
             SSMarima(
-              ar = artransform(pars[ar_idx]),
+              ar = trans$ar_coefs,
               d = 0,
-              Q = exp(pars[var_idx])
+              Q = trans$ar_var
             )
         )
       )
