@@ -470,7 +470,7 @@ tempssm <- function(temp_data,
       H = NA
     )
   } else if (use_season && !(is.null(exo_mat))) {
-    build_ssm <- SSModel(
+    build_ssm <- KFAS::SSModel(
       H = NA,
       y ~ exo_mat +
         SSMtrend(
