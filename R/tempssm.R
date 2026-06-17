@@ -144,16 +144,30 @@ tempssm <- function(temp_data,
         ar_rep_length_minus_one <- ar_order - 1
         ar_inits <- c(0.5, rep(0, ar_rep_length_minus_one))
 
-        inits <- c(
-          -13, # trend
-          -7, # seasonal
-          ar_inits,
-          -0.3, # AR variance
-          -5 # observation variance
-        )
+        if (use_season) {
+          inits <- c(
+            -13, # trend
+            -7, # seasonal
+            ar_inits,
+            -0.3, # AR variance
+            -5 # observation variance
+          )
+        } else {
+          inits <- c(
+            -13, # trend
+            ar_inits,
+            -0.3, # AR variance
+            -5 # observation variance
+          )
+        }
       }
 
-      expected_len <- 2 + ar_order + 2
+      expected_len <- if (use_season) {
+        2 + ar_order + 2
+      } else {
+        1 + ar_order + 2
+      }
+
       if (!is.numeric(inits) || length(inits) != expected_len) {
         cli::cli_abort(
           "{.arg inits} must be a numeric vector of length {expected_len}."
@@ -173,7 +187,6 @@ tempssm <- function(temp_data,
         "Optimization settings: maxit={maxit}, reltol={reltol}"
       )
 
-      ## ---- Parameter indexing ------------------------------------------
       ## ---- Parameter indexing ------------------------------------------
       param_idx_list <- .get_param_index(ar_order = ar_order,
                        use_season = use_season)

@@ -31,6 +31,17 @@
 #'
 #' @export
 summary.tempssm <- function(object, ...) {
+  if (!inherits(object, "tempssm")) {
+    cli::cli_abort("`object` must be an object of class {.cls tempssm}.")
+  }
+
+  if (is.null(object$fit) || is.null(object$fit$optim.out) ||
+      is.null(object$fit$optim.out$par)) {
+    cli::cli_abort(
+      "Summary is not available because the fitted model results are missing."
+    )
+  }
+
   opt <- object$fit$optim.out
   pars <- opt$par
   ar_order <- object$ar_order

@@ -337,6 +337,13 @@ get_params <- function(res) {
     stop("`res` must be an object of class 'tempssm.'", call. = FALSE)
   }
 
+  if (is.null(res$fit) || is.null(res$fit$optim.out) ||
+      is.null(res$fit$optim.out$par)) {
+    stop("Fitted parameters are not available in the provided tempssm object.",
+      call. = FALSE
+    )
+  }
+
   model <- res$model
   pars <- res$fit$optim.out$par
   ar_order <- res$ar_order
@@ -455,9 +462,9 @@ get_exo_coef <- function(res, ci_level = 0.95) {
 
   data.frame(
     Variable    = exo_vars,
-    Coefficient = as.numeric(beta_hat)[1],
-    lwr         = ci_mat[, "lwr"][1],
-    upr         = ci_mat[, "upr"][1],
+    Coefficient = as.numeric(beta_hat[1, , drop = TRUE]),
+    lwr         = ci_mat[, "lwr"],
+    upr         = ci_mat[, "upr"],
     row.names   = NULL
   )
 }
