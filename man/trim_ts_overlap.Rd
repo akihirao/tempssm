@@ -22,7 +22,8 @@ are assigned with a warning.}
 \value{
 A named list with the following elements:
 \describe{
-  \item{temperature}{A univariate \code{ts} object of the trimmed temperature series.}
+  \item{temperature}{A univariate \code{ts} object of the trimmed 
+  temperature series.}
   \item{exogenous}{A \code{ts} object of the trimmed exogenous variables.}
 }
 }

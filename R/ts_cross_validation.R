@@ -198,10 +198,17 @@
                                freq,
                                ar_order,
                                use_season) {
+  
+  ## ---- Parameter indexing ------------------------------------------
+  param_idx_list <- .get_param_index(ar_order = ar_order,
+                                     use_season = use_season)
+  
+  ar_idx <- param_idx_list$ar
+  var_idx <- param_idx_list$var
+  H_idx <- param_idx_list$H
+  
+  ## ---- Build model -------
   if (use_season) {
-    ar_idx <- 3:(2 + ar_order)
-    var_idx <- 3 + ar_order
-    H_idx <- 4 + ar_order
 
     SSModel(
       H = exp(pars[H_idx]),
@@ -223,9 +230,6 @@
       data = data
     )
   } else {
-    ar_idx <- 2:(1 + ar_order)
-    var_idx <- 2 + ar_order
-    H_idx <- 3 + ar_order
 
     SSModel(
       H = exp(pars[H_idx]),

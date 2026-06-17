@@ -1,3 +1,45 @@
+#' Compute parameter index positions for state-space model
+#'
+#' Internal helper to generate index positions for parameters in the
+#' optimization vector used in \code{tempssm()}. The indices are used
+#' to extract autoregressive coefficients and variance parameters.
+#'
+#' The mapping depends on whether a seasonal component is included.
+#'
+#' @param ar_order Integer; order of the autoregressive component.
+#' @param use_season Logical; whether a seasonal component is included.
+#'
+#' @return A named list with components:
+#' \describe{
+#'   \item{ar}{Integer vector of indices for AR coefficients}
+#'   \item{var}{Integer index for AR process variance}
+#'   \item{H}{Integer index for observation variance}
+#' }
+#'
+#' @details
+#' The parameter vector follows different layouts depending on
+#' \code{use_season}, and this function centralizes that indexing logic
+#' to avoid duplication across model construction and prediction code.
+#'
+#' @keywords internal
+#' @noRd
+.get_param_index <- function(ar_order, use_season) {
+  if (use_season) {
+    list(
+      ar = 3:(2 + ar_order),
+      var = 3 + ar_order,
+      H = 4 + ar_order
+    )
+  } else {
+    list(
+      ar = 2:(1 + ar_order),
+      var = 2 + ar_order,
+      H = 3 + ar_order
+    )
+  }
+}
+
+
 #' Base function for fitting a linear Gaussian state-space model to temperature
 #' time series
 #'
@@ -67,8 +109,12 @@ tempssm <- function(temp_data,
     {
       ## ---- Start message -----------------------------------------------
       .tempssm_cli_inform(
-        "Fitting state-space model (AR order: {ar_order}, seasonal: {use_season})"
-      )
+        paste0(
+          "Fitting state-space model (",
+          "AR order: {ar_order}, ",
+          "seasonal: {use_season})"
+        )
+      )  
 
       ## ---- Input checks -------------------------------------------------
       y <- .tempssm_check_temp_ts(temp_data)
@@ -128,15 +174,13 @@ tempssm <- function(temp_data,
       )
 
       ## ---- Parameter indexing ------------------------------------------
-      if (use_season) {
-        ar_idx <- 3:(2 + ar_order)
-        var_idx <- 3 + ar_order
-        H_idx <- 4 + ar_order
-      } else {
-        ar_idx <- 2:(1 + ar_order)
-        var_idx <- 2 + ar_order
-        H_idx <- 3 + ar_order
-      }
+      ## ---- Parameter indexing ------------------------------------------
+      param_idx_list <- .get_param_index(ar_order = ar_order,
+                       use_season = use_season)
+
+      ar_idx <- param_idx_list$ar
+      var_idx <- param_idx_list$var
+      H_idx <- param_idx_list$H
 
       ## ---- Exogenous handling ------------------------------------------
       if (is.null(exo_data)) {
@@ -642,8 +686,11 @@ tempssm <- function(temp_data,
   uni_multi <- if (n_col > 1) "multivariate" else "univariate"
 
   .tempssm_cli_debug(
-    "Validated exo_data: {uni_multi} ts with {n_col} variable{?s}, frequency {exo_freq}"
-  )
+    paste0(
+      "Validated exo_data: {uni_multi} ts with {n_col} variable{?s}, ",
+      "frequency {exo_freq}"
+      )
+   )
 
   return(exo_data)
 }

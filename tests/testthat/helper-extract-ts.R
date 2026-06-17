@@ -4,15 +4,17 @@
 
 check_ts_basic <- function(ts_obj, res) {
   testthat::expect_s3_class(ts_obj, "ts")
-  testthat::expect_equal(start(ts_obj), start(res$temp_data))
-  testthat::expect_equal(frequency(ts_obj), frequency(res$temp_data))
+  testthat::expect_identical(start(ts_obj), start(res$temp_data))
+  testthat::expect_identical(frequency(ts_obj), frequency(res$temp_data))
 }
 
 check_ts_univariate <- function(ts_obj) {
-  testthat::expect_equal(NCOL(ts_obj), 1)
+  expect_equal(NCOL(ts_obj), 1)
 }
 
+
 # ---- CI checks ---------------------------------------------------------
+
 
 check_ts_ci_structure <- function(ts_ci, value_name) {
   testthat::expect_s3_class(ts_ci, "ts")
@@ -22,6 +24,7 @@ check_ts_ci_structure <- function(ts_ci, value_name) {
     c(value_name, "lwr", "upr")
   )
 }
+
 
 check_ts_ci_values <- function(ts_ci, ci_obj, key, scale = 1) {
   testthat::expect_equal(ts_ci[, "lwr"], ci_obj[[key]][, "lwr"] * scale)

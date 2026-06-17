@@ -11,7 +11,9 @@ get_jma_sst_ts(sea_area_id, na_prop_max = 1)
 (numeric values are accepted and internally coerced to character).
 For example, "138" corresponding to the coastal sea off southern Ibaraki.
 A list of sea area IDs and their corresponding regions is available at:
-\url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}}
+\url{
+https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html
+}}
 
 \item{na_prop_max}{Maximum allowed proportion of NA values within a month.
 If the proportion of missing values exceeds this threshold, the monthly

@@ -72,7 +72,10 @@ set_ts_name <- function(ts_in, label) {
 
   if (!(length(label) == 1L || length(label) == n_col)) {
     cli::cli_abort(
-      "Length of {.arg label} must be 1 or equal to the number of series in {.arg ts_in}."
+      paste0(
+      "Length of {.arg label} must be 1 or equal to",
+      "the number of series in {.arg ts_in}."
+      )
     )
   }
 
@@ -152,7 +155,8 @@ set_ts_name <- function(ts_in, label) {
 #' @return
 #' A named list with the following elements:
 #' \describe{
-#'   \item{temperature}{A univariate \code{ts} object of the trimmed temperature series.}
+#'   \item{temperature}{A univariate \code{ts} object of the trimmed 
+#'   temperature series.}
 #'   \item{exogenous}{A \code{ts} object of the trimmed exogenous variables.}
 #' }
 #'
@@ -200,13 +204,19 @@ trim_ts_overlap <- function(
   } else {
     if (length(exo_name) != num_exo_variable) {
       cli::cli_abort(
-        "Length of {.arg exo_name} must equal the number of exogenous variables."
+        paste0(
+          "Length of {.arg exo_name} must equal ",
+          "the number of exogenous variables."
+          )
       )
     }
   }
 
   .tempssm_cli_debug(
-    "Trimming time series overlap (temp length={length(temp_ts)}, exo vars={num_exo_variable})"
+    paste0(
+      "Trimming time series overlap (temp length={length(temp_ts)}, ",
+      "exo vars={num_exo_variable})"
+    )
   )
 
   ## ---- overlap --------------------------------------------------------
@@ -214,7 +224,10 @@ trim_ts_overlap <- function(
 
   if (is.null(temp_exo_ts_overlap) || NROW(temp_exo_ts_overlap) == 0) {
     cli::cli_abort(
-      "No overlapping time period found between {.arg temp_ts} and {.arg exo_ts}."
+      paste0(
+        "No overlapping time period found ",
+        "between {.arg temp_ts} and {.arg exo_ts}."
+      )
     )
   }
 
@@ -264,7 +277,8 @@ trim_ts_overlap <- function(
 #'
 #' @details
 #' The function requires \code{multi_ts} to have valid column names.
-#' If a univariate \code{ts} object is supplied, the function stops with an error.
+#' If a univariate \code{ts} object is supplied, the function stops 
+#' with an error.
 #'
 #' @return
 #' A named list of univariate \code{ts} objects.
@@ -412,7 +426,10 @@ convert_monthly_df_to_ts <- function(df) {
 
   if (!all(required_cols %in% names(df))) {
     cli::cli_abort(
-      "The data frame must contain columns: {paste(required_cols, collapse = ', ')}."
+      paste0(
+        "The data frame must contain columns: ",
+        "{paste(required_cols, collapse = ', ')}."
+        )
     )
   }
 
@@ -453,7 +470,10 @@ convert_monthly_df_to_ts <- function(df) {
 
   ## ---- inform ---------------------------------------------------------
   .tempssm_cli_inform(
-    "Converted data frame to monthly time series with {length(ts_out)} observation{?s}"
+    paste0(
+      "Converted data frame to monthly time series ",
+      "with {length(ts_out)} observation{?s}"
+    )
   )
 
   return(ts_out)
@@ -539,7 +559,10 @@ read_monthly_temp_ts <- function(csv) {
 
   if (!all(required_cols %in% names(raw_data))) {
     cli::cli_abort(
-      "The CSV file must contain columns: {paste(required_cols, collapse = ', ')}."
+      paste0(
+        "The CSV file must contain columns: ",
+        "{paste(required_cols, collapse = ', ')}."
+      )
     )
   }
 
@@ -688,7 +711,10 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
 
   ## ---- inform ---------------------------------------------------------
   .tempssm_cli_inform(
-    "Aggregated daily data to monthly series with {NROW(ts_monthly)} observation{?s}"
+    paste0(
+      "Aggregated daily data to monthly series ",
+      "with {NROW(ts_monthly)} observation{?s}"
+    )
   )
 
   return(ts_monthly)
@@ -807,7 +833,10 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
   } else {
     if (!is.numeric(baseline) || length(baseline) != 2) {
       cli::cli_abort(
-        "`baseline` must be a numeric vector of length 2 (start_year, end_year)."
+        paste0(
+          "`baseline` must be a numeric vector of ",
+          "length 2 (start_year, end_year)."
+        )
       )
     }
 
@@ -1076,7 +1105,9 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #' (numeric values are accepted and internally coerced to character).
 #' For example, 138 corresponding to the coastal sea off southern Ibaraki.
 #' A list of sea area IDs and their corresponding regions is available at:
-#' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
+#' \url{
+#' https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html
+#' }
 #'
 #' @details
 #' The function retrieves a text-format dataset from the JMA website,
@@ -1114,7 +1145,11 @@ get_jma_sst_zoo <- function(sea_area_id) {
   out <- .build_sst_zoo(sst_tidy)
 
   .tempssm_cli_inform(
-    "Retrieved SST data with {nrow(sst_tidy)} observation{?s} for area {sea_area_id}"
+    paste0(
+      "Retrieved SST data with {nrow(sst_tidy)} ",
+      "observation{?s} for area {sea_area_id}"
+    )
+    
   )
 
   out
@@ -1141,7 +1176,9 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' (numeric values are accepted and internally coerced to character).
 #' For example, "138" corresponding to the coastal sea off southern Ibaraki.
 #' A list of sea area IDs and their corresponding regions is available at:
-#' \url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}
+#' \url{
+#' https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html
+#' }
 #'
 #' @param na_prop_max Maximum allowed proportion of NA values within a month.
 #'   If the proportion of missing values exceeds this threshold, the monthly
@@ -1194,7 +1231,10 @@ get_jma_sst_ts <- function(sea_area_id, na_prop_max = 1) {
   )
 
   .tempssm_cli_inform(
-    "Retrieved and aggregated SST data to {length(monthly_sst_ts)} monthly observation{?s} (area {sea_area_id})"
+    paste0(
+      "Retrieved and aggregated SST data to {length(monthly_sst_ts)} ",
+      "monthly observation{?s} (area {sea_area_id})"
+    )
   )
 
   monthly_sst_ts

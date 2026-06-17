@@ -15,7 +15,9 @@ A \code{ts} object with:
 \source{
 Global Historical Climatology Network monthly (GHCNm).
 Data obtained from the NOAA website:
-\url{https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4}
+\url{
+https://www.ncei.noaa.gov/data/global-historical-climatology-network-monthly/v4
+}
 }
 \usage{
 hmo_temp

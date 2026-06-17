@@ -26,7 +26,8 @@ This ensures consistent handling of variable names within the
 }
 \details{
 The function requires \code{multi_ts} to have valid column names.
-If a univariate \code{ts} object is supplied, the function stops with an error.
+If a univariate \code{ts} object is supplied, the function stops 
+with an error.
 }
 \examples{
 multi_ts <- ts(
