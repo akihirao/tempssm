@@ -13,8 +13,8 @@ test_that("ts_cv_run_fold works without exogenous variables", {
   expect_true(is.list(res))
   expect_true(res$converged)
 
-  expect_true(inherits(res$y_train, "ts"))
-  expect_true(inherits(res$y_test, "ts"))
+  expect_s3_class(res$y_train, "ts")
+  expect_s3_class(res$y_test, "ts")
 
   expect_false(is.null(res$y_pred))
 })

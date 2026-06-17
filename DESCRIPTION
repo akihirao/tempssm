@@ -23,16 +23,12 @@ Imports:
     stats,
     ggplot2 (>= 3.4.0),
     rlang   (>= 1.0.0),
-    dplyr,
-    magrittr,
     readr,
-    lubridate,
     tibble,
     forecast,
     tseries,
-    moments,
     cli,
-    patchwork,
+    gtable,
     httr2
 Suggests:
     testthat (>= 3.0.0),

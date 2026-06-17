@@ -17,8 +17,8 @@ test_that("trim_ts_overlap works for valid input", {
   expect_true(is.list(res))
   expect_named(res, c("temperature", "exogenous"))
 
-  expect_true(inherits(res$temperature, "ts"))
-  expect_true(inherits(res$exogenous, "ts"))
+  expect_s3_class(res$temperature, "ts")
+  expect_s3_class(res$exogenous, "ts")
 })
 
 
@@ -28,7 +28,7 @@ test_that("trim_ts_overlap trims to overlapping period", {
 
   res <- trim_ts_overlap(temp_ts_test, exo_ts, exo_name = c("x1"))
 
-  expect_true(length(res$temperature) == length(res$exogenous))
+  expect_identical(length(res$temperature), length(res$exogenous))
 })
 
 

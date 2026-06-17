@@ -66,7 +66,7 @@ test_that("number of observations matches input data", {
     use_season = TRUE
   )
 
-  expect_equal(NROW(model$y), NROW(data))
+  expect_identical(NROW(model$y), NROW(data))
 })
 
 
@@ -122,7 +122,7 @@ test_that("state dimension differs with seasonal option", {
     FALSE
   )
 
-  expect_true(ncol(model_season$T) > ncol(model_no$T))
+  expect_gt(ncol(model_season$T), ncol(model_no$T))
 })
 
 

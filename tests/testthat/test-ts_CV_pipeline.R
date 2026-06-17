@@ -8,7 +8,7 @@ test_that("lightweight CV pipeline works", {
     step = 24
   )
 
-  expect_equal(length(folds), 1)
+  expect_length(folds, 1)
 
   cv_results <- ts_cv_run(
     folds,

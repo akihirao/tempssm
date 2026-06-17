@@ -48,16 +48,18 @@ summary.tempssm <- function(object, ...) {
   use_season <- object$use_season
   state_map <- object$state_map
 
+  ## ---- Parameter indexing ------------------------------------------
+  param_idx_list <- .get_param_index(ar_order = ar_order,
+                                     use_season = use_season)
+  
+  ar_idx <- param_idx_list$ar
+  var_idx <- param_idx_list$var
+  H_idx <- param_idx_list$H
+  
   ## --- indices (as before) ----
   if (use_season) {
-    ar_idx <- 3:(2 + ar_order)
-    var_idx <- 3 + ar_order
-    H_idx <- 4 + ar_order
     Q_season_est <- exp(pars[2])
   } else {
-    ar_idx <- 2:(1 + ar_order)
-    var_idx <- 2 + ar_order
-    H_idx <- 3 + ar_order
     Q_season_est <- NA
   }
 

@@ -63,7 +63,7 @@ test_that("parameters are exponentiated correctly", {
 test_that("AR coefficients are transformed correctly", {
   params <- get_params(res_tempssm)
 
-  expect_true(length(params$ARs) == res_tempssm$ar_order)
+  expect_equal(length(params$ARs), res_tempssm$ar_order)
 })
 
 

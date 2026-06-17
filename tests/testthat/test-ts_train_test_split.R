@@ -25,7 +25,7 @@ test_that("number of folds matches expected", {
     step = step
   )
 
-  expect_equal(length(folds), expected)
+  expect_length(folds, expected)
 })
 
 
@@ -54,8 +54,8 @@ test_that("train and test indices are consistent", {
   t_idx <- f1$train_idx
   s_idx <- f1$test_idx
 
-  expect_true(t_idx[1] < t_idx[2])
-  expect_true(s_idx[1] < s_idx[2])
+  expect_gt(t_idx[2], t_idx[1])
+  expect_gt(s_idx[2], s_idx[1])
 
   expect_equal(s_idx[1], t_idx[2] + 1)
 })
@@ -66,13 +66,13 @@ test_that("train and test lengths match indices", {
 
   f <- folds[[1]]
 
-  expect_equal(
-    length(f$train_ts),
+  expect_length(
+    f$train_ts,
     diff(f$train_idx) + 1
   )
 
-  expect_equal(
-    length(f$test_ts),
+  expect_length(
+    f$test_ts,
     diff(f$test_idx) + 1
   )
 })
@@ -87,15 +87,15 @@ test_that("fixed vs expanding window works correctly", {
     fixed_window = TRUE
   )
 
-  # expanding → 長くなる
-  expect_true(
-    length(f_exp[[2]]$train_ts) >
-      length(f_exp[[1]]$train_ts)
+  # expanding
+  expect_gt(
+    length(f_exp[[2]]$train_ts),
+    length(f_exp[[1]]$train_ts)
   )
 
   # fixed → 一定
-  expect_equal(
-    length(f_fix[[2]]$train_ts),
+  expect_length(
+    f_fix[[2]]$train_ts,
     length(f_fix[[1]]$train_ts)
   )
 })
@@ -127,8 +127,8 @@ test_that("works with exogenous variables", {
   expect_s3_class(f1$exo_train_ts, "ts")
   expect_s3_class(f1$exo_test_ts, "ts")
 
-  expect_equal(
-    length(f1$exo_train_ts),
+  expect_length(
+    f1$exo_train_ts,
     length(f1$train_ts)
   )
 })

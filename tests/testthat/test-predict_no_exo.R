@@ -21,7 +21,7 @@ test_that("prediction length matches h", {
   h <- 12
   pred <- .predict_no_exo(res$model, h)
 
-  expect_equal(length(pred), h)
+  expect_length(pred, h)
 })
 
 
@@ -49,8 +49,8 @@ test_that("different h produces different length", {
   pred1 <- .predict_no_exo(res$model, h = 3)
   pred2 <- .predict_no_exo(res$model, h = 6)
 
-  expect_equal(length(pred1), 3)
-  expect_equal(length(pred2), 6)
+  expect_length(pred1, 3)
+  expect_length(pred2, 6)
 })
 
 
@@ -62,5 +62,5 @@ test_that("works with minimal horizon h = 1", {
 
   pred <- .predict_no_exo(res$model, h = 1)
 
-  expect_equal(length(pred), 1)
+  expect_length(pred, 1)
 })

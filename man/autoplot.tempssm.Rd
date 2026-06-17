@@ -23,7 +23,7 @@ Defaults to \code{0.95}.}
 }
 \value{
 A \code{ggplot} object if a single component is requested,
-or a \pkg{patchwork} object combining multiple plots.
+or a \code{gtable} object combining all component plots.
 }
 \description{
 Create diagnostic and component plots for a model fitted by

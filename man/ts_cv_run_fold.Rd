@@ -20,8 +20,10 @@ A list with the following components:
   \item{converged}{Logical indicating whether model fitting succeeded.}
   \item{y_train}{Training time series (\code{ts}).}
   \item{y_test}{Test time series (\code{ts}).}
-  \item{y_pred}{Predicted values for the test period (object returned by \code{predict}).}
-  \item{model}{Fitted model object returned by \code{tempssm()} (or \code{NULL} if failed).}
+  \item{y_pred}{Predicted values for the test period (object returned 
+  by \code{predict}).}
+  \item{model}{Fitted model object returned 
+  by \code{tempssm()} (or \code{NULL} if failed).}
 }
 }
 \description{

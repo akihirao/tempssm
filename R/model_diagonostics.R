@@ -23,6 +23,28 @@ get_residuals <- function(res) {
 }
 
 
+#' Compute kurtosis
+#'
+#' Uses non-excess kurtosis, m4 / m2^2.
+#'
+#' @param x A numeric vector.
+#' @param na.rm Logical; if TRUE, missing values are removed.
+#'
+#' @return A numeric scalar.
+#' @keywords internal
+#' @noRd
+.kurtosis <- function(x, na.rm = FALSE) {
+  if (na.rm) {
+    x <- x[!is.na(x)]
+  }
+
+  m2 <- mean((x - mean(x))^2)
+  m4 <- mean((x - mean(x))^4)
+
+  m4 / m2^2
+}
+
+
 #' Residual diagnostics for tempssm models
 #'
 #' @description
@@ -69,7 +91,7 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
     lag = min(2 * freq, n_ts / 5)
   )
 
-  kurt <- moments::kurtosis(r)
+  kurt <- .kurtosis(r)
 
   if (JB_test) {
     jb <- tseries::jarque.bera.test(r)

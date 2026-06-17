@@ -55,5 +55,5 @@ test_that("ar_order = 1 returns scalar ar index", {
 
   idx <- .get_param_index(1, TRUE)
 
-  expect_equal(length(idx$ar), 1)
+  expect_length(idx$ar, 1)
 })

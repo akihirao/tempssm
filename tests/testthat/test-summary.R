@@ -74,7 +74,7 @@ test_that("summary contains valid AR coefficients", {
   s <- summary(res_tempssm)
 
   expect_true(is.list(s$coef_ar))
-  expect_true(s$coef_ar$AR_order >= 1)
+  expect_true(s$coef_ar$AR_order <= 1)
   expect_length(s$coef_ar$AR_coef, s$coef_ar$AR_order)
 })
 

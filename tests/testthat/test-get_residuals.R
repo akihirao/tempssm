@@ -4,7 +4,7 @@ test_that("get_residuals returns a numeric vector", {
   r <- get_residuals(res_tempssm)
 
   expect_type(r, "double")
-  expect_true(length(r) > 0)
+  expect_gt(length(r), 0)
   expect_true(all(is.finite(r)))
 })
 

@@ -88,9 +88,6 @@ Load the following libraries for executing 'How to use'.
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 ## Set libraries
 library(tempssm)
-
-library(dplyr)
-library(patchwork)
 ```
 
 ## Input Data Format
@@ -182,13 +179,8 @@ and their rates of change (drift) by extracting the corresponding latent
 components from the state-space model.Additionally, seasonal variability and autoregressive dependence are plotted out, allowing the underlying trend behavior to be examined more clearly.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-# plot each of components at once
-plt_level <- forecast::autoplot(res, component = c("level"))
-plt_drift <- forecast::autoplot(res, component = c("drift"))
-plt_season <- forecast::autoplot(res, component = c("season"))
-plt_ar1 <- forecast::autoplot(res, component = c("ar1"))
-
-plt_level + plt_drift + plt_season + plt_ar1 + patchwork::plot_layout(ncol = 2, nrow = 2)
+# plot all components at once
+forecast::autoplot(res)
 ```
 
 The level component shows a persistent upward trend in sea surface
@@ -232,5 +224,3 @@ print(mean_drift_year)
 ```
  
 Average annual increase in SST is approximately 0.05 °C.
-
-

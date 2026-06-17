@@ -3,5 +3,5 @@
 test_that("ts_slice works correctly", {
   sliced <- tempssm:::.ts_slice(temp_ts_test, 3, 6)
 
-  expect_equal(length(sliced), 4)
+  expect_length(sliced, 4)
 })

@@ -9,7 +9,7 @@ check_ts_basic <- function(ts_obj, res) {
 }
 
 check_ts_univariate <- function(ts_obj) {
-  expect_equal(NCOL(ts_obj), 1)
+  expect_identical(NCOL(ts_obj), 1L)
 }
 
 
@@ -18,7 +18,7 @@ check_ts_univariate <- function(ts_obj) {
 
 check_ts_ci_structure <- function(ts_ci, value_name) {
   testthat::expect_s3_class(ts_ci, "ts")
-  testthat::expect_equal(NCOL(ts_ci), 3)
+  testthat::expect_identical(NCOL(ts_ci), 3L)
   testthat::expect_named(
     as.data.frame(ts_ci),
     c(value_name, "lwr", "upr")
@@ -27,8 +27,8 @@ check_ts_ci_structure <- function(ts_ci, value_name) {
 
 
 check_ts_ci_values <- function(ts_ci, ci_obj, key, scale = 1) {
-  testthat::expect_equal(ts_ci[, "lwr"], ci_obj[[key]][, "lwr"] * scale)
-  testthat::expect_equal(ts_ci[, "upr"], ci_obj[[key]][, "upr"] * scale)
+  testthat::expect_identical(ts_ci[, "lwr"], ci_obj[[key]][, "lwr"] * scale)
+  testthat::expect_identical(ts_ci[, "upr"], ci_obj[[key]][, "upr"] * scale)
 }
 
 # ---- error helper ------------------------------------------------------

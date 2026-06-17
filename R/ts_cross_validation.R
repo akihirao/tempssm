@@ -98,7 +98,8 @@
 #' no exogenous variables are present. This function simply calls
 #' \code{stats::predict()} with \code{n.ahead}.
 #'
-#' @param model A fitted model object (typically \code{SSModel} from \code{tempssm}).
+#' @param model A fitted model object (typically \code{SSModel} 
+#' from \code{tempssm}).
 #' @param h Integer; forecast horizon.
 #'
 #' @return An object returned by \code{stats::predict()}.
@@ -183,7 +184,8 @@
 #'
 #' @param pars Numeric vector of model parameters.
 #' @param exo_mat Matrix of exogenous variables for the test period.
-#' @param data A matrix-valued \code{ts} object combining response and exogenous data.
+#' @param data A matrix-valued \code{ts} object combining response and 
+#' exogenous data.
 #' @param freq Integer; seasonal frequency.
 #' @param ar_order Integer; autoregressive order.
 #' @param use_season Logical; whether to include a seasonal component.
@@ -293,8 +295,10 @@
 #'   \item{converged}{Logical indicating whether model fitting succeeded.}
 #'   \item{y_train}{Training time series (\code{ts}).}
 #'   \item{y_test}{Test time series (\code{ts}).}
-#'   \item{y_pred}{Predicted values for the test period (object returned by \code{predict}).}
-#'   \item{model}{Fitted model object returned by \code{tempssm()} (or \code{NULL} if failed).}
+#'   \item{y_pred}{Predicted values for the test period (object returned 
+#'   by \code{predict}).}
+#'   \item{model}{Fitted model object returned 
+#'   by \code{tempssm()} (or \code{NULL} if failed).}
 #' }
 #'
 #' @details

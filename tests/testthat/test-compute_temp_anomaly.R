@@ -13,7 +13,7 @@ test_that("compute_temp_anomaly works without baseline", {
   expect_s3_class(anom, "ts")
   expect_equal(frequency(anom), 12)
   expect_equal(start(anom), start(temp_ts))
-  expect_equal(length(anom), length(temp_ts))
+  expect_length(anom, length(temp_ts))
 })
 
 
@@ -27,7 +27,7 @@ test_that("compute_temp_anomaly works with baseline", {
   anom <- compute_temp_anomaly(temp_ts, baseline = c(2005, 2010))
 
   expect_s3_class(anom, "ts")
-  expect_equal(length(anom), length(temp_ts))
+  expect_length(anom, length(temp_ts))
 })
 
 

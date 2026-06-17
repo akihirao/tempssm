@@ -3,7 +3,7 @@
 test_that(".build_jma_url constructs correct URL", {
   url <- .build_jma_url("138")
 
-  expect_equal(
+  expect_identical(
     url,
     "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area138.txt"
   )
@@ -13,7 +13,7 @@ test_that(".build_jma_url constructs correct URL", {
 test_that("numeric sea_area_id is handled", {
   url <- .build_jma_url(138)
 
-  expect_equal(
+  expect_identical(
     url,
     "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area138.txt"
   )

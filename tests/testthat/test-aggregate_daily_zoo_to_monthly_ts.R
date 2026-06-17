@@ -11,9 +11,9 @@ test_that("aggregate_daily_zoo_to_monthly_ts works for valid input", {
   res <- aggregate_daily_zoo_to_monthly_ts(zoo_obj)
 
   expect_s3_class(res, "ts")
-  expect_equal(frequency(res), 12)
-  expect_true(length(res) >= 2) # 2 months
-  expect_equal(colnames(res), "Temp")
+  expect_identical(frequency(res), 12)
+  expect_gt(length(res), 2) # 2 months
+  expect_identical(colnames(res), "Temp")
 })
 
 
@@ -27,7 +27,7 @@ test_that("var argument selects correct column", {
 
   res <- aggregate_daily_zoo_to_monthly_ts(zoo_obj, var = "B")
 
-  expect_equal(colnames(res), "B")
+  expect_identical(colnames(res), "B")
 })
 
 

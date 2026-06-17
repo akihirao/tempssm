@@ -72,7 +72,7 @@ test_that("works with single observation", {
 
   res <- .build_sst_zoo(sst)
 
-  expect_equal(length(res), 1)
+  expect_length(res, 1)
 })
 
 
@@ -85,5 +85,5 @@ test_that("handles empty input", {
   res <- .build_sst_zoo(sst)
 
   expect_s3_class(res, "zoo")
-  expect_equal(length(res), 0)
+  expect_length(res, 0)
 })

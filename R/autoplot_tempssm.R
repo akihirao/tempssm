@@ -1,3 +1,36 @@
+
+#' Arrange ggplot objects and return a gtable
+#'
+#' @param plots A list of ggplot objects
+#' @param nrow Number of rows
+#' @param ncol Number of columns
+#'
+#' @return A gtable object (grob)
+#' @keywords internal
+#' @noRd
+.make_gtable_layout <- function(plots,
+                               nrow = length(plots),
+                               ncol = 1) {
+  if (!is.list(plots)) {
+    stop("`plots` must be a list.", call. = FALSE)
+  }
+
+  grobs <- lapply(plots, ggplot2::ggplotGrob)
+
+  mat <- matrix(grobs,
+                nrow = nrow,
+                ncol = ncol,
+                byrow = TRUE)
+
+  gtable::gtable_matrix(
+    name = "layout",
+    grobs = mat,
+    widths  = grid::unit(rep(1, ncol), "null"),
+    heights = grid::unit(rep(1, nrow), "null")
+  )
+}
+
+
 #' Autoplot method for tempssm objects
 #'
 #' @description
@@ -25,7 +58,7 @@
 #'
 #' @return
 #' A \code{ggplot} object if a single component is requested,
-#' or a \pkg{patchwork} object combining multiple plots.
+#' or a \code{gtable} object combining all component plots.
 #'
 #' @examples
 #' \dontrun{
@@ -49,7 +82,7 @@ autoplot.tempssm <- function(object,
                              ci = TRUE,
                              ci_level = 0.95,
                              ...) {
-  # ---- Component mapping ----
+
   plotters <- list(
     level  = autoplot_level,
     drift  = autoplot_drift,
@@ -57,12 +90,10 @@ autoplot.tempssm <- function(object,
     ar1    = autoplot_ar1
   )
 
-  # ---- Validate component ----
   if (!is.null(component)) {
     if (!is.character(component) || length(component) != 1) {
       stop("`component` must be a single character string.",
-        call. = FALSE
-      )
+           call. = FALSE)
     }
 
     if (!component %in% names(plotters)) {
@@ -73,7 +104,6 @@ autoplot.tempssm <- function(object,
       )
     }
 
-    # ---- Single component ----
     return(
       plotters[[component]](
         object,
@@ -84,14 +114,15 @@ autoplot.tempssm <- function(object,
     )
   }
 
-  # ---- All components ----
   plots <- lapply(
     plotters,
-    function(f) {
-      f(object, ci = ci, ci_level = ci_level, ...)
-    }
+    function(f) f(object, ci = ci, ci_level = ci_level, ...)
   )
 
-  # Combine using patchwork
-  patchwork::wrap_plots(plots, ncol = 1)
+  g <- .make_gtable_layout(plots, ncol = 1)
+
+  grid::grid.newpage()
+  grid::grid.draw(g)
+
+  invisible(g)
 }

@@ -937,27 +937,24 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
     cli::cli_abort("Retrieved data has unexpected or empty format.")
   }
 
-  ## remove last row
-  sst_tidy <- sst_raw %>%
-    dplyr::slice(-dplyr::n())
+  ## preserve the existing behavior of dropping the final parsed row.
+  sst_tidy <- as.data.frame(sst_raw[-nrow(sst_raw), , drop = FALSE])
 
   colnames(sst_tidy) <- c(
     "Year", "Month", "Day", "areaNo", "flag", "Temp"
   )
 
-  sst_tidy <- sst_tidy %>%
-    dplyr::mutate(
-      Temp = as.numeric(.data$Temp),
-      date = lubridate::make_date(
-        year  = as.integer(.data$Year),
-        month = as.integer(.data$Month),
-        day   = as.integer(.data$Day)
-      ),
-      Temp = dplyr::if_else(.data$Temp <= -999, NA_real_, .data$Temp)
-    ) %>%
-    dplyr::select(dplyr::all_of(c("date", "Temp", "flag")))
+  sst_tidy$Temp <- as.numeric(sst_tidy$Temp)
+  sst_tidy$date <- as.Date(
+    ISOdate(
+      year = as.integer(sst_tidy$Year),
+      month = as.integer(sst_tidy$Month),
+      day = as.integer(sst_tidy$Day)
+    )
+  )
+  sst_tidy$Temp[sst_tidy$Temp <= -999] <- NA_real_
 
-  sst_tidy
+  sst_tidy[, c("date", "Temp", "flag")]
 }
 
 
@@ -1013,18 +1010,22 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 
   .tempssm_cli_debug("Fetching JMA SST data (area_id={sea_area_id})")
 
-  resp <- tryCatch(
-    httr2::request(url) %>%
-      httr2::req_user_agent(.user_agent()) %>%
-      httr2::req_error(body = function(resp) {
+  req <- httr2::request(url)
+  req <- httr2::req_user_agent(req, .user_agent())
+  req <- httr2::req_error(
+    req,
+    body = function(resp) {
         paste0(
           "Failed to retrieve SST data for sea_area_id = '",
           sea_area_id,
           "'. HTTP status: ",
           httr2::resp_status(resp)
         )
-      }) %>%
-      httr2::req_perform(),
+    }
+  )
+
+  resp <- tryCatch(
+    httr2::req_perform(req),
     error = function(e) {
       cli::cli_abort(
         "Failed to access JMA SST endpoint: {conditionMessage(e)}"
@@ -1092,13 +1093,9 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #' provided by the Japan Meteorological Agency (JMA),
 #' and returns the data as a \code{zoo} object indexed by date.
 #'
-#' @importFrom magrittr %>%
 #' @importFrom readr read_csv
-#' @importFrom rlang .data
 #' @importFrom httr2 request req_user_agent req_error req_perform resp_body_raw resp_status
-#' @import dplyr
 #' @import zoo
-#' @import lubridate
 #'
 #' @param sea_area_id
 #' Character string giving the JMA sea area ID
@@ -1163,13 +1160,9 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' provided by the Japan Meteorological Agency (JMA),
 #' and returns the monthly average data as a \code{ts} object.
 #'
-#' @importFrom magrittr %>%
 #' @importFrom readr read_csv
-#' @importFrom rlang .data
 #' @importFrom httr2 request req_user_agent req_error req_perform resp_body_raw resp_status
-#' @import dplyr
 #' @import zoo
-#' @import lubridate
 #'
 #' @param sea_area_id
 #' Character string giving the JMA sea area ID

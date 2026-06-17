@@ -19,7 +19,7 @@ test_that("read_monthly_temp_ts works for valid CSV", {
   expect_s3_class(ts_out, "ts")
   expect_equal(frequency(ts_out), 12)
   expect_equal(start(ts_out), c(2001, 1))
-  expect_equal(length(ts_out), 4)
+  expect_length(ts_out, 4)
 })
 
 
