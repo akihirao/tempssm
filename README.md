@@ -54,11 +54,15 @@ if (!requireNamespace("devtools", quietly = TRUE)) {
 devtools::install_github("akihirao/tempssm")
 ```
 
-## Tutorial
+## Documentation
 
-A tutorial is available in the package vignette:
+A short tutorial is available in the package vignette:
 
 <https://github.com/akihirao/tempssm/blob/main/vignettes/tutorial.pdf>
+
+A more detailed PDF manual is also available:
+
+<https://github.com/akihirao/tempssm/blob/main/inst/doc/tempssm-manual.pdf>
 
 ## Basic Usage
 
