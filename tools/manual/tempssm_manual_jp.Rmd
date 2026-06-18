@@ -1,0 +1,211 @@
+---
+title: "Rパッケージ ThermoSST マニュアル"
+author: "平尾 章 (水研機構　水産資源研究所）"
+date: "`r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    toc: true
+    toc_depth: 2
+header-includes:
+  - \usepackage{xeCJK}
+  - \setmainfont{Times New Roman}
+  - \setCJKmainfont{Hiragino Mincho ProN}
+---
+
+# 1. 概要
+
+ThermoSSMは、温度時系列データの状態空間モデル分析をおこなうためのRパッケージです。温度の長期トレンドを推定するにあたって、線形ガウス状態空間モデルを適用し、カルマンフィルタリングと平滑化によって高速にパラメーターの推定をおこないます。    
+　温度の長期トレンドの推定において、時点を説明変数とした線形回帰モデルを使う場合、誤差項が独立であることが仮定されています。しかしながら時系列データでは誤差項が互いに独立ではなく、時点に対して正の自己相関を有する場合、最小事情推定量のばらつきが大きくなってしまい、本当は説明変数と目的変数の間に関係はない場合でも有意な回帰係数が得られやすくなるなどの問題が生じることが知られています。また地球温暖化の下にある自然界における各種の温度データは、単純な線形増加ではなく、周期的な変動を繰り返しながら増加していると考えられ、これを単純な線形回帰モデルで表現することは難しいと思われます。     
+　2000年代以降、時系列データ分析に状態空間モデルが広く利用されるようになりました。状態空間モデルは目に見えない「状態」とデータとして取得できる「観測値」に分けてモデル化を行います。多くの時系列データは一般的にトレンドや季節性に加えて、外部から影響を与える要因（外生変数）など様々な変動要因を同時に有します。状態空間モデルはこれらを個別の成分に分けて推定・可視化できるため、モデルの解釈が容易となります。そのため、温度の長期トレンドに加えて、季節的変化や外生変数の影響を考慮した推定が可能です。またフィールド調査データでは、観測値がしばしば欠測することがありますが、状態空間モデルを用いると応答変数としての観測値の欠測を事前に補間することなく、そのまま分析に利用することができます。誤差構造に正規分布を仮定した線形ガウス状態空間モデルは、カルマンフィルタという手法を用いることで容易かつ高速に「状態」をするすることができるため、様々なタイプの温度時系列データに適用するための有用な統計的アプローチになると考えられます。
+
+## 主な機能   
+* 温度の長期トレンドについて、季節性や外生変数の影響さらにはトレンドの変化を考慮して推定
+* 主に月次の温度時系列データの解析用に開発。ただし季節周期は任意の単位（半月や四半期など）に設定可能
+* モデル評価のための時系列クロスバリデーションの実装  
+
+なお、このパッケージの核となるRコードは、Baba et al. (2024) の補足資料として提供されているコードに由来し、カルマンフィルタリングおよび平滑化の計算はRライブラリーKFASに委ねられています。
+[https://github.com/logics-of-blue/sea-temperature-trend-jogashima](https://github.com/logics-of-blue/sea-temperature-trend-jogashima)
+
+
+# 2. インストール
+githubレポジトリーから次のコマンドにてインストールしてください。  
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+if(!require("devtools")){ #もしRパッケージ devtoolsがインストールされていなければ
+  	install.packages("devtools")
+}
+
+if(!require("ThermoSSM")){#もしRパッケージ ThermoSSMがまだインストールされていなければ
+  devtools::install_github("akihirao/ThermoSSM")
+}
+```
+
+
+# 3. 解析方法
+これからパッケージの付録データを使って温度時系列データの解析の実例を紹介します。
+
+解析の準備として、まずThermoSSMおよびその他に必要なパッケージを読み込んでおきます。
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+library(ThermoSSM) # ThermoSSMの読み込み
+
+library(forecast)
+library(purrr)
+library(tibble)
+library(readr)
+library(dplyr)
+library(ggplot2)
+```
+
+## 3.1 富士山山頂の気温データの解析例
+最初の実例として、富士山山頂の気温データ(fuji_temp)を使った解析例を紹介します。パッケージの付録データとして fuji_tempには、[気象庁] (https://www.jma.go.jp/jma/indexe.html)の公開データに由来する月平均気温の観測値( 1937年7月—2025年12月）がts object形式で収められています。     
+
+### 3.1.1 付録データの読み込み
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+data(fuji_temp) #付録データの読み込み
+
+# A ts object of monthly air temperature at the summit of Mt. Fuji, Japan
+head(fuji_temp)
+```
+
+  
+### 3.1.2 月次気温時系列データのプロット
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+plot_temp_fuji <- forecast::autoplot(fuji_temp) +
+  labs(y = expression(Temperature~(degree*C)), 
+       x = "Time") +
+  ggtitle("Monthly mean air temperature at the summit of Mt. Fuji, Japan")
+
+plot(plot_temp_fuji)
+# The example data includes missing observation values
+```
+
+
+### 3.1.3 気温偏差データのプロット 
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# Generate temperature anomalies
+example_anomaly <- ThermoSSM::monthly_anomaly(fuji_temp)
+
+monthly_example_anomaly_plot <- forecast::autoplot(example_anomaly) +
+  labs(y = expression(Temperature~(degree*C)), 
+       x = "Time") +
+  ggtitle("Temperature anomaliese")
+  
+plot(monthly_example_anomaly_plot)
+```
+
+
+### 3.1.4 月単位の季節サイクルのプロット
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+monthly_seasonal_cycle_fuji <- ThermoSSM::mean_seasonal_cycle(fuji_temp) 
+summary(monthly_seasonal_cycle_fuji)
+
+plt_monthly_seasonal_cycle_fuji <- ggplot(
+  data = monthly_seasonal_cycle_fuji,
+  aes(x = Month, y = Temperature)
+) +
+  geom_point(size = 2) +
+  geom_line(linetype = "dashed") +
+  labs(
+    title = "Monthly seasonal cycle of temperature",
+    x = "Month",
+    y = expression(Temperature~(degree*C))
+  ) +
+  scale_x_continuous(
+    breaks = 1:12,
+    labels = sprintf("%02d", 1:12)
+  )
+
+
+plot(plt_monthly_seasonal_cycle_fuji)
+```
+
+### 3.1.5 線形ガウス状態空間モデルの適用
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+res <- lgssm(fuji_temp) 
+summary(res)
+```
+
+### 3.1.6 温度の長期トレンドの構成要素としての水準、ドリフト、季節性、自己回帰の各成分のプロット
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# plot each of components at once
+plot(res)
+```
+
+### 3.1.7 モデル診断
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+resid_test_output <- ThermoSSM::wrapper_checkresiduals(res)
+
+print(resid_test_output)
+```
+
+### 3.1.8 推定パラメータの表示
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# Parameters including process errors and observation error
+params <- ThermoSSM::extract_param(res)
+params
+
+# Smoothing estimates
+alpha_hat <- res$kfs$alphahat
+head(alpha_hat)
+
+
+#　Smoothing estimate of level component
+level_ts <- ThermoSSM::extract_level_ts(res)
+
+#　Smoothing estimate of drift component
+drift_ts <- ThermoSSM::extract_drift_ts(res)
+
+# Average drift rate per year
+mean_drift_year <- mean(drift_ts) * 12
+print(mean_drift_year)
+
+# Average drift rate per year during 1950s
+drift_per_year_1950s <- window(drift_ts,
+                               start=c(1950,1),
+                               end=c(1959,12)
+                               ) %>%  mean()*12
+print(drift_per_year_1950s)
+
+# Average drift rate per year during 2010s
+drift_per_year_2010s <- window(drift_ts,
+                               start=c(2010,1),
+                               end=c(2019,12)
+                               ) %>%  mean()*12
+print(drift_per_year_2010s)
+
+```
+
+### 3.1.9 水準成分（95%信頼区間付）のプロット
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+plt_level_ci <- plot(res,
+                     components = "level",
+                     ci = TRUE,
+                     ci_level = 0.95
+                     )
+
+plot(plt_level_ci)
+```
+
+### 3.1.10 ドリフト成分（95%信頼区間付）のプロット
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+plt_drift_ci <- plot(res,
+                     components = "drift",
+                     ci = TRUE,
+                     ci_level = 0.95
+                     )
+
+plot(plt_drift_ci)
+```
+
+
+
