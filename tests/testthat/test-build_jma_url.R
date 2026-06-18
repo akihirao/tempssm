@@ -5,7 +5,10 @@ test_that(".build_jma_url constructs correct URL", {
 
   expect_identical(
     url,
-    "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area138.txt"
+    paste0(
+      "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/",
+      "engan/txt/area138.txt"
+    )
   )
 })
 
@@ -15,7 +18,10 @@ test_that("numeric sea_area_id is handled", {
 
   expect_identical(
     url,
-    "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/txt/area138.txt"
+    paste0(
+      "https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/",
+      "engan/txt/area138.txt"
+    )
   )
 })
 

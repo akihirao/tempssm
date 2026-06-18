@@ -8,10 +8,10 @@
 #' data(niigata_sst)
 #' res <- tempssm(niigata_sst)
 #'
-#' residuals <- get_residuals(res)
+#' residuals <- get_tempssm_residuals(res)
 #' }
 #' @export
-get_residuals <- function(res) {
+get_tempssm_residuals <- function(res) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
@@ -80,7 +80,7 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
     )
   }
 
-  r <- get_residuals(res)
+  r <- get_tempssm_residuals(res)
 
   freq <- frequency(res$data_temp)
   n_ts <- length(r)
@@ -132,13 +132,13 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
 #' res <- tempssm(niigata_sst)
 #'
 #' model_diagnose <- diagnose_residuals(res)
-#' plot_residual_diagnostics(model_diagnose)
+#' plot_tempssm_residual_diagnostics(model_diagnose)
 #' }
 #' @export
-plot_residual_diagnostics <- function(res,
-                                      save = FALSE,
-                                      prefix = "residuals") {
-  r <- get_residuals(res)
+plot_tempssm_residual_diagnostics <- function(res,
+                                              save = FALSE,
+                                              prefix = "residuals") {
+  r <- get_tempssm_residuals(res)
 
   # Standard residual plot
   forecast::checkresiduals(r, test = FALSE)

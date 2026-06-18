@@ -4,7 +4,7 @@
 \alias{set_ts_name}
 \title{Assign variable names to a ts object}
 \usage{
-set_ts_name(ts_in, label)
+set_ts_name(ts_in, label, quiet = FALSE)
 }
 \arguments{
 \item{ts_in}{A time series object of class \code{ts}. May be univariate or multivariate.}
@@ -13,6 +13,8 @@ set_ts_name(ts_in, label)
 For a univariate series, must be a length-one character string.
 For a multivariate series, must be either length one (recycled) or the same
 length as the number of columns in \code{ts_in}.}
+
+\item{quiet}{Logical; if \code{TRUE}, suppresses the informational message.}
 }
 \value{
 A \code{ts} object with assigned variable names.

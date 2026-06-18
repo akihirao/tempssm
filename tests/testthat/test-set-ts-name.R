@@ -139,3 +139,22 @@ test_that("existing column names are overwritten", {
 
   expect_equal(colnames(ts_named), c("new1", "new2"))
 })
+
+
+test_that("quiet suppresses informational message", {
+  ts_uni <- ts(rnorm(12), frequency = 12)
+
+  expect_silent(
+    set_ts_name(ts_uni, label = "x", quiet = TRUE)
+  )
+})
+
+
+test_that("invalid quiet value triggers error", {
+  ts_uni <- ts(rnorm(12), frequency = 12)
+
+  expect_error(
+    set_ts_name(ts_uni, label = "x", quiet = NA),
+    "`quiet` must be a single logical value"
+  )
+})

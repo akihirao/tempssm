@@ -40,6 +40,13 @@ test_that("grid_arrange_base handles single plot", {
   )
 })
 
+test_that(".make_gtable_layout requires a list of plots", {
+  expect_error(
+    tempssm:::.make_gtable_layout(NULL),
+    "`plots` must be a list."
+  )
+})
+
 test_that("autoplot.tempssm validates component", {
   expect_error(
     autoplot(res_tempssm, component = c("level", "drift")),

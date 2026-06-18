@@ -10,23 +10,23 @@ test_that("get_exo_coef returns NULL for non-converged models", {
 })
 
 
-test_that("get_params handles missing fit results gracefully", {
+test_that("get_tempssm_params handles missing fit results gracefully", {
   res <- res_tempssm
   res$fit <- NULL
 
   expect_error(
-    get_params(res),
+    get_tempssm_params(res),
     "Fitted parameters are not available"
   )
 })
 
 
-test_that("get_params handles missing optim.out gracefully", {
+test_that("get_tempssm_params handles missing optim.out gracefully", {
   res <- res_tempssm
   res$fit$optim.out <- NULL
 
   expect_error(
-    get_params(res),
+    get_tempssm_params(res),
     "Fitted parameters are not available"
   )
 })
@@ -90,7 +90,7 @@ test_that("get_drift_ts works even if model did not converge", {
 })
 
 
-test_that("get_season_ts returns NULL for non-seasonal model even if converged", {
+test_that("get_season_ts returns NULL for non-seasonal converged model", {
   res <- res_tempssm
   res$use_season <- FALSE
 

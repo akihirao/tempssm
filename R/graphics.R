@@ -1,5 +1,7 @@
 #' Plot the estimated level component from a tempssm model
 #'
+#' @importFrom rlang .data
+#'
 #' @description
 #' Create a \pkg{ggplot2} visualization of the estimated level component
 #' obtained from a state space model fitted by \code{tempssm()}.

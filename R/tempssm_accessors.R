@@ -329,10 +329,10 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' \dontrun{
 #' data(niigata_sst)
 #' res <- tempssm(niigata_sst)
-#' params <- get_params(res)
+#' params <- get_tempssm_params(res)
 #' }
 #' @export
-get_params <- function(res) {
+get_tempssm_params <- function(res) {
   if (!inherits(res, "tempssm")) {
     stop("`res` must be an object of class 'tempssm.'", call. = FALSE)
   }

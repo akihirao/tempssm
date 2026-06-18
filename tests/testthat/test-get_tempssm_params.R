@@ -1,7 +1,7 @@
-# tests/testthat/test-get_params.R
+# tests/testthat/test-get_tempssm_params.R
 
-test_that("get_params returns a list with expected names", {
-  params <- get_params(res_tempssm)
+test_that("get_tempssm_params returns a list with expected names", {
+  params <- get_tempssm_params(res_tempssm)
 
   expect_type(params, "list")
 
@@ -12,8 +12,8 @@ test_that("get_params returns a list with expected names", {
 })
 
 
-test_that("get_params returns numeric values", {
-  params <- get_params(res_tempssm)
+test_that("get_tempssm_params returns numeric values", {
+  params <- get_tempssm_params(res_tempssm)
 
   expect_true(is.numeric(params$H))
   expect_true(is.numeric(params$Q_trend))
@@ -26,14 +26,14 @@ test_that("Q_season is NA when seasonal is not used", {
   bad_res <- res_tempssm
   bad_res$use_season <- FALSE
 
-  params <- get_params(bad_res)
+  params <- get_tempssm_params(bad_res)
 
   expect_true(is.na(params$Q_season))
 })
 
 
 test_that("Q_season is computed when seasonal is used", {
-  params <- get_params(res_tempssm)
+  params <- get_tempssm_params(res_tempssm)
 
   expect_true(is.numeric(params$Q_season))
   expect_false(is.na(params$Q_season))
@@ -54,22 +54,22 @@ test_that("parameters are exponentiated correctly", {
 
   expected_H <- exp(pars[H_idx])
 
-  params <- get_params(res_tempssm)
+  params <- get_tempssm_params(res_tempssm)
 
   expect_equal(params$H, expected_H)
 })
 
 
 test_that("AR coefficients are transformed correctly", {
-  params <- get_params(res_tempssm)
+  params <- get_tempssm_params(res_tempssm)
 
   expect_equal(length(params$ARs), res_tempssm$ar_order)
 })
 
 
-test_that("get_params checks input", {
+test_that("get_tempssm_params checks input", {
   expect_error(
-    get_params(NULL),
+    get_tempssm_params(NULL),
     "`res` must be an object of class"
   )
 })

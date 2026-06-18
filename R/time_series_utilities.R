@@ -19,6 +19,9 @@
 #' For a multivariate series, must be either length one (recycled) or the same
 #' length as the number of columns in \code{ts_in}.
 #'
+#' @param quiet
+#' Logical; if \code{TRUE}, suppresses the informational message.
+#'
 #' @details
 #' This function does not modify the time attributes of the input series
 #' (e.g., start time, frequency). It only assigns variable names while 
@@ -56,7 +59,7 @@
 #' )
 #'
 #' @export
-set_ts_name <- function(ts_in, label) {
+set_ts_name <- function(ts_in, label, quiet = FALSE) {
   ## ---- input check ----------------------------------------------------
   if (!inherits(ts_in, "ts")) {
     cli::cli_abort(
@@ -73,10 +76,14 @@ set_ts_name <- function(ts_in, label) {
   if (!(length(label) == 1L || length(label) == n_col)) {
     cli::cli_abort(
       paste0(
-      "Length of {.arg label} must be 1 or equal to",
-      "the number of series in {.arg ts_in}."
+        "Length of {.arg label} must be 1 or equal to ",
+        "the number of series in {.arg ts_in}."
       )
     )
+  }
+
+  if (!is.logical(quiet) || length(quiet) != 1L || is.na(quiet)) {
+    cli::cli_abort("`quiet` must be a single logical value.")
   }
 
   .tempssm_cli_debug("Assigning variable names to {.cls ts} object")
@@ -106,9 +113,11 @@ set_ts_name <- function(ts_in, label) {
   )
 
   ## ---- inform ---------------------------------------------------------
-  .tempssm_cli_inform(
-    "Assigned {length(label)} variable name{?s} to time series"
-  )
+  if (!quiet) {
+    .tempssm_cli_inform(
+      "Assigned {length(label)} variable name{?s} to time series"
+    )
+  }
 
   return(ts_out)
 }
@@ -1094,8 +1103,8 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #' and returns the data as a \code{zoo} object indexed by date.
 #'
 #' @importFrom readr read_csv
-#' @importFrom httr2 request req_user_agent req_error req_perform resp_body_raw resp_status
-#' @import zoo
+#' @importFrom httr2 request req_user_agent req_error
+#' @importFrom httr2 req_perform resp_body_raw resp_status
 #'
 #' @param sea_area_id
 #' Character string giving the JMA sea area ID
@@ -1161,8 +1170,8 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' and returns the monthly average data as a \code{ts} object.
 #'
 #' @importFrom readr read_csv
-#' @importFrom httr2 request req_user_agent req_error req_perform resp_body_raw resp_status
-#' @import zoo
+#' @importFrom httr2 request req_user_agent req_error
+#' @importFrom httr2 req_perform resp_body_raw resp_status
 #'
 #' @param sea_area_id
 #' Character string giving the JMA sea area ID

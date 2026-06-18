@@ -1,33 +1,10 @@
-#' Convert univariate ts to matrix-style ts (mts)
-#'
-#' Internal helper to convert a univariate \code{ts} object into a
-#' matrix-valued \code{ts} (mts) with a single column named "Temp".
-#' This format is required for consistency with \code{tempssm()}.
-#'
-#' @param y A univariate time series of class \code{ts}.
-#'
-#' @return A matrix-valued \code{ts} object with one column named "Temp".
-#'
-#' @keywords internal
-#' @noRd
-.make_mts <- function(y) {
-  mts <- ts(
-    as.matrix(y),
-    start = start(y),
-    frequency = frequency(y)
-  )
-  colnames(mts) <- "Temp"
-  mts
-}
-
-
 #' Safely fit tempssm model with error handling
 #'
 #' Internal helper function to fit a \code{tempssm} model while
 #' gracefully handling errors. If model fitting fails, a warning
 #' is issued and \code{NULL} is returned.
 #'
-#' @param y_train A matrix-valued \code{ts} object used for training.
+#' @param y_train A named temperature \code{ts} object used for training.
 #' @param exo_train Optional \code{ts} object of exogenous variables.
 #' @param ar_order Integer; autoregressive order.
 #' @param use_season Logical; whether to include a seasonal component.
@@ -114,19 +91,16 @@
 #' Generate predictions with exogenous variables for CV fold
 #'
 #' Internal helper to generate forecasts for a test period when
-#' exogenous variables are present. The function refits a
-#' \code{tempssm} model on the training data, reconstructs a
-#' state-space model for the test period using estimated parameters,
-#' and applies \code{predict()}.
+#' exogenous variables are present. The function reuses a fitted
+#' \code{tempssm} model, reconstructs a state-space model for the test
+#' period using estimated parameters, and applies \code{predict()}.
 #'
 #' The test-period state-space model is constructed via
 #' \code{.build_newdata_ssm()}.
 #'
-#' @param res A fitted \code{tempssm} object (currently unused but kept
-#'   for interface consistency).
-#' @param y_train_mts Training data as matrix-valued \code{ts}.
-#' @param y_test_mts Test data as matrix-valued \code{ts}.
-#' @param exo_train Exogenous training data (\code{ts}).
+#' @param res A fitted \code{tempssm} object.
+#' @param y_train_named Named training temperature \code{ts}.
+#' @param y_test_named Named test temperature \code{ts}.
 #' @param exo_test Exogenous test data (\code{ts}).
 #' @param ar_order Integer; autoregressive order.
 #' @param use_season Logical; whether to include a seasonal component.
@@ -135,28 +109,26 @@
 #'
 #' @keywords internal
 #' @noRd
-.predict_with_exo <- function(res, y_train_mts, y_test_mts,
-                              exo_train, exo_test,
+.predict_with_exo <- function(res, y_train_named, y_test_named,
+                              exo_test,
                               ar_order, use_season) {
-  res_train <- tempssm(
-    temp_data = y_train_mts,
-    exo_data = exo_train,
-    ar_order = ar_order,
-    use_season = use_season
-  )
+  if (!inherits(res, "tempssm") ||
+      is.null(res$model) ||
+      is.null(res$fit$optim.out$par)) {
+    cli::cli_abort("`res` must be a fitted {.cls tempssm} object.")
+  }
 
-  train_model <- res_train$model
-  train_pars <- res_train$fit$optim.out$par
-  freq <- frequency(y_train_mts)
+  train_model <- res$model
+  train_pars <- res$fit$optim.out$par
+  freq <- frequency(y_train_named)
 
-  temp_exo_test <- cbind(y_test_mts, exo_test)
-  colnames(temp_exo_test) <- c("Temp", colnames(exo_test))
   exo_mat <- as.matrix(exo_test)
+  n_ahead <- NROW(y_test_named)
 
   newdata <- .build_newdata_ssm(
     train_pars,
     exo_mat,
-    temp_exo_test,
+    n_ahead,
     freq,
     ar_order,
     use_season
@@ -184,8 +156,7 @@
 #'
 #' @param pars Numeric vector of model parameters.
 #' @param exo_mat Matrix of exogenous variables for the test period.
-#' @param data A matrix-valued \code{ts} object combining response and 
-#' exogenous data.
+#' @param n_ahead Integer forecast horizon.
 #' @param freq Integer; seasonal frequency.
 #' @param ar_order Integer; autoregressive order.
 #' @param use_season Logical; whether to include a seasonal component.
@@ -196,10 +167,17 @@
 #' @noRd
 .build_newdata_ssm <- function(pars,
                                exo_mat,
-                               data,
+                               n_ahead,
                                freq,
                                ar_order,
                                use_season) {
+  if (NROW(exo_mat) != n_ahead) {
+    cli::cli_abort(
+      "`exo_mat` must have `n_ahead` rows."
+    )
+  }
+
+  y_new <- rep(NA_real_, n_ahead)
   
   ## ---- Parameter indexing ------------------------------------------
   param_idx_list <- .get_param_index(ar_order = ar_order,
@@ -217,7 +195,7 @@
 
     SSModel(
       H = trans$H,
-      rep(NA, nrow(data)) ~ exo_mat +
+      y_new ~ exo_mat +
         SSMtrend(
           degree = 2,
           Q = c(list(0), list(trans$trend_var))
@@ -231,14 +209,13 @@
           ar = trans$ar_coefs,
           d = 0,
           Q = trans$ar_var
-        ),
-      data = data
+        )
     )
   } else {
 
     SSModel(
       H = trans$H,
-      rep(NA, nrow(data)) ~ exo_mat +
+      y_new ~ exo_mat +
         SSMtrend(
           degree = 2,
           Q = c(list(0), list(trans$trend_var))
@@ -247,8 +224,7 @@
           ar = trans$ar_coefs,
           d = 0,
           Q = trans$ar_var
-        ),
-      data = data
+        )
     )
   }
 }
@@ -351,11 +327,11 @@ ts_cv_run_fold <- function(fold,
   y_train <- fold$train_ts
   y_test <- fold$test_ts
 
-  y_train_mts <- .make_mts(y_train)
-  y_test_mts <- .make_mts(y_test)
+  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
+  y_test_named <- set_ts_name(y_test, label = "Temp", quiet = TRUE)
 
   res <- .fit_tempssm_safe(
-    y_train_mts,
+    y_train_named,
     fold$exo_train_ts,
     ar_order,
     use_season,
@@ -368,13 +344,12 @@ ts_cv_run_fold <- function(fold,
   }
 
   if (is.null(fold$exo_train_ts)) {
-    y_pred <- .predict_no_exo(res$model, length(y_test_mts))
+    y_pred <- .predict_no_exo(res$model, NROW(y_test_named))
   } else {
     y_pred <- .predict_with_exo(
       res,
-      y_train_mts,
-      y_test_mts,
-      fold$exo_train_ts,
+      y_train_named,
+      y_test_named,
       fold$exo_test_ts,
       ar_order,
       use_season
@@ -477,7 +452,10 @@ ts_train_test_split <- function(temp_data,
                                 allow_partial = FALSE) {
   ## ---- Start message --------------------------------------------------
   .tempssm_cli_inform(
-    "Creating rolling train/test data (initial={initial}, horizon={horizon}, step={step})"
+    paste0(
+      "Creating rolling train/test data ",
+      "(initial={initial}, horizon={horizon}, step={step})"
+    )
   )
 
   ## ---- Input checks ---------------------------------------------------
@@ -496,13 +474,17 @@ ts_train_test_split <- function(temp_data,
   }
 
   if (any(c(initial, horizon, step) < 1)) {
-    cli::cli_abort("`initial`, `horizon`, and `step` must be positive integers.")
+    cli::cli_abort(
+      "`initial`, `horizon`, and `step` must be positive integers."
+    )
   }
 
   n <- length(temp_data)
 
   if (initial >= n) {
-    cli::cli_abort("`initial` must be smaller than the length of the time series.")
+    cli::cli_abort(
+      "`initial` must be smaller than the length of the time series."
+    )
   }
 
   .tempssm_cli_debug("Series length: {n}, frequency: {freq}")
@@ -557,7 +539,10 @@ ts_train_test_split <- function(temp_data,
     }
 
     .tempssm_cli_debug(
-      "Fold {k}: train[{train_start}:{train_end}], test[{test_start}:{test_end}]"
+      paste0(
+        "Fold {k}: train[{train_start}:{train_end}], ",
+        "test[{test_start}:{test_end}]"
+      )
     )
 
     folds[[k]] <- list(

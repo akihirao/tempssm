@@ -2,9 +2,9 @@
 
 test_that(".predict_no_exo runs without error", {
   y_train <- window(temp_ts_small, end = c(2002, 12))
-  y_train_mts <- .make_mts(y_train)
+  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
 
-  res <- tempssm(y_train_mts)
+  res <- tempssm(y_train_named)
 
   expect_no_error({
     .predict_no_exo(res$model, h = 12)
@@ -14,9 +14,9 @@ test_that(".predict_no_exo runs without error", {
 
 test_that("prediction length matches h", {
   y_train <- window(temp_ts_small, end = c(2002, 12))
-  y_train_mts <- .make_mts(y_train)
+  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
 
-  res <- tempssm(y_train_mts)
+  res <- tempssm(y_train_named)
 
   h <- 12
   pred <- .predict_no_exo(res$model, h)
@@ -27,9 +27,9 @@ test_that("prediction length matches h", {
 
 test_that("prediction output has valid type", {
   y_train <- window(temp_ts_small, end = c(2002, 12))
-  y_train_mts <- .make_mts(y_train)
+  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
 
-  res <- tempssm(y_train_mts)
+  res <- tempssm(y_train_named)
 
   pred <- .predict_no_exo(res$model, h = 6)
 
@@ -42,9 +42,9 @@ test_that("prediction output has valid type", {
 
 test_that("different h produces different length", {
   y_train <- window(temp_ts_small, end = c(2002, 12))
-  y_train_mts <- .make_mts(y_train)
+  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
 
-  res <- tempssm(y_train_mts)
+  res <- tempssm(y_train_named)
 
   pred1 <- .predict_no_exo(res$model, h = 3)
   pred2 <- .predict_no_exo(res$model, h = 6)
@@ -56,9 +56,9 @@ test_that("different h produces different length", {
 
 test_that("works with minimal horizon h = 1", {
   y_train <- window(temp_ts_small, end = c(2002, 12))
-  y_train_mts <- .make_mts(y_train)
+  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
 
-  res <- tempssm(y_train_mts)
+  res <- tempssm(y_train_named)
 
   pred <- .predict_no_exo(res$model, h = 1)
 

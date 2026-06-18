@@ -1,20 +1,17 @@
 # tests/testthat/test-build_newdata_ssm.R
 
 test_that(".build_newdata_ssm works with seasonal model", {
-  y <- window(temp_ts_small, end = c(2002, 12))
   x <- window(exo_ts_small, end = c(2002, 12))
 
-  y_mts <- .make_mts(y)
-
   exo_mat <- as.matrix(x)
-  data <- cbind(y_mts, x)
+  n_ahead <- NROW(exo_mat)
 
   pars <- rep(0.1, 6) # assuming ar=1
 
   model <- .build_newdata_ssm(
     pars,
     exo_mat,
-    data,
+    n_ahead,
     freq = 12,
     ar_order = 1,
     use_season = TRUE
@@ -25,19 +22,17 @@ test_that(".build_newdata_ssm works with seasonal model", {
 
 
 test_that(".build_newdata_ssm works without seasonal model", {
-  y <- window(temp_ts_small, end = c(2002, 12))
   x <- window(exo_ts_small, end = c(2002, 12))
 
-  y_mts <- .make_mts(y)
   exo_mat <- as.matrix(x)
-  data <- cbind(y_mts, x)
+  n_ahead <- NROW(exo_mat)
 
   pars <- rep(0.1, 5)
 
   model <- .build_newdata_ssm(
     pars,
     exo_mat,
-    data,
+    n_ahead,
     freq = 12,
     ar_order = 1,
     use_season = FALSE
@@ -47,43 +42,39 @@ test_that(".build_newdata_ssm works without seasonal model", {
 })
 
 
-test_that("number of observations matches input data", {
-  y <- window(temp_ts_small, end = c(2002, 12))
+test_that("number of observations matches forecast horizon", {
   x <- window(exo_ts_small, end = c(2002, 12))
 
-  y_mts <- .make_mts(y)
   exo_mat <- as.matrix(x)
-  data <- cbind(y_mts, x)
+  n_ahead <- NROW(exo_mat)
 
   pars <- rep(0.1, 6)
 
   model <- .build_newdata_ssm(
     pars,
     exo_mat,
-    data,
+    n_ahead,
     freq = 12,
     ar_order = 1,
     use_season = TRUE
   )
 
-  expect_identical(NROW(model$y), NROW(data))
+  expect_identical(NROW(model$y), n_ahead)
 })
 
 
 test_that("observation variance is positive", {
-  y <- window(temp_ts_small, end = c(2002, 12))
   x <- window(exo_ts_small, end = c(2002, 12))
 
-  y_mts <- .make_mts(y)
   exo_mat <- as.matrix(x)
-  data <- cbind(y_mts, x)
+  n_ahead <- NROW(exo_mat)
 
   pars <- rep(0.1, 6)
 
   model <- .build_newdata_ssm(
     pars,
     exo_mat,
-    data,
+    n_ahead,
     freq = 12,
     ar_order = 1,
     use_season = TRUE
@@ -94,12 +85,10 @@ test_that("observation variance is positive", {
 
 
 test_that("state dimension differs with seasonal option", {
-  y <- window(temp_ts_small, end = c(2002, 12))
   x <- window(exo_ts_small, end = c(2002, 12))
 
-  y_mts <- .make_mts(y)
   exo_mat <- as.matrix(x)
-  data <- cbind(y_mts, x)
+  n_ahead <- NROW(exo_mat)
 
   pars_season <- rep(0.1, 6)
   pars_no <- rep(0.1, 5)
@@ -107,7 +96,7 @@ test_that("state dimension differs with seasonal option", {
   model_season <- .build_newdata_ssm(
     pars_season,
     exo_mat,
-    data,
+    n_ahead,
     12,
     1,
     TRUE
@@ -116,7 +105,7 @@ test_that("state dimension differs with seasonal option", {
   model_no <- .build_newdata_ssm(
     pars_no,
     exo_mat,
-    data,
+    n_ahead,
     12,
     1,
     FALSE
@@ -126,26 +115,41 @@ test_that("state dimension differs with seasonal option", {
 })
 
 
-test_that("handles NA data input", {
-  y <- window(temp_ts_small, end = c(2002, 12))
-  y[] <- NA
-
+test_that("newdata response is univariate and unknown", {
   x <- window(exo_ts_small, end = c(2002, 12))
 
-  y_mts <- .make_mts(y)
   exo_mat <- as.matrix(x)
-  data <- cbind(y_mts, x)
+  n_ahead <- NROW(exo_mat)
 
   pars <- rep(0.1, 6)
 
-  expect_no_error(
+  model <- .build_newdata_ssm(
+    pars,
+    exo_mat,
+    n_ahead,
+    freq = 12,
+    ar_order = 1,
+    use_season = TRUE
+  )
+
+  expect_identical(NCOL(model$y), 1L)
+  expect_true(all(is.na(model$y)))
+})
+
+
+test_that(".build_newdata_ssm checks exogenous horizon", {
+  x <- window(exo_ts_small, end = c(2002, 12))
+  exo_mat <- as.matrix(x)
+
+  expect_error(
     .build_newdata_ssm(
-      pars,
-      exo_mat,
-      data,
+      pars = rep(0.1, 6),
+      exo_mat = exo_mat,
+      n_ahead = NROW(exo_mat) + 1L,
       freq = 12,
       ar_order = 1,
       use_season = TRUE
-    )
+    ),
+    "`exo_mat` must have `n_ahead` rows."
   )
 })
