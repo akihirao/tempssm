@@ -10,7 +10,7 @@ test_that("compute_monthly_climatology works for valid input", {
   res <- compute_monthly_climatology(temp_ts)
 
   expect_s3_class(res, "tbl_df")
-  expect_equal(nrow(res), 12)
+  expect_identical(nrow(res), 12L)
 
   expect_named(res, c("Month", "Temperature"))
 })
@@ -25,8 +25,8 @@ test_that("months are correctly ordered from 1 to 12", {
 
   res <- compute_monthly_climatology(temp_ts)
 
-  expect_equal(res$Month, 1:12)
-  expect_equal(res$Temperature, 1:12)
+  expect_identical(res$Month, 1:12)
+  expect_identical(res$Temperature, as.numeric(1:12))
 })
 
 

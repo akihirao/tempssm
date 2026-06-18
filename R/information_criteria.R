@@ -174,7 +174,7 @@ AIC.tempssm <- function(object, ..., k = 2) {
 #' \code{tempssm} model using the model log-likelihood and the
 #' number of estimated parameters.
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
+#' @inheritParams get_level_ts
 #'
 #' @details
 #' The number of parameters is determined from the optimization results

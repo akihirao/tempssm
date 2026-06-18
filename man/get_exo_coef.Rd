@@ -7,7 +7,7 @@
 get_exo_coef(res, ci_level = 0.95)
 }
 \arguments{
-\item{res}{An object of class \code{"tempssm"} returned by \code{ssm()}.}
+\item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
 
 \item{ci_level}{Numeric confidence level between 0 and 1 (default: 0.95).}
 }

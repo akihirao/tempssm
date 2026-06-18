@@ -7,7 +7,7 @@ test_that("scale_Q works for naive method", {
 
   expected <- mean(abs(diff(c(1, 2, 3, 5))))
 
-  expect_equal(Q, expected)
+  expect_identical(Q, expected)
 })
 
 
@@ -24,7 +24,7 @@ test_that("scale_Q works for seasonal method", {
 
   expected <- mean(abs(y[(m + 1):n] - y[1:(n - m)]))
 
-  expect_equal(Q, expected)
+  expect_identical(Q, expected)
 })
 
 
@@ -33,7 +33,7 @@ test_that("scale_Q handles NA values with na.rm", {
 
   Q <- .scale_Q(ts_data, method = "naive")
 
-  expect_true(is.numeric(Q))
+  expect_type(Q, "double")
 })
 
 
@@ -90,7 +90,7 @@ test_that("constant series returns zero Q", {
 
   Q <- .scale_Q(ts_data, method = "naive")
 
-  expect_equal(Q, 0)
+  expect_identical(Q, 0)
 })
 
 

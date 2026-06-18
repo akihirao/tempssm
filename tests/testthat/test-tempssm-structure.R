@@ -24,7 +24,7 @@ test_that("tempssm object structure is consistent", {
 
   alpha <- res_tempssm$kfs$alphahat
   expect_true(is.matrix(alpha))
-  expect_equal(nrow(alpha), length(res_tempssm$temp_data))
+  expect_identical(nrow(alpha), length(res_tempssm$temp_data))
 
   state_names <- colnames(alpha)
   expect_true("level" %in% state_names)

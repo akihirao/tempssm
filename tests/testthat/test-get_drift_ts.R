@@ -27,8 +27,8 @@ test_that("get_drift_ts CI values scaled", {
 test_that("get_drift_ts preserves time attributes", {
   ts_obj <- get_drift_ts(res_tempssm)
 
-  expect_equal(start(ts_obj), start(res_tempssm$temp_data))
-  expect_equal(frequency(ts_obj), frequency(res_tempssm$temp_data))
+  expect_identical(start(ts_obj), start(res_tempssm$temp_data))
+  expect_identical(frequency(ts_obj), frequency(res_tempssm$temp_data))
 })
 
 
@@ -39,12 +39,12 @@ test_that("CI is scaled by frequency", {
 
   ci_obj <- stats::confint(res_tempssm$kfs)
 
-  expect_equal(
+  expect_identical(
     ts_ci[, "lwr"],
     ci_obj$slope[, "lwr"] * freq
   )
 
-  expect_equal(
+  expect_identical(
     ts_ci[, "upr"],
     ci_obj$slope[, "upr"] * freq
   )
@@ -54,7 +54,7 @@ test_that("CI is scaled by frequency", {
 test_that("CI output has correct structure", {
   ts_ci <- get_drift_ts(res_tempssm, ci = TRUE)
 
-  expect_equal(NCOL(ts_ci), 3)
+  expect_identical(NCOL(ts_ci), 3L)
   expect_named(as.data.frame(ts_ci), c("drift", "lwr", "upr"))
 })
 
@@ -100,7 +100,7 @@ test_that("errors when slope missing in confidence intervals", {
 test_that("ci = FALSE returns univariate ts", {
   ts_obj <- get_drift_ts(res_tempssm, ci = FALSE)
 
-  expect_equal(NCOL(ts_obj), 1)
+  expect_identical(NCOL(ts_obj), 1L)
 })
 
 

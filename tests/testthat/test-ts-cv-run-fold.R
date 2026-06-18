@@ -10,7 +10,7 @@ test_that("ts_cv_run_fold works without exogenous variables", {
 
   res <- ts_cv_run_fold(folds[[1]])
 
-  expect_true(is.list(res))
+  expect_type(res, "list")
   expect_true(res$converged)
 
   expect_s3_class(res$y_train, "ts")

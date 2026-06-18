@@ -12,7 +12,7 @@ test_that(".fit_tempssm_safe returns tempssm object on success", {
   )
 
   expect_s3_class(res, "tempssm")
-  expect_true(is.logical(res$converged))
+  expect_type(res$converged, "logical")
 })
 
 

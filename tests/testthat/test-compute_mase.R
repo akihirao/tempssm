@@ -7,7 +7,7 @@ test_that("compute_mase works with naive scaling", {
 
   mase <- tempssm:::.compute_mase(y_pred, y_true, y_train, method = "naive")
 
-  expect_true(is.numeric(mase))
+  expect_type(mase, "double")
   expect_false(is.na(mase))
 })
 
@@ -19,7 +19,7 @@ test_that("compute_mase works with seasonal scaling", {
 
   mase <- tempssm:::.compute_mase(y_pred, y_true, y_train, method = "seasonal")
 
-  expect_true(is.numeric(mase))
+  expect_type(mase, "double")
 })
 
 
@@ -30,7 +30,7 @@ test_that("perfect prediction gives zero MASE", {
 
   mase <- tempssm:::.compute_mase(y_pred, y_true, y_train)
 
-  expect_equal(mase, 0)
+  expect_identical(mase, 0)
 })
 
 

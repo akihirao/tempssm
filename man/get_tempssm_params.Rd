@@ -7,7 +7,7 @@
 get_tempssm_params(res)
 }
 \arguments{
-\item{res}{An object of class \code{"tempssm"} returned by \code{ssm()}.}
+\item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
 }
 \value{
 A \code{list} object of the estimated parameters.

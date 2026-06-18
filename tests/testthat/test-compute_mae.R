@@ -6,7 +6,7 @@ test_that("compute_mae returns correct value", {
 
   mae <- tempssm:::.compute_mae(y_pred, y_true)
 
-  expect_equal(mae, mean(c(0, 1, 1)))
+  expect_identical(mae, mean(c(0, 1, 1)))
 })
 
 
@@ -18,7 +18,7 @@ test_that("compute_mae handles numeric values correctly", {
 
   expected <- mean(abs(y_true - y_pred))
 
-  expect_equal(mae, expected)
+  expect_identical(mae, expected)
 })
 
 
@@ -30,7 +30,7 @@ test_that("compute_mae ignores NA values", {
 
   expected <- mean(abs(c(1 - 1, 3 - 2)))
 
-  expect_equal(mae, expected)
+  expect_identical(mae, expected)
 })
 
 
@@ -54,7 +54,7 @@ test_that("compute_mae coerces inputs to numeric", {
 
   mae <- tempssm:::.compute_mae(y_pred, y_true)
 
-  expect_equal(mae, mean(c(0, 1, 1)))
+  expect_identical(mae, mean(c(0, 1, 1)))
 })
 
 

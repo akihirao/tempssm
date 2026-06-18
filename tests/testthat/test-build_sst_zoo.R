@@ -34,7 +34,7 @@ test_that("index matches input dates", {
 
   res <- .build_sst_zoo(sst)
 
-  expect_equal(zoo::index(res), dates)
+  expect_identical(zoo::index(res), dates)
 })
 
 
@@ -48,7 +48,7 @@ test_that("values are preserved", {
 
   res <- .build_sst_zoo(sst)
 
-  expect_equal(as.numeric(res), temp)
+  expect_identical(as.numeric(res), temp)
 })
 
 

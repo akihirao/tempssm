@@ -14,7 +14,7 @@ test_that("ts_cv_collect returns a tibble", {
   res <- ts_cv_collect(cv_results, metrics)
 
   expect_s3_class(res, "tbl_df")
-  expect_equal(nrow(res), 2)
+  expect_identical(nrow(res), 2L)
 })
 
 
@@ -49,9 +49,9 @@ test_that("values are correctly extracted", {
 
   res <- ts_cv_collect(cv_results, metrics)
 
-  expect_equal(res$fold, c(1, 2))
-  expect_equal(res$converged, c(1, 0)) # as.numeric(TRUE/FALSE)
-  expect_equal(res$MAE, c(10, 20))
+  expect_identical(res$fold, c(1, 2))
+  expect_identical(res$converged, c(1, 0)) # as.numeric(TRUE/FALSE)
+  expect_identical(res$MAE, c(10, 20))
 })
 
 

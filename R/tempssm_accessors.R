@@ -69,9 +69,7 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 #' Extract the smoothed drift (slope) component as a time series
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
-#' @param ci Logical; if TRUE, pointwise confidence intervals are returned.
-#' @param ci_level Numeric confidence level between 0 and 1 (default: 0.95).
+#' @inheritParams get_level_ts
 #'
 #' @details
 #' The drift component is scaled to represent change per year.
@@ -146,9 +144,7 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 #' Extract the smoothed seasonal component as a time series
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
-#' @param ci Logical; if TRUE, pointwise confidence intervals are returned.
-#' @param ci_level Numeric confidence level between 0 and 1 (default: 0.95).
+#' @inheritParams get_level_ts
 #'
 #' @details
 #' The seasonal component represents recurrent intra-year variability
@@ -232,9 +228,7 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 #' Extract the smoothed first autoregressive component (AR1) as a time series
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
-#' @param ci Logical; if TRUE, pointwise confidence intervals are returned.
-#' @param ci_level Numeric confidence level between 0 and 1 (default: 0.95).
+#' @inheritParams get_level_ts
 #'
 #' @details
 #' The AR1 component represents short-term autocorrelated deviations
@@ -276,10 +270,8 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
   if (!(has_alphahat) || !(has_ar1)) {
     stop(
-      paste(
-        "First autoregressive component (AR1) not found",
-        "in the smoothing results."
-      ),
+      "First autoregressive component (AR1) not found ",
+      "in the smoothing results.",
       call. = FALSE
     )
   }
@@ -297,10 +289,8 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
     if (!"arima1" %in% names(ci_obj)) {
       stop(
-        paste(
-          "First Autoregressive (AR1) component not found",
-          "in confidence intervals."
-        ),
+        "First Autoregressive (AR1) component not found ",
+        "in confidence intervals.",
         call. = FALSE
       )
     }
@@ -321,7 +311,7 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 
 #' Extract estimated parameters in the fitted models
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
+#' @inheritParams get_level_ts
 #'
 #' @return A \code{list} object of the estimated parameters.
 #'
@@ -384,9 +374,7 @@ get_tempssm_params <- function(res) {
 #' If the fitted model does not include exogenous variables,
 #' the function returns \code{NULL}.
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{ssm()}.
-#'
-#' @param ci_level Numeric confidence level between 0 and 1 (default: 0.95).
+#' @inheritParams get_level_ts
 #'
 #' @return
 #' A \code{data.frame} with the following columns:

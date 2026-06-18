@@ -13,10 +13,9 @@
 One of \code{"level"}, \code{"drift"}, \code{"season"}, or \code{"ar1"}.
 If NULL (default), all components are plotted.}
 
-\item{ci}{Logical; if TRUE (default), pointwise confidence intervals are shown.}
+\item{ci}{Logical; if TRUE, pointwise confidence intervals are returned.}
 
-\item{ci_level}{Numeric confidence level between 0 and 1.
-Defaults to \code{0.95}.}
+\item{ci_level}{Numeric confidence level between 0 and 1 (default: 0.95).}
 
 \item{...}{Additional arguments passed to the corresponding
 \code{autoplot_*()} function.}

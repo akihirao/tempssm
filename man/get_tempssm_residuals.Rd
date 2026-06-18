@@ -7,7 +7,7 @@
 get_tempssm_residuals(res)
 }
 \arguments{
-\item{res}{An object of class "tempssm".}
+\item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
 }
 \value{
 A numeric vector of standardized recursive residuals.

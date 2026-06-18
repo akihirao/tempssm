@@ -22,5 +22,5 @@ test_that("lightweight CV pipeline works", {
   summary <- ts_cv_collect(cv_results, metrics)
 
   expect_s3_class(summary, "tbl_df")
-  expect_equal(nrow(summary), 1)
+  expect_identical(nrow(summary), 1L)
 })

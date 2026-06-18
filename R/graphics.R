@@ -7,20 +7,11 @@
 #' obtained from a state space model fitted by \code{tempssm()}.
 #' A pointwise confidence interval is shown as a shaded ribbon.
 #'
-#' @param res
-#' An object returned by \code{tempssm()} from the \pkg{tempssm} package.
-#'
-#' @param ci
-#' Logical; if TRUE (default), pointwise confidence intervals are shown
-#' as a shaded ribbon.
+#' @inheritParams get_level_ts
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
 #' Defalut is "temperature".
-#'
-#' @param ci_level
-#' Numeric confidence level between 0 and 1.
-#' Defaults to \code{0.95}, corresponding to a 95\% confidence interval.
 #'
 #' @details
 #' The confidence interval is computed using
@@ -135,20 +126,11 @@ autoplot_level <- function(res,
 #' obtained from a state space model fitted by \code{tempssm()}.
 #' A pointwise confidence interval is shown as a shaded ribbon.
 #'
-#' @param res
-#' An object returned by \code{tempssm()} from the \pkg{tempssm} package.
-#'
-#' @param ci
-#' Logical; if TRUE (default), pointwise confidence intervals are shown
-#' as a shaded ribbon.
+#' @inheritParams get_level_ts
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
 #' Defalut is "temperature".
-#'
-#' @param ci_level
-#' Numeric confidence level between 0 and 1.
-#' Defaults to \code{0.95}, corresponding to a 95\% confidence interval.
 #'
 #' @details
 #' The confidence interval is computed using
@@ -263,20 +245,11 @@ autoplot_drift <- function(res,
 #' obtained from a state space model fitted by \code{tempssm()}.
 #' A pointwise confidence interval is shown as a shaded ribbon.
 #'
-#' @param res
-#' An object returned by \code{tempssm()} from the \pkg{tempssm} package.
-#'
-#' @param ci
-#' Logical; if TRUE (default), pointwise confidence intervals are shown
-#' as a shaded ribbon.
+#' @inheritParams get_level_ts
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
 #' Defalut is "temperature".
-#'
-#' @param ci_level
-#' Numeric confidence level between 0 and 1.
-#' Defaults to \code{0.95}, corresponding to a 95\% confidence interval.
 #'
 #' @details
 #' The confidence interval is computed using
@@ -391,20 +364,11 @@ autoplot_season <- function(res,
 #' obtained from a state space model fitted by \code{tempssm()}.
 #' A pointwise confidence interval is shown as a shaded ribbon.
 #'
-#' @param res
-#' An object returned by \code{tempssm()} from the \pkg{tempssm} package.
-#'
-#' @param ci
-#' Logical; if TRUE (default), pointwise confidence intervals are shown
-#' as a shaded ribbon.
+#' @inheritParams get_level_ts
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
 #' Defalut is "temperature".
-#'
-#' @param ci_level
-#' Numeric confidence level between 0 and 1.
-#' Defaults to \code{0.95}, corresponding to a 95\% confidence interval.
 #'
 #' @details
 #' The confidence interval is computed using

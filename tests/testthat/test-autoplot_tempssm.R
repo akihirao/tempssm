@@ -21,7 +21,7 @@ test_that("autoplot.tempssm passes extra arguments to component plotter", {
     ylab = "Sea surface temperature"
   )
 
-  expect_equal(p$labels$y, "Sea surface temperature")
+  expect_identical(p$labels$y, "Sea surface temperature")
 })
 
 

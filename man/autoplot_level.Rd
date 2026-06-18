@@ -7,13 +7,11 @@
 autoplot_level(res, ci = TRUE, ci_level = 0.95, ylab = "Temperature")
 }
 \arguments{
-\item{res}{An object returned by \code{tempssm()} from the \pkg{tempssm} package.}
+\item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
 
-\item{ci}{Logical; if TRUE (default), pointwise confidence intervals are shown
-as a shaded ribbon.}
+\item{ci}{Logical; if TRUE, pointwise confidence intervals are returned.}
 
-\item{ci_level}{Numeric confidence level between 0 and 1.
-Defaults to \code{0.95}, corresponding to a 95\% confidence interval.}
+\item{ci_level}{Numeric confidence level between 0 and 1 (default: 0.95).}
 
 \item{ylab}{Character string giving label of y-axis.
 Defalut is "temperature".}

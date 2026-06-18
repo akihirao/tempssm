@@ -31,7 +31,7 @@ test_that(".handle_non_convergence handles non-converged model", {
   )
 
   expect_false(res$converged)
-  expect_equal(res$model, "dummy_model")
+  expect_identical(res$model, "dummy_model")
 })
 
 

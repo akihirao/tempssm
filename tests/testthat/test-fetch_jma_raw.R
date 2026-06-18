@@ -20,7 +20,7 @@ test_that(".fetch_jma_raw returns raw vector", {
   res <- .fetch_jma_raw("138")
 
   expect_type(res, "raw")
-  expect_equal(res, fake_raw)
+  expect_identical(res, fake_raw)
 })
 
 

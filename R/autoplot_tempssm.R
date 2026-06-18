@@ -45,12 +45,7 @@
 #' One of \code{"level"}, \code{"drift"}, \code{"season"}, or \code{"ar1"}.
 #' If NULL (default), all components are plotted.
 #'
-#' @param ci
-#' Logical; if TRUE (default), pointwise confidence intervals are shown.
-#'
-#' @param ci_level
-#' Numeric confidence level between 0 and 1.
-#' Defaults to \code{0.95}.
+#' @inheritParams get_level_ts
 #'
 #' @param ...
 #' Additional arguments passed to the corresponding
@@ -99,7 +94,7 @@ autoplot.tempssm <- function(object,
     if (!component %in% names(plotters)) {
       stop(
         "`component` must be one of: ",
-        paste0(names(plotters), collapse = ", "),
+        toString(names(plotters)),
         call. = FALSE
       )
     }

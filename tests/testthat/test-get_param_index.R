@@ -4,9 +4,9 @@ test_that(".get_param_index works with seasonal model", {
 
   idx <- .get_param_index(ar_order = 1, use_season = TRUE)
 
-  expect_equal(idx$ar, 3)
-  expect_equal(idx$var, 4)
-  expect_equal(idx$H, 5)
+  expect_identical(idx$ar, 3L)
+  expect_identical(idx$var, 4)
+  expect_identical(idx$H, 5)
 })
 
 
@@ -14,9 +14,9 @@ test_that(".get_param_index works without seasonal model", {
 
   idx <- .get_param_index(ar_order = 1, use_season = FALSE)
 
-  expect_equal(idx$ar, 2)
-  expect_equal(idx$var, 3)
-  expect_equal(idx$H, 4)
+  expect_identical(idx$ar, 2L)
+  expect_identical(idx$var, 3)
+  expect_identical(idx$H, 4)
 })
 
 
@@ -24,9 +24,9 @@ test_that("handles higher AR order correctly", {
 
   idx <- .get_param_index(ar_order = 3, use_season = TRUE)
 
-  expect_equal(idx$ar, 3:5)
-  expect_equal(idx$var, 6)
-  expect_equal(idx$H, 7)
+  expect_identical(idx$ar, 3:5)
+  expect_identical(idx$var, 6)
+  expect_identical(idx$H, 7)
 })
 
 
@@ -34,9 +34,9 @@ test_that("handles higher AR order without season", {
 
   idx <- .get_param_index(ar_order = 3, use_season = FALSE)
 
-  expect_equal(idx$ar, 2:4)
-  expect_equal(idx$var, 5)
-  expect_equal(idx$H, 6)
+  expect_identical(idx$ar, 2:4)
+  expect_identical(idx$var, 5)
+  expect_identical(idx$H, 6)
 })
 
 

@@ -5,7 +5,7 @@ test_that("diagnose_residuals returns a tibble", {
   diag <- diagnose_residuals(res_tempssm)
 
   expect_s3_class(diag, "tbl_df")
-  expect_equal(nrow(diag), 1)
+  expect_identical(nrow(diag), 1L)
 
   expect_true(
     all(c("lb_stat", "lb_df", "lb_pvalue", "kurtosis") %in% colnames(diag))

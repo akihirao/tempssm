@@ -9,8 +9,8 @@ test_that("convert_monthly_df_to_ts works for valid input", {
   ts_out <- convert_monthly_df_to_ts(df)
 
   expect_s3_class(ts_out, "ts")
-  expect_equal(frequency(ts_out), 12)
-  expect_equal(start(ts_out), c(2001, 1))
+  expect_identical(frequency(ts_out), 12)
+  expect_identical(start(ts_out), c(2001, 1))
   expect_length(ts_out, 12)
 })
 
@@ -69,7 +69,7 @@ test_that("start time is correctly set", {
 
   ts_out <- convert_monthly_df_to_ts(df)
 
-  expect_equal(start(ts_out), c(1995, 5))
+  expect_identical(start(ts_out), c(1995, 5))
 })
 
 

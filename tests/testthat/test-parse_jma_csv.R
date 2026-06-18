@@ -10,7 +10,7 @@ END"
 
   res <- .parse_jma_csv(raw)
 
-  expect_equal(nrow(res), 1)
+  expect_identical(nrow(res), 1L)
   expect_named(res, c("date", "Temp", "flag"))
 })
 
@@ -25,7 +25,7 @@ END"
 
   res <- .parse_jma_csv(raw)
 
-  expect_equal(res$date[1], as.Date("2000-01-02"))
+  expect_identical(res$date[1], as.Date("2000-01-02"))
 })
 
 
@@ -53,7 +53,7 @@ END"
 
   res <- .parse_jma_csv(raw)
 
-  expect_equal(nrow(res), 1)
+  expect_identical(nrow(res), 1L)
 })
 
 

@@ -11,8 +11,8 @@ test_that("compute_temp_anomaly works without baseline", {
   anom <- compute_temp_anomaly(temp_ts)
 
   expect_s3_class(anom, "ts")
-  expect_equal(frequency(anom), 12)
-  expect_equal(start(anom), start(temp_ts))
+  expect_identical(frequency(anom), 12)
+  expect_identical(start(anom), start(temp_ts))
   expect_length(anom, length(temp_ts))
 })
 
@@ -89,5 +89,5 @@ test_that("output values are numeric", {
 
   anom <- compute_temp_anomaly(temp_ts)
 
-  expect_true(is.numeric(as.numeric(anom)))
+  expect_type(as.numeric(anom), "double")
 })

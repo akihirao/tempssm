@@ -14,7 +14,7 @@ test_that("trim_ts_overlap works for valid input", {
     exo_name  = c("x1")
   )
 
-  expect_true(is.list(res))
+  expect_type(res, "list")
   expect_named(res, c("temperature", "exogenous"))
 
   expect_s3_class(res$temperature, "ts")
@@ -28,7 +28,7 @@ test_that("trim_ts_overlap trims to overlapping period", {
 
   res <- trim_ts_overlap(temp_ts_test, exo_ts, exo_name = c("x1"))
 
-  expect_identical(length(res$temperature), length(res$exogenous))
+  expect_length(res$temperature, length(res$exogenous))
 })
 
 
@@ -41,7 +41,7 @@ test_that("trim_ts_overlap assigns default exo names with warning", {
     res <- trim_ts_overlap(temp_ts_test, exo_ts)
   )
 
-  expect_true(all(grepl("var", colnames(res$exogenous))))
+  expect_true(all(grepl("var", colnames(res$exogenous), fixed = TRUE)))
 })
 
 
@@ -67,7 +67,7 @@ test_that("trim_ts_overlap handles multivariate exogenous series", {
     exo_name = c("a", "b", "c")
   )
 
-  expect_equal(colnames(res$exogenous), c("a", "b", "c"))
+  expect_identical(colnames(res$exogenous), c("a", "b", "c"))
 })
 
 
@@ -98,7 +98,7 @@ test_that("temp_name is correctly assigned", {
     exo_name = "x"
   )
 
-  expect_equal(colnames(res$temperature), "temperature_test")
+  expect_identical(colnames(res$temperature), "temperature_test")
 })
 
 
@@ -108,8 +108,8 @@ test_that("overlap period is correctly computed", {
 
   res <- trim_ts_overlap(temp_ts, exo_ts, exo_name = "x")
 
-  expect_equal(start(res$temperature), c(2005, 1))
-  expect_equal(end(res$temperature), end(exo_ts))
+  expect_identical(start(res$temperature), c(2005, 1))
+  expect_identical(end(res$temperature), end(exo_ts))
 })
 
 
@@ -122,7 +122,7 @@ test_that("single exogenous variable uses set_ts_name", {
     exo_name = "x"
   )
 
-  expect_equal(colnames(res$exogenous), "x")
+  expect_identical(colnames(res$exogenous), "x")
 })
 
 
@@ -137,5 +137,5 @@ test_that("multivariate exogenous uses direct colnames assignment", {
     exo_name = c("a", "b")
   )
 
-  expect_equal(colnames(res$exogenous), c("a", "b"))
+  expect_identical(colnames(res$exogenous), c("a", "b"))
 })

@@ -12,12 +12,14 @@ test_that("split_multi_ts splits multivariate ts correctly", {
 
   res <- split_multi_ts(multi_ts)
 
-  expect_true(is.list(res))
+  expect_type(res, "list")
   expect_length(res, 2)
 
   expect_named(res, c("x1", "x2"))
 
-  expect_true(all(sapply(res, function(x) inherits(x, "ts"))))
+  is_ts <- vapply(res, function(x) inherits(x, "ts"), logical(1))
+
+  expect_true(all(is_ts))
 })
 
 
@@ -31,7 +33,9 @@ test_that("each split series is univariate ts", {
 
   res <- split_multi_ts(multi_ts)
 
-  expect_true(all(sapply(res, function(x) NCOL(x) == 1)))
+  is_univariate <- vapply(res, function(x) NCOL(x) == 1, logical(1))
+
+  expect_true(all(is_univariate))
 })
 
 
@@ -73,8 +77,8 @@ test_that("each split series preserves time attributes", {
 
   res <- split_multi_ts(multi_ts)
 
-  expect_equal(start(res[[1]]), start(multi_ts))
-  expect_equal(frequency(res[[1]]), frequency(multi_ts))
+  expect_identical(start(res[[1]]), start(multi_ts))
+  expect_identical(frequency(res[[1]]), frequency(multi_ts))
 })
 
 
@@ -87,8 +91,8 @@ test_that("each split ts has correct column name", {
 
   res <- split_multi_ts(multi_ts)
 
-  expect_equal(colnames(res[[1]]), "var1")
-  expect_equal(colnames(res[[2]]), "var2")
+  expect_identical(colnames(res[[1]]), "var1")
+  expect_identical(colnames(res[[2]]), "var2")
 })
 
 
@@ -101,7 +105,13 @@ test_that("all elements are ts of length matching original", {
 
   res <- split_multi_ts(multi_ts)
 
-  expect_true(all(sapply(res, function(x) length(x) == nrow(multi_ts))))
+  has_original_length <- vapply(
+    res,
+    function(x) length(x) == nrow(multi_ts),
+    logical(1)
+  )
+
+  expect_true(all(has_original_length))
 })
 
 

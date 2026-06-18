@@ -48,7 +48,7 @@ test_that(".predict_with_exo runs without error", {
 #    use_season = FALSE
 #  )
 #
-#  expect_equal(length(pred), length(y_test))
+#  expect_identical(length(pred), length(y_test))
 # })
 
 

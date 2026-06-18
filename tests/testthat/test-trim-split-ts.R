@@ -30,8 +30,8 @@ test_that("trim_ts_overlap and split_multi_ts work together", {
   expect_s3_class(trimmed$temperature, "ts")
   expect_s3_class(trimmed$exogenous, "ts")
 
-  expect_equal(colnames(trimmed$temperature), "temp")
-  expect_equal(colnames(trimmed$exogenous), c("precip", "solar"))
+  expect_identical(colnames(trimmed$temperature), "temp")
+  expect_identical(colnames(trimmed$exogenous), c("precip", "solar"))
 
   expect_length(split_exo, 2)
   expect_named(split_exo, c("precip", "solar"))
@@ -39,6 +39,6 @@ test_that("trim_ts_overlap and split_multi_ts work together", {
   expect_s3_class(split_exo[[1]], "ts")
   expect_s3_class(split_exo[[2]], "ts")
 
-  expect_equal(colnames(split_exo[[1]]), "precip")
-  expect_equal(colnames(split_exo[[2]]), "solar")
+  expect_identical(colnames(split_exo[[1]]), "precip")
+  expect_identical(colnames(split_exo[[2]]), "solar")
 })

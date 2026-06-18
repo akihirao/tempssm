@@ -19,9 +19,9 @@ test_that("get_exo_coef returns numeric columns", {
 
   df <- get_exo_coef(res_tempssm_exo)
 
-  expect_true(is.numeric(df$Coefficient))
-  expect_true(is.numeric(df$lwr))
-  expect_true(is.numeric(df$upr))
+  expect_type(df$Coefficient, "double")
+  expect_type(df$lwr, "double")
+  expect_type(df$upr, "double")
 })
 
 
@@ -42,7 +42,7 @@ test_that("coefficient matches alphahat", {
 
   alpha <- res_tempssm_exo$kfs$alphahat
 
-  expect_equal(
+  expect_identical(
     df$Coefficient,
     as.numeric(alpha[1, var_name])
   )

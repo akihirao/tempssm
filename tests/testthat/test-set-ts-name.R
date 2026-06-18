@@ -8,13 +8,13 @@ test_that("set_ts_name works for univariate ts", {
   ts_named <- set_ts_name(ts_uni, label = "temperature")
 
   expect_s3_class(ts_named, "ts")
-  expect_equal(NCOL(ts_named), 1)
-  expect_equal(colnames(ts_named), "temperature")
+  expect_identical(NCOL(ts_named), 1L)
+  expect_identical(colnames(ts_named), "temperature")
 
   ## time attributes are preserved
-  expect_equal(start(ts_named), start(ts_uni))
-  expect_equal(frequency(ts_named), frequency(ts_uni))
-  expect_equal(tsp(ts_named), tsp(ts_uni))
+  expect_identical(start(ts_named), start(ts_uni))
+  expect_identical(frequency(ts_named), frequency(ts_uni))
+  expect_identical(tsp(ts_named), tsp(ts_uni))
 })
 
 
@@ -30,11 +30,11 @@ test_that("set_ts_name works for multivariate ts with matching labels", {
   ts_named <- set_ts_name(ts_multi, label = labels)
 
   expect_s3_class(ts_named, "ts")
-  expect_equal(NCOL(ts_named), 3)
-  expect_equal(colnames(ts_named), labels)
+  expect_identical(NCOL(ts_named), 3L)
+  expect_identical(colnames(ts_named), labels)
 
   ## time attributes are preserved
-  expect_equal(tsp(ts_named), tsp(ts_multi))
+  expect_identical(tsp(ts_named), tsp(ts_multi))
 })
 
 
@@ -47,7 +47,7 @@ test_that("single label is recycled for multivariate ts", {
 
   ts_named <- set_ts_name(ts_multi, label = "exo")
 
-  expect_equal(
+  expect_identical(
     colnames(ts_named),
     rep("exo", 4)
   )
@@ -64,8 +64,8 @@ test_that("vector ts input is safely converted to single-column ts", {
   ts_named <- set_ts_name(ts_vec, label = "x")
 
   expect_s3_class(ts_named, "ts")
-  expect_equal(NCOL(ts_named), 1)
-  expect_equal(colnames(ts_named), "x")
+  expect_identical(NCOL(ts_named), 1L)
+  expect_identical(colnames(ts_named), "x")
 })
 
 
@@ -109,8 +109,8 @@ test_that("1-column matrix ts is handled correctly", {
 
   ts_named <- set_ts_name(ts_mat, label = "temp")
 
-  expect_equal(NCOL(ts_named), 1)
-  expect_equal(colnames(ts_named), "temp")
+  expect_identical(NCOL(ts_named), 1L)
+  expect_identical(colnames(ts_named), "temp")
 })
 
 
@@ -124,7 +124,7 @@ test_that("label length equals number of columns is accepted exactly", {
 
   ts_named <- set_ts_name(ts_multi, labels)
 
-  expect_equal(colnames(ts_named), labels)
+  expect_identical(colnames(ts_named), labels)
 })
 
 
@@ -137,7 +137,7 @@ test_that("existing column names are overwritten", {
 
   ts_named <- set_ts_name(ts_multi, c("new1", "new2"))
 
-  expect_equal(colnames(ts_named), c("new1", "new2"))
+  expect_identical(colnames(ts_named), c("new1", "new2"))
 })
 
 

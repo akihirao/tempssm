@@ -75,7 +75,7 @@ test_that("get_level_ts works even if model did not converge", {
   ts_obj <- get_level_ts(res)
 
   expect_s3_class(ts_obj, "ts")
-  expect_equal(NCOL(ts_obj), 1)
+  expect_identical(NCOL(ts_obj), 1L)
 })
 
 
@@ -86,7 +86,7 @@ test_that("get_drift_ts works even if model did not converge", {
   ts_obj <- get_drift_ts(res)
 
   expect_s3_class(ts_obj, "ts")
-  expect_equal(NCOL(ts_obj), 1)
+  expect_identical(NCOL(ts_obj), 1L)
 })
 
 

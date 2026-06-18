@@ -4,9 +4,11 @@ test_that("ts_train_test_split returns list of folds", {
   folds <- ts_train_test_split(temp_ts_test)
 
   expect_type(folds, "list")
-  expect_true(length(folds) > 0)
+  expect_gt(length(folds), 0)
 
-  expect_true(all(sapply(folds, function(x) is.list(x))))
+  fold_is_list <- vapply(folds, is.list, logical(1))
+
+  expect_true(all(fold_is_list))
 })
 
 
@@ -57,7 +59,7 @@ test_that("train and test indices are consistent", {
   expect_gt(t_idx[2], t_idx[1])
   expect_gt(s_idx[2], s_idx[1])
 
-  expect_equal(s_idx[1], t_idx[2] + 1)
+  expect_identical(s_idx[1], t_idx[2] + 1)
 })
 
 
@@ -112,7 +114,7 @@ test_that("allow_partial changes final fold", {
     allow_partial = TRUE
   )
 
-  expect_true(length(f2) >= length(f1))
+  expect_gte(length(f2), length(f1))
 })
 
 

@@ -34,9 +34,9 @@ test_that("summary uses logLik() and AIC() methods consistently", {
   ll <- logLik(res_tempssm)
   aic <- AIC(res_tempssm)
 
-  expect_equal(s$logLik, as.numeric(ll))
-  expect_equal(s$k, attr(ll, "df"))
-  expect_equal(s$AIC, aic)
+  expect_identical(s$logLik, as.numeric(ll))
+  expect_identical(s$k, attr(ll, "df"))
+  expect_identical(s$AIC, aic)
 })
 
 
@@ -55,8 +55,8 @@ test_that("print.summary.tempssm outputs expected text", {
 
   output <- capture.output(print(s))
 
-  expect_true(any(grepl("tempssm summary", output)))
-  expect_true(any(grepl("Log-likelihood", output)))
+  expect_true(any(grepl("tempssm summary", output, fixed = TRUE)))
+  expect_true(any(grepl("Log-likelihood", output, fixed = TRUE)))
 })
 
 
@@ -73,8 +73,8 @@ test_that("summary handles non-seasonal model", {
 test_that("summary contains valid AR coefficients", {
   s <- summary(res_tempssm)
 
-  expect_true(is.list(s$coef_ar))
-  expect_true(s$coef_ar$AR_order <= 1)
+  expect_type(s$coef_ar, "list")
+  expect_lte(s$coef_ar$AR_order, 1)
   expect_length(s$coef_ar$AR_coef, s$coef_ar$AR_order)
 })
 

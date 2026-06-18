@@ -1,6 +1,6 @@
 #' Extract standardized recursive residuals
 #'
-#' @param res An object of class "tempssm".
+#' @inheritParams get_level_ts
 #' @return A numeric vector of standardized recursive residuals.
 #'
 #' @examples
@@ -52,7 +52,7 @@ get_tempssm_residuals <- function(res) {
 #' The output is returned as a tidy tibble suitable for meta-analysis
 #' across many fitted models.
 #'
-#' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
+#' @inheritParams get_level_ts
 #' @param JB_test Logical; if TRUE, the Jarque–Bera test is included.
 #'
 #' @return
@@ -119,7 +119,7 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
 
 #' Plot residual diagnostics for tempssm models
 #'
-#' @param res An object of class "tempssm".
+#' @inheritParams get_level_ts
 #' @param save Logical; if TRUE, plots are saved.
 #' @param prefix Character prefix for file names.
 #'

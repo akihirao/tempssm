@@ -29,7 +29,7 @@ test_that("numeric sea_area_id is handled", {
 test_that("character sea_area_id is preserved", {
   url <- .build_jma_url("001")
 
-  expect_true(grepl("area001", url))
+  expect_true(grepl("area001", url, fixed = TRUE))
 })
 
 
@@ -37,12 +37,12 @@ test_that("vector input returns vectorized output", {
   urls <- .build_jma_url(c("138", "139"))
 
   expect_length(urls, 2)
-  expect_true(all(grepl("area", urls)))
+  expect_true(all(grepl("area", urls, fixed = TRUE)))
 })
 
 
 test_that("handles empty input", {
   url <- .build_jma_url("")
 
-  expect_true(grepl("area.txt", url))
+  expect_true(grepl("area.txt", url, fixed = TRUE))
 })

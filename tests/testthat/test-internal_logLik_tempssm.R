@@ -24,7 +24,7 @@ test_that(".internal_logLik_tempssm returns numeric values", {
 test_that("nobs equals length of temp_data", {
   out <- tempssm:::.internal_logLik_tempssm(res_tempssm)
 
-  expect_equal(out$nobs, length(res_tempssm$temp_data))
+  expect_identical(out$nobs, length(res_tempssm$temp_data))
 })
 
 
@@ -33,7 +33,7 @@ test_that("df equals number of parameters without exogenous variables", {
 
   expected_df <- length(res_tempssm$fit$optim.out$par)
 
-  expect_equal(out$df, expected_df)
+  expect_identical(out$df, expected_df)
 })
 
 
@@ -44,7 +44,7 @@ test_that("df includes exogenous variables when present", {
 
   expected_df <- length(res$fit$optim.out$par) + ncol(res$exogenous_data)
 
-  expect_equal(out$df, expected_df)
+  expect_identical(out$df, expected_df)
 })
 
 
@@ -53,7 +53,7 @@ test_that("logLik matches stats::logLik output", {
 
   expected <- as.numeric(stats::logLik(res_tempssm$model))
 
-  expect_equal(out$logLik, expected)
+  expect_identical(out$logLik, expected)
 })
 
 
@@ -95,7 +95,7 @@ test_that("handles exogenous with zero columns", {
 
   out <- tempssm:::.internal_logLik_tempssm(res)
 
-  expect_equal(
+  expect_identical(
     out$df,
     length(res$fit$optim.out$par)
   )

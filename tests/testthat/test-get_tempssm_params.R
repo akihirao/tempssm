@@ -15,10 +15,10 @@ test_that("get_tempssm_params returns a list with expected names", {
 test_that("get_tempssm_params returns numeric values", {
   params <- get_tempssm_params(res_tempssm)
 
-  expect_true(is.numeric(params$H))
-  expect_true(is.numeric(params$Q_trend))
-  expect_true(is.numeric(params$Q_ar))
-  expect_true(is.numeric(params$ARs))
+  expect_type(params$H, "double")
+  expect_type(params$Q_trend, "double")
+  expect_type(params$Q_ar, "double")
+  expect_type(params$ARs, "double")
 })
 
 
@@ -35,7 +35,7 @@ test_that("Q_season is NA when seasonal is not used", {
 test_that("Q_season is computed when seasonal is used", {
   params <- get_tempssm_params(res_tempssm)
 
-  expect_true(is.numeric(params$Q_season))
+  expect_type(params$Q_season, "double")
   expect_false(is.na(params$Q_season))
 })
 
@@ -56,14 +56,14 @@ test_that("parameters are exponentiated correctly", {
 
   params <- get_tempssm_params(res_tempssm)
 
-  expect_equal(params$H, expected_H)
+  expect_identical(params$H, expected_H)
 })
 
 
 test_that("AR coefficients are transformed correctly", {
   params <- get_tempssm_params(res_tempssm)
 
-  expect_equal(length(params$ARs), res_tempssm$ar_order)
+  expect_length(params$ARs, res_tempssm$ar_order)
 })
 
 
