@@ -62,7 +62,7 @@ A short tutorial is available in the package vignette:
 
 A more detailed PDF manual is also available:
 
-<https://github.com/akihirao/tempssm/blob/main/inst/doc/tempssm-manual.pdf>
+<https://github.com/akihirao/tempssm/blob/main/tools/manual/tempssm_manual.pdf>
 
 ## Basic Usage
 

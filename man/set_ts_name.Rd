@@ -20,7 +20,7 @@ length as the number of columns in \code{ts_in}.}
 A \code{ts} object with assigned variable names.
 }
 \description{
-`set_ts_name()` assigns variable (column) names to a time series object
+\code{set_ts_name()} assigns variable (column) names to a time series object
 of class \code{ts}. The function supports both univariate and multivariate
 time series and ensures that variable names are handled consistently within
 the \pkg{tempssm} framework.
@@ -31,7 +31,7 @@ assigned directly.
 }
 \details{
 This function does not modify the time attributes of the input series
-(e.g., start time, frequency). It only assigns variable names while 
+(e.g., start time, frequency). It only assigns variable names while
 preserving the internal structure required by downstream functions such as
 \code{tempssm()}.
 }

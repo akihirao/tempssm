@@ -20,8 +20,8 @@ If the proportion of missing values exceeds this threshold, the monthly
 mean is set to NA. Default is \code{1} (no additional filtering).}
 }
 \value{
-A \code{ts} object of monthly mean sea-surface temperature
-with a single column named \code{Temp}.
+A univariate monthly \code{ts} object of mean sea-surface temperature, with
+\code{frequency = 12}.
 }
 \description{
 This function downloads publicly available daily mean

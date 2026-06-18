@@ -560,7 +560,19 @@ ts_train_test_split <- function(temp_data,
 }
 
 
-# internal: slice ts object by index range
+#' Slice a time-series object by positional indices
+#'
+#' Internal helper to extract a contiguous range from a `ts` object using
+#' positional start and end indices.
+#'
+#' @param x A time-series object of class `ts`, or `NULL`.
+#' @param i_start Integer start position.
+#' @param i_end Integer end position.
+#'
+#' @return A sliced `ts` object, or `NULL` if `x` is `NULL`.
+#'
+#' @keywords internal
+#' @noRd
 .ts_slice <- function(x, i_start, i_end) {
   if (is.null(x)) {
     return(NULL)

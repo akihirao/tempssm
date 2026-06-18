@@ -16,7 +16,7 @@ Each list element corresponds to one column of \code{multi_ts}, and the list
 names are taken from \code{colnames(multi_ts)}.
 }
 \description{
-`split_multi_ts()` splits a multivariate \code{ts} object into a list of
+\code{split_multi_ts()} splits a multivariate \code{ts} object into a list of
 univariate \code{ts} objects, one for each variable (column).
 
 Each resulting univariate series preserves the original time attributes and
@@ -26,7 +26,7 @@ This ensures consistent handling of variable names within the
 }
 \details{
 The function requires \code{multi_ts} to have valid column names.
-If a univariate \code{ts} object is supplied, the function stops 
+If a univariate \code{ts} object is supplied, the function stops
 with an error.
 }
 \examples{

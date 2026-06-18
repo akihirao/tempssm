@@ -44,15 +44,15 @@ test period is shorter than \code{horizon}. Default is \code{FALSE}.}
 \value{
 A list of folds. Each element is a list containing:
 \describe{
-  \item{fold}{Fold index.}
-  \item{train_ts}{Training time series.}
-  \item{test_ts}{Test time series.}
-  \item{exo_train_ts}{Training exogenous time series (or \code{NULL}).}
-  \item{exo_test_ts}{Test exogenous time series (or \code{NULL}).}
-  \item{train_idx}{Index range of the training set (position-based).}
-  \item{test_idx}{Index range of the test set (position-based).}
-  \item{train_range}{Time range of the training set.}
-  \item{test_range}{Time range of the test set.}
+\item{fold}{Fold index.}
+\item{train_ts}{Training time series.}
+\item{test_ts}{Test time series.}
+\item{exo_train_ts}{Training exogenous time series (or \code{NULL}).}
+\item{exo_test_ts}{Test exogenous time series (or \code{NULL}).}
+\item{train_idx}{Index range of the training set (position-based).}
+\item{test_idx}{Index range of the test set (position-based).}
+\item{train_range}{Time range of the training set.}
+\item{test_range}{Time range of the test set.}
 }
 }
 \description{

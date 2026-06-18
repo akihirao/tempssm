@@ -22,21 +22,21 @@ are assigned with a warning.}
 \value{
 A named list with the following elements:
 \describe{
-  \item{temperature}{A univariate \code{ts} object of the trimmed 
-  temperature series.}
-  \item{exogenous}{A \code{ts} object of the trimmed exogenous variables.}
+\item{temperature}{A univariate \code{ts} object of the trimmed
+temperature series.}
+\item{exogenous}{A \code{ts} object of the trimmed exogenous variables.}
 }
 }
 \description{
-`trim_ts_overlap()` aligns a temperature time series and one or more 
-exogenous time series by trimming them to their shared (overlapping) time 
+\code{trim_ts_overlap()} aligns a temperature time series and one or more
+exogenous time series by trimming them to their shared (overlapping) time
 period.
 
-The function returns the trimmed series as a named list of `ts` objects,
+The function returns the trimmed series as a named list of \code{ts} objects,
 with consistent variable labels applied for downstream modeling in
 \code{tempssm()}.
 
-Univariate `ts` objects are labeled using \code{set_ts_name()} to ensure a
+Univariate \code{ts} objects are labeled using \code{set_ts_name()} to ensure a
 consistent handling of variable names within the \pkg{tempssm} framework.
 }
 \details{
@@ -62,5 +62,5 @@ trim_ts_overlap(
 
 }
 \seealso{
-[ts.intersect()], [set_ts_name()], \code{\link{tempssm}}
+\code{\link[=ts.intersect]{ts.intersect()}}, \code{\link[=set_ts_name]{set_ts_name()}}, \code{\link{tempssm}}
 }

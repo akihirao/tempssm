@@ -9,11 +9,11 @@ convert_monthly_df_to_ts(df)
 }
 \arguments{
 \item{df}{A data frame containing monthly temperature data with columns
-\code{Date} and \code{Temp}.}
+\code{Date} (class \code{Date}) and \code{Temp} (numeric).}
 }
 \value{
-A univariate \code{ts} object representing the monthly temperature
-  time series.
+A univariate monthly \code{ts} object representing the temperature
+time series, with \code{frequency = 12}.
 }
 \description{
 Convert a data frame of monthly temperature time series to a \code{ts} object
@@ -24,11 +24,11 @@ time series into an R \code{ts} object with a frequency of 12.
 
 The input data frame must contain the following columns:
 \describe{
-  \item{\code{Date}}{A date column indicating the time index.
-  If the exact day of the month is not uniquely defined, any arbitrary
-  day (e.g., the first day of the month) may be used.}
-  \item{\code{Temp}}{Monthly temperature values. Missing values should be
-  represented as \code{NA}.}
+\item{\code{Date}}{A date column indicating the time index.
+If the exact day of the month is not uniquely defined, any arbitrary
+day (e.g., the first day of the month) may be used.}
+\item{\code{Temp}}{Monthly temperature values. Missing values should be
+represented as \code{NA}.}
 }
 
 The function assumes that the input data represent a regularly spaced

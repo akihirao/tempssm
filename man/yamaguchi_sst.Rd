@@ -7,8 +7,8 @@
 \format{
 A \code{zoo} object with:
 \describe{
-  \item{index}{Date from 1982-01-01 to 2025-12-31}
-  \item{Temp}{Monthly mean temperature (°C)}
+\item{index}{Date from 1982-01-01 to 2025-12-31}
+\item{Temp}{Monthly mean temperature (°C)}
 }
 }
 \source{

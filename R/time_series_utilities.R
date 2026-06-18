@@ -394,10 +394,10 @@ split_multi_ts <- function(multi_ts) {
 #' }
 #'
 #' @param df A data frame containing monthly temperature data with columns
-#'   \code{Date} and \code{Temp}.
+#'   \code{Date} (class \code{Date}) and \code{Temp} (numeric).
 #'
-#' @return A univariate \code{ts} object representing the monthly temperature
-#'   time series.
+#' @return A univariate monthly \code{ts} object representing the temperature
+#'   time series, with \code{frequency = 12}.
 #'
 #' @importFrom stats ts
 #'
@@ -505,16 +505,16 @@ convert_monthly_df_to_ts <- function(df) {
 #' ...
 #' }
 #'
-#' @param csv A character string specifying the path to a CSV file
-#'   containing monthly temperature data.
+#' @param csv A length-one character string giving the path to a UTF-8 CSV file
+#'   with columns \code{Year}, \code{Month}, and \code{Temp}.
 #'
 #' @importFrom readr read_csv
 #' @importFrom stats ts
 #'
 #' @encoding UTF-8
 #'
-#' @return
-#' \code{ts} object representing the monthly time series
+#' @return A univariate monthly \code{ts} object representing the temperature
+#'   time series, with \code{frequency = 12}.
 #'
 #' @examples
 #' ## Create a temporary CSV file with monthly temperature data
@@ -610,8 +610,9 @@ read_monthly_temp_ts <- function(csv) {
 
 #' Convert a daily zoo object to a monthly \code{ts} object
 #'
-#' @param zoo_obj A \code{zoo} object with daily observations.
-#'   The index must be of class \code{Date} or \code{POSIXt}.
+#' @param zoo_obj A \code{zoo} object with daily observations. The index must
+#'   be of class \code{Date} or \code{POSIXt}, and the object must include a
+#'   numeric column named by \code{var}.
 #'
 #' @param var A character string specifying the name of the variable
 #'   to be aggregated (default: \code{"Temp"}).
@@ -622,7 +623,7 @@ read_monthly_temp_ts <- function(csv) {
 #'   If the proportion of missing values exceeds this threshold, the monthly
 #'   mean is set to NA. Default is \code{1} (no additional filtering).
 #'
-#' @return A monthly \code{ts} object with frequency = 12.
+#' @return A univariate monthly \code{ts} object with \code{frequency = 12}.
 #'
 #' @examples
 #' \dontrun{
@@ -906,7 +907,16 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 }
 
 
-# internal utilities ------------------------------------
+#' Get the package user agent string
+#'
+#' Internal helper returning the user agent used for HTTP requests.
+#' If the `tempssm.user_agent` option is set, that value is used;
+#' otherwise a package-specific default is returned.
+#'
+#' @return A length-one character vector.
+#'
+#' @keywords internal
+#' @noRd
 .user_agent <- function() {
   getOption(
     "tempssm.user_agent",
@@ -1128,8 +1138,8 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #' \code{options(tempssm.user_agent = "my-analysis/1.0")}.
 #'
 #' @return
-#' A \code{zoo} object of daily mean sea-surface temperature
-#' with a single column named \code{Temp}.
+#' A \code{zoo} object of daily mean sea-surface temperature with a
+#' \code{Date} index and a single numeric column named \code{Temp}.
 #'
 #' @examples
 #' \dontrun{
@@ -1199,8 +1209,8 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' \code{options(tempssm.user_agent = "my-analysis/1.0")}.
 #'
 #' @return
-#' A \code{ts} object of monthly mean sea-surface temperature
-#' with a single column named \code{Temp}.
+#' A univariate monthly \code{ts} object of mean sea-surface temperature, with
+#' \code{frequency = 12}.
 #'
 #' @examples
 #' \dontrun{

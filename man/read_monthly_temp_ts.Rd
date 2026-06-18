@@ -8,11 +8,12 @@
 read_monthly_temp_ts(csv)
 }
 \arguments{
-\item{csv}{A character string specifying the path to a CSV file
-containing monthly temperature data.}
+\item{csv}{A length-one character string giving the path to a UTF-8 CSV file
+with columns \code{Year}, \code{Month}, and \code{Temp}.}
 }
 \value{
-\code{ts} object representing the monthly time series
+A univariate monthly \code{ts} object representing the temperature
+time series, with \code{frequency = 12}.
 }
 \description{
 Read and convert a monthly temperature CSV file to a \code{ts} object

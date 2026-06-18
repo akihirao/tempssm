@@ -16,8 +16,8 @@ https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html
 }}
 }
 \value{
-A \code{zoo} object of daily mean sea-surface temperature
-with a single column named \code{Temp}.
+A \code{zoo} object of daily mean sea-surface temperature with a
+\code{Date} index and a single numeric column named \code{Temp}.
 }
 \description{
 This function downloads publicly available daily mean

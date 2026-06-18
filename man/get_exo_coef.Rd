@@ -14,10 +14,10 @@ get_exo_coef(res, ci_level = 0.95)
 \value{
 A \code{data.frame} with the following columns:
 \describe{
-  \item{Variable}{Name of the exogenous variable}
-  \item{Coefficient}{Estimated regression coefficient}
-  \item{lwr}{Lower bound of the confidence interval}
-  \item{upr}{Upper bound of the confidence interval}
+\item{Variable}{Name of the exogenous variable}
+\item{Coefficient}{Estimated regression coefficient}
+\item{lwr}{Lower bound of the confidence interval}
+\item{upr}{Upper bound of the confidence interval}
 }
 Returns \code{NULL} if no exogenous variables are included in the model.
 }

@@ -54,9 +54,11 @@
 #'
 #' @return A named list containing transformed parameters:
 #' \describe{
-#'   \item{trend_var}{Positive trend variance: exp(pars[1])}
-#'   \item{season_var}{Positive seasonal variance if use_season=TRUE, else NULL}
-#'   \item{ar_coefs}{Stationary AR coefficients via KFAS::artransform()}
+#'   \item{trend_var}{Positive trend variance: \code{exp(pars[[1]])}}
+#'   \item{season_var}{Positive seasonal variance if \code{use_season = TRUE},
+#'   otherwise \code{NULL}}
+#'   \item{ar_coefs}{Stationary AR coefficients via
+#'   \code{KFAS::artransform()}}
 #'   \item{ar_var}{Positive AR process variance}
 #'   \item{H}{Positive observation variance}
 #' }

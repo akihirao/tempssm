@@ -7,9 +7,9 @@
 \format{
 A \code{ts} object with:
 \describe{
-  \item{frequency}{12 (monthly data)}
-  \item{start}{January 1865}
-  \item{end}{June 2023}
+\item{frequency}{12 (monthly data)}
+\item{start}{January 1865}
+\item{end}{June 2023}
 }
 }
 \source{
