@@ -89,6 +89,8 @@ summary(res)
 autoplot(res)
 ```
 
+![Example output from autoplot(res)](vignettes/fig/myfig.png)
+
 ### Use Your Own Data
 
 If you already have a `ts` object, pass it directly to `tempssm()`.
