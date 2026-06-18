@@ -16,11 +16,12 @@ ts_cv_run(
 \arguments{
 \item{folds}{A list of fold objects returned by \code{ts_train_test_split()}.}
 
-\item{ar_order}{Integer specifying the order of the autoregressive (AR) component
-used in \code{tempssm()}. Default is 1.}
+\item{ar_order}{Integer specifying the order of the autoregressive (AR)
+component in the error structure (e.g., 2 for AR(2), 3 for AR(3)).
+Defaults to 1.}
 
-\item{use_season}{Logical; if \code{TRUE}, include a seasonal component in the model.
-Default is \code{TRUE}.}
+\item{use_season}{Logical; Should seasonal component be considered.
+Default to TRUE.}
 
 \item{parallel}{Logical; if \code{TRUE}, folds are evaluated in parallel using the
 \pkg{future.apply} framework. If \code{FALSE}, folds are processed

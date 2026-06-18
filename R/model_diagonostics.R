@@ -27,7 +27,7 @@ get_tempssm_residuals <- function(res) {
 #'
 #' Uses non-excess kurtosis, m4 / m2^2.
 #'
-#' @param x A numeric vector.
+#' @inheritParams .check_na_ratio
 #' @param na.rm Logical; if TRUE, missing values are removed.
 #'
 #' @return A numeric scalar.

@@ -30,3 +30,26 @@ test_that("diagnose_residuals checks input class", {
     "`res` must be an object of class <tempssm>."
   )
 })
+
+
+test_that(".kurtosis removes missing values when requested", {
+  x <- c(1, 2, NA, 3, 4)
+
+  expect_true(is.na(.kurtosis(x)))
+  expect_false(is.na(.kurtosis(x, na.rm = TRUE)))
+})
+
+
+test_that("plot_tempssm_residual_diagnostics can save plots", {
+  prefix <- file.path(tempdir(), "tempssm-residuals")
+  check_file <- paste0(prefix, "_check.png")
+  qq_file <- paste0(prefix, "_qq.png")
+
+  withr::defer(unlink(c(check_file, qq_file)))
+
+  expect_invisible(
+    plot_tempssm_residual_diagnostics(res_tempssm, save = TRUE, prefix = prefix)
+  )
+  expect_true(file.exists(check_file))
+  expect_true(file.exists(qq_file))
+})

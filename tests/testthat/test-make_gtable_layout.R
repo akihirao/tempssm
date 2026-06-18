@@ -12,7 +12,7 @@ test_that("grid_arrange_base works with multiple ggplots", {
   plots <- list(p1, p2)
 
   expect_silent(
-    tempssm:::.make_gtable_layout(plots)
+    .make_gtable_layout(plots)
   )
 })
 
@@ -25,7 +25,7 @@ test_that("grid_arrange_base respects nrow/ncol", {
   plots <- list(p, p, p, p)
 
   expect_silent(
-    tempssm:::.make_gtable_layout(plots, nrow = 2, ncol = 2)
+    .make_gtable_layout(plots, nrow = 2, ncol = 2)
   )
 })
 
@@ -36,13 +36,13 @@ test_that("grid_arrange_base handles single plot", {
     ggplot2::geom_point()
 
   expect_silent(
-    tempssm:::.make_gtable_layout(list(p))
+    .make_gtable_layout(list(p))
   )
 })
 
 test_that(".make_gtable_layout requires a list of plots", {
   expect_error(
-    tempssm:::.make_gtable_layout(NULL),
+    .make_gtable_layout(NULL),
     "`plots` must be a list."
   )
 })

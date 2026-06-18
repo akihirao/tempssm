@@ -3,7 +3,7 @@
 test_that(".user_agent returns default value when option not set", {
   withr::local_options(list(tempssm.user_agent = NULL))
 
-  ua <- tempssm:::.user_agent()
+  ua <- .user_agent()
 
   expect_type(ua, "character")
   expect_length(ua, 1)
@@ -16,7 +16,7 @@ test_that(".user_agent returns default value when option not set", {
 test_that("default user agent contains package version", {
   withr::local_options(list(tempssm.user_agent = NULL))
 
-  ua <- tempssm:::.user_agent()
+  ua <- .user_agent()
 
   pkg_ver <- as.character(utils::packageVersion("tempssm"))
 

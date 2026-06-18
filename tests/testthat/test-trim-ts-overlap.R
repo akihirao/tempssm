@@ -11,7 +11,7 @@ test_that("trim_ts_overlap works for valid input", {
     temp_ts_test,
     exo_ts,
     temp_name = "temp",
-    exo_name  = c("x1")
+    exo_name  = "x1"
   )
 
   expect_type(res, "list")
@@ -26,7 +26,7 @@ test_that("trim_ts_overlap trims to overlapping period", {
   # length(temp_ts_test): 120
   exo_ts <- ts(rnorm(50), start = c(2000, 1), frequency = 12)
 
-  res <- trim_ts_overlap(temp_ts_test, exo_ts, exo_name = c("x1"))
+  res <- trim_ts_overlap(temp_ts_test, exo_ts, exo_name = "x1")
 
   expect_length(res$temperature, length(res$exogenous))
 })

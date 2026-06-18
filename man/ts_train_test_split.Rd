@@ -15,10 +15,15 @@ ts_train_test_split(
 )
 }
 \arguments{
-\item{temp_data}{A univariate time series of class \code{ts} representing temperature data.}
+\item{temp_data}{A temperature time series of class \code{ts}.
+The \code{ts} object must be univariant.
+The series can have any arbitrary frequency of 2 or higher.
+For example, a frequency of 12 represents a monthly \code{ts} object.}
 
-\item{exo_data}{Optional exogenous time series variable(s) of class \code{ts}.
-Must have the same length and frequency as \code{temp_data}.}
+\item{exo_data}{A data set of exogenous variable(s) of class \code{ts}.
+The series may have any arbitrary frequency of 2 or higher,
+but it must be the same as that of \code{temp_data}. The default is
+\code{NULL} when fitting a model without exogenous variables.}
 
 \item{initial}{Initial length of the training set (number of observations).
 Default is 60.}

@@ -17,7 +17,7 @@ test_that("split_multi_ts splits multivariate ts correctly", {
 
   expect_named(res, c("x1", "x2"))
 
-  is_ts <- vapply(res, function(x) inherits(x, "ts"), logical(1))
+  is_ts <- vapply(res, inherits, logical(1), "ts")
 
   expect_true(all(is_ts))
 })
@@ -33,9 +33,9 @@ test_that("each split series is univariate ts", {
 
   res <- split_multi_ts(multi_ts)
 
-  is_univariate <- vapply(res, function(x) NCOL(x) == 1, logical(1))
+  n_cols <- vapply(res, NCOL, integer(1))
 
-  expect_true(all(is_univariate))
+  expect_true(all(n_cols == 1L))
 })
 
 

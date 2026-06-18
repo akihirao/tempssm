@@ -6,8 +6,7 @@
 #'
 #' The mapping depends on whether a seasonal component is included.
 #'
-#' @param ar_order Integer; order of the autoregressive component.
-#' @param use_season Logical; whether a seasonal component is included.
+#' @inheritParams tempssm
 #'
 #' @return A named list with components:
 #' \describe{
@@ -51,7 +50,7 @@
 #' @param ar_idx Integer vector of indices for AR coefficients
 #' @param var_idx Integer index for AR process variance parameter
 #' @param H_idx Integer index for observation variance parameter
-#' @param use_season Logical; whether seasonal component is included
+#' @inheritParams tempssm
 #'
 #' @return A named list containing transformed parameters:
 #' \describe{
@@ -416,10 +415,9 @@ tempssm <- function(temp_data,
 #' @param y A numeric vector or univariate \code{ts} object representing
 #'   the observed time series.
 #' @param freq Integer indicating the seasonal frequency of \code{y}.
-#' @param use_season Logical; whether to include a seasonal component.
+#' @inheritParams tempssm
 #' @param exo_mat Optional numeric matrix of exogenous regressors.
 #'   If provided, each column is treated as a separate covariate.
-#' @param ar_order Integer specifying the order of the autoregressive component.
 #'
 #' @return A \code{KFAS::SSModel} object with unspecified variance parameters.
 #'
@@ -528,9 +526,8 @@ tempssm <- function(temp_data,
 #' @param y A numeric vector or univariate \code{ts} object representing
 #'   the observed time series.
 #' @param freq Integer indicating the seasonal frequency.
-#' @param use_season Logical; whether to include a seasonal component.
+#' @inheritParams tempssm
 #' @param exo_mat Optional matrix of exogenous regressors.
-#' @param ar_order Integer specifying the order of the autoregressive component.
 #' @param ar_idx Integer vector indicating positions of AR coefficients
 #'   in the parameter vector.
 #' @param var_idx Integer indicating the position of the AR process variance.
@@ -649,9 +646,7 @@ tempssm <- function(temp_data,
 
 #' Check ts object of temperature time series for applying \code{tempssm()}
 #'
-#' @param temp_data A temperature time series of class \code{ts}.
-#'   The series can have any arbitrary frequency of 2 or higher.
-#'   For example, a frequency of 12 represents a monthly \code{ts} object.
+#' @inheritParams tempssm
 #'
 #' @return A univariate \code{ts} object.
 #'
@@ -692,15 +687,7 @@ tempssm <- function(temp_data,
 
 #' Check ts object of exogenous variable(s) for applying \code{tempssm()}
 #'
-#' @param temp_data A temperature time series of class \code{ts}.
-#'   The series can have any arbitrary frequency of 2 or higher.
-#'   For example, a frequency of 12 represents a monthly \code{ts} object.
-#'
-#' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
-#'   The series may have any arbitrary frequency of 2 or higher,
-#'   but it must be the same as that of \code{temp_data}.
-#'   The default is \code{NULL} when fitting a model without exogenous 
-#'   variables.
+#' @inheritParams tempssm
 #'
 #' @return A univariate or multivairate \code{ts} object.
 #'

@@ -2,7 +2,7 @@
 
 test_that(".validate_tempssm_for_ic works for valid object", {
   expect_invisible(
-    out <- tempssm:::.validate_tempssm_for_ic(res_tempssm)
+    out <- .validate_tempssm_for_ic(res_tempssm)
   )
 
   expect_identical(out, res_tempssm)
@@ -11,7 +11,7 @@ test_that(".validate_tempssm_for_ic works for valid object", {
 
 test_that(".validate_tempssm_for_ic errors for invalid class", {
   expect_error(
-    tempssm:::.validate_tempssm_for_ic(NULL),
+    .validate_tempssm_for_ic(NULL),
     "`res` must be an object of class"
   )
 })
@@ -22,7 +22,7 @@ test_that(".validate_tempssm_for_ic errors when not converged", {
   bad_res$converged <- FALSE
 
   expect_error(
-    tempssm:::.validate_tempssm_for_ic(bad_res),
+    .validate_tempssm_for_ic(bad_res),
     "did not converge"
   )
 })
@@ -33,7 +33,7 @@ test_that(".validate_tempssm_for_ic errors when model is missing", {
   bad_res$model <- NULL
 
   expect_error(
-    tempssm:::.validate_tempssm_for_ic(bad_res),
+    .validate_tempssm_for_ic(bad_res),
     "fitted model is missing"
   )
 })
@@ -44,7 +44,7 @@ test_that(".validate_tempssm_for_ic errors when fit is missing", {
   bad_res$fit <- NULL
 
   expect_error(
-    tempssm:::.validate_tempssm_for_ic(bad_res),
+    .validate_tempssm_for_ic(bad_res),
     "fitted model is missing"
   )
 })
@@ -57,8 +57,8 @@ test_that(".validate_tempssm_for_ic errors if model or fit is NULL", {
   bad_res2 <- res_tempssm
   bad_res2$fit <- NULL
 
-  expect_error(tempssm:::.validate_tempssm_for_ic(bad_res1))
-  expect_error(tempssm:::.validate_tempssm_for_ic(bad_res2))
+  expect_error(.validate_tempssm_for_ic(bad_res1))
+  expect_error(.validate_tempssm_for_ic(bad_res2))
 })
 
 
@@ -67,7 +67,7 @@ test_that(".validate_tempssm_for_ic does not modify object", {
 
   expect_error(
     tryCatch(
-      tempssm:::.validate_tempssm_for_ic(res_copy),
+      .validate_tempssm_for_ic(res_copy),
       error = function(e) NULL
     ),
     NA
@@ -82,7 +82,7 @@ test_that(".validate_tempssm_for_ic requires TRUE convergence", {
   bad_res$converged <- NA # subtle case
 
   expect_error(
-    tempssm:::.validate_tempssm_for_ic(bad_res),
+    .validate_tempssm_for_ic(bad_res),
     "did not converge"
   )
 })

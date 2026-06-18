@@ -519,7 +519,7 @@ plot_temp_dev <- function(ts) {
   mnum <- cycle(ts)
   mfac <- factor(mnum, levels = 1:12)
 
-  monthly_ave_temp <- tapply(temp, mfac, function(v) mean(v, na.rm = TRUE))
+  monthly_ave_temp <- tapply(temp, mfac, mean, na.rm = TRUE)
   clim <- monthly_ave_temp[as.integer(mfac)]
   anom <- temp - clim
 

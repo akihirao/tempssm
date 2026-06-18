@@ -29,7 +29,7 @@ exo_ts_test <- ts(
 )
 
 
-tempssm::set_ts_name(exo_ts_test, label = c("var1"))
+tempssm::set_ts_name(exo_ts_test, label = "var1")
 
 # ---- model with exogenous variables -----------------------------------
 
@@ -51,4 +51,4 @@ exo_ts_small <- ts(
   frequency = 12
 )
 
-exo_ts_small <- tempssm::set_ts_name(exo_ts_small, label = c("var1"))
+exo_ts_small <- tempssm::set_ts_name(exo_ts_small, label = "var1")

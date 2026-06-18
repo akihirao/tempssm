@@ -6,8 +6,7 @@
 #'
 #' @param y_train A named temperature \code{ts} object used for training.
 #' @param exo_train Optional \code{ts} object of exogenous variables.
-#' @param ar_order Integer; autoregressive order.
-#' @param use_season Logical; whether to include a seasonal component.
+#' @inheritParams tempssm
 #' @param fold_id Identifier for the current cross-validation fold.
 #'
 #' @return A \code{tempssm} object if successful, otherwise \code{NULL}.
@@ -102,8 +101,7 @@
 #' @param y_train_named Named training temperature \code{ts}.
 #' @param y_test_named Named test temperature \code{ts}.
 #' @param exo_test Exogenous test data (\code{ts}).
-#' @param ar_order Integer; autoregressive order.
-#' @param use_season Logical; whether to include a seasonal component.
+#' @inheritParams tempssm
 #'
 #' @return An object returned by \code{stats::predict()}.
 #'
@@ -158,8 +156,7 @@
 #' @param exo_mat Matrix of exogenous variables for the test period.
 #' @param n_ahead Integer forecast horizon.
 #' @param freq Integer; seasonal frequency.
-#' @param ar_order Integer; autoregressive order.
-#' @param use_season Logical; whether to include a seasonal component.
+#' @inheritParams tempssm
 #'
 #' @return A \code{KFAS::SSModel} object.
 #'
@@ -258,11 +255,7 @@
 #' @param fold
 #' A single fold object returned by \code{ts_train_test_split()}.
 #'
-#' @param ar_order
-#' Integer specifying the AR order. Default is 1.
-#'
-#' @param use_season
-#' Logical; whether to include a seasonal component. Default is \code{TRUE}.
+#' @inheritParams tempssm
 #'
 #' @return
 #' A list with the following components:
@@ -375,12 +368,7 @@ ts_cv_run_fold <- function(fold,
 #' It is intended for model evaluation, including comparison between
 #' simple linear models and state space models.
 #'
-#' @param temp_data
-#' A univariate time series of class \code{ts} representing temperature data.
-#'
-#' @param exo_data
-#' Optional exogenous time series variable(s) of class \code{ts}.
-#' Must have the same length and frequency as \code{temp_data}.
+#' @inheritParams tempssm
 #'
 #' @param initial
 #' Initial length of the training set (number of observations).
@@ -607,13 +595,7 @@ ts_train_test_split <- function(temp_data,
 #' @param folds
 #' A list of fold objects returned by \code{ts_train_test_split()}.
 #'
-#' @param ar_order
-#' Integer specifying the order of the autoregressive (AR) component
-#' used in \code{tempssm()}. Default is 1.
-#'
-#' @param use_season
-#' Logical; if \code{TRUE}, include a seasonal component in the model.
-#' Default is \code{TRUE}.
+#' @inheritParams tempssm
 #'
 #' @param parallel
 #' Logical; if \code{TRUE}, folds are evaluated in parallel using the

@@ -9,9 +9,12 @@ ts_cv_run_fold(fold, ar_order = 1, use_season = TRUE)
 \arguments{
 \item{fold}{A single fold object returned by \code{ts_train_test_split()}.}
 
-\item{ar_order}{Integer specifying the AR order. Default is 1.}
+\item{ar_order}{Integer specifying the order of the autoregressive (AR)
+component in the error structure (e.g., 2 for AR(2), 3 for AR(3)).
+Defaults to 1.}
 
-\item{use_season}{Logical; whether to include a seasonal component. Default is \code{TRUE}.}
+\item{use_season}{Logical; Should seasonal component be considered.
+Default to TRUE.}
 }
 \value{
 A list with the following components:
