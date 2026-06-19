@@ -98,6 +98,9 @@ autoplot(res)
 The panels show the estimated model components; gray ribbons indicate
 pointwise 95% confidence intervals.
 
+In this example, the estimated level component suggests a gradual increase
+in SST, with an average annual increase of approximately 0.05 °C.
+
 ### Use Your Own Data
 
 If you already have a `ts` object, pass it directly to `tempssm()`.
