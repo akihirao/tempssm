@@ -230,8 +230,8 @@ missing observations.
 
 ``` r
 plt_niigata_sst <- forecast::autoplot(niigata_sst) +
-  labs(y = expression(Temperature~(degree*C)), 
-       x = "Time") +
+  labs(y = expression(Temp.~(degree*C)), 
+       x = "Time (year)") +
   ggtitle("Monthly SST off Niigata, Japan") +
   theme_classic()
 
@@ -589,14 +589,14 @@ end(pdo_trim)
 
 ``` r
 plt_yamaguchi_sst_trim <- forecast::autoplot(yamaguchi_sst_trim) +
-  labs(y = expression(Temperature~(degree*C)), 
-       x = "Time") +
+  labs(y = expression(Temp.~(degree*C)), 
+       x = "Time (year)") +
   ggtitle("Monthly SST off Yamaguchi, Japan") +
   theme_classic()
 
 
 plt_pdo <- forecast::autoplot(pdo_trim) +
-  labs(x = "Time", y = "PDO index") +
+  labs(x = "Time (year)", y = "PDO index") +
   ggtitle("PDO index") +
   theme_classic()
 
@@ -1140,7 +1140,10 @@ applications that focus on departures from typical seasonal conditions.
 # Generate temperature anomalies
 data(niigata_sst)
 niigata_sst_anomaly <- compute_temp_anomaly(niigata_sst)
-plot(niigata_sst_anomaly, ylab=expression(Anomaly~(degree*C))) 
+plt_niigata_sst_anomaly <- forecast::autoplot(niigata_sst_anomaly) +
+  labs(y = expression(Temp.~(degree*C)), 
+       x = "Time (year)")
+plot(plt_niigata_sst_anomaly) 
 ```
 
 ![](tempssm_manual_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
@@ -1178,7 +1181,7 @@ plt_monthly_seasonal_cycle_niigata_sst <- ggplot(
   labs(
     title = "Monthly seasonal cycle of temperature",
     x = "Month",
-    y = expression(Temperature~(degree*C))
+    y = expression(Temp.~(degree*C))
   ) +
   scale_x_continuous(
     breaks = 1:12,
