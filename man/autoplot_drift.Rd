@@ -8,7 +8,7 @@ autoplot_drift(
   res,
   ci = TRUE,
   ci_level = 0.95,
-  ylab = "°C/yr",
+  ylab = expression(Temp. ~ change ~ (degree * C/year)),
   show_ci_in_title = FALSE
 )
 }
@@ -19,8 +19,8 @@ autoplot_drift(
 
 \item{ci_level}{Numeric confidence level between 0 and 1 (default: 0.95).}
 
-\item{ylab}{Character string giving label of y-axis.
-Default is \code{"°C/yr"}.}
+\item{ylab}{Label of y-axis. The default is a plotmath expression showing temperature
+change in degrees Celsius per year.}
 
 \item{show_ci_in_title}{Logical; should the confidence level be shown in
 the plot title when \code{ci = TRUE}? The default is \code{FALSE}.}

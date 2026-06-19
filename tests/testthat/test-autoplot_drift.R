@@ -19,7 +19,12 @@ test_that("autoplot_drift hides CI label in title by default", {
 test_that("autoplot_drift uses compact rate label by default", {
   p <- autoplot_drift(res_tempssm)
 
-  expect_identical(p$labels$y, "°C/yr")
+  expect_identical(rlang::as_label(p$mapping$x), "time")
+  expect_identical(p$labels$x, "Time (year)")
+  expect_identical(
+    p$labels$y,
+    expression(Temp. ~ change ~ (degree * C / year))
+  )
 })
 
 

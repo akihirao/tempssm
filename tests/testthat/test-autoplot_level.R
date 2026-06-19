@@ -19,7 +19,9 @@ test_that("autoplot_level hides CI label in title by default", {
 test_that("autoplot_level uses compact unit label by default", {
   p <- autoplot_level(res_tempssm)
 
-  expect_identical(p$labels$y, "°C")
+  expect_identical(rlang::as_label(p$mapping$x), "time")
+  expect_identical(p$labels$x, "Time (year)")
+  expect_identical(p$labels$y, expression(Temp. ~ (degree * C)))
 })
 
 

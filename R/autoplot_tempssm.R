@@ -98,6 +98,7 @@
 #' }
 #'
 #' @method autoplot tempssm
+#' @importFrom ggplot2 autoplot
 #' @export
 autoplot.tempssm <- function(object,
                              component = NULL,

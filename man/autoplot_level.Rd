@@ -8,7 +8,7 @@ autoplot_level(
   res,
   ci = TRUE,
   ci_level = 0.95,
-  ylab = "°C",
+  ylab = expression(Temp. ~ (degree * C)),
   show_ci_in_title = FALSE
 )
 }
@@ -19,8 +19,8 @@ autoplot_level(
 
 \item{ci_level}{Numeric confidence level between 0 and 1 (default: 0.95).}
 
-\item{ylab}{Character string giving label of y-axis.
-Default is \code{"°C"}.}
+\item{ylab}{Label of y-axis. The default is a plotmath expression showing temperature
+in degrees Celsius.}
 
 \item{show_ci_in_title}{Logical; should the confidence level be shown in
 the plot title when \code{ci = TRUE}? The default is \code{FALSE}.}

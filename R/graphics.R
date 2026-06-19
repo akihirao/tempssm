@@ -10,8 +10,8 @@
 #' @inheritParams get_level_ts
 #'
 #' @param ylab
-#' Character string giving label of y-axis.
-#' Default is \code{"°C"}.
+#' Label of y-axis. The default is a plotmath expression showing temperature
+#' in degrees Celsius.
 #'
 #' @param show_ci_in_title Logical; should the confidence level be shown in
 #'   the plot title when \code{ci = TRUE}? The default is \code{FALSE}.
@@ -45,7 +45,7 @@
 autoplot_level <- function(res,
                            ci = TRUE,
                            ci_level = 0.95,
-                           ylab = "°C",
+                           ylab = expression(Temp. ~ (degree * C)),
                            show_ci_in_title = FALSE) {
   ## ---- input checks ---------------------------------------------------
   if (!inherits(res, "tempssm")) {
@@ -109,7 +109,7 @@ autoplot_level <- function(res,
       } else {
         "Level component"
       },
-      x = "Time",
+      x = "Time (year)",
       y = ylab
     )
 
@@ -138,8 +138,8 @@ autoplot_level <- function(res,
 #' @inheritParams autoplot_level
 #'
 #' @param ylab
-#' Character string giving label of y-axis.
-#' Default is \code{"°C/yr"}.
+#' Label of y-axis. The default is a plotmath expression showing temperature
+#' change in degrees Celsius per year.
 #'
 #' @details
 #' The confidence interval is computed using
@@ -170,7 +170,8 @@ autoplot_level <- function(res,
 autoplot_drift <- function(res,
                            ci = TRUE,
                            ci_level = 0.95,
-                           ylab = "°C/yr",
+                           ylab = expression(Temp. ~ change ~
+                                               (degree * C / year)),
                            show_ci_in_title = FALSE) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
@@ -234,7 +235,7 @@ autoplot_drift <- function(res,
       } else {
         "Drift component"
       },
-      x = "Time",
+      x = "Time (year)",
       y = ylab
     )
 
@@ -263,8 +264,8 @@ autoplot_drift <- function(res,
 #' @inheritParams autoplot_level
 #'
 #' @param ylab
-#' Character string giving label of y-axis.
-#' Default is \code{"°C"}.
+#' Label of y-axis. The default is a plotmath expression showing temperature
+#' in degrees Celsius.
 #'
 #' @details
 #' The confidence interval is computed using
@@ -295,7 +296,7 @@ autoplot_drift <- function(res,
 autoplot_season <- function(res,
                             ci = TRUE,
                             ci_level = 0.95,
-                            ylab = "°C",
+                            ylab = expression(Temp. ~ (degree * C)),
                             show_ci_in_title = FALSE) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
@@ -359,7 +360,7 @@ autoplot_season <- function(res,
       } else {
         "Seasonal component"
       },
-      x = "Time",
+      x = "Time (year)",
       y = ylab
     )
 
@@ -388,8 +389,8 @@ autoplot_season <- function(res,
 #' @inheritParams autoplot_level
 #'
 #' @param ylab
-#' Character string giving label of y-axis.
-#' Default is \code{"°C"}.
+#' Label of y-axis. The default is a plotmath expression showing temperature
+#' in degrees Celsius.
 #'
 #' @details
 #' The confidence interval is computed using
@@ -420,7 +421,7 @@ autoplot_season <- function(res,
 autoplot_ar1 <- function(res,
                          ci = TRUE,
                          ci_level = 0.95,
-                         ylab = "°C",
+                         ylab = expression(Temp. ~ (degree * C)),
                          show_ci_in_title = FALSE) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
@@ -484,7 +485,7 @@ autoplot_ar1 <- function(res,
       } else {
         "Autoregressive (1)"
       },
-      x = "Time",
+      x = "Time (year)",
       y = ylab
     )
 
@@ -515,6 +516,12 @@ autoplot_ar1 <- function(res,
 #' A univariate time series object of class \code{ts} with an integer
 #' frequency greater than 1.
 #'
+#' @param connect_missing
+#' Logical; should line segments be connected across missing values?
+#' If \code{FALSE}, the default, lines are broken at missing values.
+#' If \code{TRUE}, missing observations are omitted before plotting, so line
+#' segments connect across gaps.
+#'
 #' @details
 #' The function first computes the seasonal climatological mean across all
 #' years, and then calculates anomalies as deviations from these seasonal
@@ -531,20 +538,35 @@ autoplot_ar1 <- function(res,
 #' print(p)
 #' }
 #'
-#' @importFrom forecast autoplot
 #' @importFrom ggplot2 labs ggtitle
 #' @export
-plot_temp_dev <- function(ts) {
+plot_temp_dev <- function(ts, connect_missing = FALSE) {
   if (!inherits(ts, "ts")) {
     cli::cli_abort("`ts` must be an object of class {.cls ts}.")
   }
 
-  anom <- tempssm::compute_temp_anomaly(ts)
+  if (!is.logical(connect_missing) || length(connect_missing) != 1) {
+    cli::cli_abort("`connect_missing` must be a single logical value.")
+  }
 
-  dev_plot <- forecast::autoplot(anom) +
+  anom <- tempssm::compute_temp_anomaly(ts)
+  anom_df <- data.frame(
+    time = time(anom),
+    anomaly = as.numeric(anom)
+  )
+
+  if (connect_missing) {
+    anom_df <- anom_df[!is.na(anom_df$anomaly), , drop = FALSE]
+  }
+
+  dev_plot <- ggplot2::ggplot(
+    anom_df,
+    ggplot2::aes(x = .data$time, y = .data$anomaly)
+  ) +
+    ggplot2::geom_line() +
     ggplot2::labs(
       y = expression(Temperature ~ (degree * C)),
-      x = "Time"
+      x = "Time (year)"
     ) +
     ggplot2::ggtitle("Temperature anomalies")
 

@@ -188,7 +188,7 @@ and missing observations.
 plt_niigata_sst <- forecast::autoplot(niigata_sst) +
   ggplot2::labs(
     y = expression(Temperature ~ (degree * C)),
-    x = "Time"
+    x = "Time (year)"
   ) +
   ggplot2::ggtitle("Monthly SST off Niigata, Japan") +
   ggplot2::theme_classic()

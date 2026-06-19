@@ -4,11 +4,16 @@
 \alias{plot_temp_dev}
 \title{Plot temperature anomalies}
 \usage{
-plot_temp_dev(ts)
+plot_temp_dev(ts, connect_missing = FALSE)
 }
 \arguments{
 \item{ts}{A univariate time series object of class \code{ts} with an integer
 frequency greater than 1.}
+
+\item{connect_missing}{Logical; should line segments be connected across missing values?
+If \code{FALSE}, the default, lines are broken at missing values.
+If \code{TRUE}, missing observations are omitted before plotting, so line
+segments connect across gaps.}
 }
 \value{
 A \code{ggplot2} plot object showing the temperature anomaly time series.
