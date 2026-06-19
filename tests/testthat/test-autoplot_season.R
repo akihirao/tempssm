@@ -7,6 +7,15 @@ test_that("autoplot_season returns a ggplot object", {
 })
 
 
+test_that("autoplot_season hides CI label in title by default", {
+  p1 <- autoplot_season(res_tempssm)
+  p2 <- autoplot_season(res_tempssm, show_ci_in_title = TRUE)
+
+  expect_identical(p1$labels$title, "Seasonal component")
+  expect_identical(p2$labels$title, "Seasonal component (95% CI)")
+})
+
+
 test_that("autoplot_season checks inputs correctly", {
   expect_error(
     autoplot_season(NULL),
@@ -21,5 +30,10 @@ test_that("autoplot_season checks inputs correctly", {
   expect_error(
     autoplot_season(res_tempssm, ci = "yes"),
     "`ci` must be a single logical value"
+  )
+
+  expect_error(
+    autoplot_season(res_tempssm, show_ci_in_title = "yes"),
+    "`show_ci_in_title` must be a single logical value"
   )
 })

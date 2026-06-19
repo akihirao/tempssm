@@ -4,7 +4,13 @@
 \alias{autoplot_ar1}
 \title{Plot the estimated autoregressive component from a tempssm model}
 \usage{
-autoplot_ar1(res, ci = TRUE, ci_level = 0.95, ylab = "Temperature")
+autoplot_ar1(
+  res,
+  ci = TRUE,
+  ci_level = 0.95,
+  ylab = "Temperature",
+  show_ci_in_title = FALSE
+)
 }
 \arguments{
 \item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
@@ -15,6 +21,9 @@ autoplot_ar1(res, ci = TRUE, ci_level = 0.95, ylab = "Temperature")
 
 \item{ylab}{Character string giving label of y-axis.
 Defalut is "temperature".}
+
+\item{show_ci_in_title}{Logical; should the confidence level be shown in
+the plot title when \code{ci = TRUE}? The default is \code{FALSE}.}
 }
 \value{
 A \code{ggplot} object, allowing further customization by adding

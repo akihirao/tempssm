@@ -7,6 +7,15 @@ test_that("autoplot_drift returns a ggplot object", {
 })
 
 
+test_that("autoplot_drift hides CI label in title by default", {
+  p1 <- autoplot_drift(res_tempssm)
+  p2 <- autoplot_drift(res_tempssm, show_ci_in_title = TRUE)
+
+  expect_identical(p1$labels$title, "Drift component")
+  expect_identical(p2$labels$title, "Drift component (95% CI)")
+})
+
+
 test_that("autoplot_drift checks inputs correctly", {
   expect_error(
     autoplot_drift(NULL),
@@ -21,5 +30,10 @@ test_that("autoplot_drift checks inputs correctly", {
   expect_error(
     autoplot_drift(res_tempssm, ci = "yes"),
     "`ci` must be a single logical value"
+  )
+
+  expect_error(
+    autoplot_drift(res_tempssm, show_ci_in_title = "yes"),
+    "`show_ci_in_title` must be a single logical value"
   )
 })

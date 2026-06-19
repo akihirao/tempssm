@@ -15,6 +15,26 @@
     stop("`plots` must be a list.", call. = FALSE)
   }
 
+  if (!is.numeric(nrow) ||
+      length(nrow) != 1 ||
+      !is.finite(nrow) ||
+      nrow < 1 ||
+      nrow != as.integer(nrow)) {
+    stop("`nrow` must be a positive integer.", call. = FALSE)
+  }
+
+  if (!is.numeric(ncol) ||
+      length(ncol) != 1 ||
+      !is.finite(ncol) ||
+      ncol < 1 ||
+      ncol != as.integer(ncol)) {
+    stop("`ncol` must be a positive integer.", call. = FALSE)
+  }
+
+  if (nrow * ncol < length(plots)) {
+    stop("`nrow * ncol` must be at least the number of plots.", call. = FALSE)
+  }
+
   grobs <- lapply(plots, ggplot2::ggplotGrob)
 
   mat <- matrix(grobs,
@@ -47,6 +67,10 @@
 #'
 #' @inheritParams get_level_ts
 #'
+#' @param nrow,ncol Positive integers specifying the layout used when all
+#'   components are plotted. The default is a 2 by 2 layout. These arguments
+#'   are ignored when \code{component} is specified.
+#'
 #' @param ...
 #' Additional arguments passed to the corresponding
 #' \code{autoplot_*()} function.
@@ -66,6 +90,9 @@
 #' # plot all components without 95% confidence interval
 #' autoplot(res, ci = FALSE)
 #'
+#' # plot all components in one column
+#' autoplot(res, nrow = 4, ncol = 1)
+#'
 #' # plot each of components
 #' autoplot(res, component = "level", ci = FALSE)
 #' }
@@ -76,6 +103,8 @@ autoplot.tempssm <- function(object,
                              component = NULL,
                              ci = TRUE,
                              ci_level = 0.95,
+                             nrow = 2,
+                             ncol = 2,
                              ...) {
 
   plotters <- list(
@@ -114,7 +143,7 @@ autoplot.tempssm <- function(object,
     function(f) f(object, ci = ci, ci_level = ci_level, ...)
   )
 
-  g <- .make_gtable_layout(plots, ncol = 1)
+  g <- .make_gtable_layout(plots, nrow = nrow, ncol = ncol)
 
   grid::grid.newpage()
   grid::grid.draw(g)

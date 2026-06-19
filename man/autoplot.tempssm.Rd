@@ -4,7 +4,15 @@
 \alias{autoplot.tempssm}
 \title{Autoplot method for tempssm objects}
 \usage{
-\method{autoplot}{tempssm}(object, component = NULL, ci = TRUE, ci_level = 0.95, ...)
+\method{autoplot}{tempssm}(
+  object,
+  component = NULL,
+  ci = TRUE,
+  ci_level = 0.95,
+  nrow = 2,
+  ncol = 2,
+  ...
+)
 }
 \arguments{
 \item{object}{An object returned by \code{tempssm()}.}
@@ -16,6 +24,10 @@ If NULL (default), all components are plotted.}
 \item{ci}{Logical; if TRUE, pointwise confidence intervals are returned.}
 
 \item{ci_level}{Numeric confidence level between 0 and 1 (default: 0.95).}
+
+\item{nrow, ncol}{Positive integers specifying the layout used when all
+components are plotted. The default is a 2 by 2 layout. These arguments
+are ignored when \code{component} is specified.}
 
 \item{...}{Additional arguments passed to the corresponding
 \code{autoplot_*()} function.}
@@ -38,6 +50,9 @@ autoplot(res)
 
 # plot all components without 95\% confidence interval
 autoplot(res, ci = FALSE)
+
+# plot all components in one column
+autoplot(res, nrow = 4, ncol = 1)
 
 # plot each of components
 autoplot(res, component = "level", ci = FALSE)

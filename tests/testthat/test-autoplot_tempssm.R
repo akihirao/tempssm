@@ -29,6 +29,17 @@ test_that("autoplot.tempssm returns gtable for all components", {
   g <- autoplot(res_tempssm, ci = FALSE)
 
   expect_s3_class(g, "gtable")
+  expect_identical(length(g$heights), 2L)
+  expect_identical(length(g$widths), 2L)
+})
+
+
+test_that("autoplot.tempssm accepts manual layout for all components", {
+  g <- autoplot(res_tempssm, ci = FALSE, nrow = 4, ncol = 1)
+
+  expect_s3_class(g, "gtable")
+  expect_identical(length(g$heights), 4L)
+  expect_identical(length(g$widths), 1L)
 })
 
 
@@ -42,5 +53,19 @@ test_that("autoplot.tempssm propagates component input checks", {
     autoplot(res_tempssm, component = "level", ci_level = 1.5),
     "`ci_level` must be a numeric value between 0 and 1."
   )
-})
 
+  expect_error(
+    autoplot(res_tempssm, nrow = 0),
+    "`nrow` must be a positive integer."
+  )
+
+  expect_error(
+    autoplot(res_tempssm, ncol = 1.5),
+    "`ncol` must be a positive integer."
+  )
+
+  expect_error(
+    autoplot(res_tempssm, nrow = 1, ncol = 1),
+    "`nrow \\* ncol` must be at least the number of plots."
+  )
+})

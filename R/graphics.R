@@ -13,6 +13,9 @@
 #' Character string giving label of y-axis.
 #' Defalut is "temperature".
 #'
+#' @param show_ci_in_title Logical; should the confidence level be shown in
+#'   the plot title when \code{ci = TRUE}? The default is \code{FALSE}.
+#'
 #' @details
 #' The confidence interval is computed using
 #' \code{stats::confint()} applied to the Kalman filter and smoother
@@ -42,7 +45,8 @@
 autoplot_level <- function(res,
                            ci = TRUE,
                            ci_level = 0.95,
-                           ylab = "Temperature") {
+                           ylab = "Temperature",
+                           show_ci_in_title = FALSE) {
   ## ---- input checks ---------------------------------------------------
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
@@ -52,6 +56,10 @@ autoplot_level <- function(res,
 
   if (!is.logical(ci) || length(ci) != 1) {
     cli::cli_abort("`ci` must be a single logical value.")
+  }
+
+  if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
+    cli::cli_abort("`show_ci_in_title` must be a single logical value.")
   }
 
   if (ci) {
@@ -96,7 +104,7 @@ autoplot_level <- function(res,
   ) +
     ggplot2::geom_line(linewidth = 1.2) +
     ggplot2::labs(
-      title = if (ci) {
+      title = if (ci && show_ci_in_title) {
         paste0("Level component (", ci_lab, ")")
       } else {
         "Level component"
@@ -127,6 +135,7 @@ autoplot_level <- function(res,
 #' A pointwise confidence interval is shown as a shaded ribbon.
 #'
 #' @inheritParams get_level_ts
+#' @inheritParams autoplot_level
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
@@ -161,7 +170,8 @@ autoplot_level <- function(res,
 autoplot_drift <- function(res,
                            ci = TRUE,
                            ci_level = 0.95,
-                           ylab = "Temperature") {
+                           ylab = "Temperature",
+                           show_ci_in_title = FALSE) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
@@ -171,6 +181,10 @@ autoplot_drift <- function(res,
   # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
     cli::cli_abort("`ci` must be a single logical value.")
+  }
+
+  if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
+    cli::cli_abort("`show_ci_in_title` must be a single logical value.")
   }
 
   # ---- check ci_level only if ci is TRUE ----
@@ -215,7 +229,7 @@ autoplot_drift <- function(res,
   ) +
     ggplot2::geom_line(linewidth = 1.2) +
     ggplot2::labs(
-      title = if (ci) {
+      title = if (ci && show_ci_in_title) {
         paste0("Drift component (", ci_lab, ")")
       } else {
         "Drift component"
@@ -246,6 +260,7 @@ autoplot_drift <- function(res,
 #' A pointwise confidence interval is shown as a shaded ribbon.
 #'
 #' @inheritParams get_level_ts
+#' @inheritParams autoplot_level
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
@@ -280,7 +295,8 @@ autoplot_drift <- function(res,
 autoplot_season <- function(res,
                             ci = TRUE,
                             ci_level = 0.95,
-                            ylab = "Temperature") {
+                            ylab = "Temperature",
+                            show_ci_in_title = FALSE) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
@@ -290,6 +306,10 @@ autoplot_season <- function(res,
   # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
     cli::cli_abort("`ci` must be a single logical value.")
+  }
+
+  if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
+    cli::cli_abort("`show_ci_in_title` must be a single logical value.")
   }
 
   # ---- check ci_level only if ci is TRUE ----
@@ -334,7 +354,7 @@ autoplot_season <- function(res,
   ) +
     ggplot2::geom_line() +
     ggplot2::labs(
-      title = if (ci) {
+      title = if (ci && show_ci_in_title) {
         paste0("Seasonal component (", ci_lab, ")")
       } else {
         "Seasonal component"
@@ -365,6 +385,7 @@ autoplot_season <- function(res,
 #' A pointwise confidence interval is shown as a shaded ribbon.
 #'
 #' @inheritParams get_level_ts
+#' @inheritParams autoplot_level
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
@@ -399,7 +420,8 @@ autoplot_season <- function(res,
 autoplot_ar1 <- function(res,
                          ci = TRUE,
                          ci_level = 0.95,
-                         ylab = "Temperature") {
+                         ylab = "Temperature",
+                         show_ci_in_title = FALSE) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
@@ -409,6 +431,10 @@ autoplot_ar1 <- function(res,
   # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
     cli::cli_abort("`ci` must be a single logical value.")
+  }
+
+  if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
+    cli::cli_abort("`show_ci_in_title` must be a single logical value.")
   }
 
   # ---- check ci_level only if ci is TRUE ----
@@ -453,7 +479,7 @@ autoplot_ar1 <- function(res,
   ) +
     ggplot2::geom_line() +
     ggplot2::labs(
-      title = if (ci) {
+      title = if (ci && show_ci_in_title) {
         paste0("Autoregressive (1) component (", ci_lab, ")")
       } else {
         "Autoregressive (1)"
