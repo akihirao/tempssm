@@ -34,6 +34,16 @@ test_that("autoplot.tempssm returns gtable for all components", {
 })
 
 
+test_that("plot.tempssm delegates to autoplot.tempssm", {
+  p <- plot(res_tempssm, component = "level", ci = FALSE)
+  g <- plot(res_tempssm, ci = FALSE)
+
+  expect_s3_class(p, "ggplot")
+  expect_identical(p$labels$title, "Level component")
+  expect_s3_class(g, "gtable")
+})
+
+
 test_that("autoplot.tempssm accepts manual layout for all components", {
   g <- autoplot(res_tempssm, ci = FALSE, nrow = 4, ncol = 1)
 

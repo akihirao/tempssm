@@ -254,7 +254,7 @@ underlying trend behavior to be examined more clearly.
 
 ``` r
 # plot all components at once
-forecast::autoplot(res)
+plot(res)
 ```
 
 ![](tutorial_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
@@ -266,8 +266,9 @@ represent 95% confidence intervals for the estimated latent states,
 illustrating the uncertainty associated with each of estimated
 components.
 
-To visualize all components simultaneously, you can use `autoplot(res)`,
-which provides a convenient overview of the model decomposition.
+The standard plotting interface is `plot(res)`. The ggplot2-style
+interface `autoplot(res)` is also available and produces the same
+component plot by default.
 
 ### Simple Model Diagnostics
 

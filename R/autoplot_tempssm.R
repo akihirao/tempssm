@@ -150,3 +150,30 @@ autoplot.tempssm <- function(object,
 
   invisible(g)
 }
+
+
+#' Plot method for tempssm objects
+#'
+#' @description
+#' Default base R plot method for objects fitted by \code{tempssm()}.
+#' This method delegates to \code{autoplot.tempssm()} so that \code{plot(res)}
+#' displays the same component plots as \code{autoplot(res)}.
+#'
+#' @param x An object returned by \code{tempssm()}.
+#' @param ... Additional arguments passed to \code{autoplot.tempssm()}.
+#'
+#' @return
+#' Invisibly returns the plotted \code{ggplot} object for a single component,
+#' or the \code{gtable} object combining all component plots.
+#'
+#' @method plot tempssm
+#' @export
+plot.tempssm <- function(x, ...) {
+  p <- autoplot.tempssm(x, ...)
+
+  if (inherits(p, "ggplot")) {
+    print(p)
+  }
+
+  invisible(p)
+}

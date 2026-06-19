@@ -229,7 +229,7 @@ behavior to be examined more clearly.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # plot all components at once
-forecast::autoplot(res)
+plot(res)
 ```
 
 The level component shows a persistent upward trend in sea surface
@@ -238,9 +238,9 @@ a relatively stable positive rate of change. The shaded gray areas
 represent 95% confidence intervals for the estimated latent states,
 illustrating the uncertainty associated with each of estimated components.
 
-To visualize all components simultaneously, you can use
-`autoplot(res)`, which provides a convenient overview of the model
-decomposition.
+The standard plotting interface is `plot(res)`. The ggplot2-style interface
+`autoplot(res)` is also available and produces the same component plot by
+default.
 
 
 ### Simple Model Diagnostics    

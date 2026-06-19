@@ -90,16 +90,24 @@ inspected with standard methods.
 
 ```r
 summary(res)
-autoplot(res)
+plot(res)
 ```
 
-![Example output from autoplot(res)](vignettes/fig/myfig.png)
+![Example output from plot(res)](vignettes/fig/myfig.png)
 
 The panels show the estimated model components; gray ribbons indicate
 pointwise 95% confidence intervals.
 
 In this example, the estimated level component suggests a gradual increase
 in SST, with an average annual increase of approximately 0.05 °C.
+
+The ggplot2-style interface is also available:
+
+```r
+autoplot(res)
+```
+
+By default, `plot(res)` and `autoplot(res)` produce the same component plot.
 
 ### Use Your Own Data
 

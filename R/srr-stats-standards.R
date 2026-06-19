@@ -389,7 +389,11 @@
 #' `y_test` for observed held-out values and `y_pred` for model forecasts.
 #' The `@return` documentation for `ts_cv_run_fold()` describes these elements.
 #' 
-#' @srrstatsTODO {TS5.0} *Implement default `plot` methods for any implemented class system.*
+#' @srrstats {TS5.0} The package implements a default S3 `plot.tempssm()`
+#' method for fitted `tempssm` objects. The method delegates to
+#' `autoplot.tempssm()`, so `plot(res)` displays the same component plots as
+#' `autoplot(res)` and accepts the same plotting arguments.
+#' 
 #' @srrstatsTODO {TS5.1} *When representing results in temporal domain(s), ensure that one axis is clearly labelled "time" (or equivalent), with continuous units.*
 #' @srrstatsTODO {TS5.2} *Default to placing the "time" (or equivalent) variable on the horizontal axis.*
 #' @srrstatsTODO {TS5.3} *Ensure that units of the time, frequency, or index variable are printed by default on the axis.*

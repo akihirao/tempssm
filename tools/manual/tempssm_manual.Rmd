@@ -246,11 +246,31 @@ AIC_table_res %>% knitr::kable()
 
 AR1 model is better than the other models.
 
-### Plotting Level, Drift, Seasonal, and Auto-Regressive Components    
+#### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
 We visualize the estimated long-term evolution of temperature levels
-and their rates of change (drift) by extracting the corresponding latent
-components from the state-space model.Additionally, seasonal variability and autoregressive dependence are plotted out, allowing the underlying trend behavior to be examined more clearly.
+and their rate of change (drift) by extracting the corresponding latent
+components from the state-space model. Seasonal variation and autoregressive
+dependence can also be plotted, allowing the underlying trend structure to be
+examined more clearly.
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+# plot all components at once
+plot(res)
+```
+
+The level component indicates a gradual increase in sea surface temperature
+over the study period. In this example, the average annual increase in SST is
+approximately 0.05 °C. The drift component remains mostly positive and
+relatively stable, supporting the interpretation of a persistent warming trend.
+The shaded gray areas represent 95% confidence intervals for the estimated
+latent states, illustrating the uncertainty associated with each estimated
+component.
+
+The standard plotting interface is `plot(res)`. The ggplot2-style interface
+`autoplot(res)` is also available and produces the same component plot by
+default. To obtain a ggplot object for an individual component, specify the 
+component argument in `autoplot()` as follows.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # plot each of components at once
@@ -258,20 +278,7 @@ plt_level <- autoplot(res, component = c("level"))
 plt_drift <- autoplot(res, component = c("drift"))
 plt_season <- autoplot(res, component = c("season"))
 plt_ar1 <- autoplot(res, component = c("ar1"))
-
-plt_level + plt_drift + plt_season + plt_ar1 + patchwork::plot_layout(ncol=2, nrow=2)
 ```
-
-The level component shows a persistent upward trend in sea surface
-temperature over the study period, while the drift component indicates
-a relatively stable positive rate of change. The shaded gray areas
-represent 95% confidence intervals for the estimated latent states,
-illustrating the uncertainty associated with each of estimated components.
-
-To visualize all components simultaneously, you can use
-`autoplot(res)`, which provides a convenient overview of the model
-decomposition.
-
 
 ### Simple Model Diagnostics    
 
