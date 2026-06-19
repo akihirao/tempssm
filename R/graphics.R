@@ -11,7 +11,7 @@
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
-#' Defalut is "temperature".
+#' Default is \code{"°C"}.
 #'
 #' @param show_ci_in_title Logical; should the confidence level be shown in
 #'   the plot title when \code{ci = TRUE}? The default is \code{FALSE}.
@@ -45,7 +45,7 @@
 autoplot_level <- function(res,
                            ci = TRUE,
                            ci_level = 0.95,
-                           ylab = "Temperature",
+                           ylab = "°C",
                            show_ci_in_title = FALSE) {
   ## ---- input checks ---------------------------------------------------
   if (!inherits(res, "tempssm")) {
@@ -139,7 +139,7 @@ autoplot_level <- function(res,
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
-#' Defalut is "temperature".
+#' Default is \code{"°C/yr"}.
 #'
 #' @details
 #' The confidence interval is computed using
@@ -170,7 +170,7 @@ autoplot_level <- function(res,
 autoplot_drift <- function(res,
                            ci = TRUE,
                            ci_level = 0.95,
-                           ylab = "Temperature",
+                           ylab = "°C/yr",
                            show_ci_in_title = FALSE) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
@@ -264,7 +264,7 @@ autoplot_drift <- function(res,
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
-#' Defalut is "temperature".
+#' Default is \code{"°C"}.
 #'
 #' @details
 #' The confidence interval is computed using
@@ -295,7 +295,7 @@ autoplot_drift <- function(res,
 autoplot_season <- function(res,
                             ci = TRUE,
                             ci_level = 0.95,
-                            ylab = "Temperature",
+                            ylab = "°C",
                             show_ci_in_title = FALSE) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
@@ -389,7 +389,7 @@ autoplot_season <- function(res,
 #'
 #' @param ylab
 #' Character string giving label of y-axis.
-#' Defalut is "temperature".
+#' Default is \code{"°C"}.
 #'
 #' @details
 #' The confidence interval is computed using
@@ -420,7 +420,7 @@ autoplot_season <- function(res,
 autoplot_ar1 <- function(res,
                          ci = TRUE,
                          ci_level = 0.95,
-                         ylab = "Temperature",
+                         ylab = "°C",
                          show_ci_in_title = FALSE) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(

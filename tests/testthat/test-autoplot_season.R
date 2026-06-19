@@ -16,6 +16,13 @@ test_that("autoplot_season hides CI label in title by default", {
 })
 
 
+test_that("autoplot_season uses compact unit label by default", {
+  p <- autoplot_season(res_tempssm)
+
+  expect_identical(p$labels$y, "°C")
+})
+
+
 test_that("autoplot_season checks inputs correctly", {
   expect_error(
     autoplot_season(NULL),

@@ -19,6 +19,13 @@ test_that("autoplot_ar1 hides CI label in title by default", {
 })
 
 
+test_that("autoplot_ar1 uses compact unit label by default", {
+  p <- autoplot_ar1(res_tempssm)
+
+  expect_identical(p$labels$y, "°C")
+})
+
+
 test_that("autoplot_ar1 checks inputs correctly", {
   expect_error(
     autoplot_ar1(NULL),
