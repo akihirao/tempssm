@@ -377,13 +377,33 @@ AIC_table_res %>% knitr::kable()
 
 AR1 model is better than the other models.
 
-### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
+#### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
 We visualize the estimated long-term evolution of temperature levels and
-their rates of change (drift) by extracting the corresponding latent
-components from the state-space model.Additionally, seasonal variability
-and autoregressive dependence are plotted out, allowing the underlying
-trend behavior to be examined more clearly.
+their rate of change (drift) by extracting the corresponding latent
+components from the state-space model. Seasonal variation and
+autoregressive dependence can also be plotted, allowing the underlying
+trend structure to be examined more clearly.
+
+``` r
+# plot all components at once
+plot(res)
+```
+
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+
+The level component indicates a gradual increase in sea surface
+temperature over the study period. In this example, the average annual
+increase in SST is approximately 0.05 °C. The drift component remains
+mostly positive and relatively stable, supporting the interpretation of
+a persistent warming trend. The shaded gray areas represent 95%
+confidence intervals for the estimated latent states, illustrating the
+uncertainty associated with each estimated component.
+
+The standard plotting interface is `plot(res)`. The ggplot2-style
+interface `autoplot(res)` is also available and produces the same
+component plot by default. To obtain a ggplot object for an individual
+component, specify the component argument in `autoplot()` as follows.
 
 ``` r
 # plot each of components at once
@@ -391,21 +411,7 @@ plt_level <- autoplot(res, component = c("level"))
 plt_drift <- autoplot(res, component = c("drift"))
 plt_season <- autoplot(res, component = c("season"))
 plt_ar1 <- autoplot(res, component = c("ar1"))
-
-plt_level + plt_drift + plt_season + plt_ar1 + patchwork::plot_layout(ncol=2, nrow=2)
 ```
-
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
-
-The level component shows a persistent upward trend in sea surface
-temperature over the study period, while the drift component indicates a
-relatively stable positive rate of change. The shaded gray areas
-represent 95% confidence intervals for the estimated latent states,
-illustrating the uncertainty associated with each of estimated
-components.
-
-To visualize all components simultaneously, you can use `autoplot(res)`,
-which provides a convenient overview of the model decomposition.
 
 ### Simple Model Diagnostics
 
@@ -423,7 +429,7 @@ print(diag)
 plot_tempssm_residual_diagnostics(res)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 Autocorrelation of residuals was not significant by Ljung-Box test (P \>
 0.05).
@@ -597,7 +603,7 @@ plt_pdo <- forecast::autoplot(pdo_trim) +
 plt_yamaguchi_sst_trim + plt_pdo + patchwork::plot_layout(ncol=1)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
 ### Applying a Model Without an Exogenous Variable
 
@@ -773,7 +779,7 @@ plt_level_drift_without_ts <- plt_level_without_ts +
 plot(plt_level_drift_without_ts)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
 ``` r
 plt_level_with_ts <- autoplot(res_with,
@@ -795,7 +801,7 @@ plt_level_drift_with_ts <- plt_level_with_ts +
 plot(plt_level_drift_with_ts)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-16-2.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-17-2.png)<!-- -->
 
 Gray areas in the above graph show 95% confidence interval.
 
@@ -905,7 +911,7 @@ plt_tsCV <- plt_MAE + plt_MASE_naive + plt_MASE_seasonal + patchwork::plot_layou
 plot(plt_tsCV)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 Analysis of tsCV shows that the model with the exogenous variable is
 better than the model without one. In this tutorial, the number of tsCV
@@ -1137,7 +1143,7 @@ niigata_sst_anomaly <- compute_temp_anomaly(niigata_sst)
 plot(niigata_sst_anomaly, ylab=expression(Anomaly~(degree*C))) 
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
 
 ## Utility function: `compute_monthly_climatology()`
 
@@ -1184,7 +1190,7 @@ plt_monthly_seasonal_cycle_niigata_sst <- ggplot(
 plot(plt_monthly_seasonal_cycle_niigata_sst)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-24-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-25-1.png)<!-- -->
 
 These utility functions are provided to support data preparation
 and　exploratory analysis and are not required for the core modeling
