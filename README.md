@@ -95,6 +95,9 @@ autoplot(res)
 
 ![Example output from autoplot(res)](vignettes/fig/myfig.png)
 
+The panels show the estimated model components; gray ribbons indicate
+pointwise 95% confidence intervals.
+
 ### Use Your Own Data
 
 If you already have a `ts` object, pass it directly to `tempssm()`.
