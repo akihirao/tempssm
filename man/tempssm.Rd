@@ -197,11 +197,56 @@ future observations depend on accumulated uncertainty in the latent state
 dynamics and observation equation. In \code{tempssm}, forecast intervals are
 obtained from the underlying \code{KFAS} state-space model, for example via
 \code{stats::predict(res$model, n.ahead = h, interval = "prediction")}.
+With \code{interval = "prediction"}, the returned object includes point
+forecasts and prediction interval bounds, conventionally named \code{fit},
+\code{lwr}, and \code{upr}, which provide a direct indication of forecast
+uncertainty.
 
 Users can trim forecasts to a chosen error margin with
 \code{trim_prediction_intervals()}. This helper keeps the longest leading
 forecast horizon for which the prediction interval width, defined as
 \code{upr - lwr}, does not exceed a user-specified maximum width.
+
+Cross-validation helpers such as \code{ts_cv_run_fold()} return point forecasts
+for accuracy scoring. They are intended for evaluating predictive
+performance rather than for representing full forecast uncertainty. Users
+who need prediction intervals should call \code{stats::predict()} on the fitted
+\code{KFAS} model as shown above.
+
+Forecast and observed values are kept distinct in package outputs. Direct
+calls to \code{stats::predict()} return forecast values only. In time-series
+cross-validation results, observed test values are stored in \code{y_test}, while
+forecasts are stored separately in \code{y_pred}.
+}
+
+\section{Forecast Scale and Transformations}{
+
+Forecasts are produced on the same numeric scale as the input temperature
+series. The package does not log-transform, standardize, difference, or
+otherwise transform the response series before forecasting, so forecast
+means and prediction intervals do not require back-transformation to be
+comparable with the original input data. For this reason, \code{tempssm} does
+not provide a separate back-transformation routine for forecast values.
+
+Internal parameter transformations are used only to enforce model
+constraints: variance parameters are exponentiated to remain positive, and
+AR parameters are transformed with \code{KFAS::artransform()} to satisfy
+stationarity constraints. These transformations affect the fitted dynamics
+and associated uncertainty estimates through the state-space model, but they
+do not change the scale on which forecast values are returned.
+
+\code{trim_prediction_intervals()} is a post-processing helper. It does not alter
+forecast means, lower bounds, or upper bounds; it only removes forecast
+horizons after the prediction interval width exceeds the user-specified
+threshold. The drift accessor scales the latent slope by the input
+frequency to report change per seasonal cycle, but this is a component
+summary and is not applied to forecast values.
+
+Forecast limitations follow from the fitted linear Gaussian state-space
+model. Forecasts are conditional on the selected model structure, estimated
+parameters, and any supplied future exogenous variables. They should not be
+interpreted as physically constrained forecasts beyond the assumptions of
+the fitted model.
 }
 
 \section{Return Value Conventions}{
@@ -216,9 +261,29 @@ rather than a transformed time series.
 
 Accessor functions such as \code{get_level_ts()}, \code{get_drift_ts()},
 \code{get_season_ts()}, and \code{get_ar1_ts()} return \code{ts} objects that preserve the
-time scale of the fitted model. Summary and diagnostic helpers return
-documented structured objects such as \code{summary.tempssm}, \code{data.frame}, or
-\code{tibble} outputs as appropriate for the information being represented.
+time scale of the fitted model through their \code{start}, \code{end}, \code{frequency},
+and \code{time()} attributes. Conversion utilities that aggregate calendar-daily
+\code{zoo} inputs return monthly \code{ts} objects with \code{frequency = 12}, while
+utilities that retrieve daily SST data as \code{zoo} objects preserve the
+\code{Date} index. Summary and diagnostic helpers return documented structured
+objects such as \code{summary.tempssm}, \code{data.frame}, or \code{tibble} outputs as
+appropriate for the information being represented.
+Each exported function documents the type and class of its return value in
+its \verb{@return} field, including named list elements or columns where the
+return value is structured.
+}
+
+\section{Units in Return Values}{
+
+Inputs carrying class \code{units} from the optional \code{units} package are accepted
+by selected pre-processing paths, but their unit attributes are converted to
+numeric values with an explicit warning before model fitting or conversion
+to \code{ts}. Unit metadata are therefore not propagated to fitted \code{tempssm}
+objects or derived component series. This avoids adding \code{units} as a hard
+runtime dependency and keeps the internal state-space calculations numeric.
+
+Users who need formal units in downstream presentation should store the
+original units externally and reattach or label them after model fitting.
 }
 
 \examples{

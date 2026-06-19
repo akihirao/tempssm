@@ -19,7 +19,8 @@ calculated as \code{upr - lwr}.}
 \value{
 An object of the same basic class as \code{pred}, truncated to the
 longest leading sequence whose prediction interval width is less than or
-equal to \code{max_width}.
+equal to \code{max_width}. If \code{pred} is a \code{ts} object, the
+returned object preserves its time scale.
 }
 \description{
 Trims forecast or prediction intervals to the longest leading forecast
@@ -31,7 +32,8 @@ Forecast uncertainty in state-space models generally increases with forecast
 horizon because future observations depend on accumulated state and
 observation uncertainty. This helper provides a simple post-processing rule:
 retain forecasts only until their prediction interval width exceeds a
-user-defined error margin.
+user-defined error margin. It does not modify forecast means, lower bounds,
+or upper bounds; it only truncates the returned forecast horizon.
 }
 \examples{
 \dontrun{

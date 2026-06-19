@@ -17,7 +17,8 @@ length as the number of columns in \code{ts_in}.}
 \item{quiet}{Logical; if \code{TRUE}, suppresses the informational message.}
 }
 \value{
-A \code{ts} object with assigned variable names.
+A \code{ts} object with assigned variable names and the same time scale as
+\code{ts_in}, including \code{start}, \code{end}, and \code{frequency}.
 }
 \description{
 \code{set_ts_name()} assigns variable (column) names to a time series object

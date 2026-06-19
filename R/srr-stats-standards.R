@@ -322,22 +322,73 @@
 #' visualization. The `summary()` method returns a `summary.tempssm` object,
 #' and tests verify the expected S3 classes of these primary return values.
 #' 
-#' @srrstatsTODO {TS4.1} *Any units included as attributes of input data should also be included within return values.*
-#' @srrstatsTODO {TS4.2} *The type and class of all return values should be explicitly documented.* 
-#' @srrstatsTODO {TS4.3} *Return values should explicitly include all appropriate units and/or time scales* 
-#' @srrstatsTODO {TS4.4} *Document the effect of any such transformations on forecast data, including potential effects on both first- and second-order estimates.*
-#' @srrstatsTODO {TS4.5} *In decreasing order of preference, either:*
-#' @srrstatsTODO {TS4.5a} *Provide explicit routines or options to back-transform data commensurate with original, non-stationary input data*
-#' @srrstatsTODO {TS4.5b} *Demonstrate how data may be back-transformed to a form commensurate with original, non-stationary input data.*
-#' @srrstatsTODO {TS4.5c} *Document associated limitations on forecast values* 
-#' @srrstatsTODO {TS4.6} *Time Series Software which implements or otherwise enables forecasting should return either:*
-#' @srrstatsTODO {TS4.6a} *A distribution object, for example via one of the many packages described in the CRAN Task View on [Probability Distributions](https://cran.r-project.org/web/views/Distributions.html) (or the new [`distributional` package](https://pkg.mitchelloharawild.com/distributional/) as used in the [`fable` package](https://fable.tidyverts.org) for time-series forecasting).*
-#' @srrstatsTODO {TS4.6b} *For each variable to be forecast, predicted values equivalent to first- and second-order moments (for example, mean and standard error values).*
-#' @srrstatsTODO {TS4.6c} *Some more general indication of error associated with forecast estimates.* 
-#' @srrstatsTODO {TS4.7} *Ensure that forecast (modelled) values are clearly distinguished from observed (model or input) values, either (in this case in no order of preference) by*
-#' @srrstatsTODO {TS4.7a} *Returning forecast values alone*
-#' @srrstatsTODO {TS4.7b} *Returning distinct list items for model and forecast values*
-#' @srrstatsTODO {TS4.7c} *Combining model and forecast values into a single return object with an appropriate additional column clearly distinguishing the two kinds of data.* 
+#' @srrstats {TS4.2} Exported functions document the type and class of their
+#' return values in roxygen `@return` fields. Structured return values also
+#' document their named list elements or columns, including `tempssm`,
+#' `summary.tempssm`, `logLik`, `ts`, `zoo`, `ggplot`, `gtable`, `tibble`,
+#' `data.frame`, and named list outputs used by accessors, diagnostics, and
+#' cross-validation helpers. Package-level documentation summarizes these
+#' return-value conventions.
+#' 
+#' @srrstats {TS4.3} Return values that represent time series explicitly
+#' include their time scales. Component accessors and time-series utilities
+#' return base R `ts` objects with preserved or explicitly constructed
+#' `start`, `end`, `frequency`, and `time()` attributes. Daily SST retrieval
+#' returns `zoo` objects indexed by `Date`, and daily-to-monthly conversion
+#' returns monthly `ts` objects with `frequency = 12`. Unit attributes from
+#' optional `units` inputs are intentionally not propagated, as documented
+#' under TS4.1 and in package-level documentation.
+#' 
+#' @srrstats {TS4.4} Package-level documentation includes a "Forecast Scale
+#' and Transformations" section. It states that forecast values are returned
+#' on the original numeric temperature scale because the response series is not
+#' log-transformed, standardized, differenced, or otherwise transformed before
+#' forecasting. It also documents that internal transformations of variance
+#' and AR parameters affect model dynamics and uncertainty estimates but do not
+#' change the scale of returned forecast values. The post-processing helper
+#' `trim_prediction_intervals()` is documented as truncating forecast horizons
+#' without modifying forecast means or interval bounds.
+#' 
+#' @srrstats {TS4.5} Forecast values are returned on the same numeric scale as
+#' the input temperature series, so no back-transformation is required to make
+#' them commensurate with the original non-stationary input data. The package
+#' documentation explicitly states this design and documents forecast
+#' limitations.
+#' 
+#' @srrstats {TS4.5c} Package-level documentation states that forecasts are
+#' conditional on the selected state-space model structure, estimated
+#' parameters, and any supplied future exogenous variables. It also states that
+#' forecasts should not be interpreted as physically constrained forecasts
+#' beyond the assumptions of the fitted model.
+#' 
+#' @srrstats {TS4.6} Forecast uncertainty is available through the fitted
+#' `KFAS` model returned by `tempssm()`. Package-level documentation shows the
+#' use of `stats::predict(res$model, n.ahead = h,
+#' interval = "prediction")`, which returns point forecasts and prediction
+#' interval bounds.
+#' 
+#' @srrstats {TS4.6c} Prediction intervals from the `KFAS` backend provide a
+#' general indication of forecast error through lower and upper interval
+#' bounds. The exported helper `trim_prediction_intervals()` also operates on
+#' these interval bounds and documents their expected `fit`, `lwr`, and `upr`
+#' structure.
+#' 
+#' @srrstats {TS4.7} Forecast values and observed values are clearly
+#' distinguished in package outputs. Direct forecasts obtained via
+#' `stats::predict()` return forecast values alone, while cross-validation
+#' results store observed test values and forecasts in separate named list
+#' elements.
+#' 
+#' @srrstats {TS4.7a} Direct forecasting uses `stats::predict()` on the fitted
+#' `KFAS` model returned by `tempssm()`, and the returned object contains
+#' forecast values and optional interval bounds rather than observed input
+#' values.
+#' 
+#' @srrstats {TS4.7b} Cross-validation results returned by
+#' `ts_cv_run_fold()` and `ts_cv_run()` use distinct named list elements:
+#' `y_test` for observed held-out values and `y_pred` for model forecasts.
+#' The `@return` documentation for `ts_cv_run_fold()` describes these elements.
+#' 
 #' @srrstatsTODO {TS5.0} *Implement default `plot` methods for any implemented class system.*
 #' @srrstatsTODO {TS5.1} *When representing results in temporal domain(s), ensure that one axis is clearly labelled "time" (or equivalent), with continuous units.*
 #' @srrstatsTODO {TS5.2} *Default to placing the "time" (or equivalent) variable on the horizontal axis.*
@@ -399,6 +450,36 @@ NULL
 #' intentionally not returned in the same class as the input `ts` object.
 #' Component accessor functions return `ts` objects where the output represents
 #' a time series rather than a model object.
+#'
+#' @srrstatsNA {TS4.1} Unit attributes from optional `units` inputs are
+#' intentionally not propagated to return values. As documented under TS1.7
+#' and in package-level documentation, such inputs are converted to numeric
+#' values with an explicit warning before model fitting or conversion to `ts`.
+#' This avoids adding `units` as a hard runtime dependency and keeps the
+#' internal state-space calculations numeric. Returned time-series objects
+#' preserve time attributes but not unit attributes.
+#'
+#' @srrstatsNA {TS4.5a} The package does not transform the response series
+#' before forecasting, so there is no transformed forecast scale for which a
+#' back-transformation routine or option would be required.
+#'
+#' @srrstatsNA {TS4.5b} The package does not transform the response series
+#' before forecasting, so there is no required user workflow for
+#' back-transforming forecast values to the original input scale.
+#'
+#' @srrstatsNA {TS4.6a} The package does not construct a separate forecast
+#' distribution object. Forecast uncertainty is exposed through prediction
+#' intervals returned by the `KFAS` backend.
+#'
+#' @srrstatsNA {TS4.6b} The package does not return forecast standard errors
+#' directly as a separate second-order moment interface. Forecast uncertainty
+#' is instead represented by prediction interval bounds from the `KFAS`
+#' backend.
+#'
+#' @srrstatsNA {TS4.7c} The package does not combine observed and forecast
+#' values into a single returned table for forecasting workflows. It instead
+#' returns forecasts alone for direct prediction and distinct `y_test` and
+#' `y_pred` list elements for cross-validation workflows.
 #'
 #' @noRd
 NULL

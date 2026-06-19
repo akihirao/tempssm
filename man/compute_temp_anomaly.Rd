@@ -19,7 +19,8 @@ the reference period for climatology in complete seasonal cycles
 is used.}
 }
 \value{
-A \code{ts} object of seasonal temperature anomalies.
+A \code{ts} object of seasonal temperature anomalies with the same
+\code{start} and \code{frequency} as \code{temp_ts}.
 }
 \description{
 Temperature anomalies are calculated by subtracting a seasonal climatology

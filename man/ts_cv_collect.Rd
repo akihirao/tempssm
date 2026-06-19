@@ -13,7 +13,9 @@ ts_cv_collect(cv_results, metrics)
 \code{compute_cv_metrics()}, corresponding to \code{cv_results}.}
 }
 \value{
-A \code{tibble} where each row represents a cross-validation fold.
+A \code{tibble} where each row represents a cross-validation fold, with
+columns \code{fold}, \code{converged}, \code{MAE}, \code{MASE_naive}, and
+\code{MASE_seasonal}.
 }
 \description{
 Combine cross-validation results and evaluation metrics into

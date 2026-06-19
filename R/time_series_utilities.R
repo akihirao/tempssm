@@ -29,7 +29,8 @@
 #' \code{tempssm()}.
 #'
 #' @return
-#' A \code{ts} object with assigned variable names.
+#' A \code{ts} object with assigned variable names and the same time scale as
+#' \code{ts_in}, including \code{start}, \code{end}, and \code{frequency}.
 #'
 #' @seealso
 #' \code{\link{trim_ts_overlap}},
@@ -1026,7 +1027,8 @@ compute_monthly_climatology <- function(temp_ts) {
 #' only data within the specified reference period.
 #' Missing values are ignored when calculating climatological means.
 #'
-#' @return A \code{ts} object of seasonal temperature anomalies.
+#' @return A \code{ts} object of seasonal temperature anomalies with the same
+#'   \code{start} and \code{frequency} as \code{temp_ts}.
 #'
 #' @examples
 #' temp_ts <- ts(

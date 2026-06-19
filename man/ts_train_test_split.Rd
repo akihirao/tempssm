@@ -48,17 +48,17 @@ Use \code{"warn"} to issue a warning and proceed, \code{"error"} to stop,
 or \code{"allow"} to proceed silently. The default is \code{"warn"}.}
 }
 \value{
-A list of folds. Each element is a list containing:
+A list of folds. Each element is a named list containing:
 \describe{
-\item{fold}{Fold index.}
-\item{train_ts}{Training time series.}
-\item{test_ts}{Test time series.}
-\item{exo_train_ts}{Training exogenous time series (or \code{NULL}).}
-\item{exo_test_ts}{Test exogenous time series (or \code{NULL}).}
-\item{train_idx}{Index range of the training set (position-based).}
-\item{test_idx}{Index range of the test set (position-based).}
-\item{train_range}{Time range of the training set.}
-\item{test_range}{Time range of the test set.}
+\item{fold}{Integer fold index.}
+\item{train_ts}{Training time series of class \code{ts}.}
+\item{test_ts}{Test time series of class \code{ts}.}
+\item{exo_train_ts}{Training exogenous \code{ts}, or \code{NULL}.}
+\item{exo_test_ts}{Test exogenous \code{ts}, or \code{NULL}.}
+\item{train_idx}{Integer vector giving the training index range.}
+\item{test_idx}{Integer vector giving the test index range.}
+\item{train_range}{Numeric vector giving the training time range.}
+\item{test_range}{Numeric vector giving the test time range.}
 }
 }
 \description{

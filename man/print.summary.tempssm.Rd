@@ -12,7 +12,8 @@
 \item{...}{Additional arguments (currently not used).}
 }
 \value{
-The input object \code{x}, invisibly.
+The input object \code{x}, invisibly. The returned object has class
+\code{"summary.tempssm"}.
 }
 \description{
 Prints a human-readable summary of a fitted

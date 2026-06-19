@@ -1,3 +1,13 @@
+#' Print method for tempssm objects
+#'
+#' @param x An object of class \code{"tempssm"} returned by \code{tempssm()}.
+#' @param ... Additional arguments, currently ignored.
+#'
+#' @return
+#' The input object \code{x}, invisibly. The returned object has class
+#' \code{"tempssm"}.
+#'
+#' @method print tempssm
 #' @importFrom stats start end
 #' @export
 print.tempssm <- function(x, ...) {

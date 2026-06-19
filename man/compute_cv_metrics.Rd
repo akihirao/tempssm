@@ -10,7 +10,8 @@ compute_cv_metrics(cv_result)
 \item{cv_result}{A single result returned by \code{ts_cv_run_fold()}.}
 }
 \value{
-A named list of accuracy metrics.
+A named list of numeric accuracy metrics with components \code{MAE},
+\code{MASE_naive}, and \code{MASE_seasonal}.
 }
 \description{
 Compute forecast accuracy metrics for a CV fold

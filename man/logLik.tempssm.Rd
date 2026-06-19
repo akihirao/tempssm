@@ -15,7 +15,8 @@ These are currently ignored but are included for compatibility
 with the generic interface.}
 }
 \value{
-A numeric value representing the log-likelihood.
+An object of class \code{"logLik"} containing the numeric log-likelihood,
+with \code{df} and \code{nobs} attributes.
 }
 \description{
 Log-likelihood method for tempssm objects (S3 method)

@@ -20,7 +20,7 @@ This argument is included for compatibility with
 where the standard AIC definition (\code{k = 2}) is applied.}
 }
 \value{
-A numeric value giving the AIC of the fitted \code{tempssm} model.
+A numeric scalar giving the AIC of the fitted \code{tempssm} model.
 }
 \description{
 Compute the Akaike Information Criterion (AIC) for a model fitted

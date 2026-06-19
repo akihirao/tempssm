@@ -17,16 +17,16 @@ Defaults to 1.}
 Default to TRUE.}
 }
 \value{
-A list with the following components:
+A named list with the following components:
 \describe{
-\item{fold}{Fold index.}
-\item{converged}{Logical indicating whether model fitting succeeded.}
-\item{y_train}{Training time series (\code{ts}).}
-\item{y_test}{Test time series (\code{ts}).}
-\item{y_pred}{Predicted values for the test period (object returned
-by \code{predict}).}
-\item{model}{Fitted model object returned
-by \code{tempssm()} (or \code{NULL} if failed).}
+\item{fold}{Integer fold index.}
+\item{converged}{Logical scalar indicating whether fitting succeeded.}
+\item{y_train}{Training time series of class \code{ts}.}
+\item{y_test}{Test time series of class \code{ts}.}
+\item{y_pred}{Predicted values for the test period, as returned by
+\code{stats::predict()}.}
+\item{model}{A fitted \code{tempssm} object, or \code{NULL} if fitting
+failed.}
 }
 }
 \description{

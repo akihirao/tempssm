@@ -36,8 +36,8 @@ using the \pkg{progressr} package. If \code{FALSE}, no progress bar
 is shown. Default is \code{TRUE}.}
 }
 \value{
-A list of cross-validation results. Each element corresponds to one
-fold and contains the output of \code{ts_cv_run_fold()}.
+A list of named lists. Each element corresponds to one fold and contains
+the output of \code{ts_cv_run_fold()}.
 }
 \description{
 Apply \code{ts_cv_run_fold()} to multiple train/test splits and

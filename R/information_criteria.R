@@ -91,7 +91,8 @@
 #' @method logLik tempssm
 #'
 #' @return
-#' A numeric value representing the log-likelihood.
+#' An object of class \code{"logLik"} containing the numeric log-likelihood,
+#' with \code{df} and \code{nobs} attributes.
 #'
 #' @seealso
 #' \code{\link{AIC.tempssm}} for computing AIC,
@@ -150,7 +151,7 @@ logLik.tempssm <- function(object, ...) {
 #' where the standard AIC definition (\code{k = 2}) is applied.
 #'
 #' @return
-#' A numeric value giving the AIC of the fitted \code{tempssm} model.
+#' A numeric scalar giving the AIC of the fitted \code{tempssm} model.
 #'
 #' @examples
 #' \dontrun{
@@ -182,7 +183,7 @@ AIC.tempssm <- function(object, ..., k = 2) {
 #' their coefficients are added to the parameter count.
 #'
 #' @return
-#' A single numeric value representing the AIC of the fitted model.
+#' A numeric scalar representing the AIC of the fitted model.
 #'
 #' @export
 #'

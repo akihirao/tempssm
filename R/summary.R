@@ -7,7 +7,11 @@
 #' by \code{tempssm()}.
 #' @param ... Additional arguments (currently not used).
 #'
-#' @return A list containing model diagnostics and summaries.
+#' @return
+#' An object of class \code{"summary.tempssm"}, implemented as a named list
+#' with components \code{call}, \code{logLik}, \code{k}, \code{AIC},
+#' \code{convergence}, \code{variances}, \code{coef_ar},
+#' \code{exogenous}, and \code{exogenous_coef}.
 #'
 #' @method summary tempssm
 #' @importFrom stats logLik
@@ -110,7 +114,9 @@ summary.tempssm <- function(object, ...) {
 #' @param x An object of class \code{summary.tempssm}.
 #' @param ... Additional arguments (currently not used).
 #'
-#' @return The input object \code{x}, invisibly.
+#' @return
+#' The input object \code{x}, invisibly. The returned object has class
+#' \code{"summary.tempssm"}.
 #'
 #' @method print summary.tempssm
 #'

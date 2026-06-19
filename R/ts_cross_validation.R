@@ -258,16 +258,16 @@
 #' @inheritParams tempssm
 #'
 #' @return
-#' A list with the following components:
+#' A named list with the following components:
 #' \describe{
-#'   \item{fold}{Fold index.}
-#'   \item{converged}{Logical indicating whether model fitting succeeded.}
-#'   \item{y_train}{Training time series (\code{ts}).}
-#'   \item{y_test}{Test time series (\code{ts}).}
-#'   \item{y_pred}{Predicted values for the test period (object returned 
-#'   by \code{predict}).}
-#'   \item{model}{Fitted model object returned 
-#'   by \code{tempssm()} (or \code{NULL} if failed).}
+#'   \item{fold}{Integer fold index.}
+#'   \item{converged}{Logical scalar indicating whether fitting succeeded.}
+#'   \item{y_train}{Training time series of class \code{ts}.}
+#'   \item{y_test}{Test time series of class \code{ts}.}
+#'   \item{y_pred}{Predicted values for the test period, as returned by
+#'   \code{stats::predict()}.}
+#'   \item{model}{A fitted \code{tempssm} object, or \code{NULL} if fitting
+#'   failed.}
 #' }
 #'
 #' @details
@@ -392,17 +392,17 @@ ts_cv_run_fold <- function(fold,
 #' test period is shorter than \code{horizon}. Default is \code{FALSE}.
 #'
 #' @return
-#' A list of folds. Each element is a list containing:
+#' A list of folds. Each element is a named list containing:
 #' \describe{
-#'   \item{fold}{Fold index.}
-#'   \item{train_ts}{Training time series.}
-#'   \item{test_ts}{Test time series.}
-#'   \item{exo_train_ts}{Training exogenous time series (or \code{NULL}).}
-#'   \item{exo_test_ts}{Test exogenous time series (or \code{NULL}).}
-#'   \item{train_idx}{Index range of the training set (position-based).}
-#'   \item{test_idx}{Index range of the test set (position-based).}
-#'   \item{train_range}{Time range of the training set.}
-#'   \item{test_range}{Time range of the test set.}
+#'   \item{fold}{Integer fold index.}
+#'   \item{train_ts}{Training time series of class \code{ts}.}
+#'   \item{test_ts}{Test time series of class \code{ts}.}
+#'   \item{exo_train_ts}{Training exogenous \code{ts}, or \code{NULL}.}
+#'   \item{exo_test_ts}{Test exogenous \code{ts}, or \code{NULL}.}
+#'   \item{train_idx}{Integer vector giving the training index range.}
+#'   \item{test_idx}{Integer vector giving the test index range.}
+#'   \item{train_range}{Numeric vector giving the training time range.}
+#'   \item{test_range}{Numeric vector giving the test time range.}
 #' }
 #'
 #' @examples
@@ -604,8 +604,8 @@ ts_train_test_split <- function(temp_data,
 #' is shown. Default is \code{TRUE}.
 #'
 #' @return
-#' A list of cross-validation results. Each element corresponds to one
-#' fold and contains the output of \code{ts_cv_run_fold()}.
+#' A list of named lists. Each element corresponds to one fold and contains
+#' the output of \code{ts_cv_run_fold()}.
 #'
 #' @examples
 #' \dontrun{
@@ -856,7 +856,9 @@ ts_cv_run <- function(
 #' metrics
 #' }
 #'
-#' @return A named list of accuracy metrics.
+#' @return
+#' A named list of numeric accuracy metrics with components \code{MAE},
+#' \code{MASE_naive}, and \code{MASE_seasonal}.
 #' @export
 compute_cv_metrics <- function(cv_result) {
   if (!isTRUE(cv_result$converged)) {
@@ -899,7 +901,9 @@ compute_cv_metrics <- function(cv_result) {
 #' \code{compute_cv_metrics()}, corresponding to \code{cv_results}.
 #'
 #' @return
-#' A \code{tibble} where each row represents a cross-validation fold.
+#' A \code{tibble} where each row represents a cross-validation fold, with
+#' columns \code{fold}, \code{converged}, \code{MAE}, \code{MASE_naive}, and
+#' \code{MASE_seasonal}.
 #'
 #' @importFrom tibble tibble
 #'

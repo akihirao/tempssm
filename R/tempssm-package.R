@@ -110,11 +110,54 @@
 #' dynamics and observation equation. In `tempssm`, forecast intervals are
 #' obtained from the underlying `KFAS` state-space model, for example via
 #' `stats::predict(res$model, n.ahead = h, interval = "prediction")`.
+#' With `interval = "prediction"`, the returned object includes point
+#' forecasts and prediction interval bounds, conventionally named `fit`,
+#' `lwr`, and `upr`, which provide a direct indication of forecast
+#' uncertainty.
 #'
 #' Users can trim forecasts to a chosen error margin with
 #' `trim_prediction_intervals()`. This helper keeps the longest leading
 #' forecast horizon for which the prediction interval width, defined as
 #' `upr - lwr`, does not exceed a user-specified maximum width.
+#'
+#' Cross-validation helpers such as `ts_cv_run_fold()` return point forecasts
+#' for accuracy scoring. They are intended for evaluating predictive
+#' performance rather than for representing full forecast uncertainty. Users
+#' who need prediction intervals should call `stats::predict()` on the fitted
+#' `KFAS` model as shown above.
+#'
+#' Forecast and observed values are kept distinct in package outputs. Direct
+#' calls to `stats::predict()` return forecast values only. In time-series
+#' cross-validation results, observed test values are stored in `y_test`, while
+#' forecasts are stored separately in `y_pred`.
+#'
+#' @section Forecast Scale and Transformations:
+#' Forecasts are produced on the same numeric scale as the input temperature
+#' series. The package does not log-transform, standardize, difference, or
+#' otherwise transform the response series before forecasting, so forecast
+#' means and prediction intervals do not require back-transformation to be
+#' comparable with the original input data. For this reason, `tempssm` does
+#' not provide a separate back-transformation routine for forecast values.
+#'
+#' Internal parameter transformations are used only to enforce model
+#' constraints: variance parameters are exponentiated to remain positive, and
+#' AR parameters are transformed with `KFAS::artransform()` to satisfy
+#' stationarity constraints. These transformations affect the fitted dynamics
+#' and associated uncertainty estimates through the state-space model, but they
+#' do not change the scale on which forecast values are returned.
+#'
+#' `trim_prediction_intervals()` is a post-processing helper. It does not alter
+#' forecast means, lower bounds, or upper bounds; it only removes forecast
+#' horizons after the prediction interval width exceeds the user-specified
+#' threshold. The drift accessor scales the latent slope by the input
+#' frequency to report change per seasonal cycle, but this is a component
+#' summary and is not applied to forecast values.
+#'
+#' Forecast limitations follow from the fitted linear Gaussian state-space
+#' model. Forecasts are conditional on the selected model structure, estimated
+#' parameters, and any supplied future exogenous variables. They should not be
+#' interpreted as physically constrained forecasts beyond the assumptions of
+#' the fitted model.
 #'
 #' @section Return Value Conventions:
 #' The primary modelling function, `tempssm()`, returns an object of class
@@ -127,9 +170,27 @@
 #'
 #' Accessor functions such as `get_level_ts()`, `get_drift_ts()`,
 #' `get_season_ts()`, and `get_ar1_ts()` return `ts` objects that preserve the
-#' time scale of the fitted model. Summary and diagnostic helpers return
-#' documented structured objects such as `summary.tempssm`, `data.frame`, or
-#' `tibble` outputs as appropriate for the information being represented.
+#' time scale of the fitted model through their `start`, `end`, `frequency`,
+#' and `time()` attributes. Conversion utilities that aggregate calendar-daily
+#' `zoo` inputs return monthly `ts` objects with `frequency = 12`, while
+#' utilities that retrieve daily SST data as `zoo` objects preserve the
+#' `Date` index. Summary and diagnostic helpers return documented structured
+#' objects such as `summary.tempssm`, `data.frame`, or `tibble` outputs as
+#' appropriate for the information being represented.
+#' Each exported function documents the type and class of its return value in
+#' its `@return` field, including named list elements or columns where the
+#' return value is structured.
+#'
+#' @section Units in Return Values:
+#' Inputs carrying class `units` from the optional `units` package are accepted
+#' by selected pre-processing paths, but their unit attributes are converted to
+#' numeric values with an explicit warning before model fitting or conversion
+#' to `ts`. Unit metadata are therefore not propagated to fitted `tempssm`
+#' objects or derived component series. This avoids adding `units` as a hard
+#' runtime dependency and keeps the internal state-space calculations numeric.
+#'
+#' Users who need formal units in downstream presentation should store the
+#' original units externally and reattach or label them after model fitting.
 #'
 #' @author
 #' Akira Hirao and Momoko Ichinokawa

@@ -10,7 +10,7 @@ get_aic(res)
 \item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
 }
 \value{
-A single numeric value representing the AIC of the fitted model.
+A numeric scalar representing the AIC of the fitted model.
 }
 \description{
 Compute the Akaike Information Criterion (AIC) for a fitted
