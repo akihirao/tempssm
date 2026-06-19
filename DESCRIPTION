@@ -6,7 +6,11 @@ Authors@R: c(
     person(
       given="Akira", family="Hirao",
       email = "akihirao@gmail.com",
-      role = c("aut", "cre")
+      role = c("aut", "cre")),
+    person(
+      given="Momoko", family="Ichinokawa",
+      email = "ichinokawa_momoko09@fra.go.jp",
+      role = c("aut")
     )
   )
 Description: Linear Gaussian state-space analysis of temperature time series.

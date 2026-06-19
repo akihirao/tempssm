@@ -358,7 +358,7 @@ get_tempssm_params <- function(res) {
     Q_trend = exp(pars[1]), # process error for level component
     Q_season = Q_season_est, # process error for seasonal component
     Q_ar = exp(pars[var_idx]), # process error for AR
-    ARs = KFAS::artransform(pars[ar_idx]) # the AR(s) coefficient
+    ARs = .tempssm_transform_ar(pars[ar_idx]) # the AR(s) coefficient
   )
 
   return(params)

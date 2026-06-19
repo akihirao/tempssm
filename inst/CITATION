@@ -1,9 +1,12 @@
-citHeader("To cite tempssm in publicatons use:")
+citHeader("To cite tempssm in publications use:")
 
 bibentry(
   bibtype = "Misc",
   title = "tempssm: State-space models for temperature time series in R",
-  author = c(person("Akira","Hirao")),
+  author = c(
+    person("Akira", "Hirao"),
+    person("Momoko", "Ichinokawa")
+  ),
   year = 2026,
-  note = "R package version 0.2.3",
+  note = "R package version 0.2.3.1",
 )

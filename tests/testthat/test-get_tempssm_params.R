@@ -67,6 +67,21 @@ test_that("AR coefficients are transformed correctly", {
 })
 
 
+test_that("AR stationarity checker detects valid coefficients", {
+  expect_true(.tempssm_is_stationary_ar(numeric(0)))
+  expect_true(.tempssm_is_stationary_ar(0.5))
+  expect_false(.tempssm_is_stationary_ar(1.1))
+  expect_false(.tempssm_is_stationary_ar(NA_real_))
+})
+
+
+test_that("AR parameter transformation returns stationary coefficients", {
+  ar_coefs <- .tempssm_transform_ar(c(10, -10, 2))
+
+  expect_true(.tempssm_is_stationary_ar(ar_coefs))
+})
+
+
 test_that("get_tempssm_params checks input", {
   expect_error(
     get_tempssm_params(NULL),

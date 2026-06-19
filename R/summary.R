@@ -87,7 +87,7 @@ summary.tempssm <- function(object, ...) {
     ),
     coef_ar = list(
       AR_order = ar_order,
-      AR_coef  = KFAS::artransform(pars[ar_idx])
+      AR_coef  = .tempssm_transform_ar(pars[ar_idx])
     ),
     exogenous = exogenous_variable,
     exogenous_coef = exogenous_coef

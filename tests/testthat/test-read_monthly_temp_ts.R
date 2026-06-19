@@ -128,7 +128,7 @@ test_that("errors when year-month rows are not increasing", {
 })
 
 
-test_that("warns when months are missing in CSV input", {
+test_that("implicit missing months in CSV input are explicit NA values", {
   tmp <- tempfile(fileext = ".csv")
 
   writeLines(
@@ -141,7 +141,11 @@ test_that("warns when months are missing in CSV input", {
   )
 
   expect_warning(
-    read_monthly_temp_ts(tmp),
-    "not strictly monthly"
+    ts_out <- read_monthly_temp_ts(tmp),
+    "Implicit missing months"
   )
+
+  expect_identical(start(ts_out), c(2001, 1))
+  expect_length(ts_out, 3)
+  expect_identical(as.numeric(ts_out), c(10.4, NA, 13.6))
 })

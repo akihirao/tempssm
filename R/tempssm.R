@@ -39,6 +39,52 @@
 }
 
 
+#' Check stationarity of autoregressive coefficients
+#'
+#' @param ar_coefs Numeric vector of autoregressive coefficients.
+#' @param tol Numeric tolerance used for root-modulus comparisons.
+#'
+#' @return Logical scalar; \code{TRUE} if the AR polynomial roots are outside
+#'   the unit circle within numerical tolerance.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_is_stationary_ar <- function(ar_coefs,
+                                      tol = sqrt(.Machine$double.eps)) {
+  if (length(ar_coefs) == 0) {
+    return(TRUE)
+  }
+
+  if (any(!is.finite(ar_coefs))) {
+    return(FALSE)
+  }
+
+  roots <- base::polyroot(c(1, -ar_coefs))
+  all(Mod(roots) > 1 - tol)
+}
+
+
+#' Transform AR parameters and check stationarity
+#'
+#' @param ar_pars Numeric vector of unconstrained autoregressive parameters.
+#'
+#' @return Numeric vector of stationary autoregressive coefficients.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_transform_ar <- function(ar_pars) {
+  ar_coefs <- KFAS::artransform(ar_pars)
+
+  if (!.tempssm_is_stationary_ar(ar_coefs)) {
+    cli::cli_abort(
+      "Transformed autoregressive coefficients are not stationary."
+    )
+  }
+
+  ar_coefs
+}
+
+
 #' Transform unconstrained parameters to constrained values
 #'
 #' Internal helper to apply standard transformations to the parameter vector
@@ -77,7 +123,7 @@
   list(
     trend_var = exp(pars[1]),
     season_var = if (use_season) exp(pars[2]) else NULL,
-    ar_coefs = KFAS::artransform(pars[ar_idx]),
+    ar_coefs = .tempssm_transform_ar(pars[ar_idx]),
     ar_var = exp(pars[var_idx]),
     H = exp(pars[H_idx])
   )
@@ -91,6 +137,19 @@
 #' for regular temperature time series using Kalman filtering and smoothing.
 #' The input must be a univariate \code{ts} object with an integer seasonal
 #' frequency greater than 1.
+#'
+#' @details
+#' The observed temperature series is not required to be stationary in mean.
+#' Long-term mean changes are represented by latent level and drift
+#' components, and recurring within-cycle mean variation is represented by the
+#' seasonal component when \code{use_season = TRUE}. Stationarity constraints
+#' are applied to the autoregressive component, whose coefficients are
+#' transformed with \code{KFAS::artransform()} during model fitting.
+#'
+#' Observation and state disturbances are assumed Gaussian with positive,
+#' time-invariant variances. The model does not currently include
+#' time-varying volatility or automatic stationarity tests for the observed
+#' input series.
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
 #'   The \code{ts} object must be univariate.
@@ -117,6 +176,11 @@
 #'
 #' @param reltol Optional numeric of reltol.
 #'  If \code{NULL}, default value of 1e-16 is used.
+#'
+#' @param na_action Character string specifying how explicit missing
+#'   observations in \code{temp_data} or \code{exo_data} should be handled.
+#'   Use \code{"warn"} to issue a warning and proceed, \code{"error"} to stop,
+#'   or \code{"allow"} to proceed silently. The default is \code{"warn"}.
 #'
 #' @return An object of class \code{"tempssm"}, a named list containing:
 #' \describe{
@@ -145,7 +209,8 @@ tempssm <- function(temp_data,
                     inits = NULL,
                     maxit = NULL,
                     reltol = NULL,
-                    use_season = TRUE) {
+                    use_season = TRUE,
+                    na_action = c("warn", "error", "allow")) {
   exo_name <- NULL
   state_names <- character(0)
 
@@ -163,7 +228,8 @@ tempssm <- function(temp_data,
       ## ---- Input checks -------------------------------------------------
       model_inputs <- .tempssm_prepare_model_inputs(
         temp_data = temp_data,
-        exo_data = exo_data
+        exo_data = exo_data,
+        na_action = na_action
       )
 
       temp_data <- model_inputs$temp_data
@@ -717,6 +783,40 @@ tempssm <- function(temp_data,
 }
 
 
+#' Handle explicit missing values in a \code{ts} object
+#'
+#' @param x A \code{ts} object.
+#' @param arg_name Name of the argument being checked.
+#' @param na_action Missing-value handling policy.
+#'
+#' @return Invisibly returns \code{x}.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_handle_missing_ts <- function(x, arg_name, na_action) {
+  if (!anyNA(x)) {
+    return(invisible(x))
+  }
+
+  if (identical(na_action, "error")) {
+    cli::cli_abort(
+      "Missing values detected in {.arg {arg_name}}."
+    )
+  }
+
+  if (identical(na_action, "warn")) {
+    cli::cli_warn(
+      c(
+        "Missing values detected in {.arg {arg_name}}.",
+        "i" = "Proceeding with explicit {.val NA} observations."
+      )
+    )
+  }
+
+  invisible(x)
+}
+
+
 #' Check ts object of exogenous variable(s) for applying \code{tempssm()}
 #'
 #' @inheritParams tempssm
@@ -794,6 +894,7 @@ tempssm <- function(temp_data,
 #'   variables are allowed after assigning default names.
 #' @param default_exo_names Logical; if \code{TRUE}, default names are assigned
 #'   to unnamed exogenous variables.
+#' @param na_action Missing-value handling policy.
 #'
 #' @return A named list containing validated \code{temp_data}, validated or
 #'   \code{NULL} \code{exo_data}, the common frequency, and the number of
@@ -804,8 +905,18 @@ tempssm <- function(temp_data,
 .tempssm_prepare_model_inputs <- function(temp_data,
                                           exo_data = NULL,
                                           allow_unnamed_exo = FALSE,
-                                          default_exo_names = FALSE) {
+                                          default_exo_names = FALSE,
+                                          na_action = c("warn",
+                                                        "error",
+                                                        "allow")) {
+  na_action <- match.arg(na_action)
+
   temp_data <- .tempssm_check_temp_ts(temp_data)
+  .tempssm_handle_missing_ts(
+    temp_data,
+    arg_name = "temp_data",
+    na_action = na_action
+  )
 
   if (!is.null(exo_data) && is.null(colnames(exo_data))) {
     if (!allow_unnamed_exo || !default_exo_names) {
@@ -828,6 +939,11 @@ tempssm <- function(temp_data,
     exo_data <- .tempssm_check_exo_ts(
       temp_data = temp_data,
       exo_data = exo_data
+    )
+    .tempssm_handle_missing_ts(
+      exo_data,
+      arg_name = "exo_data",
+      na_action = na_action
     )
   }
 

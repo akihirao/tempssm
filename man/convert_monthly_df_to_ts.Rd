@@ -33,7 +33,7 @@ represented as \code{NA}.}
 
 The function assumes that the input data represent a regularly spaced
 monthly time series. If missing months are detected in the \code{Date}
-column, a warning is issued, but the \code{ts} object is still created.
+column, a warning is issued and explicit \code{NA} values are inserted.
 
 The expected format is:
 

@@ -118,6 +118,17 @@ test_that("allow_partial changes final fold", {
 })
 
 
+test_that("ts_train_test_split can error on missing values", {
+  temp_ts <- temp_ts_test
+  temp_ts[2] <- NA
+
+  expect_error(
+    ts_train_test_split(temp_ts, na_action = "error"),
+    "Missing values detected"
+  )
+})
+
+
 test_that("works with exogenous variables", {
   folds <- ts_train_test_split(
     temp_ts_test,

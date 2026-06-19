@@ -65,6 +65,26 @@
 #' observations and evaluated on later held-out observations. MAE denotes mean
 #' absolute error, and MASE denotes mean absolute scaled error.
 #'
+#' @section Stationarity and Moment Assumptions:
+#' `tempssm` does not require the observed temperature series itself to be
+#' stationary in mean. Long-term changes in the first-order moment are treated
+#' as part of the latent level and drift components, and recurring within-cycle
+#' mean variation is represented by the seasonal component when
+#' `use_season = TRUE`.
+#'
+#' Stationarity restrictions are applied to the autoregressive component, which
+#' represents short-term serial dependence after the level, seasonal, and
+#' optional exogenous components have been accounted for. AR coefficients are
+#' transformed with `KFAS::artransform()` during model fitting so that this
+#' component satisfies the stationarity constraints implied by the selected AR
+#' order.
+#'
+#' Second-order assumptions are specified through time-invariant Gaussian
+#' disturbance variances for the observation equation and state equations.
+#' These variance parameters are estimated as positive values. The package does
+#' not currently model time-varying volatility or automatically test for
+#' higher-order forms of stationarity in the observed input series.
+#'
 #' @section Time Index and Calendar Conventions:
 #' Core modelling functions use base R `ts` objects. The `frequency` attribute
 #' defines the number of observations per seasonal cycle, and the core model
@@ -83,6 +103,9 @@
 #'
 #' Cross-validation arguments such as `initial`, `horizon`, and `step` are
 #' counts of observations, not calendar durations.
+#'
+#' @author
+#' Akira Hirao and Momoko Ichinokawa
 #'
 #' @references
 #' Helske, J. (2017). KFAS: Exponential family state space models in R.

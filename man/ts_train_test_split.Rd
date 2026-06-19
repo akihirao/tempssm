@@ -11,7 +11,8 @@ ts_train_test_split(
   horizon = 12,
   step = 12,
   fixed_window = FALSE,
-  allow_partial = FALSE
+  allow_partial = FALSE,
+  na_action = c("warn", "error", "allow")
 )
 }
 \arguments{
@@ -40,6 +41,11 @@ is used. Default is \code{FALSE}.}
 
 \item{allow_partial}{Logical; if \code{TRUE}, include the final fold even if the remaining
 test period is shorter than \code{horizon}. Default is \code{FALSE}.}
+
+\item{na_action}{Character string specifying how explicit missing
+observations in \code{temp_data} or \code{exo_data} should be handled.
+Use \code{"warn"} to issue a warning and proceed, \code{"error"} to stop,
+or \code{"allow"} to proceed silently. The default is \code{"warn"}.}
 }
 \value{
 A list of folds. Each element is a list containing:

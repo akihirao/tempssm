@@ -136,6 +136,47 @@ test_that(".tempssm_prepare_model_inputs accepts multivariate exogenous ts", {
 })
 
 
+test_that(".tempssm_prepare_model_inputs handles missing values by policy", {
+  temp_ts <- ts(c(1, NA, 3, 4), start = c(2000, 1), frequency = 4)
+
+  expect_warning(
+    prepared_warn <- .tempssm_prepare_model_inputs(temp_ts),
+    "Missing values detected"
+  )
+  expect_true(anyNA(prepared_warn$temp_data))
+
+  expect_error(
+    .tempssm_prepare_model_inputs(temp_ts, na_action = "error"),
+    "Missing values detected"
+  )
+
+  expect_silent(
+    prepared_allow <- .tempssm_prepare_model_inputs(
+      temp_ts,
+      na_action = "allow"
+    )
+  )
+  expect_true(anyNA(prepared_allow$temp_data))
+})
+
+
+test_that(".tempssm_prepare_model_inputs handles missing exogenous values", {
+  temp_ts <- ts(rnorm(4), start = c(2000, 1), frequency = 4)
+  exo_ts <- ts(c(1, NA, 3, 4), start = c(2000, 1), frequency = 4)
+  exo_ts <- set_ts_name(exo_ts, label = "x", quiet = TRUE)
+
+  expect_warning(
+    prepared <- .tempssm_prepare_model_inputs(
+      temp_data = temp_ts,
+      exo_data = exo_ts
+    ),
+    "Missing values detected"
+  )
+
+  expect_true(anyNA(prepared$exo_data))
+})
+
+
 test_that(".tempssm_prepare_model_inputs rejects misaligned exogenous ts", {
   temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
   exo_ts <- ts(rnorm(24), start = c(2001, 1), frequency = 12)

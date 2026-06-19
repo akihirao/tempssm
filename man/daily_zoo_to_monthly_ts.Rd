@@ -31,7 +31,8 @@ Daily observations are grouped by calendar month using
 \code{zoo::as.yearmon()}. The resulting monthly series is represented as a
 regular base R \code{ts} object with \code{frequency = 12}. Month lengths
 are not converted to a fixed day count; the calendar index determines month
-membership.
+membership. Months with no observations between the first and last
+observed months are represented explicitly as \code{NA}.
 }
 \examples{
 \dontrun{

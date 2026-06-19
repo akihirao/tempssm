@@ -15,16 +15,20 @@ test_that("convert_monthly_df_to_ts works for valid input", {
 })
 
 
-test_that("warning is issued when months are missing", {
+test_that("implicit missing months are inserted as explicit NA values", {
   df <- data.frame(
     Date = as.Date(c("2001-01-01", "2001-03-01")), # Feb missing
     Temp = c(10, 12)
   )
 
   expect_warning(
-    convert_monthly_df_to_ts(df),
-    "not strictly monthly"
+    ts_out <- convert_monthly_df_to_ts(df),
+    "Implicit missing months"
   )
+
+  expect_identical(start(ts_out), c(2001, 1))
+  expect_length(ts_out, 3)
+  expect_identical(as.numeric(ts_out), c(10, NA, 12))
 })
 
 

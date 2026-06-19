@@ -177,6 +177,38 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 }
 
 
+#' Complete a monthly index by inserting explicit missing values
+#'
+#' @param ym_index Integer year-month index.
+#' @param values Numeric values aligned with \code{ym_index}.
+#' @param context Description of the input source for warning messages.
+#'
+#' @return A list containing completed \code{ym_index} and \code{values}.
+#'
+#' @keywords internal
+#' @noRd
+.complete_monthly_values <- function(ym_index, values, context) {
+  full_ym_index <- seq.int(min(ym_index), max(ym_index))
+
+  if (length(full_ym_index) != length(ym_index)) {
+    cli::cli_warn(
+      c(
+        "Implicit missing months detected in {context}.",
+        "i" = "Explicit {.val NA} values are inserted."
+      )
+    )
+  }
+
+  out <- rep(NA_real_, length(full_ym_index))
+  out[match(ym_index, full_ym_index)] <- as.numeric(values)
+
+  list(
+    ym_index = full_ym_index,
+    values = out
+  )
+}
+
+
 #' Trim and align temperature and exogenous time series over their shared period
 #'
 #' @description
@@ -454,7 +486,7 @@ split_multi_ts <- function(multi_ts) {
 #'
 #' The function assumes that the input data represent a regularly spaced
 #' monthly time series. If missing months are detected in the \code{Date}
-#' column, a warning is issued, but the \code{ts} object is still created.
+#' column, a warning is issued and explicit \code{NA} values are inserted.
 #'
 #' The expected format is:
 #'
@@ -554,24 +586,24 @@ convert_monthly_df_to_ts <- function(df) {
     )
   }
 
-  if (any(diff(ym_index) != 1)) {
-    cli::cli_warn(
-      "Input data are not strictly monthly; some months may be missing."
-    )
-  }
-
   ## ---- construct ts ---------------------------------------------------
-  start_year <- as.integer(format(df$Date[1], "%Y"))
-  start_month <- as.integer(format(df$Date[1], "%m"))
+  temp_values <- .strip_units_values(df$Temp, arg_name = "Temp")
+  completed <- .complete_monthly_values(
+    ym_index = ym_index,
+    values = temp_values,
+    context = "the {.col Date} column"
+  )
+
+  start_ym <- completed$ym_index[1]
+  start_year <- (start_ym - 1) %/% 12
+  start_month <- start_ym - start_year * 12
 
   .tempssm_cli_debug(
     "Creating ts object starting at {start_year}-{start_month}"
   )
 
-  temp_values <- .strip_units_values(df$Temp, arg_name = "Temp")
-
   ts_out <- stats::ts(
-    as.numeric(temp_values),
+    completed$values,
     start = c(start_year, start_month),
     frequency = 12
   )
@@ -713,22 +745,23 @@ read_monthly_temp_ts <- function(csv) {
     )
   }
 
-  if (length(ym_index) > 1 && any(diff(ym_index) != 1)) {
-    cli::cli_warn(
-      "Input data are not strictly monthly; some months may be missing."
-    )
-  }
-
   ## ---- construct ts ---------------------------------------------------
-  start_year <- raw_data$Year[1]
-  start_month <- raw_data$Month[1]
+  completed <- .complete_monthly_values(
+    ym_index = ym_index,
+    values = raw_data$Temp,
+    context = "the CSV year-month index"
+  )
+
+  start_ym <- completed$ym_index[1]
+  start_year <- (start_ym - 1) %/% 12
+  start_month <- start_ym - start_year * 12
 
   .tempssm_cli_debug(
     "Creating ts object starting at {start_year}-{start_month}"
   )
 
   ts_out <- stats::ts(
-    as.numeric(raw_data$Temp),
+    completed$values,
     start = c(start_year, start_month),
     frequency = 12
   )
@@ -762,7 +795,8 @@ read_monthly_temp_ts <- function(csv) {
 #' \code{zoo::as.yearmon()}. The resulting monthly series is represented as a
 #' regular base R \code{ts} object with \code{frequency = 12}. Month lengths
 #' are not converted to a fixed day count; the calendar index determines month
-#' membership.
+#' membership. Months with no observations between the first and last
+#' observed months are represented explicitly as \code{NA}.
 #'
 #' @return A univariate monthly \code{ts} object with \code{frequency = 12}.
 #'
@@ -846,23 +880,30 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
     )
   }
 
-  ## ---- construct ts ---------------------------------------------------
-  ym_start <- stats::start(zoo_monthly)
+  monthly_values <- .strip_units_values(
+    zoo::coredata(zoo_monthly),
+    arg_name = var
+  )
+  monthly_index <- zoo::index(zoo_monthly)
+  ym_index <- as.integer(format(monthly_index, "%Y")) * 12 +
+    as.integer(format(monthly_index, "%m"))
+  completed <- .complete_monthly_values(
+    ym_index = ym_index,
+    values = monthly_values,
+    context = "the aggregated monthly zoo index"
+  )
 
-  start_year <- as.integer(format(ym_start, "%Y"))
-  start_month <- as.integer(format(ym_start, "%m"))
+  ## ---- construct ts ---------------------------------------------------
+  start_ym <- completed$ym_index[1]
+  start_year <- (start_ym - 1) %/% 12
+  start_month <- start_ym - start_year * 12
 
   .tempssm_cli_debug(
     "Creating monthly ts starting at {start_year}-{start_month}"
   )
 
-  monthly_values <- .strip_units_values(
-    zoo::coredata(zoo_monthly),
-    arg_name = var
-  )
-
   ts_monthly <- stats::ts(
-    monthly_values,
+    matrix(completed$values, ncol = 1),
     start = c(start_year, start_month),
     frequency = 12
   )

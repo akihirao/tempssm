@@ -437,7 +437,8 @@ ts_train_test_split <- function(temp_data,
                                 horizon = 12,
                                 step = 12,
                                 fixed_window = FALSE,
-                                allow_partial = FALSE) {
+                                allow_partial = FALSE,
+                                na_action = c("warn", "error", "allow")) {
   ## ---- Start message --------------------------------------------------
   .tempssm_cli_inform(
     paste0(
@@ -451,7 +452,8 @@ ts_train_test_split <- function(temp_data,
     temp_data = temp_data,
     exo_data = exo_data,
     allow_unnamed_exo = TRUE,
-    default_exo_names = TRUE
+    default_exo_names = TRUE,
+    na_action = na_action
   )
 
   temp_data <- model_inputs$temp_data

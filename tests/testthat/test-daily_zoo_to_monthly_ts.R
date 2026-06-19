@@ -100,6 +100,29 @@ test_that("na.rm works correctly in aggregation", {
 })
 
 
+test_that("months without daily observations are explicit NA values", {
+  dates <- c(
+    seq.Date(as.Date("2001-01-01"), by = "day", length.out = 5),
+    seq.Date(as.Date("2001-03-01"), by = "day", length.out = 5),
+    seq.Date(as.Date("2001-04-01"), by = "day", length.out = 5)
+  )
+
+  zoo_obj <- zoo::zoo(
+    data.frame(Temp = seq_along(dates)),
+    order.by = dates
+  )
+
+  expect_warning(
+    res <- daily_zoo_to_monthly_ts(zoo_obj),
+    "Implicit missing months"
+  )
+
+  expect_identical(start(res), c(2001, 1))
+  expect_length(res, 4)
+  expect_true(is.na(as.numeric(res)[2]))
+})
+
+
 test_that("warns when many NA in aggregated result", {
   dates <- seq.Date(as.Date("2001-01-01"), by = "day", length.out = 60)
 

@@ -1,6 +1,6 @@
 ---
 title: "tempssm: State-space modeling for temperature time series in R"
-author: "Akira Hirao"
+author: "Akira Hirao and Momoko Ichinokawa"
 date: "`r Sys.Date()`"
 output:
 #  pdf_document:

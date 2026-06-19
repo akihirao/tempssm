@@ -210,18 +210,69 @@
 #' Cross-validation window parameters are documented and used as observation
 #' counts rather than calendar durations.
 #' 
-#' @srrstatsTODO {TS2.0} *Time Series Software which presumes or requires regular data should only allow **explicit** missing values, and should issue appropriate diagnostic messages, potentially including errors, in response to any **implicit** missing values.*
-#' @srrstatsTODO {TS2.1} *Where possible, all functions should provide options for users to specify how to handle missing data, with options minimally including:*
-#' @srrstatsTODO {TS2.1a} *error on missing data; or.
-#' @srrstatsTODO {TS2.1b} *warn or ignore missing data, and proceed to analyse irregular data, ensuring that results from function calls with regular yet missing data return identical values to submitting equivalent irregular data with no missing values; or*
+#' @srrstats {TS2.0} Core modelling functions require regular base R `ts`
+#' inputs, where missing observations can only be represented explicitly as
+#' `NA` values. Conversion utilities that construct monthly `ts` objects from
+#' data-frame, CSV, or daily `zoo` inputs detect implicit missing months before
+#' constructing the output. Missing months between the first and last observed
+#' month are converted to explicit `NA` values with a diagnostic warning, so
+#' irregular input is not silently collapsed into a shorter regular `ts`
+#' object. Unit tests cover these conversion paths.
+#' 
+#' @srrstats {TS2.1} The main modelling and cross-validation entry points
+#' provide a \code{na_action} argument controlling how explicit missing values
+#' in regular `ts` inputs are handled. The argument is passed through the
+#' shared input pre-processing routine `.tempssm_prepare_model_inputs()`, so
+#' `tempssm()` and `ts_train_test_split()` use the same missing-data policy.
+#' Conversion utilities also expose missing-data controls where aggregation is
+#' performed, such as `na.rm` and `na_prop_max` in
+#' `daily_zoo_to_monthly_ts()`.
+#' 
+#' @srrstats {TS2.1a} Setting `na_action = "error"` in `tempssm()` or
+#' `ts_train_test_split()` stops during input pre-processing if explicit
+#' missing values are detected in `temp_data` or `exo_data`.
+#' 
+#' @srrstats {TS2.1b} The default `na_action = "warn"` issues a diagnostic
+#' warning and proceeds with explicit `NA` observations. Setting
+#' `na_action = "allow"` proceeds silently. Because these paths preserve the
+#' original regular `ts` object and its explicit missing values, results are
+#' based on the same time index rather than on an implicitly shortened series.
+#' 
 #' @srrstatsTODO {TS2.1c} *replace missing data with appropriately imputed values.* 
-#' @srrstatsTODO {TS2.2} *Consider stationarity of all relevant moments - typically first (mean) and second (variance) order, or otherwise document why such consideration may be restricted to lower orders only.*
-#' @srrstatsTODO {TS2.3} *Explicitly document all assumptions and/or requirements of stationarity*
-#' @srrstatsTODO {TS2.4} *Implement appropriate checks for all relevant forms of stationarity, and either:*
-#' @srrstatsTODO {TS2.4a} *issue diagnostic messages or warnings; or*
-#' @srrstatsTODO {TS2.4b} *enable or advise on appropriate transformations to ensure stationarity.* 
-#' @srrstatsTODO {TS2.5} *Incorporate a system to ensure that both row and column orders follow the same ordering as the underlying time series data. This may, for example, be done by including the `index` attribute of the time series data as an attribute of the auto-covariance matrix.*
-#' @srrstatsTODO {TS2.6} *Where applicable, auto-covariance matrices should also include specification of appropriate units.* 
+#' 
+#' @srrstats {TS2.2} Stationarity of relevant moments is documented in the
+#' package-level help under "Stationarity and Moment Assumptions". The observed
+#' temperature series is not required to be stationary in mean because
+#' first-order non-stationarity is represented explicitly through latent level,
+#' drift, and seasonal components. Stationarity constraints are instead applied
+#' to the autoregressive component that represents residual short-term serial
+#' dependence after those components have been accounted for. Second-order
+#' assumptions are represented by positive, time-invariant Gaussian disturbance
+#' variances in the observation and state equations; time-varying volatility
+#' and higher-order stationarity checks are outside the current package scope.
+#' 
+#' @srrstats {TS2.3} Stationarity assumptions and requirements are documented
+#' in the package-level help and in the `tempssm()` function help. The observed
+#' input series is not required to be stationary in mean; non-stationary mean
+#' structure is modelled through level, drift, seasonal, and optional exogenous
+#' components. Stationarity is required only for the autoregressive component,
+#' and this requirement is enforced by transforming AR coefficients with
+#' `KFAS::artransform()` during fitting. The documentation also states the
+#' second-order assumption of positive, time-invariant Gaussian disturbance
+#' variances and the current absence of automatic stationarity testing for the
+#' observed input series.
+#' 
+#' @srrstats {TS2.4} The relevant stationarity requirement in `tempssm` is
+#' the stationarity of the autoregressive component. The package implements an
+#' internal AR-root check after transforming unconstrained optimization
+#' parameters to AR coefficients. The same transformation-and-check helper is
+#' used during model fitting and when extracting or summarising fitted AR
+#' coefficients. Unit tests cover stationary and non-stationary AR
+#' coefficients and confirm that transformed AR parameters are stationary.
+#' 
+#' @srrstats {TS2.4b} AR coefficients are transformed with
+#' `KFAS::artransform()` and then checked by evaluating whether the AR
+#' polynomial roots lie outside the unit circle within numerical tolerance.
 #' @srrstatsTODO {TS3.0} *Provide tests to demonstrate at least one case in which errors widen appropriately with forecast horizon.*
 #' @srrstatsTODO {TS3.1} *If possible, provide at least one test which violates TS3.0*
 #' @srrstatsTODO {TS3.2} *Document the general drivers of forecast errors or horizons, as demonstrated via the particular cases of TS3.0 and TS3.1*
@@ -283,6 +334,25 @@ NULL
 #' domain-focused workflow layer for temperature time-series analysis rather
 #' than as a faster, more accurate, or otherwise superior alternative to
 #' packages such as `KFAS`, `forecast`, `dlm`, `bsts`, or `MARSS`.
+#'
+#' @srrstatsNA {TS2.4a} The package uses parameter transformations to enforce
+#' the relevant stationarity constraint, so routine warnings are not needed for
+#' valid user inputs. An internal error is raised only if transformed AR
+#' coefficients fail the stationarity check, which should indicate an internal
+#' numerical or implementation problem rather than an expected user action.
+#'
+#' @srrstatsNA {TS2.5} The package does not construct or return
+#' auto-covariance matrices whose row and column ordering would need to be
+#' linked to the underlying time-series index. Core modelling functions operate
+#' on regular `ts` inputs and validate that temperature and exogenous series
+#' have matching time indices before fitting, while returned component series
+#' preserve the `ts` time attributes of the fitted model.
+#'
+#' @srrstatsNA {TS2.6} The package does not construct or return
+#' auto-covariance matrices, so there are no auto-covariance matrix units to
+#' specify. General handling of optional `units` objects in user inputs is
+#' documented separately under TS1.7 and tested in the input pre-processing and
+#' conversion utilities.
 #'
 #' @noRd
 NULL

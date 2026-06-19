@@ -12,7 +12,8 @@ tempssm(
   inits = NULL,
   maxit = NULL,
   reltol = NULL,
-  use_season = TRUE
+  use_season = TRUE,
+  na_action = c("warn", "error", "allow")
 )
 }
 \arguments{
@@ -41,6 +42,11 @@ If \code{NULL}, default value of 1e-16 is used.}
 
 \item{use_season}{Logical; Should seasonal component be considered.
 Default to TRUE.}
+
+\item{na_action}{Character string specifying how explicit missing
+observations in \code{temp_data} or \code{exo_data} should be handled.
+Use \code{"warn"} to issue a warning and proceed, \code{"error"} to stop,
+or \code{"allow"} to proceed silently. The default is \code{"warn"}.}
 }
 \value{
 An object of class \code{"tempssm"}, a named list containing:
@@ -83,6 +89,18 @@ and makes use of Kalman filtering and smoothing.
 Main parts of the implementation were adapted from the supplementary code
 provided in Baba et al. (2024), available on GitHub:
 https://github.com/logics-of-blue/sea-temperature-trend-jogashima
+
+The observed temperature series is not required to be stationary in mean.
+Long-term mean changes are represented by latent level and drift
+components, and recurring within-cycle mean variation is represented by the
+seasonal component when \code{use_season = TRUE}. Stationarity constraints
+are applied to the autoregressive component, whose coefficients are
+transformed with \code{KFAS::artransform()} during model fitting.
+
+Observation and state disturbances are assumed Gaussian with positive,
+time-invariant variances. The model does not currently include
+time-varying volatility or automatic stationarity tests for the observed
+input series.
 }
 \section{Life Cycle and Development Status}{
 
@@ -129,6 +147,28 @@ observations and evaluated on later held-out observations. MAE denotes mean
 absolute error, and MASE denotes mean absolute scaled error.
 }
 
+\section{Stationarity and Moment Assumptions}{
+
+\code{tempssm} does not require the observed temperature series itself to be
+stationary in mean. Long-term changes in the first-order moment are treated
+as part of the latent level and drift components, and recurring within-cycle
+mean variation is represented by the seasonal component when
+\code{use_season = TRUE}.
+
+Stationarity restrictions are applied to the autoregressive component, which
+represents short-term serial dependence after the level, seasonal, and
+optional exogenous components have been accounted for. AR coefficients are
+transformed with \code{KFAS::artransform()} during model fitting so that this
+component satisfies the stationarity constraints implied by the selected AR
+order.
+
+Second-order assumptions are specified through time-invariant Gaussian
+disturbance variances for the observation equation and state equations.
+These variance parameters are estimated as positive values. The package does
+not currently model time-varying volatility or automatically test for
+higher-order forms of stationarity in the observed input series.
+}
+
 \section{Time Index and Calendar Conventions}{
 
 Core modelling functions use base R \code{ts} objects. The \code{frequency} attribute
@@ -173,4 +213,7 @@ https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 }
 \seealso{
 \url{https://github.com/akihirao/tempssm}
+}
+\author{
+Akira Hirao and Momoko Ichinokawa
 }
