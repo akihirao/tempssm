@@ -16,12 +16,12 @@ ts_train_test_split(
 }
 \arguments{
 \item{temp_data}{A temperature time series of class \code{ts}.
-The \code{ts} object must be univariant.
-The series can have any arbitrary frequency of 2 or higher.
+The \code{ts} object must be univariate.
+The series can have any integer frequency of 2 or higher.
 For example, a frequency of 12 represents a monthly \code{ts} object.}
 
 \item{exo_data}{A data set of exogenous variable(s) of class \code{ts}.
-The series may have any arbitrary frequency of 2 or higher,
+The series may have any integer frequency of 2 or higher,
 but it must be the same as that of \code{temp_data}. The default is
 \code{NULL} when fitting a model without exogenous variables.}
 

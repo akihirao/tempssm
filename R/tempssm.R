@@ -88,17 +88,17 @@
 #' time series
 #'
 #' This function estimates a linear Gaussian state-space model (SSM)
-#' for monthly temperature time series using Kalman filtering and smoothing.
-#' Both univariate and multivariate \code{ts} objects are supported.
-#' If multivariate, a column named \code{"Temp"} is used.
+#' for regular temperature time series using Kalman filtering and smoothing.
+#' The input must be a univariate \code{ts} object with an integer seasonal
+#' frequency greater than 1.
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
-#'   The \code{ts} object must be univariant.
-#'   The series can have any arbitrary frequency of 2 or higher.
+#'   The \code{ts} object must be univariate.
+#'   The series can have any integer frequency of 2 or higher.
 #'   For example, a frequency of 12 represents a monthly \code{ts} object.
 #'
 #' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
-#'   The series may have any arbitrary frequency of 2 or higher,
+#'   The series may have any integer frequency of 2 or higher,
 #'   but it must be the same as that of \code{temp_data}. The default is
 #'   \code{NULL} when fitting a model without exogenous variables.
 #'
@@ -664,12 +664,15 @@ tempssm <- function(temp_data,
     )
   }
 
+  temp_data <- .strip_units_ts(temp_data, arg_name = "temp_data")
+
   ## ---- frequency check ------------------------------------------------
   freq <- frequency(temp_data)
+  freq_int <- as.integer(round(freq))
 
-  if (freq <= 1) {
+  if (freq <= 1 || abs(freq - freq_int) > sqrt(.Machine$double.eps)) {
     cli::cli_abort(
-      "The procedure requires a {.cls ts} object with frequency > 1."
+      "The procedure requires a {.cls ts} object with integer frequency > 1."
     )
   }
 
@@ -734,6 +737,8 @@ tempssm <- function(temp_data,
       "The object {.arg exo_data} must be a {.cls ts} object."
     )
   }
+
+  exo_data <- .strip_units_ts(exo_data, arg_name = "exo_data")
 
   ## ---- frequency check ------------------------------------------------
   exo_freq <- frequency(exo_data)

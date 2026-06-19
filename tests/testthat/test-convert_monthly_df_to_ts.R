@@ -125,3 +125,22 @@ test_that("NA values are allowed", {
 
   expect_true(anyNA(ts_out))
 })
+
+
+test_that("units Temp column is accepted and converted to numeric", {
+  skip_if_not_installed("units")
+
+  df <- data.frame(
+    Date = seq(as.Date("2001-01-01"), by = "month", length.out = 3),
+    Temp = units::set_units(c(10, 11, 12), "K")
+  )
+
+  expect_warning(
+    ts_out <- convert_monthly_df_to_ts(df),
+    "converted to numeric"
+  )
+
+  expect_s3_class(ts_out, "ts")
+  expect_false(inherits(ts_out, "units"))
+  expect_identical(as.numeric(ts_out), c(10, 11, 12))
+})

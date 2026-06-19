@@ -17,12 +17,12 @@ tempssm(
 }
 \arguments{
 \item{temp_data}{A temperature time series of class \code{ts}.
-The \code{ts} object must be univariant.
-The series can have any arbitrary frequency of 2 or higher.
+The \code{ts} object must be univariate.
+The series can have any integer frequency of 2 or higher.
 For example, a frequency of 12 represents a monthly \code{ts} object.}
 
 \item{exo_data}{A data set of exogenous variable(s) of class \code{ts}.
-The series may have any arbitrary frequency of 2 or higher,
+The series may have any integer frequency of 2 or higher,
 but it must be the same as that of \code{temp_data}. The default is
 \code{NULL} when fitting a model without exogenous variables.}
 
@@ -61,9 +61,9 @@ An object of class \code{"tempssm"}, a named list containing:
 linear Gaussian state-space models.
 
 This function estimates a linear Gaussian state-space model (SSM)
-for monthly temperature time series using Kalman filtering and smoothing.
-Both univariate and multivariate \code{ts} objects are supported.
-If multivariate, a column named \code{"Temp"} is used.
+for regular temperature time series using Kalman filtering and smoothing.
+The input must be a univariate \code{ts} object with an integer seasonal
+frequency greater than 1.
 }
 \details{
 The package is designed for long-term environmental monitoring data
@@ -87,16 +87,18 @@ https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 \section{Life Cycle and Development Status}{
 
 \code{tempssm} is under active development. The current design focuses on
-temperature time series represented as base R \code{ts} objects, with examples
-and validation primarily based on monthly data. This scope is intentional:
-it keeps model fitting and cross-validation feasible on typical personal
-computing environments used by R users.
+temperature time series represented as base R \code{ts} objects with integer
+seasonal frequencies greater than 1. The examples and validation primarily
+use monthly data, but the core modelling path preserves the input
+frequency. This scope is intentional: it keeps model fitting and
+cross-validation feasible on typical personal computing environments used
+by R users.
 
 The package aims to stabilize this workflow before expanding the supported
-data structures. Future versions may consider direct support for daily or
-irregular time series, such as \code{zoo} objects, but such extensions are not
-part of the current design goals and would require careful consideration of
-computational costs, input validation, and documentation.
+data structures. Future versions may consider direct modelling support for
+daily or irregular time series, such as \code{zoo} objects, but such extensions
+are not part of the current design goals and would require careful
+consideration of computational costs, input validation, and documentation.
 }
 
 \section{Statistical Terminology}{
@@ -125,6 +127,27 @@ extracted from the fitted state-space model. Time-series cross-validation
 refers to rolling-origin evaluation, where models are fitted on earlier
 observations and evaluated on later held-out observations. MAE denotes mean
 absolute error, and MASE denotes mean absolute scaled error.
+}
+
+\section{Time Index and Calendar Conventions}{
+
+Core modelling functions use base R \code{ts} objects. The \code{frequency} attribute
+defines the number of observations per seasonal cycle, and the core model
+preserves the input frequency. For example, \code{frequency = 12} represents
+monthly observations, \code{frequency = 24} represents twice-monthly
+observations, \code{frequency = 36} represents three observations per month, and
+\code{frequency = 4} represents four seasonal observations per year. The model
+treats these observations as regularly spaced periods and does not convert
+periods to a fixed number of days.
+
+Daily SST data are handled only in conversion utilities using \code{zoo} objects
+indexed by \code{Date} or \code{POSIXt}. Daily observations are assigned to calendar
+months using \code{zoo::as.yearmon()} before aggregation to monthly \code{ts} objects.
+No assumption that a year has 365 or 365.2422 days is used in this
+conversion path.
+
+Cross-validation arguments such as \code{initial}, \code{horizon}, and \code{step} are
+counts of observations, not calendar durations.
 }
 
 \examples{

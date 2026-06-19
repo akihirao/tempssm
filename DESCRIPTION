@@ -38,6 +38,7 @@ Suggests:
     covr,
     progressr,
     rmarkdown,
+    units,
     future,
     future.apply,
     parallelly

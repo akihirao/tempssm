@@ -31,21 +31,6 @@ test_that("var argument selects correct column", {
 })
 
 
-test_that("old aggregate name remains a compatibility wrapper", {
-  dates <- seq.Date(as.Date("2001-01-01"), by = "day", length.out = 30)
-
-  zoo_obj <- zoo::zoo(
-    data.frame(Temp = rnorm(30)),
-    order.by = dates
-  )
-
-  expect_identical(
-    aggregate_daily_zoo_to_monthly_ts(zoo_obj),
-    daily_zoo_to_monthly_ts(zoo_obj)
-  )
-})
-
-
 test_that("errors when variable not found", {
   dates <- seq.Date(as.Date("2001-01-01"), by = "day", length.out = 30)
 

@@ -62,11 +62,16 @@ test_that("errors when input is not ts", {
 })
 
 
-test_that("errors when frequency is not 12", {
-  temp_ts <- ts(rnorm(10), frequency = 4)
-
-  expect_error(
-    compute_monthly_climatology(temp_ts),
-    "must be monthly"
+test_that("supports non-monthly seasonal frequencies", {
+  temp_ts <- ts(
+    rep(c(1, 2, 3, 4), 5),
+    start = c(2000, 1),
+    frequency = 4
   )
+
+  res <- compute_monthly_climatology(temp_ts)
+
+  expect_named(res, c("Period", "Temperature"))
+  expect_identical(res$Period, 1:4)
+  expect_identical(res$Temperature, as.numeric(1:4))
 })

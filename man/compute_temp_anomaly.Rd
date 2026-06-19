@@ -2,31 +2,34 @@
 % Please edit documentation in R/time_series_utilities.R
 \name{compute_temp_anomaly}
 \alias{compute_temp_anomaly}
-\title{Compute monthly temperature anomalies}
+\title{Compute seasonal temperature anomalies}
 \usage{
 compute_temp_anomaly(temp_ts, baseline = NULL)
 }
 \arguments{
-\item{temp_ts}{Monthly temperature time series of class \code{ts}.
-The time series must have a frequency of 12 (monthly data).}
+\item{temp_ts}{Temperature time series of class \code{ts}. The time series
+must have an integer frequency greater than 1. For example,
+\code{frequency = 12} represents monthly data, \code{frequency = 24}
+represents twice-monthly data, and \code{frequency = 4} represents
+four seasonal observations per year.}
 
 \item{baseline}{Optional numeric vector of length 2 specifying
-the reference period for climatology in years
+the reference period for climatology in complete seasonal cycles
 (e.g., \code{c(1981, 2010)}). If \code{NULL}, the full period
 is used.}
 }
 \value{
-A \code{ts} object of monthly temperature anomalies.
+A \code{ts} object of seasonal temperature anomalies.
 }
 \description{
-Monthly temperature anomalies are calculated by subtracting a
-monthly climatology from each observation. The climatology can be
+Temperature anomalies are calculated by subtracting a seasonal climatology
+from each observation. The climatology can be
 computed either from the full time series or from a user-defined
 baseline period.
 }
 \details{
-Monthly climatology is computed using
-\code{compute_temp_anomaly()}.
+Seasonal climatology is computed using
+\code{compute_monthly_climatology()}.
 If \code{baseline} is provided, climatology is estimated using
 only data within the specified reference period.
 Missing values are ignored when calculating climatological means.

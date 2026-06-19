@@ -3,20 +3,25 @@
 \encoding{UTF-8}
 \name{compute_monthly_climatology}
 \alias{compute_monthly_climatology}
-\title{Compute monthly climatology (mean seasonal cycle)}
+\title{Compute seasonal climatology (mean seasonal cycle)}
 \usage{
 compute_monthly_climatology(temp_ts)
 }
 \arguments{
-\item{temp_ts}{Monthly temperature time series of class \code{ts}.
-The time series must have a frequency of 12 (monthly data).}
+\item{temp_ts}{Temperature time series of class \code{ts}. The time series
+must have an integer frequency greater than 1. For example,
+\code{frequency = 12} represents monthly data, \code{frequency = 24}
+represents twice-monthly data, and \code{frequency = 4} represents
+four seasonal observations per year.}
 }
 \value{
-A tibble with one row per month (January-December) containing
-the climatological mean temperature.
+A tibble with one row per seasonal period containing the
+climatological mean temperature. For monthly data, the first column is
+named \code{Month} for backward compatibility. For other frequencies,
+the first column is named \code{Period}.
 }
 \description{
-Compute monthly climatology (mean seasonal cycle)
+Compute seasonal climatology (mean seasonal cycle)
 }
 \examples{
 temp_ts <- ts(

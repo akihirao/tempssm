@@ -67,6 +67,8 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
     )
   }
 
+  ts_in <- .strip_units_ts(ts_in, arg_name = "ts_in")
+
   n_col <- NCOL(ts_in)
 
   if (!is.character(label)) {
@@ -120,6 +122,58 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
   }
 
   return(ts_out)
+}
+
+
+#' Strip units from a vector-like input
+#'
+#' @param x A vector-like object.
+#' @param arg_name Name of the argument or column being converted.
+#'
+#' @return A numeric vector if \code{x} has class \code{"units"}, otherwise
+#'   returns \code{x} unchanged.
+#'
+#' @keywords internal
+#' @noRd
+.strip_units_values <- function(x, arg_name) {
+  if (!inherits(x, "units")) {
+    return(x)
+  }
+
+  cli::cli_warn(
+    "Units attached to {.arg {arg_name}} are converted to numeric values."
+  )
+
+  as.numeric(x)
+}
+
+
+#' Strip units from a \code{ts} object while preserving time attributes
+#'
+#' @param x A \code{ts} object.
+#' @param arg_name Name of the argument being converted.
+#'
+#' @return A \code{ts} object without units.
+#'
+#' @keywords internal
+#' @noRd
+.strip_units_ts <- function(x, arg_name) {
+  if (!inherits(x, "units")) {
+    return(x)
+  }
+
+  values <- .strip_units_values(x, arg_name = arg_name)
+
+  if (!is.null(dim(x))) {
+    dim(values) <- dim(x)
+    dimnames(values) <- dimnames(x)
+  }
+
+  stats::ts(
+    values,
+    start = stats::start(x),
+    frequency = stats::frequency(x)
+  )
 }
 
 
@@ -416,6 +470,11 @@ split_multi_ts <- function(multi_ts) {
 #' @param df A data frame containing monthly temperature data with columns
 #'   \code{Date} (class \code{Date}) and \code{Temp} (numeric).
 #'
+#' @details
+#' The output is a regular monthly \code{ts} object. Months are represented as
+#' equally spaced observations with \code{frequency = 12}; month lengths are
+#' not converted to a fixed number of days.
+#'
 #' @return A univariate monthly \code{ts} object representing the temperature
 #'   time series, with \code{frequency = 12}.
 #'
@@ -509,8 +568,10 @@ convert_monthly_df_to_ts <- function(df) {
     "Creating ts object starting at {start_year}-{start_month}"
   )
 
+  temp_values <- .strip_units_values(df$Temp, arg_name = "Temp")
+
   ts_out <- stats::ts(
-    as.numeric(df$Temp),
+    as.numeric(temp_values),
     start = c(start_year, start_month),
     frequency = 12
   )
@@ -545,6 +606,12 @@ convert_monthly_df_to_ts <- function(df) {
 #'
 #' @param csv A length-one character string giving the path to a UTF-8 CSV file
 #'   with columns \code{Year}, \code{Month}, and \code{Temp}.
+#'
+#' @details
+#' The output is a regular monthly \code{ts} object. The \code{Year} and
+#' \code{Month} columns define calendar months, which are represented as
+#' equally spaced observations with \code{frequency = 12}. Month lengths are
+#' not converted to a fixed number of days.
 #'
 #' @importFrom readr read_csv
 #' @importFrom stats ts
@@ -690,6 +757,13 @@ read_monthly_temp_ts <- function(csv) {
 #'   If the proportion of missing values exceeds this threshold, the monthly
 #'   mean is set to NA. Default is \code{1} (no additional filtering).
 #'
+#' @details
+#' Daily observations are grouped by calendar month using
+#' \code{zoo::as.yearmon()}. The resulting monthly series is represented as a
+#' regular base R \code{ts} object with \code{frequency = 12}. Month lengths
+#' are not converted to a fixed day count; the calendar index determines month
+#' membership.
+#'
 #' @return A univariate monthly \code{ts} object with \code{frequency = 12}.
 #'
 #' @examples
@@ -782,8 +856,13 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
     "Creating monthly ts starting at {start_year}-{start_month}"
   )
 
-  ts_monthly <- stats::ts(
+  monthly_values <- .strip_units_values(
     zoo::coredata(zoo_monthly),
+    arg_name = var
+  )
+
+  ts_monthly <- stats::ts(
+    monthly_values,
     start = c(start_year, start_month),
     frequency = 12
   )
@@ -810,36 +889,18 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
 }
 
 
-#' Convert a daily zoo object to a monthly \code{ts} object
+#' Compute seasonal climatology (mean seasonal cycle)
 #'
-#' Compatibility wrapper for \code{\link{daily_zoo_to_monthly_ts}}.
-#' New code should use \code{daily_zoo_to_monthly_ts()}.
+#' @param temp_ts Temperature time series of class \code{ts}. The time series
+#'   must have an integer frequency greater than 1. For example,
+#'   \code{frequency = 12} represents monthly data, \code{frequency = 24}
+#'   represents twice-monthly data, and \code{frequency = 4} represents
+#'   four seasonal observations per year.
 #'
-#' @inheritParams daily_zoo_to_monthly_ts
-#'
-#' @return A univariate monthly \code{ts} object with \code{frequency = 12}.
-#'
-#' @export
-aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
-                                              var = "Temp",
-                                              na.rm = TRUE,
-                                              na_prop_max = 1) {
-  daily_zoo_to_monthly_ts(
-    zoo_obj = zoo_obj,
-    var = var,
-    na.rm = na.rm,
-    na_prop_max = na_prop_max
-  )
-}
-
-
-#' Compute monthly climatology (mean seasonal cycle)
-#'
-#' @param temp_ts Monthly temperature time series of class \code{ts}.
-#'   The time series must have a frequency of 12 (monthly data).
-#'
-#' @return A tibble with one row per month (January-December) containing
-#'   the climatological mean temperature.
+#' @return A tibble with one row per seasonal period containing the
+#'   climatological mean temperature. For monthly data, the first column is
+#'   named \code{Month} for backward compatibility. For other frequencies,
+#'   the first column is named \code{Period}.
 #'
 #' @importFrom stats cycle
 #' @importFrom tibble tibble
@@ -862,57 +923,69 @@ compute_monthly_climatology <- function(temp_ts) {
     cli::cli_abort("Input must be a {.cls ts} object.")
   }
 
-  if (stats::frequency(temp_ts) != 12) {
-    cli::cli_abort("Time series must be monthly (frequency = 12).")
+  freq <- stats::frequency(temp_ts)
+  freq_int <- as.integer(round(freq))
+
+  if (freq <= 1 || abs(freq - freq_int) > sqrt(.Machine$double.eps)) {
+    cli::cli_abort(
+      "Time series must have an integer frequency greater than 1."
+    )
   }
 
   .tempssm_cli_debug(
-    "Computing monthly climatology for {length(temp_ts)} observations"
+    "Computing seasonal climatology for {length(temp_ts)} observations"
   )
 
   ## ---- compute --------------------------------------------------------
   temp <- as.numeric(temp_ts)
-  month <- factor(stats::cycle(temp_ts), levels = 1:12)
+  period <- factor(stats::cycle(temp_ts), levels = seq_len(freq_int))
 
-  monthly_mean <- tapply(temp, month, mean, na.rm = TRUE)
+  seasonal_mean <- tapply(temp, period, mean, na.rm = TRUE)
 
   ## ---- output ---------------------------------------------------------
   out <- tibble::tibble(
-    Month = 1:12,
-    Temperature = as.numeric(monthly_mean)
+    Period = seq_len(freq_int),
+    Temperature = as.numeric(seasonal_mean)
   )
 
-  .tempssm_cli_debug("Computed climatology for 12 months")
+  if (freq_int == 12) {
+    names(out)[1] <- "Month"
+  }
+
+  .tempssm_cli_debug("Computed climatology for {freq_int} seasonal periods")
 
   return(out)
 }
 
 
-#' Compute monthly temperature anomalies
+#' Compute seasonal temperature anomalies
 #'
-#' Monthly temperature anomalies are calculated by subtracting a
-#' monthly climatology from each observation. The climatology can be
+#' Temperature anomalies are calculated by subtracting a seasonal climatology
+#' from each observation. The climatology can be
 #' computed either from the full time series or from a user-defined
 #' baseline period.
 #'
 #' @importFrom stats cycle window frequency start
 #'
-#' @param temp_ts Monthly temperature time series of class \code{ts}.
-#'   The time series must have a frequency of 12 (monthly data).
+#' @param temp_ts Temperature time series of class \code{ts}. The time series
+#'   must have an integer frequency greater than 1. For example,
+#'   \code{frequency = 12} represents monthly data, \code{frequency = 24}
+#'   represents twice-monthly data, and \code{frequency = 4} represents
+#'   four seasonal observations per year.
 #'
 #' @param baseline Optional numeric vector of length 2 specifying
-#'   the reference period for climatology in years
+#'   the reference period for climatology in complete seasonal cycles
 #'   (e.g., \code{c(1981, 2010)}). If \code{NULL}, the full period
 #'   is used.
 #'
 #' @details
-#' Monthly climatology is computed using
-#' \code{compute_temp_anomaly()}.
+#' Seasonal climatology is computed using
+#' \code{compute_monthly_climatology()}.
 #' If \code{baseline} is provided, climatology is estimated using
 #' only data within the specified reference period.
 #' Missing values are ignored when calculating climatological means.
 #'
-#' @return A \code{ts} object of monthly temperature anomalies.
+#' @return A \code{ts} object of seasonal temperature anomalies.
 #'
 #' @examples
 #' temp_ts <- ts(
@@ -934,8 +1007,13 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
     cli::cli_abort("Input must be a {.cls ts} object.")
   }
 
-  if (stats::frequency(temp_ts) != 12) {
-    cli::cli_abort("Time series must be monthly (frequency = 12).")
+  freq <- stats::frequency(temp_ts)
+  freq_int <- as.integer(round(freq))
+
+  if (freq <= 1 || abs(freq - freq_int) > sqrt(.Machine$double.eps)) {
+    cli::cli_abort(
+      "Time series must have an integer frequency greater than 1."
+    )
   }
 
   ## ---- baseline selection ---------------------------------------------
@@ -978,7 +1056,7 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
     ts_base <- stats::window(
       temp_ts,
       start = c(baseline[1], 1),
-      end   = c(baseline[2], 12)
+      end   = c(baseline[2], freq_int)
     )
 
     if (length(ts_base) == 0) {
@@ -989,12 +1067,12 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
   }
 
   ## ---- climatology ----------------------------------------------------
-  .tempssm_cli_debug("Computing monthly climatology")
+  .tempssm_cli_debug("Computing seasonal climatology")
 
   clim_tbl <- tempssm::compute_monthly_climatology(ts_base)
   clim_vec <- clim_tbl$Temperature
 
-  clim <- clim_vec[stats::cycle(temp_ts)]
+  clim <- clim_vec[as.integer(stats::cycle(temp_ts))]
 
   ## ---- anomaly --------------------------------------------------------
   .tempssm_cli_debug("Computing anomalies")

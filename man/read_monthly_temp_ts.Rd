@@ -31,6 +31,11 @@ Year,Month,Temp
 2001,4,13.6
 ...
 }
+
+The output is a regular monthly \code{ts} object. The \code{Year} and
+\code{Month} columns define calendar months, which are represented as
+equally spaced observations with \code{frequency = 12}. Month lengths are
+not converted to a fixed number of days.
 }
 \examples{
 ## Create a temporary CSV file with monthly temperature data

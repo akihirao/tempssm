@@ -45,6 +45,10 @@ Date        Temp
 2001-04-01  13.6
 ...
 }
+
+The output is a regular monthly \code{ts} object. Months are represented as
+equally spaced observations with \code{frequency = 12}; month lengths are
+not converted to a fixed number of days.
 }
 \examples{
 ## Create a data frame of monthly temperature data

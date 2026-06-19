@@ -60,13 +60,38 @@ test_that("non-ts input triggers error", {
 })
 
 
-test_that("non-monthly ts triggers error", {
-  temp_ts <- ts(rnorm(10), frequency = 4)
-
-  expect_error(
-    compute_temp_anomaly(temp_ts),
-    "monthly"
+test_that("supports non-monthly seasonal frequencies", {
+  temp_ts <- ts(
+    rep(c(1, 2, 3, 4), 5) + rnorm(20, sd = 0.01),
+    start = c(2000, 1),
+    frequency = 4
   )
+
+  anom <- compute_temp_anomaly(temp_ts)
+  seasonal_means <- tapply(
+    as.numeric(anom),
+    cycle(anom),
+    mean
+  )
+
+  expect_s3_class(anom, "ts")
+  expect_identical(frequency(anom), 4)
+  expect_true(all(abs(seasonal_means) < 1e-10))
+})
+
+
+test_that("baseline uses the full seasonal frequency", {
+  temp_ts <- ts(
+    rep(seq_len(24), 4),
+    start = c(2000, 1),
+    frequency = 24
+  )
+
+  anom <- compute_temp_anomaly(temp_ts, baseline = c(2001, 2002))
+
+  expect_s3_class(anom, "ts")
+  expect_identical(frequency(anom), 24)
+  expect_length(anom, length(temp_ts))
 })
 
 

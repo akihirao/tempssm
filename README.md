@@ -13,8 +13,8 @@ The package was previously named `ThermoSSM` and has been renamed to `tempssm`.
 - Represents temperature dynamics using interpretable latent components:
   level, seasonal variation, autoregressive structure, and optional
   exogenous effects.
-- Supports arbitrary seasonal frequencies, while the current examples and
-  validation focus primarily on monthly temperature data.
+- Supports arbitrary integer seasonal frequencies, while the current examples
+  and validation focus primarily on monthly temperature data.
 - Allows the autoregressive order to be specified by the user.
 - Provides S3 methods for summaries, diagnostics, accessors, and plots.
 - Includes time-series cross-validation tools for model evaluation.

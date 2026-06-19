@@ -24,10 +24,11 @@
 #' 
 #' @srrstats {G1.2} Package-level documentation includes a "Life Cycle and
 #' Development Status" section. It states that `tempssm` is under active
-#' development, that the current design intentionally focuses on temperature
-#' time series represented as base R `ts` objects, primarily monthly data, and
-#' that possible future support for daily or irregular time series such as
-#' `zoo` objects is outside the current design goals.
+#' development, that the current design intentionally focuses on regular
+#' temperature time series represented as base R `ts` objects with integer
+#' seasonal frequencies greater than 1, and that possible future direct
+#' modelling support for daily or irregular time series such as `zoo` objects
+#' is outside the current design goals.
 #'  
 #' @srrstats {G1.3} Package-level documentation includes a "Statistical
 #' Terminology" section defining the main statistical terms used by the package,
@@ -137,10 +138,12 @@
 #' `ts` objects for exogenous variables. Time-series utilities such as
 #' `trim_ts_overlap()`, `split_multi_ts()`, `compute_monthly_climatology()`,
 #' `compute_temp_anomaly()`, and `plot_temp_dev()` also reject non-`ts`
-#' inputs. Daily SST conversion routines that operate on irregular daily data
-#' explicitly require `zoo` inputs before aggregating them to monthly `ts`
-#' objects. These validation paths are covered by unit tests for valid and
-#' invalid class inputs.
+#' inputs. The core modelling path and seasonal climatology helpers accept
+#' integer seasonal frequencies greater than 1, not only monthly
+#' `frequency = 12` data. Daily SST conversion routines that operate on
+#' irregular daily data explicitly require `zoo` inputs before aggregating them
+#' to monthly `ts` objects. These validation paths are covered by unit tests
+#' for valid and invalid class inputs.
 #' 
 #' @srrstats {TS1.3} Core model inputs are passed through the single internal
 #' pre-processing routine `.tempssm_prepare_model_inputs()`. This routine
@@ -186,8 +189,27 @@
 #' missing or non-increasing indices before monthly aggregation. Unit tests
 #' cover these ordering checks in the corresponding pre-processing functions.
 #' 
-#' @srrstatsTODO {TS1.7} *Accept inputs defined via the [`units` package](https://github.com/r-quantities/units/) for attributing SI units to R vectors.*
-#' @srrstatsTODO {TS1.8} *Where time intervals or periods may be days or months, be explicit about the system used to represent such, particularly regarding whether a calendar system is used, or whether a year is presumed to have 365 days, 365.2422 days, or some other value.* 
+#' @srrstats {TS1.7} The package accepts vector inputs carrying class
+#' `units` from the `units` package without adding `units` as a hard runtime
+#' dependency. Core model input pre-processing detects `units` attached to
+#' `ts` objects, converts values to numeric vectors for downstream state-space
+#' modelling, and preserves the original `ts` time attributes. Data-frame and
+#' `zoo` conversion helpers also strip `units` from value columns before
+#' constructing monthly `ts` objects. The conversion emits an explicit warning
+#' so users know that unit metadata are not retained in model inputs. Tests for
+#' this behaviour are conditional on the optional `units` package.
+#' 
+#' @srrstats {TS1.8} Package-level documentation includes a "Time Index and
+#' Calendar Conventions" section. Core modelling functions use base R `ts`
+#' objects, where `frequency` defines the number of observations per seasonal
+#' cycle and is preserved by the core modelling path. Frequencies such as 4,
+#' 12, 24, and 36 are treated as regularly spaced observations within a
+#' seasonal cycle and are not converted to fixed numbers of days. Daily `zoo`
+#' inputs are indexed by `Date` or `POSIXt` and grouped into calendar months
+#' with `zoo::as.yearmon()` before aggregation to monthly `ts` objects.
+#' Cross-validation window parameters are documented and used as observation
+#' counts rather than calendar durations.
+#' 
 #' @srrstatsTODO {TS2.0} *Time Series Software which presumes or requires regular data should only allow **explicit** missing values, and should issue appropriate diagnostic messages, potentially including errors, in response to any **implicit** missing values.*
 #' @srrstatsTODO {TS2.1} *Where possible, all functions should provide options for users to specify how to handle missing data, with options minimally including:*
 #' @srrstatsTODO {TS2.1a} *error on missing data; or.

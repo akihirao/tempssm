@@ -476,22 +476,24 @@ autoplot_ar1 <- function(res,
 }
 
 
-#' Plot monthly temperature and temperature anomalies
+#' Plot temperature anomalies
 #'
 #' @description
-#' Plots a monthly temperature time series together with its corresponding
-#' temperature anomalies (deviations from monthly climatology).
+#' Plots a temperature time series together with its corresponding
+#' temperature anomalies.
 #'
-#' The anomalies are computed by subtracting the long-term monthly mean
-#' for each calendar month from the observed temperature.
+#' The anomalies are computed by subtracting the long-term seasonal mean
+#' for each period in the seasonal cycle from the observed temperature.
 #'
 #' @param ts
-#' A univariate time series object of class \code{ts} with monthly frequency
-#' (i.e., \code{frequency(ts) == 12}).
+#' A univariate time series object of class \code{ts} with an integer
+#' frequency greater than 1.
 #'
 #' @details
-#' The function first computes the monthly climatological mean across all years,
-#' and then calculates anomalies as deviations from these monthly averages.
+#' The function first computes the seasonal climatological mean across all
+#' years, and then calculates anomalies as deviations from these seasonal
+#' averages. For monthly data, this is equivalent to subtracting the
+#' long-term mean for each calendar month.
 #'
 #' @return
 #' A \code{ggplot2} plot object showing the temperature anomaly time series.
@@ -511,21 +513,9 @@ plot_temp_dev <- function(ts) {
     cli::cli_abort("`ts` must be an object of class {.cls ts}.")
   }
 
-  if (frequency(ts) != 12) {
-    cli::cli_abort("`ts` must be a monthly series with frequency 12.")
-  }
+  anom <- tempssm::compute_temp_anomaly(ts)
 
-  temp <- as.numeric(ts)
-  mnum <- cycle(ts)
-  mfac <- factor(mnum, levels = 1:12)
-
-  monthly_ave_temp <- tapply(temp, mfac, mean, na.rm = TRUE)
-  clim <- monthly_ave_temp[as.integer(mfac)]
-  anom <- temp - clim
-
-  ts_dev <- cbind(Temp = ts, Dev = anom)
-
-  dev_plot <- forecast::autoplot(ts_dev[, "Dev"]) +
+  dev_plot <- forecast::autoplot(anom) +
     ggplot2::labs(
       y = expression(Temperature ~ (degree * C)),
       x = "Time"

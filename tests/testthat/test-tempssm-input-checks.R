@@ -7,6 +7,16 @@ test_that(".tempssm_check_temp_ts accepts valid univariate ts", {
 })
 
 
+test_that(".tempssm_check_temp_ts accepts arbitrary seasonal frequencies", {
+  temp_ts <- ts(rnorm(16), start = c(2000, 1), frequency = 4)
+
+  checked <- .tempssm_check_temp_ts(temp_ts)
+
+  expect_identical(frequency(checked), 4)
+  expect_identical(start(checked), c(2000, 1))
+})
+
+
 test_that(".tempssm_check_temp_ts rejects invalid temperature series", {
   expect_error(
     .tempssm_check_temp_ts(1:10),
@@ -16,6 +26,11 @@ test_that(".tempssm_check_temp_ts rejects invalid temperature series", {
   expect_error(
     .tempssm_check_temp_ts(ts(rnorm(10), frequency = 1)),
     "frequency > 1"
+  )
+
+  expect_error(
+    .tempssm_check_temp_ts(ts(rnorm(10), frequency = 4.5)),
+    "integer frequency"
   )
 
   multi_ts <- ts(matrix(rnorm(24), ncol = 2), frequency = 12)
@@ -133,4 +148,28 @@ test_that(".tempssm_prepare_model_inputs rejects misaligned exogenous ts", {
     ),
     "Time index"
   )
+})
+
+
+test_that(".tempssm_prepare_model_inputs accepts units ts input", {
+  skip_if_not_installed("units")
+
+  temp_units <- units::set_units(seq_len(24), "K")
+  temp_ts <- ts(as.numeric(temp_units),
+    start = c(2000, 1),
+    frequency = 12
+  )
+  class(temp_ts) <- c("units", class(temp_ts))
+  attr(temp_ts, "units") <- attr(temp_units, "units")
+
+  expect_warning(
+    prepared <- .tempssm_prepare_model_inputs(temp_ts),
+    "converted to numeric"
+  )
+
+  expect_s3_class(prepared$temp_data, "ts")
+  expect_false(inherits(prepared$temp_data, "units"))
+  expect_identical(as.numeric(prepared$temp_data), as.numeric(temp_units))
+  expect_identical(start(prepared$temp_data), c(2000, 1))
+  expect_identical(frequency(prepared$temp_data), 12)
 })

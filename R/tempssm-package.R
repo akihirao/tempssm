@@ -26,16 +26,18 @@
 #'
 #' @section Life Cycle and Development Status:
 #' `tempssm` is under active development. The current design focuses on
-#' temperature time series represented as base R `ts` objects, with examples
-#' and validation primarily based on monthly data. This scope is intentional:
-#' it keeps model fitting and cross-validation feasible on typical personal
-#' computing environments used by R users.
+#' temperature time series represented as base R `ts` objects with integer
+#' seasonal frequencies greater than 1. The examples and validation primarily
+#' use monthly data, but the core modelling path preserves the input
+#' frequency. This scope is intentional: it keeps model fitting and
+#' cross-validation feasible on typical personal computing environments used
+#' by R users.
 #'
 #' The package aims to stabilize this workflow before expanding the supported
-#' data structures. Future versions may consider direct support for daily or
-#' irregular time series, such as `zoo` objects, but such extensions are not
-#' part of the current design goals and would require careful consideration of
-#' computational costs, input validation, and documentation.
+#' data structures. Future versions may consider direct modelling support for
+#' daily or irregular time series, such as `zoo` objects, but such extensions
+#' are not part of the current design goals and would require careful
+#' consideration of computational costs, input validation, and documentation.
 #'
 #' @section Statistical Terminology:
 #' In this package, a linear Gaussian state-space model refers to a model in
@@ -62,6 +64,25 @@
 #' refers to rolling-origin evaluation, where models are fitted on earlier
 #' observations and evaluated on later held-out observations. MAE denotes mean
 #' absolute error, and MASE denotes mean absolute scaled error.
+#'
+#' @section Time Index and Calendar Conventions:
+#' Core modelling functions use base R `ts` objects. The `frequency` attribute
+#' defines the number of observations per seasonal cycle, and the core model
+#' preserves the input frequency. For example, `frequency = 12` represents
+#' monthly observations, `frequency = 24` represents twice-monthly
+#' observations, `frequency = 36` represents three observations per month, and
+#' `frequency = 4` represents four seasonal observations per year. The model
+#' treats these observations as regularly spaced periods and does not convert
+#' periods to a fixed number of days.
+#'
+#' Daily SST data are handled only in conversion utilities using `zoo` objects
+#' indexed by `Date` or `POSIXt`. Daily observations are assigned to calendar
+#' months using `zoo::as.yearmon()` before aggregation to monthly `ts` objects.
+#' No assumption that a year has 365 or 365.2422 days is used in this
+#' conversion path.
+#'
+#' Cross-validation arguments such as `initial`, `horizon`, and `step` are
+#' counts of observations, not calendar durations.
 #'
 #' @references
 #' Helske, J. (2017). KFAS: Exponential family state space models in R.

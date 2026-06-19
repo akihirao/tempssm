@@ -26,6 +26,13 @@ A univariate monthly \code{ts} object with \code{frequency = 12}.
 \description{
 Convert a daily zoo object to a monthly \code{ts} object
 }
+\details{
+Daily observations are grouped by calendar month using
+\code{zoo::as.yearmon()}. The resulting monthly series is represented as a
+regular base R \code{ts} object with \code{frequency = 12}. Month lengths
+are not converted to a fixed day count; the calendar index determines month
+membership.
+}
 \examples{
 \dontrun{
 sst_zoo <- get_jma_sst_zoo(sea_area_id = 138)

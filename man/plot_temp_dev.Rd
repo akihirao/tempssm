@@ -2,27 +2,29 @@
 % Please edit documentation in R/graphics.R
 \name{plot_temp_dev}
 \alias{plot_temp_dev}
-\title{Plot monthly temperature and temperature anomalies}
+\title{Plot temperature anomalies}
 \usage{
 plot_temp_dev(ts)
 }
 \arguments{
-\item{ts}{A univariate time series object of class \code{ts} with monthly frequency
-(i.e., \code{frequency(ts) == 12}).}
+\item{ts}{A univariate time series object of class \code{ts} with an integer
+frequency greater than 1.}
 }
 \value{
 A \code{ggplot2} plot object showing the temperature anomaly time series.
 }
 \description{
-Plots a monthly temperature time series together with its corresponding
-temperature anomalies (deviations from monthly climatology).
+Plots a temperature time series together with its corresponding
+temperature anomalies.
 
-The anomalies are computed by subtracting the long-term monthly mean
-for each calendar month from the observed temperature.
+The anomalies are computed by subtracting the long-term seasonal mean
+for each period in the seasonal cycle from the observed temperature.
 }
 \details{
-The function first computes the monthly climatological mean across all years,
-and then calculates anomalies as deviations from these monthly averages.
+The function first computes the seasonal climatological mean across all
+years, and then calculates anomalies as deviations from these seasonal
+averages. For monthly data, this is equivalent to subtracting the
+long-term mean for each calendar month.
 }
 \examples{
 \dontrun{
