@@ -104,6 +104,33 @@
 #' Cross-validation arguments such as `initial`, `horizon`, and `step` are
 #' counts of observations, not calendar durations.
 #'
+#' @section Forecast Horizons and Error Margins:
+#' Forecast uncertainty generally increases with forecast horizon because
+#' future observations depend on accumulated uncertainty in the latent state
+#' dynamics and observation equation. In `tempssm`, forecast intervals are
+#' obtained from the underlying `KFAS` state-space model, for example via
+#' `stats::predict(res$model, n.ahead = h, interval = "prediction")`.
+#'
+#' Users can trim forecasts to a chosen error margin with
+#' `trim_prediction_intervals()`. This helper keeps the longest leading
+#' forecast horizon for which the prediction interval width, defined as
+#' `upr - lwr`, does not exceed a user-specified maximum width.
+#'
+#' @section Return Value Conventions:
+#' The primary modelling function, `tempssm()`, returns an object of class
+#' `"tempssm"`. This object is a structured list containing the fitted `KFAS`
+#' model, optimization results, Kalman filtering and smoothing output, original
+#' temperature and exogenous time series, model settings, convergence status,
+#' and state-name metadata. It is intentionally not converted back to the same
+#' class as the input series, because it represents a fitted statistical model
+#' rather than a transformed time series.
+#'
+#' Accessor functions such as `get_level_ts()`, `get_drift_ts()`,
+#' `get_season_ts()`, and `get_ar1_ts()` return `ts` objects that preserve the
+#' time scale of the fitted model. Summary and diagnostic helpers return
+#' documented structured objects such as `summary.tempssm`, `data.frame`, or
+#' `tibble` outputs as appropriate for the information being represented.
+#'
 #' @author
 #' Akira Hirao and Momoko Ichinokawa
 #'

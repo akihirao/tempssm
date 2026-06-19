@@ -190,6 +190,37 @@ Cross-validation arguments such as \code{initial}, \code{horizon}, and \code{ste
 counts of observations, not calendar durations.
 }
 
+\section{Forecast Horizons and Error Margins}{
+
+Forecast uncertainty generally increases with forecast horizon because
+future observations depend on accumulated uncertainty in the latent state
+dynamics and observation equation. In \code{tempssm}, forecast intervals are
+obtained from the underlying \code{KFAS} state-space model, for example via
+\code{stats::predict(res$model, n.ahead = h, interval = "prediction")}.
+
+Users can trim forecasts to a chosen error margin with
+\code{trim_prediction_intervals()}. This helper keeps the longest leading
+forecast horizon for which the prediction interval width, defined as
+\code{upr - lwr}, does not exceed a user-specified maximum width.
+}
+
+\section{Return Value Conventions}{
+
+The primary modelling function, \code{tempssm()}, returns an object of class
+\code{"tempssm"}. This object is a structured list containing the fitted \code{KFAS}
+model, optimization results, Kalman filtering and smoothing output, original
+temperature and exogenous time series, model settings, convergence status,
+and state-name metadata. It is intentionally not converted back to the same
+class as the input series, because it represents a fitted statistical model
+rather than a transformed time series.
+
+Accessor functions such as \code{get_level_ts()}, \code{get_drift_ts()},
+\code{get_season_ts()}, and \code{get_ar1_ts()} return \code{ts} objects that preserve the
+time scale of the fitted model. Summary and diagnostic helpers return
+documented structured objects such as \code{summary.tempssm}, \code{data.frame}, or
+\code{tibble} outputs as appropriate for the information being represented.
+}
+
 \examples{
 \dontrun{
 data(niigata_sst)

@@ -273,15 +273,55 @@
 #' @srrstats {TS2.4b} AR coefficients are transformed with
 #' `KFAS::artransform()` and then checked by evaluating whether the AR
 #' polynomial roots lie outside the unit circle within numerical tolerance.
-#' @srrstatsTODO {TS3.0} *Provide tests to demonstrate at least one case in which errors widen appropriately with forecast horizon.*
-#' @srrstatsTODO {TS3.1} *If possible, provide at least one test which violates TS3.0*
-#' @srrstatsTODO {TS3.2} *Document the general drivers of forecast errors or horizons, as demonstrated via the particular cases of TS3.0 and TS3.1*
-#' @srrstatsTODO {TS3.3} *Either:*
-#' @srrstatsTODO {TS3.3a} *Document, preferable via an example, how to trim forecast values based on a specified error margin or equivalent; or*
-#' @srrstatsTODO {TS3.3b} *Provide an explicit mechanism to trim forecast values to a specified error margin, either via an explicit post-processing function, or via an input parameter to a primary analytic function.* 
-#' @srrstatsTODO {TS4.0} *Return values should either:*
-#' @srrstatsTODO {TS4.0a} *Be in same class as input data, for example by using the [`tsbox` package](https://www.tsbox.help/) to re-convert from standard internal format (see 1.4, above); or*
-#' @srrstatsTODO {TS4.0b} *Be in a unique, preferably class-defined, format.*
+#' 
+#' @srrstats {TS3.0} Unit tests demonstrate that forecast uncertainty widens
+#' with forecast horizon for a fitted temperature state-space model. In
+#' `tests/testthat/test-predict_no_exo.R`, the test "prediction intervals widen
+#' with forecast horizon" fits `tempssm()` to `niigata_sst`, obtains 24-step
+#' ahead prediction intervals from the KFAS backend, and checks that interval
+#' widths are non-decreasing and wider at horizon 24 than at horizon 1.
+#' 
+#' @srrstats {TS3.1} The same test file includes a negative-control test,
+#' "prediction interval widening check detects violations", which supplies
+#' decreasing and constant synthetic interval-width sequences to the widening
+#' check and confirms that they are rejected. This demonstrates that the
+#' TS3.0 test condition would detect forecast intervals that fail to widen
+#' appropriately with horizon.
+#' 
+#' @srrstats {TS3.2} Package-level documentation includes a "Forecast
+#' Horizons and Error Margins" section. It explains that forecast uncertainty
+#' generally increases with horizon because future observations depend on
+#' accumulated latent-state and observation uncertainty. The TS3.0 test uses
+#' the `niigata_sst` data to demonstrate this widening, and the TS3.1
+#' negative-control test demonstrates that decreasing or constant interval
+#' widths would be detected as violations.
+#' 
+#' @srrstats {TS3.3} The package supports trimming forecast values based on
+#' prediction interval width through the exported post-processing function
+#' `trim_prediction_intervals()`.
+#' 
+#' @srrstats {TS3.3a} The package-level documentation and the examples for
+#' `trim_prediction_intervals()` document how to obtain KFAS prediction
+#' intervals from a fitted `tempssm` model and trim them to a maximum allowed
+#' interval width.
+#' 
+#' @srrstats {TS3.3b} The exported function `trim_prediction_intervals()`
+#' implements an explicit post-processing mechanism for trimming forecasts to
+#' the longest leading horizon whose prediction interval width `upr - lwr`
+#' does not exceed a user-specified threshold.
+#' 
+#' @srrstats {TS4.0} Package-level documentation includes a "Return Value
+#' Conventions" section. It explains that the main modelling function returns
+#' a classed `tempssm` object, because the result is a fitted statistical model
+#' rather than a transformed time series. Accessor functions return `ts`
+#' objects for fitted components, and diagnostic or summary functions return
+#' documented structured objects appropriate to their purpose.
+#' 
+#' @srrstats {TS4.0b} The primary modelling return value is a unique S3 class,
+#' `tempssm`, with methods for printing, summaries, information criteria, and
+#' visualization. The `summary()` method returns a `summary.tempssm` object,
+#' and tests verify the expected S3 classes of these primary return values.
+#' 
 #' @srrstatsTODO {TS4.1} *Any units included as attributes of input data should also be included within return values.*
 #' @srrstatsTODO {TS4.2} *The type and class of all return values should be explicitly documented.* 
 #' @srrstatsTODO {TS4.3} *Return values should explicitly include all appropriate units and/or time scales* 
@@ -353,6 +393,12 @@ NULL
 #' specify. General handling of optional `units` objects in user inputs is
 #' documented separately under TS1.7 and tested in the input pre-processing and
 #' conversion utilities.
+#'
+#' @srrstatsNA {TS4.0a} The primary output of `tempssm()` is a fitted model
+#' object rather than a transformed version of the input time series, so it is
+#' intentionally not returned in the same class as the input `ts` object.
+#' Component accessor functions return `ts` objects where the output represents
+#' a time series rather than a model object.
 #'
 #' @noRd
 NULL
