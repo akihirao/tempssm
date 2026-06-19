@@ -468,7 +468,19 @@ convert_monthly_df_to_ts <- function(df) {
     )
   }
 
+  if (anyNA(df$Date)) {
+    cli::cli_abort(
+      "The {.col Date} column must not contain missing values."
+    )
+  }
+
   .tempssm_cli_debug("Validating input data frame with {nrow(df)} rows")
+
+  if (length(df$Date) > 1 && any(diff(df$Date) < 0)) {
+    cli::cli_warn(
+      "Input data are not ordered by {.col Date}; sorting before conversion."
+    )
+  }
 
   ## ---- sort -----------------------------------------------------------
   df <- df[order(df$Date), ]
@@ -476,6 +488,12 @@ convert_monthly_df_to_ts <- function(df) {
   ## ---- check regularity ----------------------------------------------
   ym_index <- as.integer(format(df$Date, "%Y")) * 12 +
     as.integer(format(df$Date, "%m"))
+
+  if (anyDuplicated(ym_index)) {
+    cli::cli_abort(
+      "The {.col Date} column must not contain duplicate months."
+    )
+  }
 
   if (any(diff(ym_index) != 1)) {
     cli::cli_warn(
@@ -600,9 +618,38 @@ read_monthly_temp_ts <- function(csv) {
     cli::cli_abort("The input CSV file contains no rows.")
   }
 
-  ## ---- optional warning -----------------------------------------------
+  ## ---- time index validation ------------------------------------------
   if (any(raw_data$Month < 1 | raw_data$Month > 12, na.rm = TRUE)) {
-    cli::cli_warn("Detected invalid month values outside 1-12.")
+    cli::cli_abort("Detected invalid month values outside 1-12.")
+  }
+
+  if (anyNA(raw_data$Year) || anyNA(raw_data$Month)) {
+    cli::cli_abort(
+      c(
+        "The {.col Year} and {.col Month} columns ",
+        "must not contain missing values."
+      )
+    )
+  }
+
+  ym_index <- as.integer(raw_data$Year) * 12 + as.integer(raw_data$Month)
+
+  if (anyDuplicated(ym_index)) {
+    cli::cli_abort(
+      "The CSV file must not contain duplicate year-month rows."
+    )
+  }
+
+  if (length(ym_index) > 1 && any(diff(ym_index) <= 0)) {
+    cli::cli_abort(
+      "The CSV file must be ordered by strictly increasing year-month values."
+    )
+  }
+
+  if (length(ym_index) > 1 && any(diff(ym_index) != 1)) {
+    cli::cli_warn(
+      "Input data are not strictly monthly; some months may be missing."
+    )
   }
 
   ## ---- construct ts ---------------------------------------------------
@@ -648,17 +695,17 @@ read_monthly_temp_ts <- function(csv) {
 #' @examples
 #' \dontrun{
 #' sst_zoo <- get_jma_sst_zoo(sea_area_id = 138)
-#' sst_ts_monthly <- aggregate_daily_zoo_to_monthly_ts(sst_138_zoo)
+#' sst_ts_monthly <- daily_zoo_to_monthly_ts(sst_zoo)
 #' }
 #'
 #' @importFrom zoo index coredata as.yearmon
 #' @importFrom stats ts start aggregate
 #'
 #' @export
-aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
-                                              var = "Temp",
-                                              na.rm = TRUE,
-                                              na_prop_max = 1) {
+daily_zoo_to_monthly_ts <- function(zoo_obj,
+                                    var = "Temp",
+                                    na.rm = TRUE,
+                                    na_prop_max = 1) {
   ## ---- input check ----------------------------------------------------
   if (!inherits(zoo_obj, "zoo")) {
     cli::cli_abort("Input must be a {.cls zoo} object.")
@@ -678,6 +725,18 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
   if (!inherits(idx, c("Date", "POSIXt"))) {
     cli::cli_abort(
       "Index of the zoo object must be {.cls Date} or {.cls POSIXt}."
+    )
+  }
+
+  if (anyNA(idx)) {
+    cli::cli_abort(
+      "Index of the zoo object must not contain missing values."
+    )
+  }
+
+  if (length(idx) > 1 && any(diff(idx) <= 0)) {
+    cli::cli_abort(
+      "Index of the zoo object must be strictly increasing."
     )
   }
 
@@ -748,6 +807,29 @@ aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
   )
 
   return(ts_monthly)
+}
+
+
+#' Convert a daily zoo object to a monthly \code{ts} object
+#'
+#' Compatibility wrapper for \code{\link{daily_zoo_to_monthly_ts}}.
+#' New code should use \code{daily_zoo_to_monthly_ts()}.
+#'
+#' @inheritParams daily_zoo_to_monthly_ts
+#'
+#' @return A univariate monthly \code{ts} object with \code{frequency = 12}.
+#'
+#' @export
+aggregate_daily_zoo_to_monthly_ts <- function(zoo_obj,
+                                              var = "Temp",
+                                              na.rm = TRUE,
+                                              na_prop_max = 1) {
+  daily_zoo_to_monthly_ts(
+    zoo_obj = zoo_obj,
+    var = var,
+    na.rm = na.rm,
+    na_prop_max = na_prop_max
+  )
 }
 
 
@@ -1257,7 +1339,7 @@ get_jma_sst_ts <- function(sea_area_id, na_prop_max = 1) {
 
   .tempssm_cli_debug("Aggregating daily data to monthly time series")
 
-  monthly_sst_ts <- tempssm::aggregate_daily_zoo_to_monthly_ts(
+  monthly_sst_ts <- tempssm::daily_zoo_to_monthly_ts(
     sst_zoo,
     na_prop_max = na_prop_max
   )

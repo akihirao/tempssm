@@ -161,8 +161,15 @@ tempssm <- function(temp_data,
       )  
 
       ## ---- Input checks -------------------------------------------------
-      y <- .tempssm_check_temp_ts(temp_data)
-      freq <- frequency(y)
+      model_inputs <- .tempssm_prepare_model_inputs(
+        temp_data = temp_data,
+        exo_data = exo_data
+      )
+
+      temp_data <- model_inputs$temp_data
+      exo_data <- model_inputs$exo_data
+      y <- temp_data
+      freq <- model_inputs$frequency
 
       .tempssm_cli_debug("Time series frequency: {freq}")
 
@@ -248,13 +255,8 @@ tempssm <- function(temp_data,
       } else {
         .tempssm_cli_inform("Including exogenous variables in the model")
 
-        exo_data_checked <- .tempssm_check_exo_ts(
-          temp_data = temp_data,
-          exo_data = exo_data
-        )
-
-        exo_name <- colnames(exo_data_checked)
-        exo_mat <- as.matrix(exo_data_checked)
+        exo_name <- colnames(exo_data)
+        exo_mat <- as.matrix(exo_data)
 
         .tempssm_cli_debug(
           "Exogenous variables: {paste(exo_name, collapse = ', ')}"
@@ -671,6 +673,9 @@ tempssm <- function(temp_data,
     )
   }
 
+  ## ---- time order check ----------------------------------------------
+  .tempssm_check_ts_order(temp_data, arg_name = "temp_data")
+
   ## ---- univariate check ----------------------------------------------
   if (!is.null(dim(temp_data)) && NCOL(temp_data) != 1) {
     cli::cli_abort(
@@ -684,6 +689,28 @@ tempssm <- function(temp_data,
   )
 
   return(temp_data)
+}
+
+
+#' Check strict ordering of a \code{ts} time index
+#'
+#' @param x A \code{ts} object.
+#' @param arg_name Name of the argument being checked.
+#'
+#' @return Invisibly returns \code{x}.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_check_ts_order <- function(x, arg_name) {
+  time_index <- time(x)
+
+  if (length(time_index) > 1 && any(diff(time_index) <= 0)) {
+    cli::cli_abort(
+      "Time index of {.arg {arg_name}} must be strictly increasing."
+    )
+  }
+
+  invisible(x)
 }
 
 
@@ -716,6 +743,16 @@ tempssm <- function(temp_data,
     )
   }
 
+  ## ---- time order check ----------------------------------------------
+  .tempssm_check_ts_order(exo_data, arg_name = "exo_data")
+
+  ## ---- length check ---------------------------------------------------
+  if (NROW(exo_data) != NROW(temp_data_checked)) {
+    cli::cli_abort(
+      "Length of {.arg exo_data} must match that of {.arg temp_data}."
+    )
+  }
+
   ## ---- time index check ----------------------------------------------
   if (!all(time(exo_data) == time(temp_data_checked))) {
     cli::cli_abort(
@@ -742,4 +779,57 @@ tempssm <- function(temp_data,
    )
 
   return(exo_data)
+}
+
+
+#' Validate and standardize model time-series inputs
+#'
+#' @inheritParams tempssm
+#' @param allow_unnamed_exo Logical; if \code{TRUE}, unnamed exogenous
+#'   variables are allowed after assigning default names.
+#' @param default_exo_names Logical; if \code{TRUE}, default names are assigned
+#'   to unnamed exogenous variables.
+#'
+#' @return A named list containing validated \code{temp_data}, validated or
+#'   \code{NULL} \code{exo_data}, the common frequency, and the number of
+#'   observations.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_prepare_model_inputs <- function(temp_data,
+                                          exo_data = NULL,
+                                          allow_unnamed_exo = FALSE,
+                                          default_exo_names = FALSE) {
+  temp_data <- .tempssm_check_temp_ts(temp_data)
+
+  if (!is.null(exo_data) && is.null(colnames(exo_data))) {
+    if (!allow_unnamed_exo || !default_exo_names) {
+      cli::cli_abort(
+        "The object {.arg exo_data} must have column name(s)."
+      )
+    }
+
+    cli::cli_warn(
+      "No column names in {.arg exo_data}; assigning default names."
+    )
+    exo_data <- tempssm::set_ts_name(
+      exo_data,
+      label = paste0("var", seq_len(NCOL(exo_data))),
+      quiet = TRUE
+    )
+  }
+
+  if (!is.null(exo_data)) {
+    exo_data <- .tempssm_check_exo_ts(
+      temp_data = temp_data,
+      exo_data = exo_data
+    )
+  }
+
+  list(
+    temp_data = temp_data,
+    exo_data = exo_data,
+    frequency = frequency(temp_data),
+    n_obs = length(temp_data)
+  )
 }

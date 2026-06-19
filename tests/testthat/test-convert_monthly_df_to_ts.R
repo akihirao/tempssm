@@ -28,6 +28,48 @@ test_that("warning is issued when months are missing", {
 })
 
 
+test_that("unordered dates are caught and sorted before conversion", {
+  df <- data.frame(
+    Date = as.Date(c("2001-02-01", "2001-01-01")),
+    Temp = c(12, 10)
+  )
+
+  expect_warning(
+    ts_out <- convert_monthly_df_to_ts(df),
+    "not ordered"
+  )
+
+  expect_identical(start(ts_out), c(2001, 1))
+  expect_identical(as.numeric(ts_out), c(10, 12))
+})
+
+
+test_that("duplicate months trigger error", {
+  df <- data.frame(
+    Date = as.Date(c("2001-01-01", "2001-01-15")),
+    Temp = c(10, 12)
+  )
+
+  expect_error(
+    convert_monthly_df_to_ts(df),
+    "duplicate months"
+  )
+})
+
+
+test_that("missing dates trigger error", {
+  df <- data.frame(
+    Date = as.Date(c("2001-01-01", NA)),
+    Temp = c(10, 12)
+  )
+
+  expect_error(
+    convert_monthly_df_to_ts(df),
+    "must not contain missing values"
+  )
+})
+
+
 test_that("missing required columns triggers error", {
   df <- data.frame(
     Date = as.Date("2001-01-01")

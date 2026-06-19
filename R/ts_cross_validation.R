@@ -447,19 +447,16 @@ ts_train_test_split <- function(temp_data,
   )
 
   ## ---- Input checks ---------------------------------------------------
-  if (!inherits(temp_data, "ts")) {
-    cli::cli_abort("`temp_data` must be a {.cls ts} object.")
-  }
+  model_inputs <- .tempssm_prepare_model_inputs(
+    temp_data = temp_data,
+    exo_data = exo_data,
+    allow_unnamed_exo = TRUE,
+    default_exo_names = TRUE
+  )
 
-  if (!is.null(dim(temp_data)) && ncol(temp_data) != 1) {
-    cli::cli_abort("`temp_data` must be a univariate {.cls ts} object.")
-  }
-
-  freq <- frequency(temp_data)
-
-  if (freq <= 1) {
-    cli::cli_abort("`temp_data` must have frequency > 1.")
-  }
+  temp_data <- model_inputs$temp_data
+  exo_data <- model_inputs$exo_data
+  freq <- model_inputs$frequency
 
   if (any(c(initial, horizon, step) < 1)) {
     cli::cli_abort(
@@ -467,7 +464,7 @@ ts_train_test_split <- function(temp_data,
     )
   }
 
-  n <- length(temp_data)
+  n <- model_inputs$n_obs
 
   if (initial >= n) {
     cli::cli_abort(
@@ -479,26 +476,6 @@ ts_train_test_split <- function(temp_data,
 
   ## ---- Exogenous checks ----------------------------------------------
   if (!is.null(exo_data)) {
-    if (!inherits(exo_data, "ts")) {
-      cli::cli_abort("`exo_data` must be a {.cls ts} object.")
-    }
-
-    if (length(exo_data) != n) {
-      cli::cli_abort("`exo_data` must have the same length as `temp_data`.")
-    }
-
-    if (frequency(exo_data) != freq) {
-      cli::cli_abort("`exo_data` must have the same frequency as `temp_data`.")
-    }
-
-    if (is.null(colnames(exo_data))) {
-      cli::cli_warn("No column names in `exo_data`; assigning default names.")
-      exo_data <- tempssm::set_ts_name(
-        exo_data,
-        label = paste0("var", seq_len(NCOL(exo_data)))
-      )
-    }
-
     .tempssm_cli_debug("Exogenous variables: {NCOL(exo_data)}")
   } else {
     .tempssm_cli_debug("No exogenous variables provided")

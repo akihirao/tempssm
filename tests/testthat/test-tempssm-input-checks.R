@@ -71,3 +71,66 @@ test_that(".tempssm_check_exo_ts rejects invalid exogenous series", {
     "column name"
   )
 })
+
+
+test_that(".tempssm_prepare_model_inputs validates and standardizes inputs", {
+  temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
+  exo_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
+
+  expect_warning(
+    prepared <- .tempssm_prepare_model_inputs(
+      temp_data = temp_ts,
+      exo_data = exo_ts,
+      allow_unnamed_exo = TRUE,
+      default_exo_names = TRUE
+    ),
+    "assigning default names"
+  )
+
+  expect_identical(prepared$temp_data, temp_ts)
+  expect_s3_class(prepared$exo_data, "ts")
+  expect_identical(colnames(prepared$exo_data), "var1")
+  expect_identical(prepared$frequency, 12)
+  expect_identical(prepared$n_obs, 24L)
+  expect_identical(start(prepared$temp_data), start(temp_ts))
+  expect_identical(end(prepared$temp_data), end(temp_ts))
+  expect_identical(frequency(prepared$temp_data), frequency(temp_ts))
+  expect_identical(time(prepared$temp_data), time(temp_ts))
+  expect_identical(start(prepared$exo_data), start(exo_ts))
+  expect_identical(end(prepared$exo_data), end(exo_ts))
+  expect_identical(frequency(prepared$exo_data), frequency(exo_ts))
+  expect_identical(time(prepared$exo_data), time(exo_ts))
+})
+
+
+test_that(".tempssm_prepare_model_inputs accepts multivariate exogenous ts", {
+  temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
+  exo_ts <- ts(
+    matrix(rnorm(48), ncol = 2),
+    start = c(2000, 1),
+    frequency = 12
+  )
+  colnames(exo_ts) <- c("x1", "x2")
+
+  prepared <- .tempssm_prepare_model_inputs(
+    temp_data = temp_ts,
+    exo_data = exo_ts
+  )
+
+  expect_identical(prepared$exo_data, exo_ts)
+})
+
+
+test_that(".tempssm_prepare_model_inputs rejects misaligned exogenous ts", {
+  temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
+  exo_ts <- ts(rnorm(24), start = c(2001, 1), frequency = 12)
+  exo_ts <- set_ts_name(exo_ts, label = "x", quiet = TRUE)
+
+  expect_error(
+    .tempssm_prepare_model_inputs(
+      temp_data = temp_ts,
+      exo_data = exo_ts
+    ),
+    "Time index"
+  )
+})

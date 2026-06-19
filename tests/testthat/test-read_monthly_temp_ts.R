@@ -71,7 +71,7 @@ test_that("errors when CSV has no rows", {
 })
 
 
-test_that("warns when month values are invalid", {
+test_that("errors when month values are invalid", {
   tmp <- tempfile(fileext = ".csv")
 
   writeLines(
@@ -83,8 +83,65 @@ test_that("warns when month values are invalid", {
     tmp
   )
 
-  expect_warning(
+  expect_error(
     read_monthly_temp_ts(tmp),
     "invalid month"
+  )
+})
+
+
+test_that("errors when year-month rows are duplicated", {
+  tmp <- tempfile(fileext = ".csv")
+
+  writeLines(
+    c(
+      "Year,Month,Temp",
+      "2001,1,10.4",
+      "2001,1,8.2"
+    ),
+    tmp
+  )
+
+  expect_error(
+    read_monthly_temp_ts(tmp),
+    "duplicate year-month"
+  )
+})
+
+
+test_that("errors when year-month rows are not increasing", {
+  tmp <- tempfile(fileext = ".csv")
+
+  writeLines(
+    c(
+      "Year,Month,Temp",
+      "2001,2,8.2",
+      "2001,1,10.4"
+    ),
+    tmp
+  )
+
+  expect_error(
+    read_monthly_temp_ts(tmp),
+    "strictly increasing"
+  )
+})
+
+
+test_that("warns when months are missing in CSV input", {
+  tmp <- tempfile(fileext = ".csv")
+
+  writeLines(
+    c(
+      "Year,Month,Temp",
+      "2001,1,10.4",
+      "2001,3,13.6"
+    ),
+    tmp
+  )
+
+  expect_warning(
+    read_monthly_temp_ts(tmp),
+    "not strictly monthly"
   )
 })

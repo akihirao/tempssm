@@ -136,6 +136,23 @@ test_that("works with exogenous variables", {
 })
 
 
+test_that("rejects exogenous variables with a different time index", {
+  exo_ts <- ts(rnorm(length(temp_ts_test)),
+    start = c(2001, 1),
+    frequency = frequency(temp_ts_test)
+  )
+  exo_ts <- set_ts_name(exo_ts, label = "x", quiet = TRUE)
+
+  expect_error(
+    ts_train_test_split(
+      temp_ts_test,
+      exo_data = exo_ts
+    ),
+    "Time index"
+  )
+})
+
+
 test_that("exo_data is NULL when not provided", {
   folds <- ts_train_test_split(temp_ts_test)
 

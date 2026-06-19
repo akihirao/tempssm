@@ -141,10 +141,51 @@
 #' explicitly require `zoo` inputs before aggregating them to monthly `ts`
 #' objects. These validation paths are covered by unit tests for valid and
 #' invalid class inputs.
-#' @srrstatsTODO {TS1.3} *Time Series Software should implement a single pre-processing routine to validate input data, and to appropriately transform it to a single uniform type to be passed to all subsequent data-processing functions (the [`tsbox` package](https://www.tsbox.help/) provides one convenient approach for this).*
-#' @srrstatsTODO {TS1.4} *The pre-processing function described above should maintain all time- or date-based components or attributes of input data.* 
-#' @srrstatsTODO {TS1.5} *The software should ensure strict ordering of the time, frequency, or equivalent ordering index variable.*
-#' @srrstatsTODO {TS1.6} *Any violations of ordering should be caught in the pre-processing stages of all functions.* 
+#' 
+#' @srrstats {TS1.3} Core model inputs are passed through the single internal
+#' pre-processing routine `.tempssm_prepare_model_inputs()`. This routine
+#' validates temperature and optional exogenous inputs, standardizes unnamed
+#' exogenous variables when allowed by the calling workflow, and returns a
+#' uniform list containing validated base R `ts` objects, the common
+#' frequency, and the number of observations. The primary model fitting
+#' function `tempssm()` and the cross-validation splitter
+#' `ts_train_test_split()` both use this routine before passing data to
+#' downstream model construction, fitting, or fold-generation code. Conversion
+#' helpers for data-frame, CSV, and `zoo` inputs transform those inputs to
+#' explicit monthly `ts` objects before they enter the modelling path.
+#' 
+#' @srrstats {TS1.4} The core pre-processing routine preserves the time-based
+#' attributes of accepted `ts` inputs. `.tempssm_prepare_model_inputs()`
+#' returns validated `ts` objects without converting them to non-time-series
+#' containers, and preserves `start`, `end`, `frequency`, and `time()` values
+#' for both temperature and exogenous series, including the branch where
+#' default exogenous variable names are assigned. Conversion utilities that
+#' start from data-frame, CSV, or `zoo` inputs explicitly construct monthly
+#' `ts` outputs with defined start times and `frequency = 12` before those
+#' objects enter the modelling path. These behaviours are covered by unit
+#' tests for the pre-processing and conversion utilities.
+#' 
+#' @srrstats {TS1.5} The package checks strict ordering of time indices before
+#' model fitting and cross-validation. The core input path calls
+#' `.tempssm_check_ts_order()` from `.tempssm_check_temp_ts()` and
+#' `.tempssm_check_exo_ts()` to require strictly increasing `time()` values for
+#' accepted `ts` inputs. Conversion helpers also validate calendar order before
+#' constructing monthly `ts` objects: data-frame input is sorted by `Date` and
+#' duplicate months are rejected, while CSV input must have strictly
+#' increasing year-month rows with no duplicate year-month combinations.
+#' Missing months are warned about separately because they represent
+#' regularity/completeness rather than ordering.
+#' 
+#' @srrstats {TS1.6} Ordering violations are caught during input
+#' pre-processing rather than during model fitting. Core `ts` inputs are
+#' checked by `.tempssm_check_ts_order()` before they are passed to model
+#' construction or cross-validation fold generation. Data-frame conversion
+#' catches unordered `Date` values with a warning before sorting, and rejects
+#' duplicate monthly indices. CSV conversion rejects duplicate or non-increasing
+#' year-month rows before constructing a `ts` object. `zoo` conversion rejects
+#' missing or non-increasing indices before monthly aggregation. Unit tests
+#' cover these ordering checks in the corresponding pre-processing functions.
+#' 
 #' @srrstatsTODO {TS1.7} *Accept inputs defined via the [`units` package](https://github.com/r-quantities/units/) for attributing SI units to R vectors.*
 #' @srrstatsTODO {TS1.8} *Where time intervals or periods may be days or months, be explicit about the system used to represent such, particularly regarding whether a calendar system is used, or whether a year is presumed to have 365 days, 365.2422 days, or some other value.* 
 #' @srrstatsTODO {TS2.0} *Time Series Software which presumes or requires regular data should only allow **explicit** missing values, and should issue appropriate diagnostic messages, potentially including errors, in response to any **implicit** missing values.*
