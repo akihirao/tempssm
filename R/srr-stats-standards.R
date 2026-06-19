@@ -121,8 +121,26 @@
 #' explicit `ts` objects and are not used as generic substitutes for
 #' time-series inputs in modelling functions.
 #' 
-#' @srrstatsTODO {TS1.1} *Time Series Software should explicitly document the types and classes of input data able to be passed to each function.* 
-#' @srrstatsTODO {TS1.2} *Time Series Software should implement validation routines to confirm that inputs are of acceptable classes (or represented in otherwise appropriate ways for software which does not use class systems).*
+#' @srrstats {TS1.1} Function documentation explicitly states the expected
+#' input types and classes for time-series data and conversion utilities. Core
+#' modelling and time-series functions document base R `ts` inputs, including
+#' `temp_data`, `exo_data`, and `multi_ts`. Conversion helpers document
+#' non-time-series inputs such as data frames and CSV file paths, and document
+#' their return values as explicit monthly `ts` objects. Functions for JMA SST
+#' data document `zoo` inputs or outputs where daily indexed data are used, and
+#' monthly `ts` outputs where data are aggregated.
+#' 
+#' @srrstats {TS1.2} The package implements explicit validation routines for
+#' acceptable time-series classes. The core modelling path uses
+#' `.tempssm_check_temp_ts()` to require a univariate base R `ts` object for
+#' temperature data and `.tempssm_check_exo_ts()` to require aligned base R
+#' `ts` objects for exogenous variables. Time-series utilities such as
+#' `trim_ts_overlap()`, `split_multi_ts()`, `compute_monthly_climatology()`,
+#' `compute_temp_anomaly()`, and `plot_temp_dev()` also reject non-`ts`
+#' inputs. Daily SST conversion routines that operate on irregular daily data
+#' explicitly require `zoo` inputs before aggregating them to monthly `ts`
+#' objects. These validation paths are covered by unit tests for valid and
+#' invalid class inputs.
 #' @srrstatsTODO {TS1.3} *Time Series Software should implement a single pre-processing routine to validate input data, and to appropriately transform it to a single uniform type to be passed to all subsequent data-processing functions (the [`tsbox` package](https://www.tsbox.help/) provides one convenient approach for this).*
 #' @srrstatsTODO {TS1.4} *The pre-processing function described above should maintain all time- or date-based components or attributes of input data.* 
 #' @srrstatsTODO {TS1.5} *The software should ensure strict ordering of the time, frequency, or equivalent ordering index variable.*

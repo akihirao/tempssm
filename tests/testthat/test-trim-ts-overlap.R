@@ -22,6 +22,59 @@ test_that("trim_ts_overlap works for valid input", {
 })
 
 
+test_that("trim_ts_overlap accepts explicit temp_data and exo_data", {
+  exo_ts <- ts(rnorm(120), start = c(2000, 1), frequency = 12)
+
+  res <- trim_ts_overlap(
+    temp_data = temp_ts_test,
+    exo_data = exo_ts,
+    exo_name = "x1"
+  )
+
+  expect_s3_class(res$temperature, "ts")
+  expect_s3_class(res$exogenous, "ts")
+})
+
+
+test_that("trim_ts_overlap accepts legacy temp_ts and exo_ts aliases", {
+  exo_ts <- ts(rnorm(120), start = c(2000, 1), frequency = 12)
+
+  res <- trim_ts_overlap(
+    temp_ts = temp_ts_test,
+    exo_ts = exo_ts,
+    exo_name = "x1"
+  )
+
+  expect_s3_class(res$temperature, "ts")
+  expect_s3_class(res$exogenous, "ts")
+})
+
+
+test_that("trim_ts_overlap rejects mixed current and legacy inputs", {
+  exo_ts <- ts(rnorm(120), start = c(2000, 1), frequency = 12)
+
+  expect_error(
+    trim_ts_overlap(
+      temp_data = temp_ts_test,
+      exo_data = exo_ts,
+      temp_ts = temp_ts_test,
+      exo_name = "x1"
+    ),
+    "Use either"
+  )
+
+  expect_error(
+    trim_ts_overlap(
+      temp_data = temp_ts_test,
+      exo_data = exo_ts,
+      exo_ts = exo_ts,
+      exo_name = "x1"
+    ),
+    "Use either"
+  )
+})
+
+
 test_that("trim_ts_overlap trims to overlapping period", {
   # length(temp_ts_test): 120
   exo_ts <- ts(rnorm(50), start = c(2000, 1), frequency = 12)

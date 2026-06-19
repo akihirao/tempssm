@@ -691,7 +691,7 @@ tempssm <- function(temp_data,
 #'
 #' @inheritParams tempssm
 #'
-#' @return A univariate or multivairate \code{ts} object.
+#' @return A univariate or multivariate \code{ts} object.
 #'
 #' @keywords internal
 #' @noRd

@@ -137,10 +137,10 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 #' Univariate `ts` objects are labeled using \code{set_ts_name()} to ensure a
 #' consistent handling of variable names within the \pkg{tempssm} framework.
 #'
-#' @param temp_ts
+#' @param temp_data
 #' A univariate \code{ts} object representing the temperature time series.
 #'
-#' @param exo_ts
+#' @param exo_data
 #' A multivariate or univariate \code{ts} object of exogenous variables.
 #' Each column represents a distinct exogenous covariate.
 #'
@@ -152,6 +152,11 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 #' Optional character vector giving variable names for the exogenous variables.
 #' If \code{NULL}, default names of the form \code{var1}, \code{var2}, \dots
 #' are assigned with a warning.
+#'
+#' @param temp_ts,exo_ts
+#' Compatibility aliases for \code{temp_data} and \code{exo_data}.
+#' These are accepted to avoid breaking existing calls, but new code should use
+#' \code{temp_data} and \code{exo_data}.
 #'
 #' @details
 #' The shared time window is determined using \code{ts.intersect()}, and both
@@ -173,14 +178,14 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 #' [ts.intersect()], [set_ts_name()], \code{\link{tempssm}}
 #'
 #' @examples
-#' temp_ts <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
-#' exo_ts <- ts(matrix(rnorm(200), ncol = 2),
+#' temp_data <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
+#' exo_data <- ts(matrix(rnorm(200), ncol = 2),
 #'   start = c(2001, 1), frequency = 12
 #' )
 #'
 #' trim_ts_overlap(
-#'   temp_ts,
-#'   exo_ts,
+#'   temp_data,
+#'   exo_data,
 #'   temp_name = "mean_temp",
 #'   exo_name  = c("precip", "solar")
 #' )
@@ -188,21 +193,36 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 #' @importFrom stats ts.intersect
 #' @export
 trim_ts_overlap <- function(
-  temp_ts,
-  exo_ts,
+  temp_data,
+  exo_data,
   temp_name = "temp",
-  exo_name = NULL
+  exo_name = NULL,
+  temp_ts = NULL,
+  exo_ts = NULL
 ) {
+  ## ---- backward-compatible aliases -----------------------------------
+  if (missing(temp_data)) {
+    temp_data <- temp_ts
+  } else if (!is.null(temp_ts)) {
+    cli::cli_abort("Use either {.arg temp_data} or {.arg temp_ts}, not both.")
+  }
+
+  if (missing(exo_data)) {
+    exo_data <- exo_ts
+  } else if (!is.null(exo_ts)) {
+    cli::cli_abort("Use either {.arg exo_data} or {.arg exo_ts}, not both.")
+  }
+
   ## ---- basic checks ---------------------------------------------------
-  if (!inherits(temp_ts, "ts")) {
-    cli::cli_abort("`temp_ts` must be an object of class {.cls ts}.")
+  if (!inherits(temp_data, "ts")) {
+    cli::cli_abort("`temp_data` must be an object of class {.cls ts}.")
   }
 
-  if (!inherits(exo_ts, "ts")) {
-    cli::cli_abort("`exo_ts` must be an object of class {.cls ts}.")
+  if (!inherits(exo_data, "ts")) {
+    cli::cli_abort("`exo_data` must be an object of class {.cls ts}.")
   }
 
-  num_exo_variable <- NCOL(exo_ts)
+  num_exo_variable <- NCOL(exo_data)
 
   ## ---- exo name handling ----------------------------------------------
   if (is.null(exo_name)) {
@@ -213,29 +233,29 @@ trim_ts_overlap <- function(
   } else {
     if (length(exo_name) != num_exo_variable) {
       cli::cli_abort(
-        paste0(
+        c(
           "Length of {.arg exo_name} must equal ",
           "the number of exogenous variables."
-          )
+        )
       )
     }
   }
 
   .tempssm_cli_debug(
     paste0(
-      "Trimming time series overlap (temp length={length(temp_ts)}, ",
+      "Trimming time series overlap (temp length={length(temp_data)}, ",
       "exo vars={num_exo_variable})"
     )
   )
 
   ## ---- overlap --------------------------------------------------------
-  temp_exo_ts_overlap <- stats::ts.intersect(temp_ts, exo_ts)
+  temp_exo_ts_overlap <- stats::ts.intersect(temp_data, exo_data)
 
   if (is.null(temp_exo_ts_overlap) || NROW(temp_exo_ts_overlap) == 0) {
     cli::cli_abort(
-      paste0(
+      c(
         "No overlapping time period found ",
-        "between {.arg temp_ts} and {.arg exo_ts}."
+        "between {.arg temp_data} and {.arg exo_data}."
       )
     )
   }

@@ -4,12 +4,19 @@
 \alias{trim_ts_overlap}
 \title{Trim and align temperature and exogenous time series over their shared period}
 \usage{
-trim_ts_overlap(temp_ts, exo_ts, temp_name = "temp", exo_name = NULL)
+trim_ts_overlap(
+  temp_data,
+  exo_data,
+  temp_name = "temp",
+  exo_name = NULL,
+  temp_ts = NULL,
+  exo_ts = NULL
+)
 }
 \arguments{
-\item{temp_ts}{A univariate \code{ts} object representing the temperature time series.}
+\item{temp_data}{A univariate \code{ts} object representing the temperature time series.}
 
-\item{exo_ts}{A multivariate or univariate \code{ts} object of exogenous variables.
+\item{exo_data}{A multivariate or univariate \code{ts} object of exogenous variables.
 Each column represents a distinct exogenous covariate.}
 
 \item{temp_name}{Character string giving the variable name for the temperature series.
@@ -18,6 +25,10 @@ This name is applied using \code{set_ts_name()}.}
 \item{exo_name}{Optional character vector giving variable names for the exogenous variables.
 If \code{NULL}, default names of the form \code{var1}, \code{var2}, \dots
 are assigned with a warning.}
+
+\item{temp_ts, exo_ts}{Compatibility aliases for \code{temp_data} and \code{exo_data}.
+These are accepted to avoid breaking existing calls, but new code should use
+\code{temp_data} and \code{exo_data}.}
 }
 \value{
 A named list with the following elements:
@@ -48,14 +59,14 @@ For univariate series, variable names are assigned via
 internal consistency required by \code{tempssm()}.
 }
 \examples{
-temp_ts <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
-exo_ts <- ts(matrix(rnorm(200), ncol = 2),
+temp_data <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
+exo_data <- ts(matrix(rnorm(200), ncol = 2),
   start = c(2001, 1), frequency = 12
 )
 
 trim_ts_overlap(
-  temp_ts,
-  exo_ts,
+  temp_data,
+  exo_data,
   temp_name = "mean_temp",
   exo_name  = c("precip", "solar")
 )
