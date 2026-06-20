@@ -18,7 +18,36 @@ package (Helske, 2017).
   component (default: AR(1))
 - Implements time-series cross-validation for model evaluation
 
-# Sate-space model in **tempssm**
+# Prior Art and Scope
+
+`tempssm` provides a domain-focused workflow for analyzing temperature
+time series with linear Gaussian state-space models. It brings together
+model construction, component extraction, uncertainty summaries,
+residual diagnostics, visualization, and time-series cross-validation in
+a single R package interface tailored to temperature applications.
+
+The package builds on established statistical methodology, including
+linear Gaussian state-space modeling, Kalman filtering, and Kalman
+smoothing. Model estimation is handled through the `KFAS` package, which
+provides a general framework for state-space models in R.
+
+The initial implementation was adapted from the supplementary code
+provided by Baba (2024), accompanying Baba et al. (2024), which analyzed
+sea temperature trends using a linear Gaussian state-space model. The
+supplementary code is publicly available at:
+
+<https://github.com/logics-of-blue/sea-temperature-trend-jogashima>
+
+Compared with that prior implementation, `tempssm` extends the workflow
+into a reusable R package interface with input validation, documented S3
+methods, tests, diagnostics, cross-validation utilities, and examples
+for broader temperature time-series analysis.
+
+The next section describes the state-space model used by `tempssm` and
+clarifies how the trend, seasonal, autoregressive, and exogenous
+components are represented.
+
+# State-Space Model in **tempssm**
 
 We consider an extended version of the Basic Structural Time Series
 Model (BSTSM) to describe temperature time series with explicit

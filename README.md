@@ -21,16 +21,16 @@ The package was previously named `ThermoSSM` and has been renamed to `tempssm`.
 
 ## Prior Art and Scope
 
-`tempssm` is not intended to introduce a new estimation theory or a new
-state-space algorithm. Its core statistical machinery is based on established
-linear Gaussian state-space modeling, Kalman filtering, and Kalman smoothing.
-Model fitting is delegated to `KFAS`, which provides a general framework for
-state-space models in R.
+`tempssm` provides a domain-focused workflow for analyzing temperature time
+series with linear Gaussian state-space models. It brings together model
+construction, component extraction, uncertainty summaries, residual
+diagnostics, visualization, and time-series cross-validation in a single R
+package interface tailored to temperature applications.
 
-The contribution of `tempssm` is to provide a domain-focused workflow for
-temperature time series. It combines model construction, component extraction,
-uncertainty summaries, residual diagnostics, visualization, and time-series
-cross-validation in a single API designed for temperature applications.
+The package builds on established statistical methodology, including linear
+Gaussian state-space modeling, Kalman filtering, and Kalman smoothing. Model
+estimation is handled through the `KFAS` package, which provides a general
+framework for state-space models in R.
 
 The initial implementation was adapted from the supplementary code provided by
 Baba (2024), accompanying Baba et al. (2024), which analyzed sea temperature
@@ -39,10 +39,10 @@ publicly available at:
 
 <https://github.com/logics-of-blue/sea-temperature-trend-jogashima>
 
-Compared with that prior implementation, `tempssm` aims to provide a reusable
-R package interface with input validation, documented S3 methods, tests,
-diagnostics, cross-validation utilities, and examples for broader temperature
-time-series analysis.
+Compared with that prior implementation, `tempssm` extends the workflow into a
+reusable R package interface with input validation, documented S3 methods,
+tests, diagnostics, cross-validation utilities, and examples for broader
+temperature time-series analysis.
 
 ## Installation
 
