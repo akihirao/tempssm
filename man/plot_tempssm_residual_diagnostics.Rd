@@ -9,9 +9,9 @@ plot_tempssm_residual_diagnostics(res, save = FALSE, prefix = "residuals")
 \arguments{
 \item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
 
-\item{save}{Logical; if TRUE, plots are saved.}
+\item{save}{Logical scalar; if TRUE, plots are saved.}
 
-\item{prefix}{Character prefix for file names.}
+\item{prefix}{Character scalar used as the prefix for file names.}
 }
 \value{
 Invisibly returns NULL. Called for its side effects (plots).

@@ -24,3 +24,36 @@ test_that("lightweight CV pipeline works", {
   expect_s3_class(summary, "tbl_df")
   expect_identical(nrow(summary), 1L)
 })
+
+
+test_that("ts_cv_run validates input types before execution", {
+  expect_error(
+    ts_cv_run(1),
+    "folds.*list"
+  )
+
+  expect_error(
+    ts_cv_run(list(), ar_order = "1"),
+    "ar_order.*numeric"
+  )
+
+  expect_error(
+    ts_cv_run(list(), use_season = 1),
+    "use_season.*logical"
+  )
+
+  expect_error(
+    ts_cv_run(list(), parallel = 1),
+    "parallel.*logical"
+  )
+
+  expect_error(
+    ts_cv_run(list(), workers = "2"),
+    "workers.*numeric"
+  )
+
+  expect_error(
+    ts_cv_run(list(), progress = 1),
+    "progress.*logical"
+  )
+})

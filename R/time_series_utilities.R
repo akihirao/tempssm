@@ -20,7 +20,7 @@
 #' length as the number of columns in \code{ts_in}.
 #'
 #' @param quiet
-#' Logical; if \code{TRUE}, suppresses the informational message.
+#' Logical scalar; if \code{TRUE}, suppresses the informational message.
 #'
 #' @details
 #' This function does not modify the time attributes of the input series
@@ -232,11 +232,12 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 #' Each column represents a distinct exogenous covariate.
 #'
 #' @param temp_name
-#' Character string giving the variable name for the temperature series.
+#' Character scalar giving the variable name for the temperature series.
 #' This name is applied using \code{set_ts_name()}.
 #'
 #' @param exo_name
 #' Optional character vector giving variable names for the exogenous variables.
+#' Its length must equal the number of exogenous variables when supplied.
 #' If \code{NULL}, default names of the form \code{var1}, \code{var2}, \dots
 #' are assigned with a warning.
 #'
@@ -301,12 +302,18 @@ trim_ts_overlap <- function(
   }
 
   ## ---- basic checks ---------------------------------------------------
-  if (!inherits(temp_data, "ts")) {
-    cli::cli_abort("`temp_data` must be an object of class {.cls ts}.")
-  }
+  .tempssm_check_univariate_ts(temp_data, "temp_data")
 
   if (!inherits(exo_data, "ts")) {
     cli::cli_abort("`exo_data` must be an object of class {.cls ts}.")
+  }
+
+  .tempssm_check_length_one(temp_name, "temp_name")
+  .tempssm_check_character(temp_name, "temp_name")
+  if (!is.character(temp_name) || is.na(temp_name)) {
+    cli::cli_abort(
+      "{.arg temp_name} must be a character scalar."
+    )
   }
 
   num_exo_variable <- NCOL(exo_data)
@@ -318,6 +325,13 @@ trim_ts_overlap <- function(
     )
     exo_name <- paste0("var", seq_len(num_exo_variable))
   } else {
+    .tempssm_check_character(exo_name, "exo_name")
+    if (!is.character(exo_name)) {
+      cli::cli_abort(
+        "{.arg exo_name} must be a character vector."
+      )
+    }
+
     if (length(exo_name) != num_exo_variable) {
       cli::cli_abort(
         c(
@@ -785,11 +799,13 @@ read_monthly_temp_ts <- function(csv) {
 #' @param var A character string specifying the name of the variable
 #'   to be aggregated (default: \code{"Temp"}).
 #'
-#' @param na.rm Logical; should missing values be removed before averaging?
+#' @param na.rm Logical scalar; should missing values be removed before
+#'   averaging?
 #'
-#' @param na_prop_max Maximum allowed proportion of NA values within a month.
-#'   If the proportion of missing values exceeds this threshold, the monthly
-#'   mean is set to NA. Default is \code{1} (no additional filtering).
+#' @param na_prop_max Numeric scalar giving the maximum allowed proportion of
+#'   NA values within a month. If the proportion of missing values exceeds this
+#'   threshold, the monthly mean is set to NA. Default is \code{1} (no
+#'   additional filtering).
 #'
 #' @details
 #' Daily observations are grouped by calendar month using
@@ -820,13 +836,31 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
     cli::cli_abort("Input must be a {.cls zoo} object.")
   }
 
+  .tempssm_check_length_one(var, "var")
+  .tempssm_check_character(var, "var")
+  if (!is.character(var) || is.na(var)) {
+    cli::cli_abort("{.arg var} must be a character scalar.")
+  }
+
+  .tempssm_check_length_one(na.rm, "na.rm")
+  .tempssm_check_logical(na.rm, "na.rm")
+  if (!is.logical(na.rm) || is.na(na.rm)) {
+    cli::cli_abort("{.arg na.rm} must be a logical scalar.")
+  }
+
   if (!var %in% colnames(zoo_obj)) {
     cli::cli_abort(
       "Variable {.val {var}} not found in the zoo object."
     )
   }
 
-  if (!is.numeric(na_prop_max) || na_prop_max < 0 || na_prop_max > 1) {
+  .tempssm_check_length_one(na_prop_max, "na_prop_max")
+  .tempssm_check_numeric(na_prop_max, "na_prop_max")
+  if (!is.numeric(na_prop_max) ||
+      is.na(na_prop_max) ||
+      !is.finite(na_prop_max) ||
+      na_prop_max < 0 ||
+      na_prop_max > 1) {
     cli::cli_abort("`na_prop_max` must be between 0 and 1.")
   }
 
@@ -933,8 +967,8 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
 
 #' Compute seasonal climatology (mean seasonal cycle)
 #'
-#' @param temp_ts Temperature time series of class \code{ts}. The time series
-#'   must have an integer frequency greater than 1. For example,
+#' @param temp_ts Univariate temperature time series of class \code{ts}.
+#'   The time series must have an integer frequency greater than 1. For example,
 #'   \code{frequency = 12} represents monthly data, \code{frequency = 24}
 #'   represents twice-monthly data, and \code{frequency = 4} represents
 #'   four seasonal observations per year.
@@ -961,9 +995,7 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
 #' @export
 compute_monthly_climatology <- function(temp_ts) {
   ## ---- input check ----------------------------------------------------
-  if (!inherits(temp_ts, "ts")) {
-    cli::cli_abort("Input must be a {.cls ts} object.")
-  }
+  .tempssm_check_univariate_ts(temp_ts, "temp_ts")
 
   freq <- stats::frequency(temp_ts)
   freq_int <- as.integer(round(freq))
@@ -1009,8 +1041,8 @@ compute_monthly_climatology <- function(temp_ts) {
 #'
 #' @importFrom stats cycle window frequency start
 #'
-#' @param temp_ts Temperature time series of class \code{ts}. The time series
-#'   must have an integer frequency greater than 1. For example,
+#' @param temp_ts Univariate temperature time series of class \code{ts}.
+#'   The time series must have an integer frequency greater than 1. For example,
 #'   \code{frequency = 12} represents monthly data, \code{frequency = 24}
 #'   represents twice-monthly data, and \code{frequency = 4} represents
 #'   four seasonal observations per year.
@@ -1046,9 +1078,7 @@ compute_monthly_climatology <- function(temp_ts) {
 #' @export
 compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
   ## ---- input check ----------------------------------------------------
-  if (!inherits(temp_ts, "ts")) {
-    cli::cli_abort("Input must be a {.cls ts} object.")
-  }
+  .tempssm_check_univariate_ts(temp_ts, "temp_ts")
 
   freq <- stats::frequency(temp_ts)
   freq_int <- as.integer(round(freq))
@@ -1340,7 +1370,7 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #' @importFrom httr2 req_perform resp_body_raw resp_status
 #'
 #' @param sea_area_id
-#' Character string giving the JMA sea area ID
+#' Character or numeric scalar giving the JMA sea area ID
 #' (numeric values are accepted and internally coerced to character).
 #' For example, 138 corresponding to the coastal sea off southern Ibaraki.
 #' A list of sea area IDs and their corresponding regions is available at:
@@ -1372,6 +1402,13 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #'
 #' @export
 get_jma_sst_zoo <- function(sea_area_id) {
+  .tempssm_check_length_one(sea_area_id, "sea_area_id")
+  if (!(is.character(sea_area_id) || is.numeric(sea_area_id))) {
+    cli::cli_abort(
+      "{.arg sea_area_id} must be character or numeric."
+    )
+  }
+
   raw <- .fetch_jma_raw(sea_area_id)
 
   sst_tidy <- .parse_jma_csv(raw)
@@ -1407,7 +1444,7 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' @importFrom httr2 req_perform resp_body_raw resp_status
 #'
 #' @param sea_area_id
-#' Character string giving the JMA sea area ID
+#' Character or numeric scalar giving the JMA sea area ID
 #' (numeric values are accepted and internally coerced to character).
 #' For example, "138" corresponding to the coastal sea off southern Ibaraki.
 #' A list of sea area IDs and their corresponding regions is available at:
@@ -1415,9 +1452,10 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html
 #' }
 #'
-#' @param na_prop_max Maximum allowed proportion of NA values within a month.
-#'   If the proportion of missing values exceeds this threshold, the monthly
-#'   mean is set to NA. Default is \code{1} (no additional filtering).
+#' @param na_prop_max Numeric scalar giving the maximum allowed proportion of
+#'   NA values within a month. If the proportion of missing values exceeds this
+#'   threshold, the monthly mean is set to NA. Default is \code{1} (no
+#'   additional filtering).
 #'
 #' @details
 #' The function retrieves a text-format dataset from the JMA website,
@@ -1443,7 +1481,20 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #'
 #' @export
 get_jma_sst_ts <- function(sea_area_id, na_prop_max = 1) {
-  if (!is.numeric(na_prop_max) || na_prop_max < 0 || na_prop_max > 1) {
+  .tempssm_check_length_one(sea_area_id, "sea_area_id")
+  .tempssm_check_length_one(na_prop_max, "na_prop_max")
+  if (!(is.character(sea_area_id) || is.numeric(sea_area_id))) {
+    cli::cli_abort(
+      "{.arg sea_area_id} must be character or numeric."
+    )
+  }
+  .tempssm_check_numeric(na_prop_max, "na_prop_max")
+
+  if (!is.numeric(na_prop_max) ||
+      is.na(na_prop_max) ||
+      !is.finite(na_prop_max) ||
+      na_prop_max < 0 ||
+      na_prop_max > 1) {
     cli::cli_abort("`na_prop_max` must be between 0 and 1.")
   }
 

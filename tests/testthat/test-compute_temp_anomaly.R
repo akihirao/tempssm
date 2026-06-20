@@ -60,6 +60,16 @@ test_that("non-ts input triggers error", {
 })
 
 
+test_that("multivariate input triggers error", {
+  temp_ts <- ts(matrix(rnorm(24), ncol = 2), frequency = 12)
+
+  expect_error(
+    compute_temp_anomaly(temp_ts),
+    "temp_ts.*univariate"
+  )
+})
+
+
 test_that("supports non-monthly seasonal frequencies", {
   temp_ts <- ts(
     rep(c(1, 2, 3, 4), 5) + rnorm(20, sd = 0.01),

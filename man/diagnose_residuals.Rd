@@ -9,7 +9,7 @@ diagnose_residuals(res, JB_test = FALSE)
 \arguments{
 \item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
 
-\item{JB_test}{Logical; if TRUE, the Jarque–Bera test is included.}
+\item{JB_test}{Logical scalar; if TRUE, the Jarque–Bera test is included.}
 }
 \value{
 A \code{tibble} with one row containing residual diagnostic statistics,

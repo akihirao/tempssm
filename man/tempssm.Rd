@@ -24,26 +24,35 @@ For example, a frequency of 12 represents a monthly \code{ts} object.}
 
 \item{exo_data}{A data set of exogenous variable(s) of class \code{ts}.
 The series may have any integer frequency of 2 or higher,
-but it must be the same as that of \code{temp_data}. The default is
-\code{NULL} when fitting a model without exogenous variables.}
+but it must be the same as that of \code{temp_data}. It must also have
+the same number of observations and the same time index as
+\code{temp_data}. The default is \code{NULL} when fitting a model without
+exogenous variables.}
 
-\item{ar_order}{Integer specifying the order of the autoregressive (AR)
+\item{ar_order}{Integer scalar specifying the order of the autoregressive
+(AR)
 component in the error structure (e.g., 2 for AR(2), 3 for AR(3)).
-Defaults to 1.}
+Defaults to 1. Orders from 1 to 4 are intended as the usual working range;
+larger values are allowed but trigger a warning because they may lead to
+unstable estimation.}
 
 \item{inits}{Optional numeric vector of initial parameter values.
-If \code{NULL}, default values are used.}
+If \code{NULL}, default values are used. When supplied, its length must
+match the number of variance and autoregressive parameters implied by
+\code{ar_order} and \code{use_season}.}
 
-\item{maxit}{Optional numeric of maximum iteration.
+\item{maxit}{Optional numeric scalar giving the maximum number of
+iterations.
 If \code{NULL}, default value of 5000 is used.}
 
-\item{reltol}{Optional numeric of reltol.
+\item{reltol}{Optional numeric scalar giving the relative convergence
+tolerance.
 If \code{NULL}, default value of 1e-16 is used.}
 
-\item{use_season}{Logical; Should seasonal component be considered.
-Default to TRUE.}
+\item{use_season}{Logical scalar; should the seasonal component be
+considered? Defaults to \code{TRUE}.}
 
-\item{na_action}{Character string specifying how explicit missing
+\item{na_action}{Character scalar specifying how explicit missing
 observations in \code{temp_data} or \code{exo_data} should be handled.
 Use \code{"warn"} to issue a warning and proceed, \code{"error"} to stop,
 or \code{"allow"} to proceed silently. The default is \code{"warn"}.}

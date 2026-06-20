@@ -7,7 +7,7 @@
 get_jma_sst_zoo(sea_area_id)
 }
 \arguments{
-\item{sea_area_id}{Character string giving the JMA sea area ID
+\item{sea_area_id}{Character or numeric scalar giving the JMA sea area ID
 (numeric values are accepted and internally coerced to character).
 For example, 138 corresponding to the coastal sea off southern Ibaraki.
 A list of sea area IDs and their corresponding regions is available at:

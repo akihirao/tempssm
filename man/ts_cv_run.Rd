@@ -16,24 +16,27 @@ ts_cv_run(
 \arguments{
 \item{folds}{A list of fold objects returned by \code{ts_train_test_split()}.}
 
-\item{ar_order}{Integer specifying the order of the autoregressive (AR)
+\item{ar_order}{Integer scalar specifying the order of the autoregressive
+(AR)
 component in the error structure (e.g., 2 for AR(2), 3 for AR(3)).
-Defaults to 1.}
+Defaults to 1. Orders from 1 to 4 are intended as the usual working range;
+larger values are allowed but trigger a warning because they may lead to
+unstable estimation.}
 
-\item{use_season}{Logical; Should seasonal component be considered.
-Default to TRUE.}
+\item{use_season}{Logical scalar; should the seasonal component be
+considered? Defaults to \code{TRUE}.}
 
-\item{parallel}{Logical; if \code{TRUE}, folds are evaluated in parallel using the
+\item{parallel}{Logical scalar; if \code{TRUE}, folds are evaluated in parallel using the
 \pkg{future.apply} framework. If \code{FALSE}, folds are processed
 sequentially. Default is \code{TRUE}.}
 
-\item{workers}{Integer specifying the number of parallel workers to use when
+\item{workers}{Integer scalar specifying the number of parallel workers to use when
 \code{parallel = TRUE}. The default uses all available cores as
 returned by \code{\link[future]{availableCores}}.}
 
-\item{progress}{Logical; if \code{TRUE}, a progress bar is displayed during execution
+\item{progress}{Logical scalar; if \code{TRUE}, a progress bar is displayed during execution
 using the \pkg{progressr} package. If \code{FALSE}, no progress bar
-is shown. Default is \code{TRUE}.}
+is shown. Default is \code{FALSE}.}
 }
 \value{
 A list of named lists. Each element corresponds to one fold and contains

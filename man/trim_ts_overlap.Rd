@@ -19,10 +19,11 @@ trim_ts_overlap(
 \item{exo_data}{A multivariate or univariate \code{ts} object of exogenous variables.
 Each column represents a distinct exogenous covariate.}
 
-\item{temp_name}{Character string giving the variable name for the temperature series.
+\item{temp_name}{Character scalar giving the variable name for the temperature series.
 This name is applied using \code{set_ts_name()}.}
 
 \item{exo_name}{Optional character vector giving variable names for the exogenous variables.
+Its length must equal the number of exogenous variables when supplied.
 If \code{NULL}, default names of the form \code{var1}, \code{var2}, \dots
 are assigned with a warning.}
 

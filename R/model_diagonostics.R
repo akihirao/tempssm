@@ -28,7 +28,7 @@ get_tempssm_residuals <- function(res) {
 #' Uses non-excess kurtosis, m4 / m2^2.
 #'
 #' @inheritParams .check_na_ratio
-#' @param na.rm Logical; if TRUE, missing values are removed.
+#' @param na.rm Logical scalar; if TRUE, missing values are removed.
 #'
 #' @return A numeric scalar.
 #' @keywords internal
@@ -53,7 +53,7 @@ get_tempssm_residuals <- function(res) {
 #' across many fitted models.
 #'
 #' @inheritParams get_level_ts
-#' @param JB_test Logical; if TRUE, the Jarque–Bera test is included.
+#' @param JB_test Logical scalar; if TRUE, the Jarque–Bera test is included.
 #'
 #' @return
 #' A \code{tibble} with one row containing residual diagnostic statistics,
@@ -78,6 +78,12 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
     )
+  }
+
+  .tempssm_check_length_one(JB_test, "JB_test")
+  .tempssm_check_logical(JB_test, "JB_test")
+  if (!is.logical(JB_test) || is.na(JB_test)) {
+    cli::cli_abort("{.arg JB_test} must be a logical scalar.")
   }
 
   r <- get_tempssm_residuals(res)
@@ -120,8 +126,8 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
 #' Plot residual diagnostics for tempssm models
 #'
 #' @inheritParams get_level_ts
-#' @param save Logical; if TRUE, plots are saved.
-#' @param prefix Character prefix for file names.
+#' @param save Logical scalar; if TRUE, plots are saved.
+#' @param prefix Character scalar used as the prefix for file names.
 #'
 #' @return
 #' Invisibly returns NULL. Called for its side effects (plots).
@@ -137,7 +143,19 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
 #' @export
 plot_tempssm_residual_diagnostics <- function(res,
                                               save = FALSE,
-                                              prefix = "residuals") {
+  prefix = "residuals") {
+  .tempssm_check_length_one(save, "save")
+  .tempssm_check_logical(save, "save")
+  if (!is.logical(save) || is.na(save)) {
+    cli::cli_abort("{.arg save} must be a logical scalar.")
+  }
+
+  .tempssm_check_length_one(prefix, "prefix")
+  .tempssm_check_character(prefix, "prefix")
+  if (!is.character(prefix) || is.na(prefix)) {
+    cli::cli_abort("{.arg prefix} must be a character scalar.")
+  }
+
   r <- get_tempssm_residuals(res)
 
   # Standard residual plot

@@ -14,11 +14,13 @@ numeric column named by \code{var}.}
 \item{var}{A character string specifying the name of the variable
 to be aggregated (default: \code{"Temp"}).}
 
-\item{na.rm}{Logical; should missing values be removed before averaging?}
+\item{na.rm}{Logical scalar; should missing values be removed before
+averaging?}
 
-\item{na_prop_max}{Maximum allowed proportion of NA values within a month.
-If the proportion of missing values exceeds this threshold, the monthly
-mean is set to NA. Default is \code{1} (no additional filtering).}
+\item{na_prop_max}{Numeric scalar giving the maximum allowed proportion of
+NA values within a month. If the proportion of missing values exceeds this
+threshold, the monthly mean is set to NA. Default is \code{1} (no
+additional filtering).}
 }
 \value{
 A univariate monthly \code{ts} object with \code{frequency = 12}.

@@ -56,6 +56,55 @@ test_that("errors for invalid na_prop_max", {
 
   expect_error(daily_zoo_to_monthly_ts(zoo_obj, na_prop_max = -1))
   expect_error(daily_zoo_to_monthly_ts(zoo_obj, na_prop_max = 2))
+  expect_error(
+    daily_zoo_to_monthly_ts(zoo_obj, na_prop_max = c(0.2, 0.5)),
+    "na_prop_max.*length one"
+  )
+})
+
+
+test_that("daily_zoo_to_monthly_ts validates scalar argument lengths", {
+  dates <- seq.Date(as.Date("2001-01-01"), by = "day", length.out = 30)
+
+  zoo_obj <- zoo::zoo(
+    data.frame(Temp = rnorm(30)),
+    order.by = dates
+  )
+
+  expect_error(
+    daily_zoo_to_monthly_ts(zoo_obj, var = c("Temp", "Other")),
+    "var.*length one"
+  )
+
+  expect_error(
+    daily_zoo_to_monthly_ts(zoo_obj, na.rm = c(TRUE, FALSE)),
+    "na.rm.*length one"
+  )
+})
+
+
+test_that("daily_zoo_to_monthly_ts validates scalar argument types", {
+  dates <- seq.Date(as.Date("2001-01-01"), by = "day", length.out = 30)
+
+  zoo_obj <- zoo::zoo(
+    data.frame(Temp = rnorm(30)),
+    order.by = dates
+  )
+
+  expect_error(
+    daily_zoo_to_monthly_ts(zoo_obj, var = 1),
+    "var.*character"
+  )
+
+  expect_error(
+    daily_zoo_to_monthly_ts(zoo_obj, na.rm = 1),
+    "na.rm.*logical"
+  )
+
+  expect_error(
+    daily_zoo_to_monthly_ts(zoo_obj, na_prop_max = "1"),
+    "na_prop_max.*numeric"
+  )
 })
 
 

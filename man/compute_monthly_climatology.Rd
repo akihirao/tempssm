@@ -8,8 +8,8 @@
 compute_monthly_climatology(temp_ts)
 }
 \arguments{
-\item{temp_ts}{Temperature time series of class \code{ts}. The time series
-must have an integer frequency greater than 1. For example,
+\item{temp_ts}{Univariate temperature time series of class \code{ts}.
+The time series must have an integer frequency greater than 1. For example,
 \code{frequency = 12} represents monthly data, \code{frequency = 24}
 represents twice-monthly data, and \code{frequency = 4} represents
 four seasonal observations per year.}

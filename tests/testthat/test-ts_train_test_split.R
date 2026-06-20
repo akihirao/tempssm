@@ -129,6 +129,74 @@ test_that("ts_train_test_split can error on missing values", {
 })
 
 
+test_that("ts_train_test_split validates scalar argument lengths", {
+  expect_error(
+    ts_train_test_split(temp_ts_test, initial = c(24, 36)),
+    "initial.*length one"
+  )
+
+  expect_error(
+    ts_train_test_split(temp_ts_test, horizon = c(6, 12)),
+    "horizon.*length one"
+  )
+
+  expect_error(
+    ts_train_test_split(temp_ts_test, step = c(6, 12)),
+    "step.*length one"
+  )
+
+  expect_error(
+    ts_train_test_split(temp_ts_test, fixed_window = c(TRUE, FALSE)),
+    "fixed_window.*length one"
+  )
+
+  expect_error(
+    ts_train_test_split(temp_ts_test, allow_partial = c(TRUE, FALSE)),
+    "allow_partial.*length one"
+  )
+})
+
+
+test_that("ts_train_test_split validates scalar argument types", {
+  expect_error(
+    ts_train_test_split(temp_ts_test, initial = "60"),
+    "initial.*numeric"
+  )
+
+  expect_error(
+    ts_train_test_split(temp_ts_test, horizon = "12"),
+    "horizon.*numeric"
+  )
+
+  expect_error(
+    ts_train_test_split(temp_ts_test, step = "12"),
+    "step.*numeric"
+  )
+
+  expect_error(
+    ts_train_test_split(temp_ts_test, fixed_window = 1),
+    "fixed_window.*logical"
+  )
+
+  expect_error(
+    ts_train_test_split(temp_ts_test, allow_partial = 1),
+    "allow_partial.*logical"
+  )
+})
+
+
+test_that("ts_train_test_split rejects multivariate temperature series", {
+  temp_multi <- ts(matrix(rnorm(240), ncol = 2),
+    start = c(2000, 1), frequency = 12
+  )
+
+  expect_error(
+    ts_train_test_split(temp_multi),
+    "temp_data.*univariate"
+  )
+})
+
+
 test_that("works with exogenous variables", {
   folds <- ts_train_test_split(
     temp_ts_test,

@@ -32,6 +32,22 @@ test_that("diagnose_residuals checks input class", {
 })
 
 
+test_that("diagnose_residuals validates scalar argument lengths", {
+  expect_error(
+    diagnose_residuals(res_tempssm, JB_test = c(TRUE, FALSE)),
+    "JB_test.*length one"
+  )
+})
+
+
+test_that("diagnose_residuals validates scalar argument types", {
+  expect_error(
+    diagnose_residuals(res_tempssm, JB_test = 1),
+    "JB_test.*logical"
+  )
+})
+
+
 test_that(".kurtosis removes missing values when requested", {
   x <- c(1, 2, NA, 3, 4)
 
@@ -52,4 +68,33 @@ test_that("plot_tempssm_residual_diagnostics can save plots", {
   )
   expect_true(file.exists(check_file))
   expect_true(file.exists(qq_file))
+})
+
+
+test_that("plot_tempssm_residual_diagnostics validates scalar argument lengths", {
+  expect_error(
+    plot_tempssm_residual_diagnostics(res_tempssm, save = c(TRUE, FALSE)),
+    "save.*length one"
+  )
+
+  expect_error(
+    plot_tempssm_residual_diagnostics(
+      res_tempssm,
+      prefix = c("a", "b")
+    ),
+    "prefix.*length one"
+  )
+})
+
+
+test_that("plot_tempssm_residual_diagnostics validates scalar argument types", {
+  expect_error(
+    plot_tempssm_residual_diagnostics(res_tempssm, save = 1),
+    "save.*logical"
+  )
+
+  expect_error(
+    plot_tempssm_residual_diagnostics(res_tempssm, prefix = 1),
+    "prefix.*character"
+  )
 })

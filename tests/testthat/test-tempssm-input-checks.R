@@ -42,6 +42,87 @@ test_that(".tempssm_check_temp_ts rejects invalid temperature series", {
 })
 
 
+test_that("tempssm validates scalar argument lengths", {
+  temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
+
+  expect_error(
+    tempssm(temp_ts, ar_order = c(1, 2)),
+    "ar_order.*length one"
+  )
+
+  expect_error(
+    tempssm(temp_ts, use_season = c(TRUE, FALSE)),
+    "use_season.*length one"
+  )
+
+  expect_error(
+    tempssm(temp_ts, maxit = c(100, 200)),
+    "maxit.*length one"
+  )
+
+  expect_error(
+    tempssm(temp_ts, reltol = c(1e-8, 1e-10)),
+    "reltol.*length one"
+  )
+
+  expect_error(
+    tempssm(temp_ts, inits = c(1, 2)),
+    "inits.*length"
+  )
+
+  expect_error(
+    tempssm(temp_ts, na_action = c("warn", "error")),
+    "length"
+  )
+})
+
+
+test_that("tempssm validates scalar and vector argument types", {
+  temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
+
+  expect_error(
+    tempssm(temp_ts, ar_order = "1"),
+    "ar_order.*numeric"
+  )
+
+  expect_error(
+    tempssm(temp_ts, use_season = 1),
+    "use_season.*logical"
+  )
+
+  expect_error(
+    tempssm(temp_ts, inits = rep("x", 5)),
+    "inits.*numeric"
+  )
+
+  expect_error(
+    tempssm(temp_ts, maxit = "100"),
+    "maxit.*numeric"
+  )
+
+  expect_error(
+    tempssm(temp_ts, reltol = "1e-8"),
+    "reltol.*numeric"
+  )
+})
+
+
+test_that("tempssm warns for high AR orders", {
+  temp_ts <- ts(rnorm(36), start = c(2000, 1), frequency = 12)
+
+  warnings <- character(0)
+  withCallingHandlers(
+    tempssm(temp_ts, ar_order = 5, maxit = 1, reltol = 1e-4),
+    warning = function(w) {
+      warnings <<- c(warnings, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+
+  expect_true(any(grepl("ar_order.*greater than 4", warnings)))
+})
+
+
 test_that(".tempssm_check_exo_ts accepts aligned named exogenous series", {
   temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
   exo_ts <- ts(

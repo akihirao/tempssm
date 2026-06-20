@@ -7,7 +7,7 @@
 get_jma_sst_ts(sea_area_id, na_prop_max = 1)
 }
 \arguments{
-\item{sea_area_id}{Character string giving the JMA sea area ID
+\item{sea_area_id}{Character or numeric scalar giving the JMA sea area ID
 (numeric values are accepted and internally coerced to character).
 For example, "138" corresponding to the coastal sea off southern Ibaraki.
 A list of sea area IDs and their corresponding regions is available at:
@@ -15,9 +15,10 @@ A list of sea area IDs and their corresponding regions is available at:
 https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html
 }}
 
-\item{na_prop_max}{Maximum allowed proportion of NA values within a month.
-If the proportion of missing values exceeds this threshold, the monthly
-mean is set to NA. Default is \code{1} (no additional filtering).}
+\item{na_prop_max}{Numeric scalar giving the maximum allowed proportion of
+NA values within a month. If the proportion of missing values exceeds this
+threshold, the monthly mean is set to NA. Default is \code{1} (no
+additional filtering).}
 }
 \value{
 A univariate monthly \code{ts} object of mean sea-surface temperature, with

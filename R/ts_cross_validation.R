@@ -311,14 +311,32 @@
 ts_cv_run_fold <- function(fold,
                            ar_order = 1,
                            use_season = TRUE) {
-  .tempssm_cli_inform("Running CV for fold {fold$fold}")
-
   if (!is.list(fold) || is.null(fold$train_ts) || is.null(fold$test_ts)) {
     cli::cli_abort("`fold` must be valid.")
   }
 
+  .tempssm_cli_inform("Running CV for fold {fold$fold}")
+
+  .tempssm_check_length_one(ar_order, "ar_order")
+  .tempssm_check_numeric(ar_order, "ar_order")
+  if (is.na(ar_order) || ar_order < 1 || ar_order != floor(ar_order)) {
+    cli::cli_abort(
+      "The argument {.arg ar_order} must be an integer >= 1."
+    )
+  }
+
+  .tempssm_check_length_one(use_season, "use_season")
+  .tempssm_check_logical(use_season, "use_season")
+  if (is.na(use_season)) {
+    cli::cli_abort(
+      "{.arg use_season} must be a logical scalar."
+    )
+  }
+
   y_train <- fold$train_ts
   y_test <- fold$test_ts
+  .tempssm_check_univariate_ts(y_train, "fold$train_ts")
+  .tempssm_check_univariate_ts(y_test, "fold$test_ts")
 
   y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
   y_test_named <- set_ts_name(y_test, label = "Temp", quiet = TRUE)
@@ -371,24 +389,27 @@ ts_cv_run_fold <- function(fold,
 #' @inheritParams tempssm
 #'
 #' @param initial
-#' Initial length of the training set (number of observations).
+#' Integer scalar giving the initial length of the training set (number of
+#' observations).
 #' Default is 60.
 #'
 #' @param horizon
-#' Forecast horizon for the test set (number of observations).
+#' Integer scalar giving the forecast horizon for the test set (number of
+#' observations).
 #' Default is 12.
 #'
 #' @param step
-#' Step size between successive folds (number of observations).
+#' Integer scalar giving the step size between successive folds (number of
+#' observations).
 #' Default is 12.
 #'
 #' @param fixed_window
-#' Logical; if \code{TRUE}, a fixed-length training window of size
+#' Logical scalar; if \code{TRUE}, a fixed-length training window of size
 #' \code{initial} is used. If \code{FALSE}, an expanding training window
 #' is used. Default is \code{FALSE}.
 #'
 #' @param allow_partial
-#' Logical; if \code{TRUE}, include the final fold even if the remaining
+#' Logical scalar; if \code{TRUE}, include the final fold even if the remaining
 #' test period is shorter than \code{horizon}. Default is \code{FALSE}.
 #'
 #' @return
@@ -460,9 +481,38 @@ ts_train_test_split <- function(temp_data,
   exo_data <- model_inputs$exo_data
   freq <- model_inputs$frequency
 
-  if (any(c(initial, horizon, step) < 1)) {
+  .tempssm_check_length_one(initial, "initial")
+  .tempssm_check_length_one(horizon, "horizon")
+  .tempssm_check_length_one(step, "step")
+  .tempssm_check_numeric(initial, "initial")
+  .tempssm_check_numeric(horizon, "horizon")
+  .tempssm_check_numeric(step, "step")
+
+  if (!is.numeric(initial) ||
+      !is.numeric(horizon) ||
+      !is.numeric(step) ||
+      anyNA(c(initial, horizon, step)) ||
+      any(!is.finite(c(initial, horizon, step))) ||
+      any(c(initial, horizon, step) != as.integer(c(initial, horizon, step))) ||
+      any(c(initial, horizon, step) < 1)) {
     cli::cli_abort(
       "`initial`, `horizon`, and `step` must be positive integers."
+    )
+  }
+
+  .tempssm_check_length_one(fixed_window, "fixed_window")
+  .tempssm_check_logical(fixed_window, "fixed_window")
+  if (!is.logical(fixed_window) || is.na(fixed_window)) {
+    cli::cli_abort(
+      "{.arg fixed_window} must be a logical scalar."
+    )
+  }
+
+  .tempssm_check_length_one(allow_partial, "allow_partial")
+  .tempssm_check_logical(allow_partial, "allow_partial")
+  if (!is.logical(allow_partial) || is.na(allow_partial)) {
+    cli::cli_abort(
+      "{.arg allow_partial} must be a logical scalar."
     )
   }
 
@@ -589,19 +639,19 @@ ts_train_test_split <- function(temp_data,
 #' @inheritParams tempssm
 #'
 #' @param parallel
-#' Logical; if \code{TRUE}, folds are evaluated in parallel using the
+#' Logical scalar; if \code{TRUE}, folds are evaluated in parallel using the
 #' \pkg{future.apply} framework. If \code{FALSE}, folds are processed
 #' sequentially. Default is \code{TRUE}.
 #'
 #' @param workers
-#' Integer specifying the number of parallel workers to use when
+#' Integer scalar specifying the number of parallel workers to use when
 #' \code{parallel = TRUE}. The default uses all available cores as
 #' returned by \code{\link[future]{availableCores}}.
 #'
 #' @param progress
-#' Logical; if \code{TRUE}, a progress bar is displayed during execution
+#' Logical scalar; if \code{TRUE}, a progress bar is displayed during execution
 #' using the \pkg{progressr} package. If \code{FALSE}, no progress bar
-#' is shown. Default is \code{TRUE}.
+#' is shown. Default is \code{FALSE}.
 #'
 #' @return
 #' A list of named lists. Each element corresponds to one fold and contains
@@ -649,6 +699,47 @@ ts_cv_run <- function(
   ## ---- input check ----------------------------------------------------
   if (!is.list(folds)) {
     cli::cli_abort("`folds` must be a list of fold objects.")
+  }
+
+  .tempssm_check_length_one(ar_order, "ar_order")
+  .tempssm_check_numeric(ar_order, "ar_order")
+  if (is.na(ar_order) || ar_order < 1 || ar_order != floor(ar_order)) {
+    cli::cli_abort(
+      "The argument {.arg ar_order} must be an integer >= 1."
+    )
+  }
+
+  .tempssm_check_length_one(use_season, "use_season")
+  .tempssm_check_logical(use_season, "use_season")
+  if (is.na(use_season)) {
+    cli::cli_abort(
+      "{.arg use_season} must be a logical scalar."
+    )
+  }
+
+  .tempssm_check_length_one(parallel, "parallel")
+  .tempssm_check_logical(parallel, "parallel")
+  if (is.na(parallel)) {
+    cli::cli_abort(
+      "{.arg parallel} must be a logical scalar."
+    )
+  }
+
+  .tempssm_check_length_one(workers, "workers")
+  .tempssm_check_numeric(workers, "workers")
+  if (is.na(workers) || !is.finite(workers) ||
+      workers < 1 || workers != floor(workers)) {
+    cli::cli_abort(
+      "{.arg workers} must be a positive integer scalar."
+    )
+  }
+
+  .tempssm_check_length_one(progress, "progress")
+  .tempssm_check_logical(progress, "progress")
+  if (is.na(progress)) {
+    cli::cli_abort(
+      "{.arg progress} must be a logical scalar."
+    )
   }
 
   n_folds <- length(folds)
@@ -789,11 +880,7 @@ ts_cv_run <- function(
   }
 
   ## ---- input check ----------------------------------------------------
-  if (!inherits(y_train, "ts")) {
-    cli::cli_abort(
-      "`y_train` must be a {.cls ts} object."
-    )
-  }
+  .tempssm_check_univariate_ts(y_train, "y_train")
 
   .tempssm_cli_debug(
     "Computing MASE (method = {method})"
@@ -1005,11 +1092,7 @@ ts_cv_collect <- function(cv_results, metrics) {
   method <- match.arg(method)
 
   ## ---- input check ----------------------------------------------------
-  if (!inherits(train_ts, "ts")) {
-    cli::cli_abort(
-      "`train_ts` must be a {.cls ts} object."
-    )
-  }
+  .tempssm_check_univariate_ts(train_ts, "train_ts")
 
   y <- as.numeric(train_ts)
   n <- length(y)

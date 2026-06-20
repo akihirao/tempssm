@@ -33,6 +33,16 @@ test_that("plot_temp_dev checks input class", {
 })
 
 
+test_that("plot_temp_dev rejects multivariate input", {
+  temp_ts <- ts(matrix(rnorm(24), ncol = 2), frequency = 12)
+
+  expect_error(
+    plot_temp_dev(temp_ts),
+    "ts.*univariate"
+  )
+})
+
+
 test_that("plot_temp_dev can break or connect lines across missing values", {
   temp_ts <- ts(
     c(1, 2, NA, 4, 5, 6, 7, 8),

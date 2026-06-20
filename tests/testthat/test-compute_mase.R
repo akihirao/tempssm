@@ -85,6 +85,16 @@ test_that("non-ts y_train triggers error", {
 })
 
 
+test_that("multivariate y_train triggers error", {
+  y_train <- ts(matrix(rnorm(20), ncol = 2), frequency = 1)
+
+  expect_error(
+    .compute_mase(1:3, 1:3, y_train = y_train),
+    "y_train.*univariate"
+  )
+})
+
+
 test_that("invalid method triggers error", {
   y_train <- ts(1:10, frequency = 1)
 

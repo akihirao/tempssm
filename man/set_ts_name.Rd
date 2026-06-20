@@ -14,7 +14,7 @@ For a univariate series, must be a length-one character string.
 For a multivariate series, must be either length one (recycled) or the same
 length as the number of columns in \code{ts_in}.}
 
-\item{quiet}{Logical; if \code{TRUE}, suppresses the informational message.}
+\item{quiet}{Logical scalar; if \code{TRUE}, suppresses the informational message.}
 }
 \value{
 A \code{ts} object with assigned variable names and the same time scale as

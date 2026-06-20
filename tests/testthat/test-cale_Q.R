@@ -45,6 +45,16 @@ test_that("non-ts input triggers error", {
 })
 
 
+test_that("multivariate input triggers error", {
+  ts_data <- ts(matrix(rnorm(20), ncol = 2), frequency = 1)
+
+  expect_error(
+    .scale_Q(ts_data),
+    "train_ts.*univariate"
+  )
+})
+
+
 test_that("naive method requires at least 2 observations", {
   ts_data <- ts(1)
 

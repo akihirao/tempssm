@@ -109,6 +109,36 @@ test_that("trim_ts_overlap errors on incorrect exo_name length", {
 })
 
 
+test_that("trim_ts_overlap validates name argument lengths", {
+  exo_ts <- ts(matrix(rnorm(120), ncol = 1),
+    start = c(2000, 1), frequency = 12
+  )
+
+  expect_error(
+    trim_ts_overlap(
+      temp_ts_test,
+      exo_ts,
+      temp_name = c("temp1", "temp2"),
+      exo_name = "x1"
+    ),
+    "temp_name.*length one"
+  )
+
+  exo_multi <- ts(matrix(rnorm(240), ncol = 2),
+    start = c(2000, 1), frequency = 12
+  )
+
+  expect_error(
+    trim_ts_overlap(
+      temp_ts_test,
+      exo_multi,
+      exo_name = c("x1", "x2", "x3")
+    ),
+    "Length of .*exo_name"
+  )
+})
+
+
 test_that("trim_ts_overlap handles multivariate exogenous series", {
   exo_ts <- ts(matrix(rnorm(300), ncol = 3),
     start = c(2000, 1), frequency = 12
@@ -121,6 +151,19 @@ test_that("trim_ts_overlap handles multivariate exogenous series", {
   )
 
   expect_identical(colnames(res$exogenous), c("a", "b", "c"))
+})
+
+
+test_that("trim_ts_overlap rejects multivariate temperature series", {
+  temp_multi <- ts(matrix(rnorm(240), ncol = 2),
+    start = c(2000, 1), frequency = 12
+  )
+  exo_ts <- ts(rnorm(120), start = c(2000, 1), frequency = 12)
+
+  expect_error(
+    trim_ts_overlap(temp_multi, exo_ts, exo_name = "x"),
+    "temp_data.*univariate"
+  )
 })
 
 

@@ -541,9 +541,7 @@ autoplot_ar1 <- function(res,
 #' @importFrom ggplot2 labs ggtitle
 #' @export
 plot_temp_dev <- function(ts, connect_missing = FALSE) {
-  if (!inherits(ts, "ts")) {
-    cli::cli_abort("`ts` must be an object of class {.cls ts}.")
-  }
+  .tempssm_check_univariate_ts(ts, "ts")
 
   if (!is.logical(connect_missing) || length(connect_missing) != 1) {
     cli::cli_abort("`connect_missing` must be a single logical value.")

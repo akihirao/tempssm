@@ -23,26 +23,31 @@ For example, a frequency of 12 represents a monthly \code{ts} object.}
 
 \item{exo_data}{A data set of exogenous variable(s) of class \code{ts}.
 The series may have any integer frequency of 2 or higher,
-but it must be the same as that of \code{temp_data}. The default is
-\code{NULL} when fitting a model without exogenous variables.}
+but it must be the same as that of \code{temp_data}. It must also have
+the same number of observations and the same time index as
+\code{temp_data}. The default is \code{NULL} when fitting a model without
+exogenous variables.}
 
-\item{initial}{Initial length of the training set (number of observations).
+\item{initial}{Integer scalar giving the initial length of the training set (number of
+observations).
 Default is 60.}
 
-\item{horizon}{Forecast horizon for the test set (number of observations).
+\item{horizon}{Integer scalar giving the forecast horizon for the test set (number of
+observations).
 Default is 12.}
 
-\item{step}{Step size between successive folds (number of observations).
+\item{step}{Integer scalar giving the step size between successive folds (number of
+observations).
 Default is 12.}
 
-\item{fixed_window}{Logical; if \code{TRUE}, a fixed-length training window of size
+\item{fixed_window}{Logical scalar; if \code{TRUE}, a fixed-length training window of size
 \code{initial} is used. If \code{FALSE}, an expanding training window
 is used. Default is \code{FALSE}.}
 
-\item{allow_partial}{Logical; if \code{TRUE}, include the final fold even if the remaining
+\item{allow_partial}{Logical scalar; if \code{TRUE}, include the final fold even if the remaining
 test period is shorter than \code{horizon}. Default is \code{FALSE}.}
 
-\item{na_action}{Character string specifying how explicit missing
+\item{na_action}{Character scalar specifying how explicit missing
 observations in \code{temp_data} or \code{exo_data} should be handled.
 Use \code{"warn"} to issue a warning and proceed, \code{"error"} to stop,
 or \code{"allow"} to proceed silently. The default is \code{"warn"}.}

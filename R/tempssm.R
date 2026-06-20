@@ -158,26 +158,35 @@
 #'
 #' @param exo_data A data set of exogenous variable(s) of class \code{ts}.
 #'   The series may have any integer frequency of 2 or higher,
-#'   but it must be the same as that of \code{temp_data}. The default is
-#'   \code{NULL} when fitting a model without exogenous variables.
+#'   but it must be the same as that of \code{temp_data}. It must also have
+#'   the same number of observations and the same time index as
+#'   \code{temp_data}. The default is \code{NULL} when fitting a model without
+#'   exogenous variables.
 #'
-#' @param ar_order Integer specifying the order of the autoregressive (AR)
+#' @param ar_order Integer scalar specifying the order of the autoregressive
+#' (AR)
 #' component in the error structure (e.g., 2 for AR(2), 3 for AR(3)).
-#' Defaults to 1.
+#' Defaults to 1. Orders from 1 to 4 are intended as the usual working range;
+#' larger values are allowed but trigger a warning because they may lead to
+#' unstable estimation.
 #'
-#' @param use_season Logical; Should seasonal component be considered.
-#' Default to TRUE.
+#' @param use_season Logical scalar; should the seasonal component be
+#' considered? Defaults to \code{TRUE}.
 #'
 #' @param inits Optional numeric vector of initial parameter values.
-#'  If \code{NULL}, default values are used.
+#'  If \code{NULL}, default values are used. When supplied, its length must
+#'  match the number of variance and autoregressive parameters implied by
+#'  \code{ar_order} and \code{use_season}.
 #'
-#' @param maxit Optional numeric of maximum iteration.
+#' @param maxit Optional numeric scalar giving the maximum number of
+#' iterations.
 #'  If \code{NULL}, default value of 5000 is used.
 #'
-#' @param reltol Optional numeric of reltol.
+#' @param reltol Optional numeric scalar giving the relative convergence
+#' tolerance.
 #'  If \code{NULL}, default value of 1e-16 is used.
 #'
-#' @param na_action Character string specifying how explicit missing
+#' @param na_action Character scalar specifying how explicit missing
 #'   observations in \code{temp_data} or \code{exo_data} should be handled.
 #'   Use \code{"warn"} to issue a warning and proceed, \code{"error"} to stop,
 #'   or \code{"allow"} to proceed silently. The default is \code{"warn"}.
@@ -214,6 +223,60 @@ tempssm <- function(temp_data,
   exo_name <- NULL
   state_names <- character(0)
 
+  .tempssm_check_length_one(ar_order, "ar_order")
+  .tempssm_check_length_one(use_season, "use_season")
+  .tempssm_check_length_one(maxit, "maxit", allow_null = TRUE)
+  .tempssm_check_length_one(reltol, "reltol", allow_null = TRUE)
+  .tempssm_check_numeric(ar_order, "ar_order")
+  .tempssm_check_logical(use_season, "use_season")
+  .tempssm_check_numeric(maxit, "maxit", allow_null = TRUE)
+  .tempssm_check_numeric(reltol, "reltol", allow_null = TRUE)
+  na_action <- match.arg(na_action)
+
+  if (!(is.numeric(ar_order) &&
+    !is.na(ar_order) &&
+    ar_order >= 1 && ar_order == floor(ar_order))) {
+    cli::cli_abort(
+      "The argument {.arg ar_order} must be an integer >= 1."
+    )
+  }
+
+  if (!is.logical(use_season) || is.na(use_season)) {
+    cli::cli_abort(
+      "{.arg use_season} must be a logical scalar."
+    )
+  }
+
+  if (!is.null(inits)) {
+    .tempssm_check_numeric(inits, "inits")
+
+    expected_len <- if (use_season) {
+      2 + ar_order + 2
+    } else {
+      1 + ar_order + 2
+    }
+
+    if (!is.numeric(inits) || length(inits) != expected_len) {
+      cli::cli_abort(
+        "{.arg inits} must be a numeric vector of length {expected_len}."
+      )
+    }
+  }
+
+  if (!is.null(maxit) &&
+    (!is.numeric(maxit) || is.na(maxit) || !is.finite(maxit))) {
+    cli::cli_abort(
+      "{.arg maxit} must be a finite numeric scalar."
+    )
+  }
+
+  if (!is.null(reltol) &&
+    (!is.numeric(reltol) || is.na(reltol) || !is.finite(reltol))) {
+    cli::cli_abort(
+      "{.arg reltol} must be a finite numeric scalar."
+    )
+  }
+
   tryCatch(
     {
       ## ---- Start message -----------------------------------------------
@@ -239,12 +302,19 @@ tempssm <- function(temp_data,
 
       .tempssm_cli_debug("Time series frequency: {freq}")
 
+      .tempssm_check_length_one(ar_order, "ar_order")
       if (!(is.numeric(ar_order) &&
-        length(ar_order) == 1 &&
         !is.na(ar_order) &&
         ar_order >= 1 && ar_order == floor(ar_order))) {
         cli::cli_abort(
           "The argument {.arg ar_order} must be an integer >= 1."
+        )
+      }
+
+      .tempssm_check_length_one(use_season, "use_season")
+      if (!is.logical(use_season) || is.na(use_season)) {
+        cli::cli_abort(
+          "{.arg use_season} must be a logical scalar."
         )
       }
 
@@ -294,10 +364,24 @@ tempssm <- function(temp_data,
       ## ---- Defaults -----------------------------------------------------
       if (is.null(maxit)) {
         maxit <- 5000
+      } else {
+        .tempssm_check_length_one(maxit, "maxit")
+        if (!is.numeric(maxit) || is.na(maxit) || !is.finite(maxit)) {
+          cli::cli_abort(
+            "{.arg maxit} must be a finite numeric scalar."
+          )
+        }
       }
 
       if (is.null(reltol)) {
         reltol <- 1e-16
+      } else {
+        .tempssm_check_length_one(reltol, "reltol")
+        if (!is.numeric(reltol) || is.na(reltol) || !is.finite(reltol)) {
+          cli::cli_abort(
+            "{.arg reltol} must be a finite numeric scalar."
+          )
+        }
       }
 
       .tempssm_cli_debug(
@@ -746,11 +830,7 @@ tempssm <- function(temp_data,
   .tempssm_check_ts_order(temp_data, arg_name = "temp_data")
 
   ## ---- univariate check ----------------------------------------------
-  if (!is.null(dim(temp_data)) && NCOL(temp_data) != 1) {
-    cli::cli_abort(
-      "The object {.arg temp_data} must be univariate."
-    )
-  }
+  .tempssm_check_univariate_ts(temp_data, "temp_data")
 
   ## ---- debug message --------------------------------------------------
   .tempssm_cli_debug(

@@ -21,7 +21,7 @@
 #' workflow layer for temperature time-series analysis, integrating model
 #' construction, component extraction, uncertainty summaries, diagnostics,
 #' visualization, and time-series cross-validation.
-#' 
+#'
 #' @srrstats {G1.2} Package-level documentation includes a "Life Cycle and
 #' Development Status" section. It states that `tempssm` is under active
 #' development, that the current design intentionally focuses on regular
@@ -36,7 +36,7 @@
 #' and autoregressive components, exogenous variables, Kalman filtering,
 #' Kalman smoothing, standardized recursive residuals, rolling-origin
 #' time-series cross-validation, MAE, and MASE.
-#' 
+#'
 #' @srrstats {G1.4} All exported functions are documented with `roxygen2`
 #' comments in source files under `R/`. Internal helper functions are either
 #' documented with roxygen comments and marked `@noRd`, or kept as local
@@ -50,12 +50,43 @@
 #' Local nested functions used only within a parent function are treated as
 #' implementation details of that documented parent function.
 #'
-#' @srrstatsTODO {G2.0} *Implement assertions on lengths of inputs, particularly through asserting that inputs expected to be single- or multi-valued are indeed so.*
-#' @srrstatsTODO {G2.0a} Provide explicit secondary documentation of any expectations on lengths of inputs
+#' @srrstats {G2.0} Public entry points validate input lengths for scalar,
+#' vector, and time-series inputs. Scalar arguments such as `ar_order`,
+#' `use_season`, `maxit`, `reltol`, cross-validation window parameters,
+#' logical controls, diagnostic options, file paths, JMA area identifiers, and
+#' aggregation thresholds are required to have length one. Time-series inputs
+#' are validated through shared preprocessing routines, including checks that
+#' exogenous series have the same number of observations and time index as the
+#' response series. Arguments that may be single- or multi-valued, such as
+#' `label` or `exo_name`, are checked against the corresponding number of
+#' variables.
 #'
-#' @srrstatsTODO {G2.1} *Implement assertions on types of inputs (see the initial point on nomenclature above).*
-#' @srrstatsTODO {G2.1a} *Provide explicit secondary documentation of expectations on data types of all vector inputs.*
-#' @srrstatsTODO {G2.2} *Appropriately prohibit or restrict submission of multivariate input to parameters expected to be univariate.*
+#' @srrstats {G2.0a} Function documentation explicitly states length
+#' expectations for scalar inputs, time-series inputs, and name or label
+#' vectors. Examples include scalar documentation for `ar_order`, `use_season`,
+#' cross-validation window parameters, plotting and diagnostic controls, and
+#' length-one-or-number-of-variables expectations for labels and exogenous
+#' variable names.
+#'
+#' @srrstats {G2.1} Public entry points assert expected input types, including
+#' `ts` objects for temperature and exogenous time series, `zoo` objects for
+#' daily data aggregation, `tempssm` objects for model summaries, diagnostics,
+#' plotting, and information criteria, numeric scalars or vectors for model
+#' controls and parameter inputs, logical scalars for switches, character
+#' scalars or vectors for names, file paths, and JMA area identifiers, and
+#' lists for cross-validation folds and results.
+#'
+#' @srrstats {G2.1a} Function documentation states expected input types for
+#' public arguments, including class expectations for time-series objects and
+#' scalar or vector type expectations for numeric, logical, and character
+#' inputs.
+#'
+#' @srrstats {G2.2} Public functions distinguish univariate and multivariate
+#' time-series inputs. Temperature response series supplied to modelling,
+#' cross-validation, climatology, anomaly, and plotting functions are required
+#' to be univariate `ts` objects. Exogenous series are explicitly allowed to be
+#' univariate or multivariate where appropriate, and helper functions that
+#' operate on multivariate `ts` objects document and check those expectations.
 #' @srrstatsTODO {G2.3} *For univariate character input:*
 #' @srrstatsTODO {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
 #' @srrstatsTODO {G2.3b} *Either: use `tolower()` or equivalent to ensure input of character parameters is not case dependent; or explicitly document that parameters are strictly case-sensitive.*

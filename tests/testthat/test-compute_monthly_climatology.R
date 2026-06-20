@@ -62,6 +62,16 @@ test_that("errors when input is not ts", {
 })
 
 
+test_that("errors when input is multivariate", {
+  temp_ts <- ts(matrix(rnorm(24), ncol = 2), frequency = 12)
+
+  expect_error(
+    compute_monthly_climatology(temp_ts),
+    "temp_ts.*univariate"
+  )
+})
+
+
 test_that("supports non-monthly seasonal frequencies", {
   temp_ts <- ts(
     rep(c(1, 2, 3, 4), 5),
