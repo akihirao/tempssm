@@ -69,6 +69,39 @@
 }
 
 
+#' Check that numeric-like values are not undefined
+#'
+#' @param x Object to check.
+#' @param arg_name Name of the argument being checked.
+#'
+#' @return Invisibly returns \code{x}.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_check_no_undefined <- function(x, arg_name) {
+  if (any(is.nan(x)) || any(is.infinite(x))) {
+    cli::cli_abort(
+      "{.arg {arg_name}} must not contain {.val NaN}, {.val Inf}, or {.val -Inf}."
+    )
+  }
+
+  invisible(x)
+}
+
+
+#' Check whether numeric values are integer-like
+#'
+#' @param x Numeric vector.
+#'
+#' @return A logical vector indicating whether each value is integer-like.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_is_integerish <- function(x) {
+  is.finite(x) & abs(x - round(x)) <= sqrt(.Machine$double.eps)
+}
+
+
 #' Check that an argument is logical
 #'
 #' @inheritParams .tempssm_check_numeric

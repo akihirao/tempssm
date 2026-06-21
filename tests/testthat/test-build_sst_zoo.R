@@ -52,6 +52,23 @@ test_that("values are preserved", {
 })
 
 
+test_that(".build_sst_zoo accepts tibble input", {
+  dates <- as.Date("2000-01-01") + 0:1
+  temp <- c(15.5, 16.2)
+
+  sst <- tibble::tibble(
+    date = dates,
+    Temp = temp
+  )
+
+  res <- .build_sst_zoo(sst)
+
+  expect_s3_class(res, "zoo")
+  expect_identical(zoo::index(res), dates)
+  expect_identical(as.numeric(res), temp)
+})
+
+
 test_that("NA values are preserved", {
   sst <- data.frame(
     date = as.Date("2000-01-01") + 0:2,

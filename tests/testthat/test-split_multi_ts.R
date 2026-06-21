@@ -40,16 +40,16 @@ test_that("each split series is univariate ts", {
 
 
 test_that("split_multi_ts errors for non-ts input", {
-  expect_error(split_multi_ts(NULL))
-  expect_error(split_multi_ts("not ts"))
-  expect_error(split_multi_ts(1:10))
+  expect_error(split_multi_ts(NULL), "`multi_ts` must be an object")
+  expect_error(split_multi_ts("not ts"), "`multi_ts` must be an object")
+  expect_error(split_multi_ts(1:10), "`multi_ts` must be an object")
 })
 
 
 test_that("split_multi_ts errors for univariate ts", {
   x <- ts(rnorm(100), start = c(2000, 1), frequency = 12)
 
-  expect_error(split_multi_ts(x))
+  expect_error(split_multi_ts(x), "must be multivariate")
 })
 
 

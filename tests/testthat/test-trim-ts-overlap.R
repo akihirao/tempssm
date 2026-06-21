@@ -91,7 +91,8 @@ test_that("trim_ts_overlap assigns default exo names with warning", {
   )
 
   expect_warning(
-    res <- trim_ts_overlap(temp_ts_test, exo_ts)
+    res <- trim_ts_overlap(temp_ts_test, exo_ts),
+    "exo_name.*not supplied"
   )
 
   expect_true(all(grepl("var", colnames(res$exogenous), fixed = TRUE)))
@@ -104,7 +105,8 @@ test_that("trim_ts_overlap errors on incorrect exo_name length", {
   )
 
   expect_error(
-    trim_ts_overlap(temp_ts_test, exo_ts, exo_name = "x1")
+    trim_ts_overlap(temp_ts_test, exo_ts, exo_name = "x1"),
+    "number of exogenous variables"
   )
 })
 

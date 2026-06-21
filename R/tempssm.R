@@ -187,9 +187,11 @@
 #'  If \code{NULL}, default value of 1e-16 is used.
 #'
 #' @param na_action Character scalar specifying how explicit missing
-#'   observations in \code{temp_data} or \code{exo_data} should be handled.
-#'   Use \code{"warn"} to issue a warning and proceed, \code{"error"} to stop,
-#'   or \code{"allow"} to proceed silently. The default is \code{"warn"}.
+#'   observations in \code{temp_data} should be handled. Use \code{"warn"} to
+#'   issue a warning and proceed, \code{"error"} to stop, or \code{"allow"} to
+#'   proceed silently. The default is \code{"warn"}. Missing values in
+#'   \code{exo_data} are always rejected; exogenous covariates must be
+#'   completed before model fitting.
 #'
 #' @return An object of class \code{"tempssm"}, a named list containing:
 #' \describe{
@@ -235,7 +237,7 @@ tempssm <- function(temp_data,
 
   if (!(is.numeric(ar_order) &&
     !is.na(ar_order) &&
-    ar_order >= 1 && ar_order == floor(ar_order))) {
+    ar_order >= 1 && .tempssm_is_integerish(ar_order))) {
     cli::cli_abort(
       "The argument {.arg ar_order} must be an integer >= 1."
     )
@@ -305,7 +307,7 @@ tempssm <- function(temp_data,
       .tempssm_check_length_one(ar_order, "ar_order")
       if (!(is.numeric(ar_order) &&
         !is.na(ar_order) &&
-        ar_order >= 1 && ar_order == floor(ar_order))) {
+        ar_order >= 1 && .tempssm_is_integerish(ar_order))) {
         cli::cli_abort(
           "The argument {.arg ar_order} must be an integer >= 1."
         )
@@ -815,6 +817,7 @@ tempssm <- function(temp_data,
   }
 
   temp_data <- .strip_units_ts(temp_data, arg_name = "temp_data")
+  .tempssm_check_no_undefined(temp_data, "temp_data")
 
   ## ---- frequency check ------------------------------------------------
   freq <- frequency(temp_data)
@@ -919,10 +922,11 @@ tempssm <- function(temp_data,
   }
 
   exo_data <- .strip_units_ts(exo_data, arg_name = "exo_data")
+  .tempssm_check_no_undefined(exo_data, "exo_data")
 
   ## ---- frequency check ------------------------------------------------
   exo_freq <- frequency(exo_data)
-  if (exo_freq != temp_freq) {
+  if (!isTRUE(all.equal(exo_freq, temp_freq))) {
     cli::cli_abort(
       "Frequency of {.arg exo_data} must match that of {.arg temp_data}."
     )
@@ -939,7 +943,7 @@ tempssm <- function(temp_data,
   }
 
   ## ---- time index check ----------------------------------------------
-  if (!all(time(exo_data) == time(temp_data_checked))) {
+  if (!isTRUE(all.equal(time(exo_data), time(temp_data_checked)))) {
     cli::cli_abort(
       "Time index of {.arg exo_data} must match that of {.arg temp_data}."
     )
@@ -1020,11 +1024,21 @@ tempssm <- function(temp_data,
       temp_data = temp_data,
       exo_data = exo_data
     )
-    .tempssm_handle_missing_ts(
-      exo_data,
-      arg_name = "exo_data",
-      na_action = na_action
-    )
+    if (anyNA(exo_data)) {
+      cli::cli_abort(
+        c(
+          "Missing values detected in {.arg exo_data}.",
+          "i" = paste0(
+            "Exogenous covariates must be complete for KFAS regression ",
+            "terms."
+          ),
+          "i" = paste0(
+            "Please impute, remove, or otherwise complete missing ",
+            "exogenous values before calling {.fn tempssm}."
+          )
+        )
+      )
+    }
   }
 
   list(

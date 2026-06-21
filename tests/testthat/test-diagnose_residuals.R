@@ -71,6 +71,23 @@ test_that("plot_tempssm_residual_diagnostics can save plots", {
 })
 
 
+test_that("plot_tempssm_residual_diagnostics normalizes prefix extensions", {
+  prefix <- file.path(tempdir(), "tempssm-residuals.png")
+  check_file <- file.path(tempdir(), "tempssm-residuals_check.png")
+  qq_file <- file.path(tempdir(), "tempssm-residuals_qq.png")
+  unexpected_file <- paste0(prefix, "_check.png")
+
+  withr::defer(unlink(c(check_file, qq_file, unexpected_file)))
+
+  expect_invisible(
+    plot_tempssm_residual_diagnostics(res_tempssm, save = TRUE, prefix = prefix)
+  )
+  expect_true(file.exists(check_file))
+  expect_true(file.exists(qq_file))
+  expect_false(file.exists(unexpected_file))
+})
+
+
 test_that("plot_tempssm_residual_diagnostics validates scalar argument lengths", {
   expect_error(
     plot_tempssm_residual_diagnostics(res_tempssm, save = c(TRUE, FALSE)),

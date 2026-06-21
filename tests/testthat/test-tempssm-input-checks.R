@@ -107,6 +107,21 @@ test_that("tempssm validates scalar and vector argument types", {
 })
 
 
+test_that("tempssm validates na_action choices strictly", {
+  temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
+
+  expect_error(
+    tempssm(temp_ts, na_action = "drop"),
+    "should be one of"
+  )
+
+  expect_error(
+    tempssm(temp_ts, na_action = "WARN"),
+    "should be one of"
+  )
+})
+
+
 test_that("tempssm warns for high AR orders", {
   temp_ts <- ts(rnorm(36), start = c(2000, 1), frequency = 12)
 
@@ -241,20 +256,58 @@ test_that(".tempssm_prepare_model_inputs handles missing values by policy", {
 })
 
 
-test_that(".tempssm_prepare_model_inputs handles missing exogenous values", {
+test_that(".tempssm_prepare_model_inputs rejects undefined temperature values", {
+  temp_nan <- ts(c(1, NaN, 3, 4), start = c(2000, 1), frequency = 4)
+  temp_inf <- ts(c(1, Inf, 3, 4), start = c(2000, 1), frequency = 4)
+
+  expect_error(
+    .tempssm_prepare_model_inputs(temp_nan, na_action = "allow"),
+    "NaN"
+  )
+
+  expect_error(
+    .tempssm_prepare_model_inputs(temp_inf, na_action = "allow"),
+    "Inf"
+  )
+})
+
+
+test_that(".tempssm_prepare_model_inputs rejects missing exogenous values", {
   temp_ts <- ts(rnorm(4), start = c(2000, 1), frequency = 4)
   exo_ts <- ts(c(1, NA, 3, 4), start = c(2000, 1), frequency = 4)
   exo_ts <- set_ts_name(exo_ts, label = "x", quiet = TRUE)
 
-  expect_warning(
-    prepared <- .tempssm_prepare_model_inputs(
+  expect_error(
+    .tempssm_prepare_model_inputs(
       temp_data = temp_ts,
       exo_data = exo_ts
     ),
-    "Missing values detected"
+    "Exogenous covariates must be complete"
   )
 
-  expect_true(anyNA(prepared$exo_data))
+  expect_error(
+    .tempssm_prepare_model_inputs(
+      temp_data = temp_ts,
+      exo_data = exo_ts,
+      na_action = "allow"
+    ),
+    "Exogenous covariates must be complete"
+  )
+})
+
+
+test_that(".tempssm_prepare_model_inputs rejects undefined exogenous values", {
+  temp_ts <- ts(rnorm(4), start = c(2000, 1), frequency = 4)
+  exo_ts <- ts(c(1, Inf, 3, 4), start = c(2000, 1), frequency = 4)
+  exo_ts <- set_ts_name(exo_ts, label = "x", quiet = TRUE)
+
+  expect_error(
+    .tempssm_prepare_model_inputs(
+      temp_data = temp_ts,
+      exo_data = exo_ts
+    ),
+    "Inf"
+  )
 })
 
 

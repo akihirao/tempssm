@@ -55,18 +55,20 @@ autoplot_level <- function(res,
   }
 
   if (!is.logical(ci) || length(ci) != 1) {
-    cli::cli_abort("`ci` must be a single logical value.")
+    cli::cli_abort("`ci` must be a single logical value for autoplot_level().")
   }
 
   if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
-    cli::cli_abort("`show_ci_in_title` must be a single logical value.")
+    cli::cli_abort(
+      "`show_ci_in_title` must be a single logical value for autoplot_level()."
+    )
   }
 
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
       ci_level <= 0 || ci_level >= 1) {
       cli::cli_abort(
-        "`ci_level` must be a numeric value between 0 and 1."
+        "`ci_level` must be a numeric value between 0 and 1: autoplot_level()."
       )
     }
   }
@@ -181,11 +183,13 @@ autoplot_drift <- function(res,
 
   # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
-    cli::cli_abort("`ci` must be a single logical value.")
+    cli::cli_abort("`ci` must be a single logical value for autoplot_drift().")
   }
 
   if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
-    cli::cli_abort("`show_ci_in_title` must be a single logical value.")
+    cli::cli_abort(
+      "`show_ci_in_title` must be a single logical value for autoplot_drift()."
+    )
   }
 
   # ---- check ci_level only if ci is TRUE ----
@@ -193,7 +197,7 @@ autoplot_drift <- function(res,
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
       ci_level <= 0 || ci_level >= 1) {
       cli::cli_abort(
-        "`ci_level` must be a numeric value between 0 and 1."
+        "`ci_level` must be a numeric value between 0 and 1: autoplot_drift()."
       )
     }
   }
@@ -306,11 +310,13 @@ autoplot_season <- function(res,
 
   # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
-    cli::cli_abort("`ci` must be a single logical value.")
+    cli::cli_abort("`ci` must be a single logical value for autoplot_season().")
   }
 
   if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
-    cli::cli_abort("`show_ci_in_title` must be a single logical value.")
+    cli::cli_abort(
+      "`show_ci_in_title` must be a single logical value for autoplot_season()."
+    )
   }
 
   # ---- check ci_level only if ci is TRUE ----
@@ -318,7 +324,7 @@ autoplot_season <- function(res,
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
       ci_level <= 0 || ci_level >= 1) {
       cli::cli_abort(
-        "`ci_level` must be a numeric value between 0 and 1."
+        "`ci_level` must be a numeric value between 0 and 1: autoplot_season()."
       )
     }
   }
@@ -431,11 +437,13 @@ autoplot_ar1 <- function(res,
 
   # ---- check ci first ----
   if (!is.logical(ci) || length(ci) != 1) {
-    cli::cli_abort("`ci` must be a single logical value.")
+    cli::cli_abort("`ci` must be a single logical value for autoplot_ar1().")
   }
 
   if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
-    cli::cli_abort("`show_ci_in_title` must be a single logical value.")
+    cli::cli_abort(
+      "`show_ci_in_title` must be a single logical value for autoplot_ar1()."
+    )
   }
 
   # ---- check ci_level only if ci is TRUE ----
@@ -443,7 +451,7 @@ autoplot_ar1 <- function(res,
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
       ci_level <= 0 || ci_level >= 1) {
       cli::cli_abort(
-        "`ci_level` must be a numeric value between 0 and 1."
+        "`ci_level` must be a numeric value between 0 and 1: autoplot_ar1()."
       )
     }
   }

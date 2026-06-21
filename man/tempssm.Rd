@@ -53,9 +53,11 @@ If \code{NULL}, default value of 1e-16 is used.}
 considered? Defaults to \code{TRUE}.}
 
 \item{na_action}{Character scalar specifying how explicit missing
-observations in \code{temp_data} or \code{exo_data} should be handled.
-Use \code{"warn"} to issue a warning and proceed, \code{"error"} to stop,
-or \code{"allow"} to proceed silently. The default is \code{"warn"}.}
+observations in \code{temp_data} should be handled. Use \code{"warn"} to
+issue a warning and proceed, \code{"error"} to stop, or \code{"allow"} to
+proceed silently. The default is \code{"warn"}. Missing values in
+\code{exo_data} are always rejected; exogenous covariates must be
+completed before model fitting.}
 }
 \value{
 An object of class \code{"tempssm"}, a named list containing:

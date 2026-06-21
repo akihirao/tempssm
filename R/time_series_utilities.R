@@ -568,13 +568,15 @@ convert_monthly_df_to_ts <- function(df) {
     )
   }
 
-  if (!inherits(df$Date, "Date")) {
+  date_col <- df[["Date"]]
+
+  if (!inherits(date_col, "Date")) {
     cli::cli_abort(
       "The {.col Date} column must be of class {.cls Date}."
     )
   }
 
-  if (anyNA(df$Date)) {
+  if (anyNA(date_col)) {
     cli::cli_abort(
       "The {.col Date} column must not contain missing values."
     )
@@ -582,18 +584,19 @@ convert_monthly_df_to_ts <- function(df) {
 
   .tempssm_cli_debug("Validating input data frame with {nrow(df)} rows")
 
-  if (length(df$Date) > 1 && any(diff(df$Date) < 0)) {
+  if (length(date_col) > 1 && any(diff(date_col) < 0)) {
     cli::cli_warn(
       "Input data are not ordered by {.col Date}; sorting before conversion."
     )
   }
 
   ## ---- sort -----------------------------------------------------------
-  df <- df[order(df$Date), ]
+  df <- df[order(date_col), , drop = FALSE]
+  date_col <- df[["Date"]]
 
   ## ---- check regularity ----------------------------------------------
-  ym_index <- as.integer(format(df$Date, "%Y")) * 12 +
-    as.integer(format(df$Date, "%m"))
+  ym_index <- as.integer(format(date_col, "%Y")) * 12 +
+    as.integer(format(date_col, "%m"))
 
   if (anyDuplicated(ym_index)) {
     cli::cli_abort(
@@ -602,7 +605,21 @@ convert_monthly_df_to_ts <- function(df) {
   }
 
   ## ---- construct ts ---------------------------------------------------
-  temp_values <- .strip_units_values(df$Temp, arg_name = "Temp")
+  temp_col <- df[["Temp"]]
+  if (is.list(temp_col) && !inherits(temp_col, "units")) {
+    cli::cli_abort(
+      "The {.col Temp} column must be numeric, not a list column."
+    )
+  }
+
+  temp_values <- .strip_units_values(temp_col, arg_name = "Temp")
+  if (!is.numeric(temp_values)) {
+    cli::cli_abort(
+      "The {.col Temp} column must be numeric."
+    )
+  }
+  .tempssm_check_no_undefined(temp_values, "Temp")
+
   completed <- .complete_monthly_values(
     ym_index = ym_index,
     values = temp_values,
@@ -861,7 +878,9 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
       !is.finite(na_prop_max) ||
       na_prop_max < 0 ||
       na_prop_max > 1) {
-    cli::cli_abort("`na_prop_max` must be between 0 and 1.")
+    cli::cli_abort(
+      "`na_prop_max` must be between 0 and 1 for daily_zoo_to_monthly_ts()."
+    )
   }
 
   idx <- zoo::index(zoo_obj)
@@ -919,6 +938,7 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
     zoo::coredata(zoo_monthly),
     arg_name = var
   )
+  .tempssm_check_no_undefined(monthly_values, var)
   monthly_index <- zoo::index(zoo_monthly)
   ym_index <- as.integer(format(monthly_index, "%Y")) * 12 +
     as.integer(format(monthly_index, "%m"))
@@ -1216,17 +1236,17 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
     "Year", "Month", "Day", "areaNo", "flag", "Temp"
   )
 
-  sst_tidy$Temp <- as.numeric(sst_tidy$Temp)
-  sst_tidy$date <- as.Date(
+  sst_tidy[["Temp"]] <- as.numeric(sst_tidy[["Temp"]])
+  sst_tidy[["date"]] <- as.Date(
     ISOdate(
-      year = as.integer(sst_tidy$Year),
-      month = as.integer(sst_tidy$Month),
-      day = as.integer(sst_tidy$Day)
+      year = as.integer(sst_tidy[["Year"]]),
+      month = as.integer(sst_tidy[["Month"]]),
+      day = as.integer(sst_tidy[["Day"]])
     )
   )
-  sst_tidy$Temp[sst_tidy$Temp <= -999] <- NA_real_
+  sst_tidy[["Temp"]][sst_tidy[["Temp"]] <= -999] <- NA_real_
 
-  sst_tidy[, c("date", "Temp", "flag")]
+  sst_tidy[, c("date", "Temp", "flag"), drop = FALSE]
 }
 
 
@@ -1352,8 +1372,8 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #' @noRd
 .build_sst_zoo <- function(sst_tidy) {
   zoo::zoo(
-    x = data.frame(Temp = sst_tidy$Temp),
-    order.by = sst_tidy$date
+    x = data.frame(Temp = sst_tidy[["Temp"]]),
+    order.by = sst_tidy[["date"]]
   )
 }
 
@@ -1495,7 +1515,9 @@ get_jma_sst_ts <- function(sea_area_id, na_prop_max = 1) {
       !is.finite(na_prop_max) ||
       na_prop_max < 0 ||
       na_prop_max > 1) {
-    cli::cli_abort("`na_prop_max` must be between 0 and 1.")
+    cli::cli_abort(
+      "`na_prop_max` must be between 0 and 1 for get_jma_sst_ts()."
+    )
   }
 
   raw <- .fetch_jma_raw(sea_area_id)

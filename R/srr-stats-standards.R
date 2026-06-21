@@ -87,42 +87,265 @@
 #' to be univariate `ts` objects. Exogenous series are explicitly allowed to be
 #' univariate or multivariate where appropriate, and helper functions that
 #' operate on multivariate `ts` objects document and check those expectations.
-#' @srrstatsTODO {G2.3} *For univariate character input:*
-#' @srrstatsTODO {G2.3a} *Use `match.arg()` or equivalent where applicable to only permit expected values.*
-#' @srrstatsTODO {G2.3b} *Either: use `tolower()` or equivalent to ensure input of character parameters is not case dependent; or explicitly document that parameters are strictly case-sensitive.*
-#' @srrstatsTODO {G2.4} *Provide appropriate mechanisms to convert between different data types, potentially including:*
-#' @srrstatsTODO {G2.4a} *explicit conversion to `integer` via `as.integer()`*
-#' @srrstatsTODO {G2.4b} *explicit conversion to continuous via `as.numeric()`*
-#' @srrstatsTODO {G2.4c} *explicit conversion to character via `as.character()` (and not `paste` or `paste0`)*
-#' @srrstatsTODO {G2.4d} *explicit conversion to factor via `as.factor()`*
-#' @srrstatsTODO {G2.4e} *explicit conversion from factor via `as...()` functions*
-#' @srrstatsTODO {G2.5} *Where inputs are expected to be of `factor` type, secondary documentation should explicitly state whether these should be `ordered` or not, and those inputs should provide appropriate error or other routines to ensure inputs follow these expectations.* 
-#' @srrstatsTODO {G2.6} *Software which accepts one-dimensional input should ensure values are appropriately pre-processed regardless of class structures.* 
-#' @srrstatsTODO {G2.7} *Software should accept as input as many of the above standard tabular forms as possible, including extension to domain-specific forms.* 
-#' @srrstatsTODO {G2.8} *Software should provide appropriate conversion or dispatch routines as part of initial pre-processing to ensure that all other sub-functions of a package receive inputs of a single defined class or type.*
-#' @srrstatsTODO {G2.9} *Software should issue diagnostic messages for type conversion in which information is lost (such as conversion of variables from factor to character; standardisation of variable names; or removal of meta-data such as those associated with [`sf`-format](https://r-spatial.github.io/sf/) data) or added (such as insertion of variable or column names where none were provided).* 
-#' @srrstatsTODO {G2.10} *Software should ensure that extraction or filtering of single columns from tabular inputs should not presume any particular default behaviour, and should ensure all column-extraction operations behave consistently regardless of the class of tabular data used as input.* 
-#' @srrstatsTODO {G2.11} *Software should ensure that `data.frame`-like tabular objects which have columns which do not themselves have standard class attributes (typically, `vector`) are appropriately processed, and do not error without reason. This behaviour should be tested. Again, columns created by the [`units` package](https://github.com/r-quantities/units/) provide a good test case.*
-#' @srrstatsTODO {G2.12} *Software should ensure that `data.frame`-like tabular objects which have list columns should ensure that those columns are appropriately pre-processed either through being removed, converted to equivalent vector columns where appropriate, or some other appropriate treatment such as an informative error. This behaviour should be tested.* 
-#' @srrstatsTODO {G2.13} *Statistical Software should implement appropriate checks for missing data as part of initial pre-processing prior to passing data to analytic algorithms.*
-#' @srrstatsTODO {G2.14} *Where possible, all functions should provide options for users to specify how to handle missing (`NA`) data, with options minimally including:*
-#' @srrstatsTODO {G2.14a} *error on missing data*
-#' @srrstatsTODO {G2.14b} *ignore missing data with default warnings or messages issued*
-#' @srrstatsTODO {G2.14c} *replace missing data with appropriately imputed values*
-#' @srrstatsTODO {G2.15} *Functions should never assume non-missingness, and should never pass data with potential missing values to any base routines with default `na.rm = FALSE`-type parameters (such as [`mean()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/mean.html), [`sd()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/sd.html) or [`cor()`](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/cor.html)).*
-#' @srrstatsTODO {G2.16} *All functions should also provide options to handle undefined values (e.g., `NaN`, `Inf` and `-Inf`), including potentially ignoring or removing such values.* 
-#' @srrstatsTODO {G3.0} *Statistical software should never compare floating point numbers for equality. All numeric equality comparisons should either ensure that they are made between integers, or use appropriate tolerances for approximate equality.* 
-#' @srrstatsTODO {G3.1} *Statistical software which relies on covariance calculations should enable users to choose between different algorithms for calculating covariances, and should not rely solely on covariances from the `stats::cov` function.*
-#' @srrstatsTODO {G3.1a} *The ability to use arbitrarily specified covariance methods should be documented (typically in examples or vignettes).* 
-#' @srrstatsTODO {G4.0} *Statistical Software which enables outputs to be written to local files should parse parameters specifying file names to ensure appropriate file suffixes are automatically generated where not provided.* 
-#' @srrstatsTODO {G5.0} *Where applicable or practicable, tests should use standard data sets with known properties (for example, the [NIST Standard Reference Datasets](https://www.itl.nist.gov/div898/strd/), or data sets provided by other widely-used R packages).*
-#' @srrstatsTODO {G5.1} *Data sets created within, and used to test, a package should be exported (or otherwise made generally available) so that users can confirm tests and run examples.* 
-#' @srrstatsTODO {G5.2} *Appropriate error and warning behaviour of all functions should be explicitly demonstrated through tests. In particular,*
-#' @srrstatsTODO {G5.2a} *Every message produced within R code by `stop()`, `warning()`, `message()`, or equivalent should be unique*
-#' @srrstatsTODO {G5.2b} *Explicit tests should demonstrate conditions which trigger every one of those messages, and should compare the result with expected values.*
-#' @srrstatsTODO {G5.3} *For functions which are expected to return objects containing no missing (`NA`) or undefined (`NaN`, `Inf`) values, the absence of any such values in return objects should be explicitly tested.* 
-#' @srrstatsTODO {G5.4} **Correctness tests** *to test that statistical algorithms produce expected results to some fixed test data sets (potentially through comparisons using binding frameworks such as [RStata](https://github.com/lbraglia/RStata)).*
-#' @srrstatsTODO {G5.4a} *For new methods, it can be difficult to separate out correctness of the method from the correctness of the implementation, as there may not be reference for comparison. In this case, testing may be implemented against simple, trivial cases or against multiple implementations such as an initial R implementation compared with results from a C/C++ implementation.*
+#'
+#' @srrstats {G2.3} Univariate character inputs are validated according to
+#' whether they are open identifiers or restricted choices. Restricted choices
+#' include `na_action`, MASE scaling `method`, and the plotting `component`
+#' selector. Open character inputs such as file paths, JMA `sea_area_id`,
+#' labels, and URL-related strings are checked for type and length rather than
+#' constrained to a fixed set of values.
+#'
+#' @srrstats {G2.3a} Restricted character choices use `match.arg()` or an
+#' equivalent explicit membership check. `tempssm()` and
+#' `.tempssm_prepare_model_inputs()` validate `na_action` with `match.arg()`.
+#' `.compute_mase()` and `.scale_Q()` validate `method` with `match.arg()`.
+#' `autoplot.tempssm()` validates `component` against the known component
+#' names `level`, `drift`, `season`, and `ar1`.
+#'
+#' @srrstats {G2.3b} Restricted character choices are intentionally
+#' case-sensitive. The package does not silently convert values with
+#' `tolower()`, because accepted values are documented explicitly and invalid
+#' or differently cased inputs should fail early. Unit tests cover invalid and
+#' uppercase `na_action` values, invalid MASE scaling methods, and invalid
+#' plotting component names.
+#' @srrstats {G2.4} Type conversion is explicit and localized to input
+#' preprocessing or output construction. The package generally validates
+#' expected input classes instead of silently coercing arbitrary user inputs.
+#' Explicit conversions are used where they preserve the intended statistical
+#' representation, such as constructing time indices, stripping optional
+#' `units` attributes, converting `ts` values to numeric vectors for
+#' calculations or plotting, and converting numeric JMA area IDs to character
+#' endpoint identifiers.
+#'
+#' @srrstats {G2.4a} Integer-like conversions use `as.integer()` explicitly.
+#' Examples include construction of year-month indices from `Date`, `Year`,
+#' and `Month` fields, rounding and checking integer seasonal frequencies,
+#' and using integer seasonal cycle positions to index climatological means.
+#'
+#' @srrstats {G2.4b} Continuous numeric conversions use `as.numeric()`
+#' explicitly. Examples include converting time-series values to numeric
+#' vectors for anomaly, climatology, cross-validation metric, and plotting
+#' calculations, converting `units` inputs to numeric values with a warning,
+#' and extracting numeric values from model summaries and prediction
+#' intervals.
+#'
+#' @srrstats {G2.4c} Character conversions use `as.character()` where an
+#' existing object must be represented as character data. Numeric JMA
+#' `sea_area_id` values are explicitly converted with `as.character()` before
+#' URL construction, and package version values are converted with
+#' `as.character()` for the user-agent string. `paste()` and `paste0()` are
+#' used only to build messages, labels, names, file names, and URLs, not as
+#' substitutes for type conversion.
+#'
+#' @srrstats {G2.4d} Factor conversion is explicit where categorical seasonal
+#' grouping is needed internally. `compute_monthly_climatology()` constructs
+#' `factor(stats::cycle(temp_ts), levels = seq_len(freq_int))` so that all
+#' seasonal periods are represented in a controlled order, including periods
+#' whose values may be entirely missing.
+#' @srrstats {G2.6} One-dimensional inputs are pre-processed through shared
+#' validation and coercion paths. Temperature-like analytical inputs must
+#' inherit from base R `ts` and are checked with
+#' `.tempssm_check_univariate_ts()`, which rejects multivariate `ts` objects
+#' while preserving valid univariate time-series attributes. Numeric
+#' one-dimensional inputs used in forecast accuracy calculations are checked
+#' for compatible lengths and converted with `as.numeric()` before arithmetic.
+#' Optional `units` one-dimensional `ts` inputs are stripped to numeric values
+#' with an explicit warning while preserving `start`, `frequency`, and
+#' dimensions. Unit tests cover univariate, multivariate, non-`ts`, numeric,
+#' and `units` inputs.
+#'
+#' @srrstats {G2.7} The core modelling API uses base R `ts` objects because
+#' the implemented state-space and cross-validation routines require regular
+#' time-series attributes. Standard tabular and domain-specific input forms
+#' are accepted through explicit conversion helpers before modelling:
+#' `convert_monthly_df_to_ts()` accepts `data.frame` inputs and compatible
+#' subclasses such as `tibble`; `read_monthly_temp_ts()` accepts CSV files and
+#' converts them through the same data-frame pathway; `get_jma_sst_zoo()`
+#' returns daily JMA SST data as a `zoo` object; and
+#' `daily_zoo_to_monthly_ts()` converts daily `zoo` data to monthly `ts`
+#' objects. The package therefore supports base tabular, CSV, and
+#' domain-specific indexed time-series inputs while keeping analytical
+#' routines on a single regular `ts` representation.
+#'
+#' @srrstats {G2.8} Conversion and standardization are performed at package
+#' entry points before data are passed to analytical sub-functions. The
+#' modelling and cross-validation APIs call `.tempssm_prepare_model_inputs()`,
+#' which validates temperature and exogenous inputs, assigns default exogenous
+#' names when explicitly allowed, checks frequency and time-index consistency,
+#' applies the requested temperature missing-value policy, rejects missing
+#' exogenous covariates, and returns a uniform list with validated base R `ts`
+#' objects plus common `frequency` and `n_obs` metadata.
+#' Tabular, CSV, and `zoo` conversion helpers similarly return regular `ts`
+#' objects before those data are used by modelling or utility functions.
+#'
+#' @srrstats {G2.9} Diagnostic messages are issued when preprocessing loses or
+#' adds information. Optional `units` attributes are stripped only with an
+#' explicit warning that the values have been converted to numeric values.
+#' Unnamed exogenous `ts` inputs are accepted only in workflows where default
+#' names are explicitly allowed, and a warning is issued before names such as
+#' `var1`, `var2`, ... are added. Monthly data-frame and CSV conversion warns
+#' when input rows are sorted by date, and warns when implicit missing months
+#' are inserted as explicit `NA` values. These behaviours are covered by unit
+#' tests for `tempssm()` input preparation, tabular conversion, CSV reading,
+#' and daily `zoo` aggregation.
+#'
+#' @srrstats {G2.10} Single-column extraction from tabular inputs avoids
+#' relying on class-specific default simplification. Monthly data-frame and
+#' CSV conversion use `[[ ]]` to extract `Date` and `Temp` vectors, and row
+#' filtering uses `drop = FALSE` to preserve tabular structure. Internal JMA
+#' parsing and `zoo` construction similarly use `[[ ]]` for column vectors and
+#' `drop = FALSE` when returning subsets. Daily `zoo` aggregation extracts the
+#' selected variable with `zoo_obj[, var, drop = FALSE]`. Tests cover base
+#' `data.frame`, compatible `tibble`, and `zoo` inputs.
+#'
+#' @srrstats {G2.11} Data-frame-like inputs are processed column-wise through
+#' explicit extraction and validation. Standard `Date` and numeric vector
+#' columns are handled without class-dependent assumptions. Temperature value
+#' columns with class `units` are accepted in monthly tabular conversion,
+#' stripped to numeric values with an explicit warning, and then converted to
+#' regular `ts` objects. Unit tests cover `units` temperature columns in both
+#' base `data.frame` and compatible `tibble` inputs, confirming that
+#' non-standard column attributes are pre-processed rather than causing
+#' avoidable errors.
+#'
+#' @srrstats {G2.12} List columns in tabular temperature inputs are rejected
+#' with informative errors rather than being silently simplified. Monthly
+#' tabular conversion requires `Temp` to be a numeric vector, or a `units`
+#' vector that can be stripped to numeric values with a warning. Because list
+#' columns can contain heterogeneous lengths or types, automatic `unlist()`
+#' conversion would risk changing the intended observations. Unit tests cover
+#' list-valued `Temp` columns in both base `data.frame` and compatible
+#' `tibble` inputs.
+#'
+#' @srrstats {G2.13} Missing data are checked during initial preprocessing
+#' before analytical routines are called. `tempssm()` and
+#' `ts_train_test_split()` both call `.tempssm_prepare_model_inputs()`, which
+#' checks explicit missing response values through
+#' `.tempssm_handle_missing_ts()` and rejects missing exogenous covariates
+#' before model fitting, state-space construction, or rolling splits proceed.
+#' Monthly tabular and CSV conversion reject missing date/index fields, insert
+#' implicit missing months as explicit `NA` values with a warning, and
+#' preserve explicit missing temperatures. Daily `zoo` aggregation validates
+#' non-missing date indexes, summarizes missing daily values according to
+#' `na.rm` and `na_prop_max`, and warns when many monthly values are missing
+#' after aggregation.
+#'
+#' @srrstats {G2.14} User-facing modelling and cross-validation functions
+#' provide explicit options for handling missing temperature observations
+#' through the `na_action` argument. The shared preprocessing helper
+#' `.tempssm_handle_missing_ts()` implements the temperature-series policy
+#' before model fitting or rolling-origin splitting proceeds. Missing
+#' exogenous covariates are always rejected because KFAS regression terms
+#' require complete covariate values. Conversion utilities also expose
+#' missing-value controls where relevant, such as `na.rm` and `na_prop_max` in
+#' daily-to-monthly `zoo` aggregation.
+#'
+#' @srrstats {G2.14a} `na_action = "error"` stops when explicit missing
+#' values are detected in temperature `ts` inputs. Missing values in
+#' exogenous `ts` inputs always stop preprocessing, regardless of
+#' `na_action`.
+#'
+#' @srrstats {G2.14b} `na_action = "warn"` issues a warning and proceeds with
+#' explicit `NA` temperature observations, while `na_action = "allow"`
+#' proceeds silently when users intentionally want to leave missing response
+#' values to the state-space estimation machinery.
+#'
+#' @srrstats {G2.15} Calculations that may receive missing values pass
+#' explicit missing-value handling options to base summary routines. Forecast
+#' accuracy metrics use `mean(..., na.rm = TRUE)` so held-out missing values do
+#' not silently propagate through MAE or MASE calculations. Daily-to-monthly
+#' aggregation exposes `na.rm` to users and forwards that value to `mean()`.
+#' Residual kurtosis computes all moment means with an explicit `na.rm`
+#' argument. Missing-value proportions are calculated with `mean(is.na(x))`,
+#' where `is.na()` returns a complete logical vector.
+#'
+#' @srrstats {G2.16} Undefined numeric values are handled separately from
+#' explicit missing `NA` observations. Model and cross-validation inputs reject
+#' `NaN`, `Inf`, and `-Inf` values during shared preprocessing via
+#' `.tempssm_check_no_undefined()`. This preserves the package distinction
+#' between missing response observations, which linear Gaussian state-space
+#' models can handle, and undefined numeric values, which would make
+#' likelihood evaluation and regression covariates ill-defined. Tabular and
+#' daily `zoo` conversion helpers apply the same check before constructing
+#' regular `ts` objects. Unit tests cover undefined values in temperature,
+#' exogenous, data-frame, and `zoo` inputs.
+#'
+#' @srrstats {G3.0} Floating-point values are not compared for exact equality
+#' in statistical calculations. Time-series frequencies and time indexes are
+#' compared with `all.equal()`, and integer-like numeric controls such as
+#' `ar_order`, cross-validation window sizes, worker counts, and plot layout
+#' dimensions are checked through `.tempssm_is_integerish()` using a tolerance
+#' based on `sqrt(.Machine$double.eps)`. Near-zero MASE scaling factors are
+#' treated as invalid with the same tolerance. Exact equality comparisons that
+#' remain in package code are limited to integer counts, lengths, convergence
+#' codes, logical values, or character choices.
+#'
+#' @srrstats {G4.0} The only package function that writes local output files
+#' is `plot_tempssm_residual_diagnostics(save = TRUE)`. It accepts a
+#' `prefix` argument rather than complete file names, parses any supplied file
+#' extension with `tools::file_path_sans_ext()`, and then automatically
+#' generates the two PNG output paths `*_check.png` and `*_qq.png`. Unit tests
+#' verify that prefixes with and without an extension produce correctly
+#' suffixed PNG files and do not create double-extension file names.
+#'
+#' @srrstats {G5.0} Unit tests include the base R `datasets::nottem`
+#' monthly temperature series as a standard data set with known properties.
+#' Tests verify its `ts` start, end, frequency, length, and initial values,
+#' and then exercise `compute_monthly_climatology()` and
+#' `ts_train_test_split()` on this standard series. Package examples and other
+#' tests also use exported domain data sets such as `niigata_sst`.
+#'
+#' @srrstats {G5.1} Fixed data sets created for package examples and tests
+#' are exported through the package `data/` directory and documented with
+#' roxygen data objects. These include `fuji_temp`, `hmo_temp`, `nao`,
+#' `niigata_sst`, `pdo`, `soi`, and `yamaguchi_sst`. Unit tests verify that
+#' all of these data sets can be loaded with `data(..., package = "tempssm")`
+#' and are regular monthly `ts` objects. Other test inputs are generated
+#' directly within the test suite with fixed seeds, so they are reproducible
+#' without hidden package-internal data files.
+#'
+#' @srrstats {G5.2} Error and warning behaviour is tested throughout the
+#' test suite with `expect_error()`, `expect_warning()`, and
+#' `expect_message()` checks. Tests cover invalid input classes, invalid
+#' scalar argument lengths and types, missing and undefined values,
+#' incompatible time-series alignment, unsupported model structures,
+#' non-convergence handling, file and URL input failures, and plotting
+#' argument validation.
+#'
+#' @srrstats {G5.2a} Directly coded condition messages in package R code are
+#' unique. Component-specific validation messages include the relevant
+#' function or component name where the same argument is checked in multiple
+#' functions. The test suite includes a static check that literal messages
+#' passed directly to `stop()`, `warning()`, `message()`, `cli::cli_abort()`,
+#' `cli::cli_warn()`, or `cli::cli_inform()` are not duplicated.
+#'
+#' @srrstats {G5.2b} Explicit tests use `expect_error()`,
+#' `expect_warning()`, and `expect_message()` with expected message patterns
+#' for package-defined conditions. A static unit test parses the test suite
+#' and verifies that every condition expectation supplies an expected message
+#' argument, so newly added condition tests cannot silently omit comparison
+#' against expected diagnostic text.
+#'
+#' @srrstats {G5.3} Functions whose return values are expected to be complete
+#' are tested for absence of missing and undefined values. The test suite
+#' checks model component accessors, residual diagnostics, summaries,
+#' exogenous coefficient extraction, complete-input time-series utilities, and
+#' cross-validation split objects with a shared helper that rejects `NA`,
+#' `NaN`, `Inf`, and `-Inf`. Functions that intentionally preserve or return
+#' `NA` values are tested separately for that behaviour, including explicit
+#' missing response observations, implicit missing months, undefined MASE
+#' denominators, and non-seasonal `Q_season`.
+#'
+#' @srrstats {G5.4} Correctness tests compare package calculations against
+#' fixed expected results. These tests include hand-computed MAE, MASE, and
+#' scaling factors; fixed seasonal anomaly values; monthly data-frame to `ts`
+#' conversion; rolling-origin train/test split values; prediction-interval
+#' trimming; and known properties of the base R `datasets::nottem` monthly
+#' temperature series. The state-space likelihood, filtering, and smoothing
+#' algorithms themselves are delegated to `KFAS`; tests for `tempssm()` focus
+#' on correct construction, validation, extraction, and post-processing around
+#' that backend.
+#' 
 #' @srrstatsTODO {G5.4b} *For new implementations of existing methods, correctness tests should include tests against previous implementations. Such testing may explicitly call those implementations in testing, preferably from fixed-versions of other software, or use stored outputs from those where that is not possible.*
 #' @srrstatsTODO {G5.4c} *Where applicable, stored values may be drawn from published paper outputs when applicable and where code from original implementations is not available*
 #' @srrstatsTODO {G5.5} *Correctness tests should be run with a fixed random seed*
@@ -252,22 +475,26 @@
 #' 
 #' @srrstats {TS2.1} The main modelling and cross-validation entry points
 #' provide a \code{na_action} argument controlling how explicit missing values
-#' in regular `ts` inputs are handled. The argument is passed through the
-#' shared input pre-processing routine `.tempssm_prepare_model_inputs()`, so
-#' `tempssm()` and `ts_train_test_split()` use the same missing-data policy.
-#' Conversion utilities also expose missing-data controls where aggregation is
-#' performed, such as `na.rm` and `na_prop_max` in
-#' `daily_zoo_to_monthly_ts()`.
+#' in the regular temperature `ts` input are handled. The argument is passed
+#' through the shared input pre-processing routine
+#' `.tempssm_prepare_model_inputs()`, so `tempssm()` and
+#' `ts_train_test_split()` use the same missing-data policy. Missing
+#' exogenous covariates are not controlled by `na_action`; they are rejected
+#' because regression covariates must be complete. Conversion utilities also
+#' expose missing-data controls where aggregation is performed, such as
+#' `na.rm` and `na_prop_max` in `daily_zoo_to_monthly_ts()`.
 #' 
 #' @srrstats {TS2.1a} Setting `na_action = "error"` in `tempssm()` or
 #' `ts_train_test_split()` stops during input pre-processing if explicit
-#' missing values are detected in `temp_data` or `exo_data`.
+#' missing values are detected in `temp_data`. Missing values in `exo_data`
+#' always stop input pre-processing.
 #' 
 #' @srrstats {TS2.1b} The default `na_action = "warn"` issues a diagnostic
-#' warning and proceeds with explicit `NA` observations. Setting
-#' `na_action = "allow"` proceeds silently. Because these paths preserve the
-#' original regular `ts` object and its explicit missing values, results are
-#' based on the same time index rather than on an implicitly shortened series.
+#' warning and proceeds with explicit `NA` temperature observations. Setting
+#' `na_action = "allow"` proceeds silently for missing temperature responses.
+#' Because these paths preserve the original regular `ts` object and its
+#' explicit missing response values, results are based on the same time index
+#' rather than on an implicitly shortened series.
 #' 
 #' @srrstatsTODO {TS2.1c} *replace missing data with appropriately imputed values.* 
 #' 
@@ -477,6 +704,51 @@ NULL
 #' domain-focused workflow layer for temperature time-series analysis rather
 #' than as a faster, more accurate, or otherwise superior alternative to
 #' packages such as `KFAS`, `forecast`, `dlm`, `bsts`, or `MARSS`.
+#'
+#' @srrstatsNA {G5.4a} This package does not introduce a novel statistical
+#' estimation method for which no reference implementation exists. Linear
+#' Gaussian state-space likelihood evaluation, Kalman filtering, smoothing,
+#' and parameter optimization are delegated to the established `KFAS`
+#' backend. Correctness tests therefore focus on package-owned calculations
+#' and interfaces around that backend, including fixed-value tests for
+#' scaling, anomaly calculation, time-series conversion, rolling-origin
+#' splitting, and prediction-interval trimming.
+#'
+#' @srrstatsNA {G2.4e} The package does not accept factor inputs as a
+#' supported user-facing data type. Temperature and exogenous inputs are
+#' validated as `ts` objects, tabular date columns are validated as `Date`,
+#' and scalar controls are validated as numeric, logical, or character values.
+#' Therefore there is no user-facing factor-to-other-type conversion path.
+#'
+#' @srrstatsNA {G2.5} The package does not expect factor inputs in its
+#' user-facing API. Factor objects are created only internally for seasonal
+#' grouping in `compute_monthly_climatology()`, with levels set explicitly from
+#' the validated integer seasonal frequency. Because users do not supply factor
+#' inputs, there is no ordered-versus-unordered factor expectation to document
+#' or validate.
+#'
+#' @srrstatsNA {G2.14c} The package does not provide automatic imputation as a
+#' missing-data option. For linear Gaussian state-space models, explicit
+#' missing response observations can be handled by the Kalman filtering and
+#' smoothing machinery when users choose `na_action = "warn"` or `"allow"`.
+#' Exogenous covariates are different: KFAS regression terms require complete
+#' covariate values, so missing `exo_data` values stop preprocessing. Replacing
+#' missing values with imputed values before fitting would add a separate
+#' statistical assumption and could change the likelihood, diagnostics, and
+#' uncertainty interpretation. Users who require imputation should perform and
+#' document that preprocessing step before calling `tempssm()`.
+#'
+#' @srrstatsNA {G3.1} The package does not compute empirical covariance
+#' matrices with `stats::cov()` or any alternative covariance estimator.
+#' Variance parameters in `tempssm()` are scalar observation and state
+#' disturbance variances estimated through `KFAS::fitSSM()`, and Kalman
+#' filtering and smoothing covariance recursions are handled internally by the
+#' `KFAS` backend. There is therefore no package-level covariance algorithm
+#' for users to choose.
+#'
+#' @srrstatsNA {G3.1a} Because the package does not expose a covariance
+#' estimation method or call `stats::cov()`, there is no arbitrarily specified
+#' covariance method to document in examples or vignettes.
 #'
 #' @srrstatsNA {TS2.4a} The package uses parameter transformations to enforce
 #' the relevant stationarity constraint, so routine warnings are not needed for

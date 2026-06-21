@@ -11,7 +11,10 @@ plot_tempssm_residual_diagnostics(res, save = FALSE, prefix = "residuals")
 
 \item{save}{Logical scalar; if TRUE, plots are saved.}
 
-\item{prefix}{Character scalar used as the prefix for file names.}
+\item{prefix}{Character scalar used as the prefix for file names.
+Diagnostic suffixes and the \code{.png} extension are added
+automatically. If \code{prefix} includes a file extension, that extension
+is removed before output names are generated.}
 }
 \value{
 Invisibly returns NULL. Called for its side effects (plots).

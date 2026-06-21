@@ -24,8 +24,14 @@ test_that("read_monthly_temp_ts works for valid CSV", {
 
 
 test_that("errors when csv is not character scalar", {
-  expect_error(read_monthly_temp_ts(123))
-  expect_error(read_monthly_temp_ts(c("a", "b")))
+  expect_error(
+    read_monthly_temp_ts(123),
+    "`csv` must be a file path"
+  )
+  expect_error(
+    read_monthly_temp_ts(c("a", "b")),
+    "`csv` must be a file path"
+  )
 })
 
 

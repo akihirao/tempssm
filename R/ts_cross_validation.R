@@ -319,7 +319,7 @@ ts_cv_run_fold <- function(fold,
 
   .tempssm_check_length_one(ar_order, "ar_order")
   .tempssm_check_numeric(ar_order, "ar_order")
-  if (is.na(ar_order) || ar_order < 1 || ar_order != floor(ar_order)) {
+  if (is.na(ar_order) || ar_order < 1 || !.tempssm_is_integerish(ar_order)) {
     cli::cli_abort(
       "The argument {.arg ar_order} must be an integer >= 1."
     )
@@ -493,7 +493,7 @@ ts_train_test_split <- function(temp_data,
       !is.numeric(step) ||
       anyNA(c(initial, horizon, step)) ||
       any(!is.finite(c(initial, horizon, step))) ||
-      any(c(initial, horizon, step) != as.integer(c(initial, horizon, step))) ||
+      any(!.tempssm_is_integerish(c(initial, horizon, step))) ||
       any(c(initial, horizon, step) < 1)) {
     cli::cli_abort(
       "`initial`, `horizon`, and `step` must be positive integers."
@@ -703,7 +703,7 @@ ts_cv_run <- function(
 
   .tempssm_check_length_one(ar_order, "ar_order")
   .tempssm_check_numeric(ar_order, "ar_order")
-  if (is.na(ar_order) || ar_order < 1 || ar_order != floor(ar_order)) {
+  if (is.na(ar_order) || ar_order < 1 || !.tempssm_is_integerish(ar_order)) {
     cli::cli_abort(
       "The argument {.arg ar_order} must be an integer >= 1."
     )
@@ -728,7 +728,7 @@ ts_cv_run <- function(
   .tempssm_check_length_one(workers, "workers")
   .tempssm_check_numeric(workers, "workers")
   if (is.na(workers) || !is.finite(workers) ||
-      workers < 1 || workers != floor(workers)) {
+      workers < 1 || !.tempssm_is_integerish(workers)) {
     cli::cli_abort(
       "{.arg workers} must be a positive integer scalar."
     )
@@ -904,7 +904,7 @@ ts_cv_run <- function(
     }
   )
 
-  if (is.na(Q) || Q == 0) {
+  if (is.na(Q) || abs(Q) <= sqrt(.Machine$double.eps)) {
     .tempssm_cli_debug("Invalid scaling factor (Q is NA or zero)")
     return(NA_real_)
   }

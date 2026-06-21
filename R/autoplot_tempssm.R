@@ -19,7 +19,7 @@
       length(nrow) != 1 ||
       !is.finite(nrow) ||
       nrow < 1 ||
-      nrow != as.integer(nrow)) {
+      !.tempssm_is_integerish(nrow)) {
     stop("`nrow` must be a positive integer.", call. = FALSE)
   }
 
@@ -27,7 +27,7 @@
       length(ncol) != 1 ||
       !is.finite(ncol) ||
       ncol < 1 ||
-      ncol != as.integer(ncol)) {
+      !.tempssm_is_integerish(ncol)) {
     stop("`ncol` must be a positive integer.", call. = FALSE)
   }
 

@@ -105,6 +105,12 @@ test_that("ci = FALSE returns univariate ts", {
 
 
 test_that("ci_level boundary values", {
-  expect_error(get_drift_ts(res_tempssm, ci = TRUE, ci_level = 0))
-  expect_error(get_drift_ts(res_tempssm, ci = TRUE, ci_level = 1))
+  expect_error(
+    get_drift_ts(res_tempssm, ci = TRUE, ci_level = 0),
+    "ci_level.*between 0 and 1"
+  )
+  expect_error(
+    get_drift_ts(res_tempssm, ci = TRUE, ci_level = 1),
+    "ci_level.*between 0 and 1"
+  )
 })

@@ -57,8 +57,14 @@ test_that(".validate_tempssm_for_ic errors if model or fit is NULL", {
   bad_res2 <- res_tempssm
   bad_res2$fit <- NULL
 
-  expect_error(.validate_tempssm_for_ic(bad_res1))
-  expect_error(.validate_tempssm_for_ic(bad_res2))
+  expect_error(
+    .validate_tempssm_for_ic(bad_res1),
+    "fitted model is missing"
+  )
+  expect_error(
+    .validate_tempssm_for_ic(bad_res2),
+    "fitted model is missing"
+  )
 })
 
 

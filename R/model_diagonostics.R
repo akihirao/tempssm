@@ -34,12 +34,10 @@ get_tempssm_residuals <- function(res) {
 #' @keywords internal
 #' @noRd
 .kurtosis <- function(x, na.rm = FALSE) {
-  if (na.rm) {
-    x <- x[!is.na(x)]
-  }
+  mu <- mean(x, na.rm = na.rm)
 
-  m2 <- mean((x - mean(x))^2)
-  m4 <- mean((x - mean(x))^4)
+  m2 <- mean((x - mu)^2, na.rm = na.rm)
+  m4 <- mean((x - mu)^4, na.rm = na.rm)
 
   m4 / m2^2
 }
@@ -123,11 +121,33 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
 }
 
 
+#' Build residual diagnostic plot file paths
+#'
+#' @param prefix Character scalar used as the path prefix. If a file extension
+#'   is supplied, it is removed before diagnostic suffixes are appended.
+#'
+#' @return A named character vector with file paths for diagnostic plots.
+#'
+#' @keywords internal
+#' @noRd
+.residual_diagnostic_paths <- function(prefix) {
+  prefix_base <- tools::file_path_sans_ext(prefix)
+
+  c(
+    check = paste0(prefix_base, "_check.png"),
+    qq = paste0(prefix_base, "_qq.png")
+  )
+}
+
+
 #' Plot residual diagnostics for tempssm models
 #'
 #' @inheritParams get_level_ts
 #' @param save Logical scalar; if TRUE, plots are saved.
 #' @param prefix Character scalar used as the prefix for file names.
+#'   Diagnostic suffixes and the \code{.png} extension are added
+#'   automatically. If \code{prefix} includes a file extension, that extension
+#'   is removed before output names are generated.
 #'
 #' @return
 #' Invisibly returns NULL. Called for its side effects (plots).
@@ -162,11 +182,13 @@ plot_tempssm_residual_diagnostics <- function(res,
   forecast::checkresiduals(r, test = FALSE)
 
   if (save) {
-    grDevices::png(paste0(prefix, "_check.png"), 600, 400)
+    paths <- .residual_diagnostic_paths(prefix)
+
+    grDevices::png(paths[["check"]], 600, 400)
     forecast::checkresiduals(r, test = FALSE)
     grDevices::dev.off()
 
-    grDevices::png(paste0(prefix, "_qq.png"), 600, 400)
+    grDevices::png(paths[["qq"]], 600, 400)
     stats::qqnorm(r)
     stats::qqline(r)
     grDevices::dev.off()

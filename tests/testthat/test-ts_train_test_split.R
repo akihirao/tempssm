@@ -129,6 +129,21 @@ test_that("ts_train_test_split can error on missing values", {
 })
 
 
+test_that("ts_train_test_split rejects missing exogenous values", {
+  exo_ts <- exo_ts_test
+  exo_ts[2] <- NA
+
+  expect_error(
+    ts_train_test_split(
+      temp_ts_test,
+      exo_data = exo_ts,
+      na_action = "allow"
+    ),
+    "Exogenous covariates must be complete"
+  )
+})
+
+
 test_that("ts_train_test_split validates scalar argument lengths", {
   expect_error(
     ts_train_test_split(temp_ts_test, initial = c(24, 36)),

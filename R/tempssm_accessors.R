@@ -20,13 +20,15 @@
 #' }
 get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm' for get_level_ts().",
+      call. = FALSE
+    )
   }
 
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
       ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
+      stop("`ci_level` must be a numeric value between 0 and 1: get_level_ts().",
         call. = FALSE
       )
     }
@@ -91,13 +93,15 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' }
 get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm' for get_drift_ts().",
+      call. = FALSE
+    )
   }
 
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
       ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
+      stop("`ci_level` must be a numeric value between 0 and 1: get_drift_ts().",
         call. = FALSE
       )
     }
@@ -166,13 +170,15 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' }
 get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm' for get_season_ts().",
+      call. = FALSE
+    )
   }
 
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
       ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
+      stop("`ci_level` must be a numeric value between 0 and 1: get_season_ts().",
         call. = FALSE
       )
     }
@@ -250,13 +256,15 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' }
 get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm' for get_ar1_ts().",
+      call. = FALSE
+    )
   }
 
   if (ci) {
     if (!is.numeric(ci_level) || length(ci_level) != 1 ||
       ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1.",
+      stop("`ci_level` must be a numeric value between 0 and 1: get_ar1_ts().",
         call. = FALSE
       )
     }
@@ -324,7 +332,10 @@ get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' @export
 get_tempssm_params <- function(res) {
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm.'", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm' ",
+      "for get_tempssm_params().",
+      call. = FALSE
+    )
   }
 
   if (is.null(res$fit) || is.null(res$fit$optim.out) ||
@@ -403,13 +414,15 @@ get_tempssm_params <- function(res) {
 #' @export
 get_exo_coef <- function(res, ci_level = 0.95) {
   if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm'.", call. = FALSE)
+    stop("`res` must be an object of class 'tempssm' for get_exo_coef().",
+      call. = FALSE
+    )
   }
 
   if (!is.numeric(ci_level) || length(ci_level) != 1 ||
     ci_level <= 0 || ci_level >= 1) {
     stop(
-      "`ci_level` must be a numeric value between 0 and 1.",
+      "`ci_level` must be a numeric value between 0 and 1 for get_exo_coef().",
       call. = FALSE
     )
   }

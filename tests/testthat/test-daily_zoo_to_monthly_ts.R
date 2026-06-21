@@ -54,8 +54,14 @@ test_that("errors for invalid na_prop_max", {
     order.by = dates
   )
 
-  expect_error(daily_zoo_to_monthly_ts(zoo_obj, na_prop_max = -1))
-  expect_error(daily_zoo_to_monthly_ts(zoo_obj, na_prop_max = 2))
+  expect_error(
+    daily_zoo_to_monthly_ts(zoo_obj, na_prop_max = -1),
+    "na_prop_max.*between 0 and 1"
+  )
+  expect_error(
+    daily_zoo_to_monthly_ts(zoo_obj, na_prop_max = 2),
+    "na_prop_max.*between 0 and 1"
+  )
   expect_error(
     daily_zoo_to_monthly_ts(zoo_obj, na_prop_max = c(0.2, 0.5)),
     "na_prop_max.*length one"
@@ -146,6 +152,20 @@ test_that("na.rm works correctly in aggregation", {
   res <- daily_zoo_to_monthly_ts(zoo_obj, na.rm = TRUE)
 
   expect_false(is.na(res[1]))
+})
+
+
+test_that("undefined values after aggregation trigger error", {
+  dates <- seq.Date(as.Date("2001-01-01"), by = "day", length.out = 30)
+  zoo_obj <- zoo::zoo(
+    data.frame(Temp = c(Inf, rep(1, 29))),
+    order.by = dates
+  )
+
+  expect_error(
+    daily_zoo_to_monthly_ts(zoo_obj),
+    "Inf"
+  )
 })
 
 
