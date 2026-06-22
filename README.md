@@ -47,10 +47,12 @@ temperature time-series analysis.
 ## Installation
 
 ```r
-if (!requireNamespace("devtools", quietly = TRUE)) {
-  install.packages("devtools")
-}
+# Install from Github
+# install.packages("pak")
+pak::pack("akihirao/tempssm")
 
+# Alternative
+# install.packages("devtools")
 devtools::install_github("akihirao/tempssm")
 ```
 
@@ -60,7 +62,11 @@ A short tutorial is available in the package vignette:
 
 <https://github.com/akihirao/tempssm/blob/main/vignettes/tutorial.pdf>
 
-A more detailed PDF manual is also available:
+A comprehensive reference manual (English) is available here:
+
+<https://github.com/akihirao/tempssm/blob/main/tools/manual/tempssm_manual.pdf>
+
+For Japanese users, a detailed manual is also provided:
 
 <https://github.com/akihirao/tempssm/blob/main/tools/manual/tempssm_manual.pdf>
 
