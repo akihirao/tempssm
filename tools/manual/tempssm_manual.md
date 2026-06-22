@@ -152,18 +152,6 @@ library(dplyr)
 library(ggplot2)
 
 library(patchwork)
-
-# For parallel processing
-library(progressr)
-library(future.apply)
-library(future)
-
-# enable parallel execution (optional)
-if (interactive()) {
-  plan(multisession)
-} else {
-  plan(sequential)
-}
 ```
 
 ## Input Data Format
@@ -787,6 +775,22 @@ the exogenous PDO variable, we assess whether the improvement suggested
 by AIC is also reflected in out-of-sample predictive performance.
 
 ``` r
+# (Optional) Load packages for parallel processing.
+# These are only required if you want to enable parallel execution:
+# - future: controls how parallel workers are launched
+# - future.apply: provides parallelized apply functions
+# - progressr: optional progress bar support
+library(future.apply)
+library(future)
+library(progressr)
+
+if (interactive()) {
+  future::plan(multisession)
+} else {
+  future::plan(sequential)
+}
+
+
 # ts cross-validation of the model without exogenous variables
 
 ## Generate a list of training and test datasets with their indices
@@ -832,7 +836,18 @@ folds_with <- ts_train_test_split(
 
 #-------------------------------------------------- 
 # Model without the exogenous variable of PDA index
-cv_without_results <- ts_cv_run(folds_without, ar_order = 2, use_season = TRUE)
+
+# Single processing
+# cv_without_results <- ts_cv_run(folds_without, ar_order = 2, use_season = TRUE)
+
+# Parallel processing
+cv_without_results <- future.apply::future_lapply(
+  folds_without,
+  ts_cv_run_fold,
+  ar_order = 2,
+  use_season =TRUE,
+  future.seed = TRUE
+)
 
 # Couputing assessment indexes
 metrics_without <- lapply(cv_without_results, compute_cv_metrics)
@@ -844,7 +859,18 @@ cv_without_tbl <- ts_cv_collect(cv_without_results, metrics_without) %>%
 
 #-------------------------------------------------- 
 # Model with the exogenous variable of PDA index
-cv_with_results <- ts_cv_run(folds_with, ar_order = 2, use_season = TRUE)
+
+# Single processing
+#cv_with_results <- ts_cv_run(folds_with, ar_order = 2, use_season = TRUE)
+
+# Parallel processing
+cv_with_results <- future.apply::future_lapply(
+  folds_with,
+  ts_cv_run_fold,
+  ar_order = 2,
+  use_season =TRUE,
+  future.seed = TRUE
+)
 
 # Couputing assessment indexes
 metrics_with <- lapply(cv_with_results, compute_cv_metrics)
@@ -852,7 +878,7 @@ metrics_with <- lapply(cv_with_results, compute_cv_metrics)
 # tidy summary
 cv_with_tbl <- ts_cv_collect(cv_with_results, metrics_with) %>%
   mutate(Model="With")
-#}
+
 
 cv_tbl <- bind_rows(cv_without_tbl, cv_with_tbl)
 
