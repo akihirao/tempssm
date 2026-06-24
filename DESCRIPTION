@@ -8,8 +8,10 @@ Authors@R: c(
       email = "akihirao@gmail.com",
       role = c("aut", "cre")),
     person(
+      given="Shinya", family="Baba",
+      role = c("aut"),
+    person(
       given="Momoko", family="Ichinokawa",
-      email = "ichinokawa_momoko09@fra.go.jp",
       role = c("aut")
     )
   )

@@ -1,15 +1,15 @@
 ---
 title: "tempssm Reference Manual"
 subtitle: "Version `r packageVersion('tempssm')`"
-author: "Akira Hirao and Momoko Ichinokawa"
+author: "Akira S. Hirao, Shinya Baba, and Momoko Ichinokawa"
 date: "`r Sys.Date()`"
 output:
 #  pdf_document:
 #    latex_engine: lualatex
 #    toc: true
-  rmarkdown::html_vignette: default
-#  md_document:
-#    variant: gfm+tex_math_dollars
+#  rmarkdown::html_vignette: default
+  md_document:
+    variant: gfm+tex_math_dollars
 vignette: >
   %\VignetteIndexEntry{tempssm Reference Manual}
   %\VignetteEngine{knitr::rmarkdown}

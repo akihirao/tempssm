@@ -1,7 +1,7 @@
 ---
 title: "tempssm 詳細マニュアル"
 subtitle: "Version `r packageVersion('tempssm')`"
-author: "平尾章・市野川桃子"
+author: "平尾章・馬場真哉・市野川桃子"
 date: "`r Sys.Date()`"
 output:
 #  pdf_document:

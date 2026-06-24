@@ -5,6 +5,7 @@ bibentry(
   title = "tempssm: State-space models for temperature time series in R",
   author = c(
     person("Akira", "Hirao"),
+    person("Shinya", "Baba"),
     person("Momoko", "Ichinokawa")
   ),
   year = 2026,
