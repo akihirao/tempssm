@@ -9,12 +9,11 @@ Authors@R: c(
       role = c("aut", "cre")),
     person(
       given="Shinya", family="Baba",
-      role = c("aut"),
+      role = c("aut")),
     person(
       given="Momoko", family="Ichinokawa",
-      role = c("aut")
-    )
-  )
+      role = c("aut"))
+      )
 Description: Linear Gaussian state-space analysis of temperature time series.
     The package provides tools for trend extraction, seasonal decomposition,
     and uncertainty estimation using Kalman filtering and smoothing.
