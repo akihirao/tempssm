@@ -357,24 +357,135 @@
 #' `res$kfs$alphahat`, and component confidence intervals match
 #' `stats::confint(res$kfs)`.
 #' 
-#' @srrstatsTODO {G5.4c} *Where applicable, stored values may be drawn from published paper outputs when applicable and where code from original implementations is not available*
-#' @srrstatsTODO {G5.5} *Correctness tests should be run with a fixed random seed*
-#' @srrstatsTODO {G5.6} **Parameter recovery tests** *to test that the implementation produce expected results given data with known properties. For instance, a linear regression algorithm should return expected coefficient values for a simulated data set generated from a linear model.*
-#' @srrstatsTODO {G5.6a} *Parameter recovery tests should generally be expected to succeed within a defined tolerance rather than recovering exact values.*
-#' @srrstatsTODO {G5.6b} *Parameter recovery tests should be run with multiple random seeds when either data simulation or the algorithm contains a random component. (When long-running, such tests may be part of an extended, rather than regular, test suite; see G5.10-4.12, below).* 
-#' @srrstatsTODO {G5.7} **Algorithm performance tests** *to test that implementation performs as expected as properties of data change. For instance, a test may show that parameters approach correct estimates within tolerance as data size increases, or that convergence times decrease for higher convergence thresholds.*
-#' @srrstatsTODO {G5.8} **Edge condition tests** *to test that these conditions produce expected behaviour such as clear warnings or errors when confronted with data with extreme properties including but not limited to:*
-#' @srrstatsTODO {G5.8a} *Zero-length data*
-#' @srrstatsTODO {G5.8b} *Data of unsupported types (e.g., character or complex numbers in for functions designed only for numeric data)*
-#' @srrstatsTODO {G5.8c} *Data with all-`NA` fields or columns or all identical fields or columns*
-#' @srrstatsTODO {G5.8d} *Data outside the scope of the algorithm (for example, data with more fields (columns) than observations (rows) for some regression algorithms)*
-#' @srrstatsTODO {G5.9} **Noise susceptibility tests** *Packages should test for expected stochastic behaviour, such as through the following conditions:*
-#' @srrstatsTODO {G5.9a} *Adding trivial noise (for example, at the scale of `.Machine$double.eps`) to data does not meaningfully change results*
-#' @srrstatsTODO {G5.9b} *Running under different random seeds or initial conditions does not meaningfully change results* 
-#' @srrstatsTODO {G5.10} *Extended tests should included and run under a common framework with other tests but be switched on by flags such as as a `<MYPKG>_EXTENDED_TESTS="true"` environment variable.* - The extended tests can be then run automatically by GitHub Actions for example by adding the following to the `env` section of the workflow: 
-#' @srrstatsTODO {G5.11} *Where extended tests require large data sets or other assets, these should be provided for downloading and fetched as part of the testing workflow.*
-#' @srrstatsTODO {G5.11a} *When any downloads of additional data necessary for extended tests fail, the tests themselves should not fail, rather be skipped and implicitly succeed with an appropriate diagnostic message.*
-#' @srrstatsTODO {G5.12} *Any conditions necessary to run extended tests such as platform requirements, memory, expected runtime, and artefacts produced that may need manual inspection, should be described in developer documentation such as a `CONTRIBUTING.md` or `tests/README.md` file.*
+#' @srrstats {G5.5} Correctness tests use deterministic inputs or fixed
+#' random seeds. Tests in `test-correctness-fixed-values.R` use hand-specified
+#' vectors, tables, and time series, and tests in `test-standard-datasets.R`
+#' use the fixed base R `datasets::nottem` series. Correctness checks that
+#' rely on fitted `tempssm` objects use shared fixtures created in
+#' `tests/testthat/setup-tempssm.R`, where `set.seed(123)` is called before
+#' generating synthetic temperature and exogenous series.
+#'
+#' @srrstats {G5.6} Parameter recovery tests are included for exogenous
+#' regression effects, which are directly interpretable user-facing
+#' parameters in `tempssm` models. In `test-parameter-recovery.R`, a synthetic
+#' regular `ts` series is generated from a known exogenous coefficient of 2
+#' with small Gaussian noise. The test fits `tempssm()` with the corresponding
+#' exogenous `ts` input and checks that `get_exo_coef()` recovers the known
+#' coefficient within tolerance. Variance, Kalman filtering, and smoothing
+#' internals are delegated to `KFAS` and are checked separately through direct
+#' backend comparisons.
+#'
+#' @srrstats {G5.6a} Parameter recovery tests use explicit numerical
+#' tolerances rather than exact equality. In `test-parameter-recovery.R`, the
+#' known exogenous coefficient is 2 and the recovered coefficient from
+#' `get_exo_coef()` is checked with `expect_equal(..., tolerance = 0.02)`.
+#' This reflects the fact that `tempssm()` estimates state-space parameters by
+#' numerical optimization and Kalman filtering, so recovered values are
+#' expected to agree within a defined tolerance rather than match exactly.
+#'
+#' @srrstats {G5.6b} Parameter recovery across multiple random seeds is
+#' implemented as an extended test. In
+#' `test-extended-parameter-recovery.R`, synthetic time series with the same
+#' known exogenous coefficient are generated under seeds 202401, 202402, and
+#' 202403. The test checks that all fits converge and that the recovered
+#' coefficients remain within a defined tolerance of the known value. Because
+#' these repeated fits increase test runtime, the test is skipped by default
+#' and runs only when `TEMPSSM_EXTENDED_TESTS=true` is set, as described in
+#' G5.10.
+#'
+#' @srrstats {G5.7} Algorithm performance is tested against changing data
+#' properties in `test-parameter-recovery.R`. Using the same known exogenous
+#' coefficient and fixed random seed, the test fits one synthetic series with
+#' moderate Gaussian noise and another with higher Gaussian noise. It checks
+#' that both models converge and that the confidence interval width for the
+#' recovered exogenous coefficient is larger in the higher-noise case, as
+#' expected for a less informative time series.
+#'
+#' @srrstats {G5.8} Edge condition tests are included across the test suite.
+#' Tests cover invalid input classes, unsupported scalar and vector types,
+#' invalid argument lengths, missing and undefined values, all-missing helper
+#' inputs, invalid or non-increasing time indexes, incompatible `ts`
+#' frequencies and time indexes, unsupported multivariate response series,
+#' missing fitted model components, and non-converged `tempssm` objects.
+#' These tests verify that such edge cases produce explicit errors, warnings,
+#' `NULL`, or `NA` values according to the documented behaviour of each
+#' function.
+#'
+#' @srrstats {G5.8a} Zero-length data are covered by unit tests. Monthly
+#' data-frame conversion and daily `zoo` aggregation reject zero-length inputs
+#' with explicit errors before attempting to construct invalid `ts` objects.
+#' Forecast accuracy helpers also test zero-length numeric vectors and return
+#' missing accuracy values where no comparison can be made.
+#'
+#' @srrstats {G5.8b} Unsupported data types are covered by unit tests. Model
+#' input checks reject complex `ts` values for both `temp_data` and
+#' `exo_data`, and scalar numeric controls reject complex values. Conversion
+#' utilities reject character and complex temperature columns in monthly
+#' data-frame inputs and daily `zoo` inputs before numerical modelling or
+#' aggregation is attempted.
+#'
+#' @srrstats {G5.8c} All-`NA` and all-identical data are covered by unit
+#' tests. Model preprocessing rejects all-`NA` temperature responses because
+#' no observed response remains for estimation, and all-`NA` exogenous
+#' covariates are rejected because `KFAS` regression terms require complete
+#' covariates. Conversion utilities preserve all-`NA` temperature fields as
+#' explicit `NA` time-series values. For all-identical training series,
+#' MASE scaling is zero and MASE is returned as `NA` because the scaled error
+#' denominator is undefined.
+#'
+#' @srrstats {G5.8d} Data outside the scope of the modelling algorithm are
+#' covered by unit tests. The primary response series must be univariate, so
+#' multivariate `temp_data` is rejected before model fitting. Exogenous
+#' regressors may be multivariate, but the number of exogenous variables must
+#' not exceed the number of observations; high-dimensional regression inputs
+#' of that form are rejected during model input validation rather than being
+#' passed to the `KFAS` backend.
+#'
+#' @srrstats {G5.9} Noise susceptibility is tested with synthetic time-series
+#' data in `test-parameter-recovery.R`. The tests generate a known exogenous
+#' coefficient under fixed random seeds, verify coefficient recovery under
+#' small Gaussian noise, and compare moderate- and higher-noise versions of
+#' the same design. The higher-noise series is expected to yield a wider
+#' confidence interval for the recovered exogenous coefficient while both
+#' fits converge, demonstrating expected stochastic behaviour as observation
+#' noise changes.
+#'
+#' @srrstats {G5.9a} The test suite checks that adding deterministic
+#' `.Machine$double.eps`-scale noise to a synthetic temperature series does
+#' not materially change fitted results. In `test-parameter-recovery.R`, the
+#' same known exogenous-effect series is fitted with and without a tiny
+#' alternating perturbation. The test verifies that both models converge and
+#' that the recovered exogenous coefficient, confidence limits, and fitted
+#' log-likelihood remain equal within numerical tolerance.
+#'
+#' @srrstats {G5.9b} Stability under different initial conditions is tested
+#' in `test-parameter-recovery.R`. The same synthetic time series with a
+#' known exogenous coefficient is fitted once with default initial values and
+#' once with a moderately different user-supplied `inits` vector. The test
+#' verifies that both fits converge and that the recovered exogenous
+#' coefficient, confidence limits, and fitted log-likelihood remain equal
+#' within numerical tolerance. The fitting algorithm itself is deterministic
+#' for fixed data and initial values, so random seeds affect only synthetic
+#' data generation in these tests.
+#'
+#' @srrstats {G5.10} Extended tests are included in the regular `testthat`
+#' framework and are switched on by the `TEMPSSM_EXTENDED_TESTS=true`
+#' environment variable. The file `test-extended-parameter-recovery.R` is
+#' discovered by `devtools::test()` like other tests, but skips by default
+#' unless that environment variable is set. When enabled, it runs additional
+#' parameter-recovery checks across multiple random seeds. The same flag can
+#' be set in local developer sessions or in GitHub Actions when extended
+#' validation is desired without increasing the cost of every pull request.
+#'
+#' @srrstats {G5.12} Conditions for running extended tests are documented in
+#' `CONTRIBUTING.md`. The documentation describes the
+#' `TEMPSSM_EXTENDED_TESTS=true` switch, shows the command for running
+#' extended tests through the standard `testthat` framework, and states that
+#' the current extended tests require no downloads, large external data sets,
+#' special platforms, or manual inspection of generated artefacts. It also
+#' notes that the current extended test adds only a few seconds on a typical
+#' development machine.
+#'
 #'
 #' @srrstats {TS1.0} The package uses base R `ts` objects as its explicit
 #' time-series class for modelling and related utilities. Core functions such
@@ -505,8 +616,6 @@
 #' Because these paths preserve the original regular `ts` object and its
 #' explicit missing response values, results are based on the same time index
 #' rather than on an implicitly shortened series.
-#' 
-#' @srrstatsTODO {TS2.1c} *replace missing data with appropriately imputed values.* 
 #' 
 #' @srrstats {TS2.2} Stationarity of relevant moments is documented in the
 #' package-level help under "Stationarity and Moment Assumptions". The observed
@@ -724,6 +833,27 @@ NULL
 #' scaling, anomaly calculation, time-series conversion, rolling-origin
 #' splitting, and prediction-interval trimming.
 #'
+#' @srrstatsNA {G5.4c} Stored values from published paper outputs are not used
+#' as correctness references because `tempssm` does not claim to reproduce a
+#' specific set of published numerical results and does not implement a novel
+#' algorithm for which original code is unavailable. The main state-space
+#' calculations are delegated to the available `KFAS` implementation; package
+#' correctness is instead tested against hand-computed fixed values and direct
+#' comparisons with the fitted `KFAS` objects returned by `tempssm()`.
+#'
+#' @srrstatsNA {G5.11} Extended tests do not require large external data sets
+#' or other assets. The current extended test generates all synthetic
+#' time-series inputs internally with fixed random seeds and runs entirely
+#' within the standard `testthat` workflow when
+#' `TEMPSSM_EXTENDED_TESTS=true` is set. Therefore there are no large assets
+#' to host, download, cache, or fetch as part of the testing workflow.
+#'
+#' @srrstatsNA {G5.11a} Extended tests do not download additional data or
+#' assets, so there is no download-failure path to handle. The current
+#' extended test is skipped unless `TEMPSSM_EXTENDED_TESTS=true` is set and,
+#' when enabled, generates all inputs locally from fixed random seeds.
+#' Consequently, no external fetch can fail during extended-test execution.
+#'
 #' @srrstatsNA {G2.4e} The package does not accept factor inputs as a
 #' supported user-facing data type. Temperature and exogenous inputs are
 #' validated as `ts` objects, tabular date columns are validated as `Date`,
@@ -747,6 +877,16 @@ NULL
 #' statistical assumption and could change the likelihood, diagnostics, and
 #' uncertainty interpretation. Users who require imputation should perform and
 #' document that preprocessing step before calling `tempssm()`.
+#'
+#' @srrstatsNA {TS2.1c} The package does not replace missing time-series
+#' observations with imputed values. For the response temperature series,
+#' explicit `NA` values are preserved in the regular `ts` object and can be
+#' handled by the linear Gaussian state-space model through the `KFAS`
+#' backend when users select `na_action = "warn"` or `"allow"`. Missing
+#' exogenous covariates are rejected because regression covariates must be
+#' complete before fitting. Automatic imputation would introduce an additional
+#' modelling assumption outside the scope of `tempssm`; users who require
+#' imputation should perform that preprocessing before model fitting.
 #'
 #' @srrstatsNA {G3.1} The package does not compute empirical covariance
 #' matrices with `stats::cov()` or any alternative covariance estimator.

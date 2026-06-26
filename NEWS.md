@@ -1,3 +1,13 @@
+# tempssm 0.2.4
+
+* Updated package authorship metadata and related documentation to reflect the
+  current contributor and co-author list.
+* Added rOpenSci statistical software standards documentation and supporting
+  tests for parameter recovery, edge cases, noise susceptibility, and extended
+  test workflows.
+* Clarified missing-value handling for temperature responses and exogenous
+  covariates.
+
 # tempssm 0.2.3.1
 
 * Removed several package dependencies by replacing small helper uses with

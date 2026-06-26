@@ -189,6 +189,12 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 #' @keywords internal
 #' @noRd
 .complete_monthly_values <- function(ym_index, values, context) {
+  if (length(ym_index) == 0) {
+    cli::cli_abort(
+      "No observations are available in {context}."
+    )
+  }
+
   full_ym_index <- seq.int(min(ym_index), max(ym_index))
 
   if (length(full_ym_index) != length(ym_index)) {
@@ -884,6 +890,12 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
   }
 
   idx <- zoo::index(zoo_obj)
+  if (length(idx) == 0) {
+    cli::cli_abort(
+      "No observations are available in the zoo object."
+    )
+  }
+
   if (!inherits(idx, c("Date", "POSIXt"))) {
     cli::cli_abort(
       "Index of the zoo object must be {.cls Date} or {.cls POSIXt}."
@@ -899,6 +911,20 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
   if (length(idx) > 1 && any(diff(idx) <= 0)) {
     cli::cli_abort(
       "Index of the zoo object must be strictly increasing."
+    )
+  }
+
+  selected_values <- zoo::coredata(zoo_obj[, var, drop = FALSE])
+  if (is.data.frame(selected_values)) {
+    selected_values <- selected_values[[1L]]
+  } else if (is.matrix(selected_values)) {
+    selected_values <- selected_values[, 1L]
+  }
+
+  selected_values <- .strip_units_values(selected_values, arg_name = var)
+  if (!is.numeric(selected_values)) {
+    cli::cli_abort(
+      "Variable {.val {var}} in the zoo object must be numeric."
     )
   }
 

@@ -332,11 +332,20 @@ tempssm <- function(temp_data,
     )
   }
 
+  ## ---- Default initial values --------------------------------------
   inits <- .prepare_tempssm_inits(
     inits = inits,
     ar_order = ar_order,
     use_season = use_season
   )
+
+  ## ---- Default values for optimization parameters --------------------
+  if (is.null(maxit)) {
+    maxit <- 5000
+  }
+  if (is.null(reltol)) {
+    reltol <- 1e-16
+  }
 
   if (!is.null(maxit) &&
     (!is.numeric(maxit) || is.na(maxit) || !is.finite(maxit))) {
@@ -853,6 +862,11 @@ tempssm <- function(temp_data,
   }
 
   temp_data <- .strip_units_ts(temp_data, arg_name = "temp_data")
+  if (!is.numeric(temp_data)) {
+    cli::cli_abort(
+      "The object {.arg temp_data} must contain numeric values."
+    )
+  }
   .tempssm_check_no_undefined(temp_data, "temp_data")
 
   ## ---- frequency check ------------------------------------------------
@@ -917,6 +931,12 @@ tempssm <- function(temp_data,
     return(invisible(x))
   }
 
+  if (all(is.na(x))) {
+    cli::cli_abort(
+      "{.arg {arg_name}} must contain at least one non-missing value."
+    )
+  }
+
   if (identical(na_action, "error")) {
     cli::cli_abort(
       "Missing values detected in {.arg {arg_name}}."
@@ -958,6 +978,11 @@ tempssm <- function(temp_data,
   }
 
   exo_data <- .strip_units_ts(exo_data, arg_name = "exo_data")
+  if (!is.numeric(exo_data)) {
+    cli::cli_abort(
+      "The object {.arg exo_data} must contain numeric values."
+    )
+  }
   .tempssm_check_no_undefined(exo_data, "exo_data")
 
   ## ---- frequency check ------------------------------------------------
@@ -985,6 +1010,18 @@ tempssm <- function(temp_data,
     )
   }
 
+  ## ---- dimensionality check ------------------------------------------
+  n_col <- NCOL(exo_data)
+  n_obs <- NROW(temp_data_checked)
+  if (n_col > n_obs) {
+    cli::cli_abort(
+      paste0(
+        "The number of exogenous variables must not exceed ",
+        "the number of observations."
+      )
+    )
+  }
+
   ## ---- column names check --------------------------------------------
   if (is.null(colnames(exo_data))) {
     cli::cli_abort(
@@ -993,7 +1030,6 @@ tempssm <- function(temp_data,
   }
 
   ## ---- debug message --------------------------------------------------
-  n_col <- NCOL(exo_data)
   uni_multi <- if (n_col > 1) "multivariate" else "univariate"
 
   .tempssm_cli_debug(
