@@ -20,3 +20,11 @@ Default base R plot method for objects fitted by \code{tempssm()}.
 This method delegates to \code{autoplot.tempssm()} so that \code{plot(res)}
 displays the same component plots as \code{autoplot(res)}.
 }
+\examples{
+\dontrun{
+data(niigata_sst)
+res <- tempssm(niigata_sst)
+plot(res)
+plot(res, component = "level", ci = FALSE)
+}
+}

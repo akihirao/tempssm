@@ -1,3 +1,167 @@
+#' srr standards: time-series conversion utilities
+#'
+#' @srrstats {G2.4} Type conversion is explicit and localized to input
+#' preprocessing or output construction. The package generally validates
+#' expected input classes instead of silently coercing arbitrary user inputs.
+#' Explicit conversions are used where they preserve the intended statistical
+#' representation, such as constructing time indices, stripping optional
+#' `units` attributes, converting `ts` values to numeric vectors for
+#' calculations or plotting, and converting numeric JMA area IDs to character
+#' endpoint identifiers.
+#'
+#' @srrstats {G2.4a} Integer-like conversions use `as.integer()` explicitly.
+#' Examples include construction of year-month indices from `Date`, `Year`,
+#' and `Month` fields, rounding and checking integer seasonal frequencies,
+#' and using integer seasonal cycle positions to index climatological means.
+#'
+#' @srrstats {G2.4b} Continuous numeric conversions use `as.numeric()`
+#' explicitly. Examples include converting time-series values to numeric
+#' vectors for anomaly, climatology, cross-validation metric, and plotting
+#' calculations, converting `units` inputs to numeric values with a warning,
+#' and extracting numeric values from model summaries and prediction
+#' intervals.
+#'
+#' @srrstats {G2.4c} Character conversions use `as.character()` where an
+#' existing object must be represented as character data. Numeric JMA
+#' `sea_area_id` values are explicitly converted with `as.character()` before
+#' URL construction, and package version values are converted with
+#' `as.character()` for the user-agent string. `paste()` and `paste0()` are
+#' used only to build messages, labels, names, file names, and URLs, not as
+#' substitutes for type conversion.
+#'
+#' @srrstats {G2.4d} Factor conversion is explicit where categorical seasonal
+#' grouping is needed internally. `compute_monthly_climatology()` constructs
+#' `factor(stats::cycle(temp_ts), levels = seq_len(freq_int))` so that all
+#' seasonal periods are represented in a controlled order, including periods
+#' whose values may be entirely missing.
+#'
+#' @srrstats {G2.6} One-dimensional inputs are pre-processed through shared
+#' validation and coercion paths. Temperature-like analytical inputs must
+#' inherit from base R `ts` and are checked with
+#' `.tempssm_check_univariate_ts()`, which rejects multivariate `ts` objects
+#' while preserving valid univariate time-series attributes. Numeric
+#' one-dimensional inputs used in forecast accuracy calculations are checked
+#' for compatible lengths and converted with `as.numeric()` before arithmetic.
+#' Optional `units` one-dimensional `ts` inputs are stripped to numeric values
+#' with an explicit warning while preserving `start`, `frequency`, and
+#' dimensions. Unit tests cover univariate, multivariate, non-`ts`, numeric,
+#' and `units` inputs.
+#'
+#' @srrstats {G2.7} The core modelling API uses base R `ts` objects because
+#' the implemented state-space and cross-validation routines require regular
+#' time-series attributes. Standard tabular and domain-specific input forms
+#' are accepted through explicit conversion helpers before modelling:
+#' `convert_monthly_df_to_ts()` accepts `data.frame` inputs and compatible
+#' subclasses such as `tibble`; `read_monthly_temp_ts()` accepts CSV files and
+#' converts them through the same data-frame pathway; `get_jma_sst_zoo()`
+#' returns daily JMA SST data as a `zoo` object; and
+#' `daily_zoo_to_monthly_ts()` converts daily `zoo` data to monthly `ts`
+#' objects. The package therefore supports base tabular, CSV, and
+#' domain-specific indexed time-series inputs while keeping analytical
+#' routines on a single regular `ts` representation.
+#'
+#' @srrstats {G2.9} Diagnostic messages are issued when preprocessing loses or
+#' adds information. Optional `units` attributes are stripped only with an
+#' explicit warning that the values have been converted to numeric values.
+#' Unnamed exogenous `ts` inputs are accepted only in workflows where default
+#' names are explicitly allowed, and a warning is issued before names such as
+#' `var1`, `var2`, ... are added. Monthly data-frame and CSV conversion warns
+#' when input rows are sorted by date, and warns when implicit missing months
+#' are inserted as explicit `NA` values. These behaviours are covered by unit
+#' tests for `tempssm()` input preparation, tabular conversion, CSV reading,
+#' and daily `zoo` aggregation.
+#'
+#' @srrstats {G2.10} Single-column extraction from tabular inputs avoids
+#' relying on class-specific default simplification. Monthly data-frame and
+#' CSV conversion use `[[ ]]` to extract `Date` and `Temp` vectors, and row
+#' filtering uses `drop = FALSE` to preserve tabular structure. Internal JMA
+#' parsing and `zoo` construction similarly use `[[ ]]` for column vectors and
+#' `drop = FALSE` when returning subsets. Daily `zoo` aggregation extracts the
+#' selected variable with `zoo_obj[, var, drop = FALSE]`. Tests cover base
+#' `data.frame`, compatible `tibble`, and `zoo` inputs.
+#'
+#' @srrstats {G2.11} Data-frame-like inputs are processed column-wise through
+#' explicit extraction and validation. Standard `Date` and numeric vector
+#' columns are handled without class-dependent assumptions. Temperature value
+#' columns with class `units` are accepted in monthly tabular conversion,
+#' stripped to numeric values with an explicit warning, and then converted to
+#' regular `ts` objects. Unit tests cover `units` temperature columns in both
+#' base `data.frame` and compatible `tibble` inputs, confirming that
+#' non-standard column attributes are pre-processed rather than causing
+#' avoidable errors.
+#'
+#' @srrstats {G2.12} List columns in tabular temperature inputs are rejected
+#' with informative errors rather than being silently simplified. Monthly
+#' tabular conversion requires `Temp` to be a numeric vector, or a `units`
+#' vector that can be stripped to numeric values with a warning. Because list
+#' columns can contain heterogeneous lengths or types, automatic `unlist()`
+#' conversion would risk changing the intended observations. Unit tests cover
+#' list-valued `Temp` columns in both base `data.frame` and compatible
+#' `tibble` inputs.
+#'
+#' @srrstats {TS1.0} The package uses base R `ts` objects as its explicit
+#' time-series class for modelling and related utilities. Core functions such
+#' as `tempssm()`, `ts_train_test_split()`, `trim_ts_overlap()`,
+#' `split_multi_ts()`, `compute_monthly_climatology()`,
+#' `compute_temp_anomaly()`, and `plot_temp_dev()` validate that inputs inherit
+#' from class `ts` and reject generic non-time-series inputs. Data-frame and
+#' CSV inputs are accepted only by dedicated conversion utilities, which return
+#' explicit `ts` objects and are not used as generic substitutes for
+#' time-series inputs in modelling functions.
+#'
+#' @srrstats {TS1.1} Function documentation explicitly states the expected
+#' input types and classes for time-series data and conversion utilities. Core
+#' modelling and time-series functions document base R `ts` inputs, including
+#' `temp_data`, `exo_data`, and `multi_ts`. Conversion helpers document
+#' non-time-series inputs such as data frames and CSV file paths, and document
+#' their return values as explicit monthly `ts` objects. Functions for JMA SST
+#' data document `zoo` inputs or outputs where daily indexed data are used,
+#' and monthly `ts` outputs where data are aggregated.
+#'
+#' @srrstats {TS1.5} The package checks strict ordering of time indices before
+#' model fitting and cross-validation. The core input path calls
+#' `.tempssm_check_ts_order()` from `.tempssm_check_temp_ts()` and
+#' `.tempssm_check_exo_ts()` to require strictly increasing `time()` values for
+#' accepted `ts` inputs. Conversion helpers also validate calendar order before
+#' constructing monthly `ts` objects: data-frame input is sorted by `Date` and
+#' duplicate months are rejected, while CSV input must have strictly
+#' increasing year-month rows with no duplicate year-month combinations.
+#' Missing months are warned about separately because they represent
+#' regularity/completeness rather than ordering.
+#'
+#' @srrstats {TS1.6} Ordering violations are caught during input
+#' pre-processing rather than during model fitting. Core `ts` inputs are
+#' checked by `.tempssm_check_ts_order()` before they are passed to model
+#' construction or cross-validation fold generation. Data-frame conversion
+#' catches unordered `Date` values with a warning before sorting, and rejects
+#' duplicate monthly indices. CSV conversion rejects duplicate or
+#' non-increasing year-month rows before constructing a `ts` object. `zoo`
+#' conversion rejects missing or non-increasing indices before monthly
+#' aggregation. Unit tests cover these ordering checks in the corresponding
+#' pre-processing functions.
+#'
+#' @srrstats {TS1.7} The package accepts vector inputs carrying class `units`
+#' from the `units` package without adding `units` as a hard runtime
+#' dependency. Core model input pre-processing detects `units` attached to
+#' `ts` objects, converts values to numeric vectors for downstream state-space
+#' modelling, and preserves the original `ts` time attributes. Data-frame and
+#' `zoo` conversion helpers also strip `units` from value columns before
+#' constructing monthly `ts` objects. The conversion emits an explicit warning
+#' so users know that unit metadata are not retained in model inputs. Tests for
+#' this behaviour are conditional on the optional `units` package.
+#'
+#' @srrstats {TS2.0} Core modelling functions require regular base R `ts`
+#' inputs, where missing observations can only be represented explicitly as
+#' `NA` values. Conversion utilities that construct monthly `ts` objects from
+#' data-frame, CSV, or daily `zoo` inputs detect implicit missing months before
+#' constructing the output. Missing months between the first and last observed
+#' month are converted to explicit `NA` values with a diagnostic warning, so
+#' irregular input is not silently collapsed into a shorter regular `ts`
+#' object. Unit tests cover these conversion paths.
+#'
+#' @noRd
+NULL
+
 #' Assign variable names to a ts object
 #'
 #' @description

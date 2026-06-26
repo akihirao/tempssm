@@ -23,27 +23,6 @@
 }
 
 
-#' Check that an argument has an expected length
-#'
-#' @param x Object to check.
-#' @param arg_name Name of the argument being checked.
-#' @param expected_len Expected length.
-#'
-#' @return Invisibly returns \code{x}.
-#'
-#' @keywords internal
-#' @noRd
-.tempssm_check_length <- function(x, arg_name, expected_len) {
-  if (length(x) != expected_len) {
-    cli::cli_abort(
-      "{.arg {arg_name}} must have length {expected_len}."
-    )
-  }
-
-  invisible(x)
-}
-
-
 #' Check that an argument is numeric
 #'
 #' @param x Object to check.
@@ -81,7 +60,10 @@
 .tempssm_check_no_undefined <- function(x, arg_name) {
   if (any(is.nan(x)) || any(is.infinite(x))) {
     cli::cli_abort(
-      "{.arg {arg_name}} must not contain {.val NaN}, {.val Inf}, or {.val -Inf}."
+      c(
+        "{.arg {arg_name}} must not contain {.val NaN},",
+        "{.val Inf}, or {.val -Inf}."
+      )
     )
   }
 

@@ -256,7 +256,9 @@ test_that(".tempssm_prepare_model_inputs handles missing values by policy", {
 })
 
 
-test_that(".tempssm_prepare_model_inputs rejects undefined temperature values", {
+test_that(
+  ".tempssm_prepare_model_inputs rejects undefined temperature values",
+  {
   temp_nan <- ts(c(1, NaN, 3, 4), start = c(2000, 1), frequency = 4)
   temp_inf <- ts(c(1, Inf, 3, 4), start = c(2000, 1), frequency = 4)
 
@@ -269,7 +271,8 @@ test_that(".tempssm_prepare_model_inputs rejects undefined temperature values", 
     .tempssm_prepare_model_inputs(temp_inf, na_action = "allow"),
     "Inf"
   )
-})
+  }
+)
 
 
 test_that(".tempssm_prepare_model_inputs rejects missing exogenous values", {

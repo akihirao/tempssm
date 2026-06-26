@@ -52,7 +52,7 @@ test_that("trim_prediction_intervals preserves prediction ts attributes", {
 
   trimmed <- trim_prediction_intervals(pred, max_width = 1)
 
-  expect_true(inherits(trimmed, "ts"))
+  expect_s3_class(trimmed, "ts")
   expect_identical(stats::start(trimmed), c(2020, 1))
   expect_identical(stats::frequency(trimmed), 12)
   expect_identical(NROW(trimmed), 2L)

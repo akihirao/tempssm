@@ -1,3 +1,33 @@
+#' srr standards: extended tests
+#'
+#' @srrstats {G5.6b} Parameter recovery across multiple random seeds is
+#' implemented as an extended test. In
+#' `test-extended-parameter-recovery.R`, synthetic time series with the same
+#' known exogenous coefficient are generated under seeds 202401, 202402, and
+#' 202403. The test checks that all fits converge and that the recovered
+#' coefficients remain within a defined tolerance of the known value. Because
+#' these repeated fits increase test runtime, the test is skipped by default
+#' and runs only when `TEMPSSM_EXTENDED_TESTS=true` is set, as described in
+#' G5.10.
+#'
+#' @srrstats {G5.10} Extended tests are included in the regular `testthat`
+#' framework and are switched on by the `TEMPSSM_EXTENDED_TESTS=true`
+#' environment variable. The file `test-extended-parameter-recovery.R` is
+#' discovered by `devtools::test()` like other tests, but skips by default
+#' unless that environment variable is set. When enabled, it runs additional
+#' parameter-recovery checks across multiple random seeds. The same flag can
+#' be set in local developer sessions or in GitHub Actions when extended
+#' validation is desired without increasing the cost of every pull request.
+#'
+#' @srrstats {G5.12} Conditions for running extended tests are documented in
+#' `CONTRIBUTING.md`. The documentation describes the
+#' `TEMPSSM_EXTENDED_TESTS=true` switch, shows the command for running
+#' extended tests through the standard `testthat` framework, and states that
+#' the current extended tests require no downloads, large external data sets,
+#' special platforms, or manual inspection of generated artefacts. It also
+#' notes that the current extended test adds only a few seconds on a typical
+#' development machine.
+#'
 test_that("extended parameter recovery is stable across seeds", {
   skip_if_not(
     identical(Sys.getenv("TEMPSSM_EXTENDED_TESTS"), "true"),

@@ -14,7 +14,7 @@ test_that("autoplot_ar1 hides CI label in title by default", {
   expect_identical(p1$labels$title, "Autoregressive (1)")
   expect_identical(
     p2$labels$title,
-    "Autoregressive (1) component (95% CI)"
+    "Autoregressive (1) (95% CI)"
   )
 })
 

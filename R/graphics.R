@@ -1,3 +1,151 @@
+#' Check common inputs for component autoplot functions
+#'
+#' @param res An object expected to inherit from \code{"tempssm"}.
+#' @param ci Logical; if \code{TRUE}, confidence intervals are drawn.
+#' @param ci_level Numeric confidence level between 0 and 1.
+#' @param show_ci_in_title Logical; should the CI level be shown in the title?
+#' @param fun Character scalar naming the calling function.
+#'
+#' @return Invisibly returns \code{NULL}.
+#' @noRd
+.tempssm_check_component_plot_input <- function(res, ci, ci_level,
+                                                show_ci_in_title, fun) {
+  if (!inherits(res, "tempssm")) {
+    cli::cli_abort(
+      "`res` must be an object of class {.cls tempssm}."
+    )
+  }
+
+  if (!is.logical(ci) || length(ci) != 1) {
+    cli::cli_abort(
+      "`ci` must be a single logical value for {fun}()."
+    )
+  }
+
+  if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
+    cli::cli_abort(
+      "`show_ci_in_title` must be a single logical value for {fun}()."
+    )
+  }
+
+  if (ci) {
+    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+        ci_level <= 0 || ci_level >= 1) {
+      cli::cli_abort(
+        "`ci_level` must be a numeric value between 0 and 1: {fun}()."
+      )
+    }
+  }
+
+  invisible(NULL)
+}
+
+
+#' Build a data frame for component plots
+#'
+#' @param component_ts A multivariate \code{ts} object returned by an accessor.
+#' @param value_name Character scalar naming the point estimate column.
+#' @param ci Logical; if \code{TRUE}, include lower and upper intervals.
+#'
+#' @return A tibble with \code{time}, component, and optional CI columns.
+#' @noRd
+.tempssm_component_plot_data <- function(component_ts, value_name, ci) {
+  component_df <- data.frame(
+    time = time(component_ts),
+    value = as.numeric(component_ts[, value_name])
+  )
+
+  if (ci) {
+    ci_df <- data.frame(
+      lwr = as.numeric(component_ts[, "lwr"]),
+      upr = as.numeric(component_ts[, "upr"])
+    )
+    component_df <- cbind(component_df, ci_df)
+  }
+
+  tibble::as_tibble(component_df)
+}
+
+
+#' Create a ggplot object for one tempssm component
+#'
+#' @param res An object of class \code{"tempssm"}.
+#' @param ci Logical; if \code{TRUE}, confidence intervals are drawn.
+#' @param ci_level Numeric confidence level between 0 and 1.
+#' @param ylab Label of y-axis.
+#' @param show_ci_in_title Logical; should the CI level be shown in the title?
+#' @param fun Character scalar naming the calling function.
+#' @param getter Function used to extract the component time series.
+#' @param value_name Character scalar naming the component column.
+#' @param title Character scalar used when CI is not shown in the title.
+#' @param ci_title Character scalar used when CI is shown in the title.
+#' @param debug_name Character scalar used in debug messages.
+#' @param linewidth Optional line width passed to \code{geom_line()}.
+#'
+#' @return A \code{ggplot} object.
+#' @noRd
+.tempssm_autoplot_component <- function(res, ci, ci_level, ylab,
+                                        show_ci_in_title, fun, getter,
+                                        value_name, title, ci_title,
+                                        debug_name, linewidth = NULL) {
+  .tempssm_check_component_plot_input(
+    res = res,
+    ci = ci,
+    ci_level = ci_level,
+    show_ci_in_title = show_ci_in_title,
+    fun = fun
+  )
+
+  .tempssm_cli_debug(
+    "Creating {debug_name} plot (ci={ci}, ci_level={ci_level})"
+  )
+
+  component_ts <- getter(res, ci = TRUE, ci_level = ci_level)
+  component_tidy <- .tempssm_component_plot_data(
+    component_ts = component_ts,
+    value_name = value_name,
+    ci = ci
+  )
+
+  plot_title <- title
+  if (ci && show_ci_in_title) {
+    ci_lab <- paste0(round(ci_level * 100), "% CI")
+    plot_title <- paste0(ci_title, " (", ci_lab, ")")
+  }
+
+  p <- ggplot2::ggplot(
+    component_tidy,
+    ggplot2::aes(x = .data$time, y = .data$value)
+  )
+
+  if (is.null(linewidth)) {
+    p <- p + ggplot2::geom_line()
+  } else {
+    p <- p + ggplot2::geom_line(linewidth = linewidth)
+  }
+
+  p <- p +
+    ggplot2::labs(
+      title = plot_title,
+      x = "Time (year)",
+      y = ylab
+    )
+
+  if (ci) {
+    .tempssm_cli_debug("Including confidence intervals in plot")
+    p <- p +
+      ggplot2::geom_ribbon(
+        ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
+        alpha = 0.3
+      )
+  }
+
+  .tempssm_cli_debug("{debug_name} plot created successfully")
+
+  p
+}
+
+
 #' Plot the estimated level component from a tempssm model
 #'
 #' @importFrom rlang .data
@@ -47,85 +195,20 @@ autoplot_level <- function(res,
                            ci_level = 0.95,
                            ylab = expression(Temp. ~ (degree * C)),
                            show_ci_in_title = FALSE) {
-  ## ---- input checks ---------------------------------------------------
-  if (!inherits(res, "tempssm")) {
-    cli::cli_abort(
-      "`res` must be an object of class {.cls tempssm}."
-    )
-  }
-
-  if (!is.logical(ci) || length(ci) != 1) {
-    cli::cli_abort("`ci` must be a single logical value for autoplot_level().")
-  }
-
-  if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
-    cli::cli_abort(
-      "`show_ci_in_title` must be a single logical value for autoplot_level()."
-    )
-  }
-
-  if (ci) {
-    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-      cli::cli_abort(
-        "`ci_level` must be a numeric value between 0 and 1: autoplot_level()."
-      )
-    }
-  }
-
-  .tempssm_cli_debug(
-    "Creating level plot (ci={ci}, ci_level={ci_level})"
+  .tempssm_autoplot_component(
+    res = res,
+    ci = ci,
+    ci_level = ci_level,
+    ylab = ylab,
+    show_ci_in_title = show_ci_in_title,
+    fun = "autoplot_level",
+    getter = get_level_ts,
+    value_name = "level",
+    title = "Level component",
+    ci_title = "Level component",
+    debug_name = "level",
+    linewidth = 1.2
   )
-
-  ## ---- extract data ---------------------------------------------------
-  level_ts <- get_level_ts(res, ci = TRUE, ci_level = ci_level)
-
-  level_df <- data.frame(
-    time  = time(level_ts),
-    level = as.numeric(level_ts[, "level"])
-  )
-
-  if (ci) {
-    .tempssm_cli_debug("Including confidence intervals in plot")
-
-    ci_df <- data.frame(
-      lwr = as.numeric(level_ts[, "lwr"]),
-      upr = as.numeric(level_ts[, "upr"])
-    )
-
-    level_df <- cbind(level_df, ci_df)
-    ci_lab <- paste0(round(ci_level * 100), "% CI")
-  }
-
-  level_tidy <- tibble::as_tibble(level_df)
-
-  ## ---- plotting -------------------------------------------------------
-  p <- ggplot2::ggplot(
-    level_tidy,
-    ggplot2::aes(x = .data$time, y = .data$level)
-  ) +
-    ggplot2::geom_line(linewidth = 1.2) +
-    ggplot2::labs(
-      title = if (ci && show_ci_in_title) {
-        paste0("Level component (", ci_lab, ")")
-      } else {
-        "Level component"
-      },
-      x = "Time (year)",
-      y = ylab
-    )
-
-  if (ci) {
-    p <- p +
-      ggplot2::geom_ribbon(
-        ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
-        alpha = 0.3
-      )
-  }
-
-  .tempssm_cli_debug("Level plot created successfully")
-
-  return(p)
 }
 
 
@@ -175,85 +258,20 @@ autoplot_drift <- function(res,
                            ylab = expression(Temp. ~ change ~
                                                (degree * C / year)),
                            show_ci_in_title = FALSE) {
-  if (!inherits(res, "tempssm")) {
-    cli::cli_abort(
-      "`res` must be an object of class {.cls tempssm}."
-    )
-  }
-
-  # ---- check ci first ----
-  if (!is.logical(ci) || length(ci) != 1) {
-    cli::cli_abort("`ci` must be a single logical value for autoplot_drift().")
-  }
-
-  if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
-    cli::cli_abort(
-      "`show_ci_in_title` must be a single logical value for autoplot_drift()."
-    )
-  }
-
-  # ---- check ci_level only if ci is TRUE ----
-  if (ci) {
-    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-      cli::cli_abort(
-        "`ci_level` must be a numeric value between 0 and 1: autoplot_drift()."
-      )
-    }
-  }
-
-  .tempssm_cli_debug(
-    "Creating drift plot (ci={ci}, ci_level={ci_level})"
+  .tempssm_autoplot_component(
+    res = res,
+    ci = ci,
+    ci_level = ci_level,
+    ylab = ylab,
+    show_ci_in_title = show_ci_in_title,
+    fun = "autoplot_drift",
+    getter = get_drift_ts,
+    value_name = "drift",
+    title = "Drift component",
+    ci_title = "Drift component",
+    debug_name = "drift",
+    linewidth = 1.2
   )
-
-  ## ---- extract data ---------------------------------------------------
-  drift_ts <- get_drift_ts(res, ci = TRUE, ci_level = ci_level)
-
-  drift_df <- data.frame(
-    time  = time(drift_ts),
-    drift = as.numeric(drift_ts[, "drift"])
-  )
-
-  if (ci) {
-    .tempssm_cli_debug("Including confidence intervals in plot")
-
-    ci_df <- data.frame(
-      lwr = as.numeric(drift_ts[, "lwr"]),
-      upr = as.numeric(drift_ts[, "upr"])
-    )
-    drift_df <- cbind(drift_df, ci_df)
-    ci_lab <- paste0(round(ci_level * 100), "% CI")
-  }
-
-  drift_tidy <- tibble::as_tibble(drift_df)
-
-  # ---- Plot ----
-  p <- ggplot2::ggplot(
-    drift_tidy,
-    ggplot2::aes(x = .data$time, y = .data$drift)
-  ) +
-    ggplot2::geom_line(linewidth = 1.2) +
-    ggplot2::labs(
-      title = if (ci && show_ci_in_title) {
-        paste0("Drift component (", ci_lab, ")")
-      } else {
-        "Drift component"
-      },
-      x = "Time (year)",
-      y = ylab
-    )
-
-  if (ci) {
-    p <- p +
-      ggplot2::geom_ribbon(
-        ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
-        alpha = 0.3
-      )
-  }
-
-  .tempssm_cli_debug("Drift plot created successfully")
-
-  return(p)
 }
 
 
@@ -302,85 +320,19 @@ autoplot_season <- function(res,
                             ci_level = 0.95,
                             ylab = expression(Temp. ~ (degree * C)),
                             show_ci_in_title = FALSE) {
-  if (!inherits(res, "tempssm")) {
-    cli::cli_abort(
-      "`res` must be an object of class {.cls tempssm}."
-    )
-  }
-
-  # ---- check ci first ----
-  if (!is.logical(ci) || length(ci) != 1) {
-    cli::cli_abort("`ci` must be a single logical value for autoplot_season().")
-  }
-
-  if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
-    cli::cli_abort(
-      "`show_ci_in_title` must be a single logical value for autoplot_season()."
-    )
-  }
-
-  # ---- check ci_level only if ci is TRUE ----
-  if (ci) {
-    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-      cli::cli_abort(
-        "`ci_level` must be a numeric value between 0 and 1: autoplot_season()."
-      )
-    }
-  }
-
-  .tempssm_cli_debug(
-    "Creating season plot (ci={ci}, ci_level={ci_level})"
+  .tempssm_autoplot_component(
+    res = res,
+    ci = ci,
+    ci_level = ci_level,
+    ylab = ylab,
+    show_ci_in_title = show_ci_in_title,
+    fun = "autoplot_season",
+    getter = get_season_ts,
+    value_name = "season",
+    title = "Seasonal component",
+    ci_title = "Seasonal component",
+    debug_name = "season"
   )
-
-  ## ---- extract data ---------------------------------------------------
-  season_ts <- get_season_ts(res, ci = TRUE, ci_level = ci_level)
-
-  season_df <- data.frame(
-    time = time(season_ts),
-    season = as.numeric(season_ts[, "season"])
-  )
-
-  if (ci) {
-    .tempssm_cli_debug("Including confidence intervals in plot")
-
-    ci_df <- data.frame(
-      lwr = as.numeric(season_ts[, "lwr"]),
-      upr = as.numeric(season_ts[, "upr"])
-    )
-    season_df <- cbind(season_df, ci_df)
-    ci_lab <- paste0(round(ci_level * 100), "% CI")
-  }
-
-  season_tidy <- tibble::as_tibble(season_df)
-
-  # ---- Plot ----
-  p <- ggplot2::ggplot(
-    season_tidy,
-    ggplot2::aes(x = .data$time, y = .data$season)
-  ) +
-    ggplot2::geom_line() +
-    ggplot2::labs(
-      title = if (ci && show_ci_in_title) {
-        paste0("Seasonal component (", ci_lab, ")")
-      } else {
-        "Seasonal component"
-      },
-      x = "Time (year)",
-      y = ylab
-    )
-
-  if (ci) {
-    p <- p +
-      ggplot2::geom_ribbon(
-        ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
-        alpha = 0.3
-      )
-  }
-
-  .tempssm_cli_debug("Seasonal plot created successfully")
-
-  return(p)
 }
 
 
@@ -429,85 +381,19 @@ autoplot_ar1 <- function(res,
                          ci_level = 0.95,
                          ylab = expression(Temp. ~ (degree * C)),
                          show_ci_in_title = FALSE) {
-  if (!inherits(res, "tempssm")) {
-    cli::cli_abort(
-      "`res` must be an object of class {.cls tempssm}."
-    )
-  }
-
-  # ---- check ci first ----
-  if (!is.logical(ci) || length(ci) != 1) {
-    cli::cli_abort("`ci` must be a single logical value for autoplot_ar1().")
-  }
-
-  if (!is.logical(show_ci_in_title) || length(show_ci_in_title) != 1) {
-    cli::cli_abort(
-      "`show_ci_in_title` must be a single logical value for autoplot_ar1()."
-    )
-  }
-
-  # ---- check ci_level only if ci is TRUE ----
-  if (ci) {
-    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-      cli::cli_abort(
-        "`ci_level` must be a numeric value between 0 and 1: autoplot_ar1()."
-      )
-    }
-  }
-
-  .tempssm_cli_debug(
-    "Creating ar1 plot (ci={ci}, ci_level={ci_level})"
+  .tempssm_autoplot_component(
+    res = res,
+    ci = ci,
+    ci_level = ci_level,
+    ylab = ylab,
+    show_ci_in_title = show_ci_in_title,
+    fun = "autoplot_ar1",
+    getter = get_ar1_ts,
+    value_name = "ar1",
+    title = "Autoregressive (1)",
+    ci_title = "Autoregressive (1)",
+    debug_name = "ar1"
   )
-
-  ## ---- extract data ---------------------------------------------------
-  ar1_ts <- get_ar1_ts(res, ci = TRUE, ci_level = ci_level)
-
-  ar1_df <- data.frame(
-    time = time(ar1_ts),
-    ar1 = as.numeric(ar1_ts[, "ar1"])
-  )
-
-  if (ci) {
-    .tempssm_cli_debug("Including confidence intervals in plot")
-
-    ci_df <- data.frame(
-      lwr = as.numeric(ar1_ts[, "lwr"]),
-      upr = as.numeric(ar1_ts[, "upr"])
-    )
-    ar1_df <- cbind(ar1_df, ci_df)
-    ci_lab <- paste0(round(ci_level * 100), "% CI")
-  }
-
-  ar1_tidy <- tibble::as_tibble(ar1_df)
-
-  # ---- Plot ----
-  p <- ggplot2::ggplot(
-    ar1_tidy,
-    ggplot2::aes(x = .data$time, y = .data$ar1)
-  ) +
-    ggplot2::geom_line() +
-    ggplot2::labs(
-      title = if (ci && show_ci_in_title) {
-        paste0("Autoregressive (1) component (", ci_lab, ")")
-      } else {
-        "Autoregressive (1)"
-      },
-      x = "Time (year)",
-      y = ylab
-    )
-
-  if (ci) {
-    p <- p +
-      ggplot2::geom_ribbon(
-        ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
-        alpha = 0.3
-      )
-  }
-
-  .tempssm_cli_debug("AR1 plot created successfully")
-
-  return(p)
 }
 
 

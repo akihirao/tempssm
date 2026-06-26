@@ -1,3 +1,163 @@
+#' Check common inputs for tempssm accessor functions
+#'
+#' @param res An object expected to inherit from \code{"tempssm"}.
+#' @param fun Character scalar naming the calling function.
+#'
+#' @return Invisibly returns \code{NULL}.
+#' @noRd
+.tempssm_check_accessor_input <- function(res, fun) {
+  if (!inherits(res, "tempssm")) {
+    stop(
+      "`res` must be an object of class 'tempssm' for ",
+      fun,
+      "().",
+      call. = FALSE
+    )
+  }
+
+  invisible(NULL)
+}
+
+
+#' Check confidence interval arguments for tempssm accessors
+#'
+#' @param ci Logical; if \code{TRUE}, confidence intervals are requested.
+#' @param ci_level Numeric confidence level between 0 and 1.
+#' @param fun Character scalar naming the calling function.
+#'
+#' @return Invisibly returns \code{NULL}.
+#' @noRd
+.tempssm_check_accessor_ci <- function(ci, ci_level, fun) {
+  if (ci) {
+    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
+        ci_level <= 0 || ci_level >= 1) {
+      stop(
+        "`ci_level` must be a numeric value between 0 and 1: ",
+        fun,
+        "().",
+        call. = FALSE
+      )
+    }
+  }
+
+  invisible(NULL)
+}
+
+
+#' Check whether a smoothed state is available
+#'
+#' @param res An object of class \code{"tempssm"}.
+#' @param state Character scalar naming a state in \code{res$kfs$alphahat}.
+#' @param message Character scalar used when the state is unavailable.
+#'
+#' @return Invisibly returns \code{NULL}.
+#' @noRd
+.tempssm_check_state_available <- function(res, state, message) {
+  alphahat <- res$kfs$alphahat
+  if (is.null(alphahat) || !state %in% colnames(alphahat)) {
+    stop(message, call. = FALSE)
+  }
+
+  invisible(NULL)
+}
+
+
+#' Convert a smoothed state to a ts object
+#'
+#' @param res An object of class \code{"tempssm"}.
+#' @param state Character scalar naming a state in \code{res$kfs$alphahat}.
+#' @param scale Numeric multiplier applied to the extracted state.
+#'
+#' @return A univariate \code{ts} object.
+#' @noRd
+.tempssm_state_ts <- function(res, state, scale = 1) {
+  ts(
+    res$kfs$alphahat[, state] * scale,
+    start = start(res$temp_data),
+    frequency = frequency(res$temp_data)
+  )
+}
+
+
+#' Convert state confidence intervals to a multivariate ts object
+#'
+#' @param res An object of class \code{"tempssm"}.
+#' @param state Character scalar naming a state in \code{stats::confint()}.
+#' @param output_name Character scalar used for the point estimate column.
+#' @param ci_level Numeric confidence level between 0 and 1.
+#' @param scale Numeric multiplier applied to estimates and intervals.
+#' @param message Character scalar used when the state interval is unavailable.
+#'
+#' @return A multivariate \code{ts} object.
+#' @noRd
+.tempssm_state_ci_ts <- function(res, state, output_name, ci_level,
+                                 scale = 1, message) {
+  ci_obj <- stats::confint(res$kfs, level = ci_level)
+
+  if (!state %in% names(ci_obj)) {
+    stop(message, call. = FALSE)
+  }
+
+  point <- .tempssm_state_ts(res, state, scale = scale)
+  values <- cbind(
+    point,
+    lwr = ci_obj[[state]][, "lwr"] * scale,
+    upr = ci_obj[[state]][, "upr"] * scale
+  )
+  colnames(values)[1] <- output_name
+
+  ts(
+    values,
+    start = start(res$temp_data),
+    frequency = frequency(res$temp_data)
+  )
+}
+
+
+#' Extract a smoothed state as a time series
+#'
+#' @param res An object of class \code{"tempssm"}.
+#' @param state Character scalar naming the smoothed state.
+#' @param output_name Character scalar used for the output column.
+#' @param ci Logical; if \code{TRUE}, confidence intervals are returned.
+#' @param ci_level Numeric confidence level between 0 and 1.
+#' @param fun Character scalar naming the calling function.
+#' @param missing_msg Character scalar used when the state is unavailable.
+#' @param ci_missing_msg Character scalar used when intervals are unavailable.
+#' @param scale_by_frequency Logical; if \code{TRUE}, scale by time frequency.
+#'
+#' @return A univariate or multivariate \code{ts} object.
+#' @noRd
+.tempssm_extract_state_ts <- function(res, state, output_name, ci = FALSE,
+                                      ci_level = 0.95, fun, missing_msg,
+                                      ci_missing_msg,
+                                      scale_by_frequency = FALSE) {
+  .tempssm_check_accessor_input(res, fun)
+  .tempssm_check_accessor_ci(ci, ci_level, fun)
+  .tempssm_check_state_available(res, state, missing_msg)
+
+  scale <- 1
+  if (scale_by_frequency) {
+    scale <- frequency(res$temp_data)
+  }
+
+  if (ci) {
+    return(
+      .tempssm_state_ci_ts(
+        res = res,
+        state = state,
+        output_name = output_name,
+        ci_level = ci_level,
+        scale = scale,
+        message = ci_missing_msg
+      )
+    )
+  }
+
+  .tempssm_state_ts(res, state, scale = scale)
+}
+
+
 #' Extract the level component as a time series
 #'
 #' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
@@ -19,53 +179,16 @@
 #' level_ts <- get_level_ts(res)
 #' }
 get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
-  if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm' for get_level_ts().",
-      call. = FALSE
-    )
-  }
-
-  if (ci) {
-    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1: get_level_ts().",
-        call. = FALSE
-      )
-    }
-  }
-
-  if (is.null(res$kfs$alphahat) || !"level" %in% colnames(res$kfs$alphahat)) {
-    stop("Level component not found in the smoothing results.", call. = FALSE)
-  }
-
-  freq <- frequency(res$temp_data)
-
-  level <- ts(
-    res$kfs$alphahat[, "level"],
-    start = start(res$temp_data),
-    frequency = freq
+  .tempssm_extract_state_ts(
+    res = res,
+    state = "level",
+    output_name = "level",
+    ci = ci,
+    ci_level = ci_level,
+    fun = "get_level_ts",
+    missing_msg = "Level component not found in the smoothing results.",
+    ci_missing_msg = "Level component not found in confidence intervals."
   )
-
-  if (ci) {
-    ci_obj <- stats::confint(res$kfs, level = ci_level)
-
-    if (!"level" %in% names(ci_obj)) {
-      stop("Level component not found in confidence intervals.",
-        call. = FALSE
-      )
-    }
-
-    level <- ts(
-      cbind(
-        level = level,
-        lwr = ci_obj$level[, "lwr"],
-        upr = ci_obj$level[, "upr"]
-      ),
-      start = start(res$temp_data),
-      frequency = freq
-    )
-  }
-  level
 }
 
 
@@ -92,57 +215,17 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' drift <- get_drift_ts(res)
 #' }
 get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
-  if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm' for get_drift_ts().",
-      call. = FALSE
-    )
-  }
-
-  if (ci) {
-    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1: get_drift_ts().",
-        call. = FALSE
-      )
-    }
-  }
-
-  if (is.null(res$kfs$alphahat) || !"slope" %in% colnames(res$kfs$alphahat)) {
-    stop("Drift (slope) component not found in smoothing results.",
-      call. = FALSE
-    )
-  }
-
-  freq <- frequency(res$temp_data)
-  scale <- freq
-
-  drift <- ts(
-    res$kfs$alphahat[, "slope"] * scale, # scaled per year
-    start = start(res$temp_data),
-    frequency = freq
+  .tempssm_extract_state_ts(
+    res = res,
+    state = "slope",
+    output_name = "drift",
+    ci = ci,
+    ci_level = ci_level,
+    fun = "get_drift_ts",
+    missing_msg = "Drift (slope) component not found in smoothing results.",
+    ci_missing_msg = "Slope component not found in confidence intervals.",
+    scale_by_frequency = TRUE
   )
-
-  if (ci) {
-    ci_obj <- stats::confint(res$kfs, level = ci_level)
-
-    if (!"slope" %in% names(ci_obj)) {
-      stop("Slope component not found in confidence intervals.",
-        call. = FALSE
-      )
-    }
-
-    drift <- ts(
-      cbind(
-        drift = drift,
-        lwr = ci_obj$slope[, "lwr"] * scale, # scaled per year
-        upr = ci_obj$slope[, "upr"] * scale # scaled per year
-      ),
-      start = start(res$temp_data),
-      frequency = freq
-    )
-  }
-
-  drift
 }
 
 
@@ -169,66 +252,21 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' season_ts <- get_season_ts(res)
 #' }
 get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
-  if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm' for get_season_ts().",
-      call. = FALSE
-    )
-  }
-
-  if (ci) {
-    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1: get_season_ts().",
-        call. = FALSE
-      )
-    }
-  }
-
+  .tempssm_check_accessor_input(res, "get_season_ts")
   if (!res$use_season) {
     stop("Seasonal component is not included in the model.", call. = FALSE)
   }
 
-
-  alphahat <- res$kfs$alphahat
-
-  has_alphahat <- !is.null(alphahat)
-  has_season <- "sea_dummy1" %in% colnames(alphahat)
-
-  if (!(has_alphahat && has_season)) {
-    stop(
-      "Seasonal component not found in the smoothing results.",
-      call. = FALSE
-    )
-  }
-
-  freq <- frequency(res$temp_data)
-
-  season <- ts(
-    res$kfs$alphahat[, "sea_dummy1"],
-    start = start(res$temp_data),
-    frequency = freq
+  .tempssm_extract_state_ts(
+    res = res,
+    state = "sea_dummy1",
+    output_name = "season",
+    ci = ci,
+    ci_level = ci_level,
+    fun = "get_season_ts",
+    missing_msg = "Seasonal component not found in the smoothing results.",
+    ci_missing_msg = "Seasonal component not found in confidence intervals."
   )
-
-  if (ci) {
-    ci_obj <- stats::confint(res$kfs, level = ci_level)
-
-    if (!"sea_dummy1" %in% names(ci_obj)) {
-      stop("Seasonal component not found in confidence intervals.",
-        call. = FALSE
-      )
-    }
-
-    season <- ts(
-      cbind(
-        season = season,
-        lwr = ci_obj$sea_dummy1[, "lwr"],
-        upr = ci_obj$sea_dummy1[, "upr"]
-      ),
-      start = start(res$temp_data),
-      frequency = freq
-    )
-  }
-  season
 }
 
 
@@ -255,65 +293,22 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' ar1_ts <- get_ar1_ts(res)
 #' }
 get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
-  if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm' for get_ar1_ts().",
-      call. = FALSE
-    )
-  }
-
-  if (ci) {
-    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-      ci_level <= 0 || ci_level >= 1) {
-      stop("`ci_level` must be a numeric value between 0 and 1: get_ar1_ts().",
-        call. = FALSE
-      )
-    }
-  }
-
-  alphahat <- res$kfs$alphahat
-
-  has_alphahat <- !is.null(alphahat)
-  has_ar1 <- "arima1" %in% colnames(alphahat)
-
-
-  if (!(has_alphahat) || !(has_ar1)) {
-    stop(
+  .tempssm_extract_state_ts(
+    res = res,
+    state = "arima1",
+    output_name = "ar1",
+    ci = ci,
+    ci_level = ci_level,
+    fun = "get_ar1_ts",
+    missing_msg = paste0(
       "First autoregressive component (AR1) not found ",
-      "in the smoothing results.",
-      call. = FALSE
+      "in the smoothing results."
+    ),
+    ci_missing_msg = paste0(
+      "First Autoregressive (AR1) component not found ",
+      "in confidence intervals."
     )
-  }
-
-  freq <- frequency(res$temp_data)
-
-  ar1 <- ts(
-    res$kfs$alphahat[, "arima1"],
-    start = start(res$temp_data),
-    frequency = freq
   )
-
-  if (ci) {
-    ci_obj <- stats::confint(res$kfs, level = ci_level)
-
-    if (!"arima1" %in% names(ci_obj)) {
-      stop(
-        "First Autoregressive (AR1) component not found ",
-        "in confidence intervals.",
-        call. = FALSE
-      )
-    }
-
-    ar1 <- ts(
-      cbind(
-        ar1 = ar1,
-        lwr = ci_obj$arima1[, "lwr"],
-        upr = ci_obj$arima1[, "upr"]
-      ),
-      start = start(res$temp_data),
-      frequency = freq
-    )
-  }
-  ar1
 }
 
 

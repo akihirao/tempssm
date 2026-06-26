@@ -18,3 +18,10 @@ The input object \code{x}, invisibly. The returned object has class
 \description{
 Print method for tempssm objects
 }
+\examples{
+\dontrun{
+data(niigata_sst)
+res <- tempssm(niigata_sst)
+print(res)
+}
+}

@@ -38,6 +38,176 @@
   }
 }
 
+#' srr standards: model input validation
+#'
+#' @srrstats {G2.0} Public entry points validate input lengths for scalar,
+#' vector, and time-series inputs. Scalar arguments such as `ar_order`,
+#' `use_season`, `maxit`, `reltol`, cross-validation window parameters,
+#' logical controls, diagnostic options, file paths, JMA area identifiers, and
+#' aggregation thresholds are required to have length one. Time-series inputs
+#' are validated through shared preprocessing routines, including checks that
+#' exogenous series have the same number of observations and time index as the
+#' response series. Arguments that may be single- or multi-valued, such as
+#' `label` or `exo_name`, are checked against the corresponding number of
+#' variables.
+#'
+#' @srrstats {G2.0a} Function documentation explicitly states length
+#' expectations for scalar inputs, time-series inputs, and name or label
+#' vectors. Examples include scalar documentation for `ar_order`, `use_season`,
+#' cross-validation window parameters, plotting and diagnostic controls, and
+#' length-one-or-number-of-variables expectations for labels and exogenous
+#' variable names.
+#'
+#' @srrstats {G2.1} Public entry points assert expected input types, including
+#' `ts` objects for temperature and exogenous time series, `zoo` objects for
+#' daily data aggregation, `tempssm` objects for model summaries, diagnostics,
+#' plotting, and information criteria, numeric scalars or vectors for model
+#' controls and parameter inputs, logical scalars for switches, character
+#' scalars or vectors for names, file paths, and JMA area identifiers, and
+#' lists for cross-validation folds and results.
+#'
+#' @srrstats {G2.1a} Function documentation states expected input types for
+#' public arguments, including class expectations for time-series objects and
+#' scalar or vector type expectations for numeric, logical, and character
+#' inputs.
+#'
+#' @srrstats {G2.2} Public functions distinguish univariate and multivariate
+#' time-series inputs. Temperature response series supplied to modelling,
+#' cross-validation, climatology, anomaly, and plotting functions are required
+#' to be univariate `ts` objects. Exogenous series are explicitly allowed to be
+#' univariate or multivariate where appropriate, and helper functions that
+#' operate on multivariate `ts` objects document and check those expectations.
+#'
+#' @srrstats {G2.8} Conversion and standardization are performed at package
+#' entry points before data are passed to analytical sub-functions. The
+#' modelling and cross-validation APIs call `.tempssm_prepare_model_inputs()`,
+#' which validates temperature and exogenous inputs, assigns default exogenous
+#' names when explicitly allowed, checks frequency and time-index consistency,
+#' applies the requested temperature missing-value policy, rejects missing
+#' exogenous covariates, and returns a uniform list with validated base R `ts`
+#' objects plus common `frequency` and `n_obs` metadata. Tabular, CSV, and
+#' `zoo` conversion helpers similarly return regular `ts` objects before
+#' those data are used by modelling or utility functions.
+#'
+#' @srrstats {G2.13} Missing data are checked during initial preprocessing
+#' before analytical routines are called. `tempssm()` and
+#' `ts_train_test_split()` both call `.tempssm_prepare_model_inputs()`, which
+#' checks explicit missing response values through
+#' `.tempssm_handle_missing_ts()` and rejects missing exogenous covariates
+#' before model fitting, state-space construction, or rolling splits proceed.
+#' Monthly tabular and CSV conversion reject missing date/index fields, insert
+#' implicit missing months as explicit `NA` values with a warning, and
+#' preserve explicit missing temperatures. Daily `zoo` aggregation validates
+#' non-missing date indexes, summarizes missing daily values according to
+#' `na.rm` and `na_prop_max`, and warns when many monthly values are missing
+#' after aggregation.
+#'
+#' @srrstats {G2.14} User-facing modelling and cross-validation functions
+#' provide explicit options for handling missing temperature observations
+#' through the `na_action` argument. The shared preprocessing helper
+#' `.tempssm_handle_missing_ts()` implements the temperature-series policy
+#' before model fitting or rolling-origin splitting proceeds. Missing
+#' exogenous covariates are always rejected because KFAS regression terms
+#' require complete covariate values. Conversion utilities also expose
+#' missing-value controls where relevant, such as `na.rm` and `na_prop_max` in
+#' daily-to-monthly `zoo` aggregation.
+#'
+#' @srrstats {G2.14a} `na_action = "error"` stops when explicit missing
+#' values are detected in temperature `ts` inputs. Missing values in
+#' exogenous `ts` inputs always stop preprocessing, regardless of
+#' `na_action`.
+#'
+#' @srrstats {G2.14b} `na_action = "warn"` issues a warning and proceeds with
+#' explicit `NA` temperature observations, while `na_action = "allow"`
+#' proceeds silently when users intentionally want to leave missing response
+#' values to the state-space estimation machinery.
+#'
+#' @srrstats {G2.16} Undefined numeric values are handled separately from
+#' explicit missing `NA` observations. Model and cross-validation inputs reject
+#' `NaN`, `Inf`, and `-Inf` values during shared preprocessing via
+#' `.tempssm_check_no_undefined()`. This preserves the package distinction
+#' between missing response observations, which linear Gaussian state-space
+#' models can handle, and undefined numeric values, which would make
+#' likelihood evaluation and regression covariates ill-defined. Tabular and
+#' daily `zoo` conversion helpers apply the same check before constructing
+#' regular `ts` objects. Unit tests cover undefined values in temperature,
+#' exogenous, data-frame, and `zoo` inputs.
+#'
+#' @srrstats {TS1.2} The package implements explicit validation routines for
+#' acceptable time-series classes. The core modelling path uses
+#' `.tempssm_check_temp_ts()` to require a univariate base R `ts` object for
+#' temperature data and `.tempssm_check_exo_ts()` to require aligned base R
+#' `ts` objects for exogenous variables. Time-series utilities such as
+#' `trim_ts_overlap()`, `split_multi_ts()`, `compute_monthly_climatology()`,
+#' `compute_temp_anomaly()`, and `plot_temp_dev()` also reject non-`ts`
+#' inputs. The core modelling path and seasonal climatology helpers accept
+#' integer seasonal frequencies greater than 1, not only monthly
+#' `frequency = 12` data. Daily SST conversion routines that operate on
+#' irregular daily data explicitly require `zoo` inputs before aggregating them
+#' to monthly `ts` objects. These validation paths are covered by unit tests
+#' for valid and invalid class inputs.
+#'
+#' @srrstats {TS1.3} Core model inputs are passed through the single internal
+#' pre-processing routine `.tempssm_prepare_model_inputs()`. This routine
+#' validates temperature and optional exogenous inputs, standardizes unnamed
+#' exogenous variables when allowed by the calling workflow, and returns a
+#' uniform list containing validated base R `ts` objects, the common
+#' frequency, and the number of observations. The primary model fitting
+#' function `tempssm()` and the cross-validation splitter
+#' `ts_train_test_split()` both use this routine before passing data to
+#' downstream model construction, fitting, or fold-generation code. Conversion
+#' helpers for data-frame, CSV, and `zoo` inputs transform those inputs to
+#' explicit monthly `ts` objects before they enter the modelling path.
+#'
+#' @srrstats {TS1.4} The core pre-processing routine preserves the time-based
+#' attributes of accepted `ts` inputs. `.tempssm_prepare_model_inputs()`
+#' returns validated `ts` objects without converting them to non-time-series
+#' containers, and preserves `start`, `end`, `frequency`, and `time()` values
+#' for both temperature and exogenous series, including the branch where
+#' default exogenous variable names are assigned. Conversion utilities that
+#' start from data-frame, CSV, or `zoo` inputs explicitly construct monthly
+#' `ts` outputs with defined start times and `frequency = 12` before those
+#' objects enter the modelling path. These behaviours are covered by unit
+#' tests for the pre-processing and conversion utilities.
+#'
+#' @srrstats {TS2.1} The main modelling and cross-validation entry points
+#' provide a \code{na_action} argument controlling how explicit missing values
+#' in the regular temperature `ts` input are handled. The argument is passed
+#' through the shared input pre-processing routine
+#' `.tempssm_prepare_model_inputs()`, so `tempssm()` and
+#' `ts_train_test_split()` use the same missing-data policy. Missing
+#' exogenous covariates are not controlled by `na_action`; they are rejected
+#' because regression covariates must be complete. Conversion utilities also
+#' expose missing-data controls where aggregation is performed, such as
+#' `na.rm` and `na_prop_max` in `daily_zoo_to_monthly_ts()`.
+#'
+#' @srrstats {TS2.1a} Setting `na_action = "error"` in `tempssm()` or
+#' `ts_train_test_split()` stops during input pre-processing if explicit
+#' missing values are detected in `temp_data`. Missing values in `exo_data`
+#' always stop input pre-processing.
+#'
+#' @srrstats {TS2.1b} The default `na_action = "warn"` issues a diagnostic
+#' warning and proceeds with explicit `NA` temperature observations. Setting
+#' `na_action = "allow"` proceeds silently for missing temperature responses.
+#' Because these paths preserve the original regular `ts` object and its
+#' explicit missing response values, results are based on the same time index
+#' rather than on an implicitly shortened series.
+#'
+#' @srrstats {TS2.4} The relevant stationarity requirement in `tempssm` is
+#' the stationarity of the autoregressive component. The package implements an
+#' internal AR-root check after transforming unconstrained optimization
+#' parameters to AR coefficients. The same transformation-and-check helper is
+#' used during model fitting and when extracting or summarising fitted AR
+#' coefficients. Unit tests cover stationary and non-stationary AR
+#' coefficients and confirm that transformed AR parameters are stationary.
+#'
+#' @srrstats {TS2.4b} AR coefficients are transformed with
+#' `KFAS::artransform()` and then checked by evaluating whether the AR
+#' polynomial roots lie outside the unit circle within numerical tolerance.
+#'
+#' @noRd
+NULL
+
 
 #' Compute expected length of the initial parameter vector
 #'
@@ -1104,7 +1274,7 @@ tempssm <- function(temp_data,
             "Exogenous covariates must be complete for KFAS regression ",
             "terms."
           ),
-          "i" = paste0(
+          "*" = paste0(
             "Please impute, remove, or otherwise complete missing ",
             "exogenous values before calling {.fn tempssm}."
           )

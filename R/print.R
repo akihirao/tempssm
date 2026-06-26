@@ -10,6 +10,13 @@
 #' @method print tempssm
 #' @importFrom stats start end
 #' @export
+#'
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#' res <- tempssm(niigata_sst)
+#' print(res)
+#' }
 print.tempssm <- function(x, ...) {
   cat("tempssm model fit\n")
   cat("------------------\n")

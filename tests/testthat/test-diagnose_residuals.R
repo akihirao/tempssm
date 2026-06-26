@@ -88,7 +88,9 @@ test_that("plot_tempssm_residual_diagnostics normalizes prefix extensions", {
 })
 
 
-test_that("plot_tempssm_residual_diagnostics validates scalar argument lengths", {
+test_that(
+  "plot_tempssm_residual_diagnostics validates scalar argument lengths",
+  {
   expect_error(
     plot_tempssm_residual_diagnostics(res_tempssm, save = c(TRUE, FALSE)),
     "save.*length one"
@@ -101,7 +103,8 @@ test_that("plot_tempssm_residual_diagnostics validates scalar argument lengths",
     ),
     "prefix.*length one"
   )
-})
+  }
+)
 
 
 test_that("plot_tempssm_residual_diagnostics validates scalar argument types", {
