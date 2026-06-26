@@ -46,10 +46,22 @@ test_that("component confidence intervals match KFAS confint output", {
 
   expect_equal(as.numeric(level_ci[, "lwr"]), as.numeric(ci_obj$level[, "lwr"]))
   expect_equal(as.numeric(level_ci[, "upr"]), as.numeric(ci_obj$level[, "upr"]))
-  expect_equal(as.numeric(drift_ci[, "lwr"]), as.numeric(ci_obj$slope[, "lwr"] * freq))
-  expect_equal(as.numeric(drift_ci[, "upr"]), as.numeric(ci_obj$slope[, "upr"] * freq))
-  expect_equal(as.numeric(season_ci[, "lwr"]), as.numeric(ci_obj$sea_dummy1[, "lwr"]))
-  expect_equal(as.numeric(season_ci[, "upr"]), as.numeric(ci_obj$sea_dummy1[, "upr"]))
+  expect_equal(
+    as.numeric(drift_ci[, "lwr"]),
+    as.numeric(ci_obj$slope[, "lwr"] * freq)
+  )
+  expect_equal(
+    as.numeric(drift_ci[, "upr"]),
+    as.numeric(ci_obj$slope[, "upr"] * freq)
+  )
+  expect_equal(
+    as.numeric(season_ci[, "lwr"]),
+    as.numeric(ci_obj$sea_dummy1[, "lwr"])
+  )
+  expect_equal(
+    as.numeric(season_ci[, "upr"]),
+    as.numeric(ci_obj$sea_dummy1[, "upr"])
+  )
   expect_equal(as.numeric(ar1_ci[, "lwr"]), as.numeric(ci_obj$arima1[, "lwr"]))
   expect_equal(as.numeric(ar1_ci[, "upr"]), as.numeric(ci_obj$arima1[, "upr"]))
 })

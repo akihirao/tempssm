@@ -29,7 +29,7 @@
 #' seasonal frequencies greater than 1, and that possible future direct
 #' modelling support for daily or irregular time series such as `zoo` objects
 #' is outside the current design goals.
-#'  
+#'
 #' @srrstats {G1.3} Package-level documentation includes a "Statistical
 #' Terminology" section defining the main statistical terms used by the package,
 #' including linear Gaussian state-space model, latent state, level, seasonal
@@ -43,7 +43,7 @@
 #' implementation details. The package `NAMESPACE` and `man/*.Rd` files are
 #' generated from roxygen comments, with the roxygen2 version recorded in
 #' `DESCRIPTION`.
-#' 
+#'
 #' @srrstats {G1.4a} Internal top-level helper functions are documented with
 #' standard `roxygen2` comments and marked with `@noRd` to suppress `.Rd`
 #' generation. S3 methods and exported functions are documented separately.
@@ -108,6 +108,7 @@
 #' or differently cased inputs should fail early. Unit tests cover invalid and
 #' uppercase `na_action` values, invalid MASE scaling methods, and invalid
 #' plotting component names.
+#'
 #' @srrstats {G2.4} Type conversion is explicit and localized to input
 #' preprocessing or output construction. The package generally validates
 #' expected input classes instead of silently coercing arbitrary user inputs.
@@ -345,8 +346,17 @@
 #' algorithms themselves are delegated to `KFAS`; tests for `tempssm()` focus
 #' on correct construction, validation, extraction, and post-processing around
 #' that backend.
+#'
+#' @srrstats {G5.4b} Existing state-space likelihood, filtering, smoothing,
+#' prediction, and confidence-interval calculations are not reimplemented
+#' independently; they are delegated to the established `KFAS` backend. Unit
+#' tests explicitly compare `tempssm` wrappers with the underlying `KFAS`
+#' objects by checking that `logLik.tempssm()` matches
+#' `stats::logLik(res$model)`, AIC is computed from the `KFAS` log-likelihood
+#' and the `tempssm` parameter count, component accessors match
+#' `res$kfs$alphahat`, and component confidence intervals match
+#' `stats::confint(res$kfs)`.
 #' 
-#' @srrstatsTODO {G5.4b} *For new implementations of existing methods, correctness tests should include tests against previous implementations. Such testing may explicitly call those implementations in testing, preferably from fixed-versions of other software, or use stored outputs from those where that is not possible.*
 #' @srrstatsTODO {G5.4c} *Where applicable, stored values may be drawn from published paper outputs when applicable and where code from original implementations is not available*
 #' @srrstatsTODO {G5.5} *Correctness tests should be run with a fixed random seed*
 #' @srrstatsTODO {G5.6} **Parameter recovery tests** *to test that the implementation produce expected results given data with known properties. For instance, a linear regression algorithm should return expected coefficient values for a simulated data set generated from a linear model.*
@@ -365,7 +375,7 @@
 #' @srrstatsTODO {G5.11} *Where extended tests require large data sets or other assets, these should be provided for downloading and fetched as part of the testing workflow.*
 #' @srrstatsTODO {G5.11a} *When any downloads of additional data necessary for extended tests fail, the tests themselves should not fail, rather be skipped and implicitly succeed with an appropriate diagnostic message.*
 #' @srrstatsTODO {G5.12} *Any conditions necessary to run extended tests such as platform requirements, memory, expected runtime, and artefacts produced that may need manual inspection, should be described in developer documentation such as a `CONTRIBUTING.md` or `tests/README.md` file.*
-#' 
+#'
 #' @srrstats {TS1.0} The package uses base R `ts` objects as its explicit
 #' time-series class for modelling and related utilities. Core functions such
 #' as `tempssm()`, `ts_train_test_split()`, `trim_ts_overlap()`,
@@ -375,7 +385,7 @@
 #' CSV inputs are accepted only by dedicated conversion utilities, which return
 #' explicit `ts` objects and are not used as generic substitutes for
 #' time-series inputs in modelling functions.
-#' 
+#'
 #' @srrstats {TS1.1} Function documentation explicitly states the expected
 #' input types and classes for time-series data and conversion utilities. Core
 #' modelling and time-series functions document base R `ts` inputs, including
@@ -384,7 +394,7 @@
 #' their return values as explicit monthly `ts` objects. Functions for JMA SST
 #' data document `zoo` inputs or outputs where daily indexed data are used, and
 #' monthly `ts` outputs where data are aggregated.
-#' 
+#'
 #' @srrstats {TS1.2} The package implements explicit validation routines for
 #' acceptable time-series classes. The core modelling path uses
 #' `.tempssm_check_temp_ts()` to require a univariate base R `ts` object for
@@ -398,7 +408,7 @@
 #' irregular daily data explicitly require `zoo` inputs before aggregating them
 #' to monthly `ts` objects. These validation paths are covered by unit tests
 #' for valid and invalid class inputs.
-#' 
+#'
 #' @srrstats {TS1.3} Core model inputs are passed through the single internal
 #' pre-processing routine `.tempssm_prepare_model_inputs()`. This routine
 #' validates temperature and optional exogenous inputs, standardizes unnamed
@@ -410,7 +420,7 @@
 #' downstream model construction, fitting, or fold-generation code. Conversion
 #' helpers for data-frame, CSV, and `zoo` inputs transform those inputs to
 #' explicit monthly `ts` objects before they enter the modelling path.
-#' 
+#'
 #' @srrstats {TS1.4} The core pre-processing routine preserves the time-based
 #' attributes of accepted `ts` inputs. `.tempssm_prepare_model_inputs()`
 #' returns validated `ts` objects without converting them to non-time-series
@@ -421,7 +431,7 @@
 #' `ts` outputs with defined start times and `frequency = 12` before those
 #' objects enter the modelling path. These behaviours are covered by unit
 #' tests for the pre-processing and conversion utilities.
-#' 
+#'
 #' @srrstats {TS1.5} The package checks strict ordering of time indices before
 #' model fitting and cross-validation. The core input path calls
 #' `.tempssm_check_ts_order()` from `.tempssm_check_temp_ts()` and
@@ -432,7 +442,7 @@
 #' increasing year-month rows with no duplicate year-month combinations.
 #' Missing months are warned about separately because they represent
 #' regularity/completeness rather than ordering.
-#' 
+#'
 #' @srrstats {TS1.6} Ordering violations are caught during input
 #' pre-processing rather than during model fitting. Core `ts` inputs are
 #' checked by `.tempssm_check_ts_order()` before they are passed to model
@@ -442,7 +452,7 @@
 #' year-month rows before constructing a `ts` object. `zoo` conversion rejects
 #' missing or non-increasing indices before monthly aggregation. Unit tests
 #' cover these ordering checks in the corresponding pre-processing functions.
-#' 
+#'
 #' @srrstats {TS1.7} The package accepts vector inputs carrying class
 #' `units` from the `units` package without adding `units` as a hard runtime
 #' dependency. Core model input pre-processing detects `units` attached to

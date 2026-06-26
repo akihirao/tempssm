@@ -39,6 +39,89 @@
 }
 
 
+#' Compute expected length of the initial parameter vector
+#'
+#' The initial parameter vector contains trend, optional seasonal,
+#' autoregressive, AR variance, and observation variance parameters.
+#'
+#' @inheritParams tempssm
+#'
+#' @return Integer scalar giving the expected number of initial values.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_inits_length <- function(ar_order, use_season) {
+  as.integer(ar_order + if (use_season) 4L else 3L)
+}
+
+
+#' Generate default initial parameter values for \code{tempssm()}
+#'
+#' The returned vector follows the optimization parameter order:
+#' trend variance, optional seasonal variance, AR coefficients, AR variance,
+#' and observation variance.
+#'
+#' @inheritParams tempssm
+#'
+#' @return Numeric vector of default initial parameter values.
+#'
+#' @keywords internal
+#' @noRd
+.default_tempssm_inits <- function(ar_order, use_season) {
+  ar_order <- as.integer(ar_order)
+  ar_inits <- c(0.5, rep(0, ar_order - 1L))
+
+  if (use_season) {
+    c(
+      -13, # trend
+      -7, # seasonal
+      ar_inits,
+      -0.3, # AR variance
+      -5 # observation variance
+    )
+  } else {
+    c(
+      -13, # trend
+      ar_inits,
+      -0.3, # AR variance
+      -5 # observation variance
+    )
+  }
+}
+
+
+#' Prepare initial parameter values for \code{tempssm()}
+#'
+#' This helper supplies default initial values when \code{inits = NULL} and
+#' validates user-supplied initial values against the model structure implied
+#' by \code{ar_order} and \code{use_season}.
+#'
+#' @inheritParams tempssm
+#'
+#' @return Numeric vector of initial parameter values.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_tempssm_inits <- function(inits, ar_order, use_season) {
+  expected_len <- .tempssm_inits_length(ar_order, use_season)
+
+  if (is.null(inits)) {
+    .tempssm_cli_debug("Using default initial parameter values")
+    inits <- .default_tempssm_inits(ar_order, use_season)
+  }
+
+  .tempssm_check_numeric(inits, "inits")
+
+  if (length(inits) != expected_len) {
+    cli::cli_abort(
+      "{.arg inits} must be a numeric vector of length {expected_len}."
+    )
+  }
+
+  inits
+}
+
+
 #' Check stationarity of autoregressive coefficients
 #'
 #' @param ar_coefs Numeric vector of autoregressive coefficients.
@@ -249,21 +332,11 @@ tempssm <- function(temp_data,
     )
   }
 
-  if (!is.null(inits)) {
-    .tempssm_check_numeric(inits, "inits")
-
-    expected_len <- if (use_season) {
-      2 + ar_order + 2
-    } else {
-      1 + ar_order + 2
-    }
-
-    if (!is.numeric(inits) || length(inits) != expected_len) {
-      cli::cli_abort(
-        "{.arg inits} must be a numeric vector of length {expected_len}."
-      )
-    }
-  }
+  inits <- .prepare_tempssm_inits(
+    inits = inits,
+    ar_order = ar_order,
+    use_season = use_season
+  )
 
   if (!is.null(maxit) &&
     (!is.numeric(maxit) || is.na(maxit) || !is.finite(maxit))) {
@@ -323,43 +396,6 @@ tempssm <- function(temp_data,
       if (ar_order > 4) {
         cli::cli_warn(
           "An {.arg ar_order} greater than 4 may lead to unstable estimation."
-        )
-      }
-
-      ## ---- Default initial values --------------------------------------
-      if (is.null(inits)) {
-        .tempssm_cli_debug("Using default initial parameter values")
-
-        ar_rep_length_minus_one <- ar_order - 1
-        ar_inits <- c(0.5, rep(0, ar_rep_length_minus_one))
-
-        if (use_season) {
-          inits <- c(
-            -13, # trend
-            -7, # seasonal
-            ar_inits,
-            -0.3, # AR variance
-            -5 # observation variance
-          )
-        } else {
-          inits <- c(
-            -13, # trend
-            ar_inits,
-            -0.3, # AR variance
-            -5 # observation variance
-          )
-        }
-      }
-
-      expected_len <- if (use_season) {
-        2 + ar_order + 2
-      } else {
-        1 + ar_order + 2
-      }
-
-      if (!is.numeric(inits) || length(inits) != expected_len) {
-        cli::cli_abort(
-          "{.arg inits} must be a numeric vector of length {expected_len}."
         )
       }
 
