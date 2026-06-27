@@ -459,7 +459,10 @@ ts_train_test_split <- function(temp_data,
                                 step = 12,
                                 fixed_window = FALSE,
                                 allow_partial = FALSE,
-                                na_action = c("warn", "error", "allow")) {
+                                na_action = c("inform",
+                                              "warn",
+                                              "error",
+                                              "allow")) {
   ## ---- Start message --------------------------------------------------
   .tempssm_cli_inform(
     paste0(

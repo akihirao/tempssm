@@ -71,7 +71,7 @@ test_that("tempssm validates scalar argument lengths", {
   )
 
   expect_error(
-    tempssm(temp_ts, na_action = c("warn", "error")),
+    tempssm(temp_ts, na_action = c("inform", "warn")),
     "length"
   )
 })
@@ -234,10 +234,21 @@ test_that(".tempssm_prepare_model_inputs accepts multivariate exogenous ts", {
 
 test_that(".tempssm_prepare_model_inputs handles missing values by policy", {
   temp_ts <- ts(c(1, NA, 3, 4), start = c(2000, 1), frequency = 4)
+  withr::local_envvar(TEMPSSM_VERBOSITY = "")
+  withr::local_options(list(tempssm.verbosity = "inform"))
+
+  expect_message(
+    prepared_inform <- .tempssm_prepare_model_inputs(temp_ts),
+    "Missing values detected"
+  )
+  expect_true(anyNA(prepared_inform$temp_data))
 
   expect_warning(
-    prepared_warn <- .tempssm_prepare_model_inputs(temp_ts),
-    "Missing values detected"
+    prepared_warn <- .tempssm_prepare_model_inputs(
+      temp_ts,
+      na_action = "warn"
+    ),
+    "unobserved responses"
   )
   expect_true(anyNA(prepared_warn$temp_data))
 

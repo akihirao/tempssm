@@ -320,7 +320,8 @@ NULL
 #' @srrstatsNA {G2.14c} The package does not provide automatic imputation as a
 #' missing-data option. For linear Gaussian state-space models, explicit
 #' missing response observations can be handled by the Kalman filtering and
-#' smoothing machinery when users choose `na_action = "warn"` or `"allow"`.
+#' smoothing machinery when users choose `na_action = "inform"`, `"warn"`, or
+#' `"allow"`.
 #' Exogenous covariates are different: KFAS regression terms require complete
 #' covariate values, so missing `exo_data` values stop preprocessing. Replacing
 #' missing values with imputed values before fitting would add a separate
@@ -332,11 +333,11 @@ NULL
 #' observations with imputed values. For the response temperature series,
 #' explicit `NA` values are preserved in the regular `ts` object and can be
 #' handled by the linear Gaussian state-space model through the `KFAS`
-#' backend when users select `na_action = "warn"` or `"allow"`. Missing
-#' exogenous covariates are rejected because regression covariates must be
-#' complete before fitting. Automatic imputation would introduce an additional
-#' modelling assumption outside the scope of `tempssm`; users who require
-#' imputation should perform that preprocessing before model fitting.
+#' backend when users select `na_action = "inform"`, `"warn"`, or `"allow"`.
+#' Missing exogenous covariates are rejected because regression covariates
+#' must be complete before fitting. Automatic imputation would introduce an
+#' additional modelling assumption outside the scope of `tempssm`; users who
+#' require imputation should perform that preprocessing before model fitting.
 #'
 #' @srrstatsNA {G3.1} The package does not compute empirical covariance
 #' matrices with `stats::cov()` or any alternative covariance estimator.

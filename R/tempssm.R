@@ -117,10 +117,11 @@
 #' exogenous `ts` inputs always stop preprocessing, regardless of
 #' `na_action`.
 #'
-#' @srrstats {G2.14b} `na_action = "warn"` issues a warning and proceeds with
-#' explicit `NA` temperature observations, while `na_action = "allow"`
-#' proceeds silently when users intentionally want to leave missing response
-#' values to the state-space estimation machinery.
+#' @srrstats {G2.14b} The default `na_action = "inform"` reports and proceeds
+#' with explicit `NA` temperature observations because linear Gaussian
+#' state-space models can treat them as unobserved responses. `na_action =
+#' "warn"` raises the notification to a warning, while `na_action = "allow"`
+#' proceeds silently.
 #'
 #' @srrstats {G2.16} Undefined numeric values are handled separately from
 #' explicit missing `NA` observations. Model and cross-validation inputs reject
@@ -186,12 +187,12 @@
 #' missing values are detected in `temp_data`. Missing values in `exo_data`
 #' always stop input pre-processing.
 #'
-#' @srrstats {TS2.1b} The default `na_action = "warn"` issues a diagnostic
-#' warning and proceeds with explicit `NA` temperature observations. Setting
-#' `na_action = "allow"` proceeds silently for missing temperature responses.
-#' Because these paths preserve the original regular `ts` object and its
-#' explicit missing response values, results are based on the same time index
-#' rather than on an implicitly shortened series.
+#' @srrstats {TS2.1b} The default `na_action = "inform"` issues an informational
+#' message and proceeds with explicit `NA` temperature observations. Setting
+#' `na_action = "warn"` issues a warning instead, and `na_action = "allow"`
+#' proceeds silently. These paths preserve the original regular `ts` object
+#' and its explicit missing response values, so results use the same time index
+#' rather than an implicitly shortened series.
 #'
 #' @srrstats {TS2.4} The relevant stationarity requirement in `tempssm` is
 #' the stationarity of the autoregressive component. The package implements an
@@ -440,11 +441,12 @@ NULL
 #'  If \code{NULL}, default value of 1e-16 is used.
 #'
 #' @param na_action Character scalar specifying how explicit missing
-#'   observations in \code{temp_data} should be handled. Use \code{"warn"} to
-#'   issue a warning and proceed, \code{"error"} to stop, or \code{"allow"} to
-#'   proceed silently. The default is \code{"warn"}. Missing values in
-#'   \code{exo_data} are always rejected; exogenous covariates must be
-#'   completed before model fitting.
+#'   observations in \code{temp_data} should be handled. Use \code{"inform"}
+#'   to issue an informational message and proceed, \code{"warn"} to issue a
+#'   warning and proceed, \code{"error"} to stop, or \code{"allow"} to proceed
+#'   silently. The default is \code{"inform"}. Missing values in
+#'   \code{exo_data} are always rejected; exogenous covariates must be completed
+#'   before model fitting.
 #'
 #' @return An object of class \code{"tempssm"}, a named list containing:
 #' \describe{
@@ -474,7 +476,7 @@ tempssm <- function(temp_data,
                     maxit = NULL,
                     reltol = NULL,
                     use_season = TRUE,
-                    na_action = c("warn", "error", "allow")) {
+                    na_action = c("inform", "warn", "error", "allow")) {
   exo_name <- NULL
   state_names <- character(0)
 
@@ -1113,13 +1115,20 @@ tempssm <- function(temp_data,
     )
   }
 
-  if (identical(na_action, "warn")) {
-    cli::cli_warn(
-      c(
-        "Missing values detected in {.arg {arg_name}}.",
-        "i" = "Proceeding with explicit {.val NA} observations."
-      )
+  msg <- c(
+    "Missing values detected in {.arg {arg_name}}.",
+    "i" = paste0(
+      "They will be retained and treated as unobserved responses during ",
+      "Kalman filtering and smoothing."
     )
+  )
+
+  if (identical(na_action, "inform")) {
+    .tempssm_cli_inform(msg)
+  }
+
+  if (identical(na_action, "warn")) {
+    cli::cli_warn(msg)
   }
 
   invisible(x)
@@ -1232,7 +1241,8 @@ tempssm <- function(temp_data,
                                           exo_data = NULL,
                                           allow_unnamed_exo = FALSE,
                                           default_exo_names = FALSE,
-                                          na_action = c("warn",
+                                          na_action = c("inform",
+                                                        "warn",
                                                         "error",
                                                         "allow")) {
   na_action <- match.arg(na_action)
