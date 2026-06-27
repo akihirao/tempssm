@@ -63,14 +63,21 @@ before model fitting.}
 \value{
 An object of class \code{"tempssm"}, a named list containing:
 \describe{
-\item{model}{Fitted \code{SSModel} object.}
-\item{fit}{Results from \code{fitSSM}.}
-\item{kfs}{Kalman filtering and smoothing results from \code{KFS}.}
-\item{data_temp}{Temperature time series used for estimation.}
-\item{data_exo}{Time series of exogenous variable(s) used for estimation.}
+\item{model}{Fitted \code{SSModel} object, or \code{NULL} if fitting
+raised an error.}
+\item{fit}{Results from \code{fitSSM}, or \code{NULL} if fitting raised an
+error.}
+\item{kfs}{Kalman filtering and smoothing results from \code{KFS}, or
+\code{NULL} if fitting raised an error.}
+\item{temp_data}{Temperature time series used for estimation.}
+\item{exogenous_data}{Time series of exogenous variables used for
+estimation, or \code{NULL}.}
 \item{ar_order}{Order of the autoregressive component.}
 \item{use_season}{Logical; whether to include a seasonal component.}
 \item{call}{Matched function call.}
+\item{converged}{Logical; whether the second optimization stage
+converged.}
+\item{state_map}{List describing exogenous and complete state names.}
 }
 }
 \description{
@@ -113,6 +120,13 @@ Observation and state disturbances are assumed Gaussian with positive,
 time-invariant variances. The model does not currently include
 time-varying volatility or automatic stationarity tests for the observed
 input series.
+
+Invalid arguments and model inputs raise an error before fitting begins. If
+the fitting backend raises an error, the function issues a warning and
+returns a \code{"tempssm"} object with \code{converged = FALSE} and
+\code{NULL} model, fit, and filtering components. If optimization completes
+without convergence, the available fitted components are retained and
+\code{converged} is set to \code{FALSE}.
 }
 \section{Life Cycle and Development Status}{
 

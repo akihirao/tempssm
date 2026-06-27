@@ -210,6 +210,97 @@
 NULL
 
 
+#' Prepare an optional finite numeric control
+#'
+#' @param x A numeric scalar or \code{NULL}.
+#' @param arg_name Name of the argument being checked.
+#' @param default Numeric scalar used when \code{x} is \code{NULL}.
+#'
+#' @return A finite numeric scalar.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_tempssm_numeric_control <- function(x, arg_name, default) {
+  if (is.null(x)) {
+    return(default)
+  }
+
+  .tempssm_check_length_one(x, arg_name)
+  .tempssm_check_numeric(x, arg_name)
+
+  if (is.na(x) || !is.finite(x)) {
+    cli::cli_abort(
+      "{.arg {arg_name}} must be a finite numeric scalar."
+    )
+  }
+
+  x
+}
+
+
+#' Validate and prepare controls for \code{tempssm()}
+#'
+#' This helper validates scalar model and optimization controls, supplies
+#' defaults for optional optimization controls, and warns about unusually high
+#' autoregressive orders.
+#'
+#' @inheritParams tempssm
+#'
+#' @return A named list containing validated \code{ar_order},
+#'   \code{use_season}, \code{maxit}, \code{reltol}, and \code{na_action}.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_tempssm_controls <- function(ar_order,
+                                      use_season,
+                                      maxit,
+                                      reltol,
+                                      na_action) {
+  .tempssm_check_length_one(ar_order, "ar_order")
+  .tempssm_check_length_one(use_season, "use_season")
+  .tempssm_check_numeric(ar_order, "ar_order")
+  .tempssm_check_logical(use_season, "use_season")
+  na_action <- match.arg(
+    na_action,
+    c("inform", "warn", "error", "allow")
+  )
+
+  valid_ar_order <- all(c(
+    !is.na(ar_order),
+    ar_order >= 1,
+    .tempssm_is_integerish(ar_order)
+  ))
+  if (!valid_ar_order) {
+    cli::cli_abort(
+      "The argument {.arg ar_order} must be an integer >= 1."
+    )
+  }
+
+  if (is.na(use_season)) {
+    cli::cli_abort(
+      "{.arg use_season} must be a logical scalar."
+    )
+  }
+
+  maxit <- .prepare_tempssm_numeric_control(maxit, "maxit", 5000)
+  reltol <- .prepare_tempssm_numeric_control(reltol, "reltol", 1e-16)
+
+  if (ar_order > 4) {
+    cli::cli_warn(
+      "An {.arg ar_order} greater than 4 may lead to unstable estimation."
+    )
+  }
+
+  list(
+    ar_order = ar_order,
+    use_season = use_season,
+    maxit = maxit,
+    reltol = reltol,
+    na_action = na_action
+  )
+}
+
+
 #' Compute expected length of the initial parameter vector
 #'
 #' The initial parameter vector contains trend, optional seasonal,
@@ -405,6 +496,13 @@ NULL
 #' time-varying volatility or automatic stationarity tests for the observed
 #' input series.
 #'
+#' Invalid arguments and model inputs raise an error before fitting begins. If
+#' the fitting backend raises an error, the function issues a warning and
+#' returns a \code{"tempssm"} object with \code{converged = FALSE} and
+#' \code{NULL} model, fit, and filtering components. If optimization completes
+#' without convergence, the available fitted components are retained and
+#' \code{converged} is set to \code{FALSE}.
+#'
 #' @param temp_data A temperature time series of class \code{ts}.
 #'   The \code{ts} object must be univariate.
 #'   The series can have any integer frequency of 2 or higher.
@@ -450,14 +548,21 @@ NULL
 #'
 #' @return An object of class \code{"tempssm"}, a named list containing:
 #' \describe{
-#'   \item{model}{Fitted \code{SSModel} object.}
-#'   \item{fit}{Results from \code{fitSSM}.}
-#'   \item{kfs}{Kalman filtering and smoothing results from \code{KFS}.}
-#'   \item{data_temp}{Temperature time series used for estimation.}
-#'   \item{data_exo}{Time series of exogenous variable(s) used for estimation.}
+#'   \item{model}{Fitted \code{SSModel} object, or \code{NULL} if fitting
+#'   raised an error.}
+#'   \item{fit}{Results from \code{fitSSM}, or \code{NULL} if fitting raised an
+#'   error.}
+#'   \item{kfs}{Kalman filtering and smoothing results from \code{KFS}, or
+#'   \code{NULL} if fitting raised an error.}
+#'   \item{temp_data}{Temperature time series used for estimation.}
+#'   \item{exogenous_data}{Time series of exogenous variables used for
+#'   estimation, or \code{NULL}.}
 #'   \item{ar_order}{Order of the autoregressive component.}
 #'   \item{use_season}{Logical; whether to include a seasonal component.}
 #'   \item{call}{Matched function call.}
+#'   \item{converged}{Logical; whether the second optimization stage
+#'   converged.}
+#'   \item{state_map}{List describing exogenous and complete state names.}
 #' }
 #'
 #' @import KFAS
@@ -477,32 +582,25 @@ tempssm <- function(temp_data,
                     reltol = NULL,
                     use_season = TRUE,
                     na_action = c("inform", "warn", "error", "allow")) {
+  model_call <- match.call()
   exo_name <- NULL
   state_names <- character(0)
 
-  .tempssm_check_length_one(ar_order, "ar_order")
-  .tempssm_check_length_one(use_season, "use_season")
-  .tempssm_check_length_one(maxit, "maxit", allow_null = TRUE)
-  .tempssm_check_length_one(reltol, "reltol", allow_null = TRUE)
-  .tempssm_check_numeric(ar_order, "ar_order")
-  .tempssm_check_logical(use_season, "use_season")
-  .tempssm_check_numeric(maxit, "maxit", allow_null = TRUE)
-  .tempssm_check_numeric(reltol, "reltol", allow_null = TRUE)
-  na_action <- match.arg(na_action)
-
-  if (!(is.numeric(ar_order) &&
-    !is.na(ar_order) &&
-    ar_order >= 1 && .tempssm_is_integerish(ar_order))) {
-    cli::cli_abort(
-      "The argument {.arg ar_order} must be an integer >= 1."
-    )
+  if (missing(na_action)) {
+    na_action <- "inform"
   }
-
-  if (!is.logical(use_season) || is.na(use_season)) {
-    cli::cli_abort(
-      "{.arg use_season} must be a logical scalar."
-    )
-  }
+  controls <- .prepare_tempssm_controls(
+    ar_order = ar_order,
+    use_season = use_season,
+    maxit = maxit,
+    reltol = reltol,
+    na_action = na_action
+  )
+  ar_order <- controls$ar_order
+  use_season <- controls$use_season
+  maxit <- controls$maxit
+  reltol <- controls$reltol
+  na_action <- controls$na_action
 
   ## ---- Default initial values --------------------------------------
   inits <- .prepare_tempssm_inits(
@@ -511,27 +609,17 @@ tempssm <- function(temp_data,
     use_season = use_season
   )
 
-  ## ---- Default values for optimization parameters --------------------
-  if (is.null(maxit)) {
-    maxit <- 5000
-  }
-  if (is.null(reltol)) {
-    reltol <- 1e-16
-  }
+  ## ---- Input checks ---------------------------------------------------
+  model_inputs <- .tempssm_prepare_model_inputs(
+    temp_data = temp_data,
+    exo_data = exo_data,
+    na_action = na_action
+  )
 
-  if (!is.null(maxit) &&
-    (!is.numeric(maxit) || is.na(maxit) || !is.finite(maxit))) {
-    cli::cli_abort(
-      "{.arg maxit} must be a finite numeric scalar."
-    )
-  }
-
-  if (!is.null(reltol) &&
-    (!is.numeric(reltol) || is.na(reltol) || !is.finite(reltol))) {
-    cli::cli_abort(
-      "{.arg reltol} must be a finite numeric scalar."
-    )
-  }
+  temp_data <- model_inputs$temp_data
+  exo_data <- model_inputs$exo_data
+  y <- temp_data
+  freq <- model_inputs$frequency
 
   tryCatch(
     {
@@ -542,66 +630,9 @@ tempssm <- function(temp_data,
           "AR order: {ar_order}, ",
           "seasonal: {use_season})"
         )
-      )  
-
-      ## ---- Input checks -------------------------------------------------
-      model_inputs <- .tempssm_prepare_model_inputs(
-        temp_data = temp_data,
-        exo_data = exo_data,
-        na_action = na_action
       )
 
-      temp_data <- model_inputs$temp_data
-      exo_data <- model_inputs$exo_data
-      y <- temp_data
-      freq <- model_inputs$frequency
-
       .tempssm_cli_debug("Time series frequency: {freq}")
-
-      .tempssm_check_length_one(ar_order, "ar_order")
-      if (!(is.numeric(ar_order) &&
-        !is.na(ar_order) &&
-        ar_order >= 1 && .tempssm_is_integerish(ar_order))) {
-        cli::cli_abort(
-          "The argument {.arg ar_order} must be an integer >= 1."
-        )
-      }
-
-      .tempssm_check_length_one(use_season, "use_season")
-      if (!is.logical(use_season) || is.na(use_season)) {
-        cli::cli_abort(
-          "{.arg use_season} must be a logical scalar."
-        )
-      }
-
-      if (ar_order > 4) {
-        cli::cli_warn(
-          "An {.arg ar_order} greater than 4 may lead to unstable estimation."
-        )
-      }
-
-      ## ---- Defaults -----------------------------------------------------
-      if (is.null(maxit)) {
-        maxit <- 5000
-      } else {
-        .tempssm_check_length_one(maxit, "maxit")
-        if (!is.numeric(maxit) || is.na(maxit) || !is.finite(maxit)) {
-          cli::cli_abort(
-            "{.arg maxit} must be a finite numeric scalar."
-          )
-        }
-      }
-
-      if (is.null(reltol)) {
-        reltol <- 1e-16
-      } else {
-        .tempssm_check_length_one(reltol, "reltol")
-        if (!is.numeric(reltol) || is.na(reltol) || !is.finite(reltol)) {
-          cli::cli_abort(
-            "{.arg reltol} must be a finite numeric scalar."
-          )
-        }
-      }
 
       .tempssm_cli_debug(
         "Optimization settings: maxit={maxit}, reltol={reltol}"
@@ -717,7 +748,7 @@ tempssm <- function(temp_data,
         exogenous_data = exo_data,
         ar_order = ar_order,
         use_season = use_season,
-        call = match.call(),
+        call = model_call,
         converged = fit2$optim.out$convergence == 0,
         state_map = list(
           exogenous = exo_name,
@@ -750,7 +781,7 @@ tempssm <- function(temp_data,
         exogenous_data = exo_data,
         ar_order = ar_order,
         use_season = use_season,
-        call = match.call(),
+        call = model_call,
         converged = FALSE,
         state_map = list(
           exogenous = exo_name,
