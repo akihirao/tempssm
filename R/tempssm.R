@@ -384,6 +384,186 @@ NULL
 }
 
 
+#' Prepare exogenous inputs for KFAS model construction
+#'
+#' This helper converts validated exogenous time-series data to the matrix used
+#' by the KFAS model constructors and preserves its column names for state
+#' mapping.
+#'
+#' @inheritParams tempssm
+#'
+#' @return A named list containing \code{exo_names} and \code{exo_matrix}.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_tempssm_exogenous <- function(exo_data) {
+  if (is.null(exo_data)) {
+    .tempssm_cli_debug("No exogenous variables used")
+    return(list(exo_names = NULL, exo_matrix = NULL))
+  }
+
+  .tempssm_cli_inform("Including exogenous variables in the model")
+
+  exo_names <- colnames(exo_data)
+  exo_matrix <- as.matrix(exo_data)
+
+  .tempssm_cli_debug(
+    "Exogenous variables: {paste(exo_names, collapse = ', ')}"
+  )
+
+  list(exo_names = exo_names, exo_matrix = exo_matrix)
+}
+
+
+#' Construct state names for a fitted tempssm model
+#'
+#' State names follow the KFAS model component order used by
+#' \code{.define_build_model()} and \code{.define_update_func()}.
+#'
+#' @param exo_names Optional character vector of exogenous state names.
+#' @param freq Integer seasonal frequency.
+#' @param n_states Integer number of columns in the smoothed state matrix.
+#' @inheritParams tempssm
+#'
+#' @return Character vector of state names.
+#'
+#' @keywords internal
+#' @noRd
+.make_tempssm_state_names <- function(exo_names,
+                                      freq,
+                                      use_season,
+                                      ar_order,
+                                      n_states) {
+  seasonal_names <- if (use_season) {
+    paste0("sea_dummy", seq_len(freq - 1))
+  } else {
+    character(0)
+  }
+
+  state_names <- c(
+    exo_names,
+    "level",
+    "slope",
+    seasonal_names,
+    paste0("arima", seq_len(ar_order))
+  )
+
+  if (length(state_names) != n_states) {
+    cli::cli_abort(
+      paste0(
+        "Internal state-name mapping produced {length(state_names)} names, ",
+        "but the KFAS state matrix has {n_states} columns."
+      )
+    )
+  }
+
+  state_names
+}
+
+
+#' Construct a tempssm result object
+#'
+#' @param model A fitted KFAS model or \code{NULL}.
+#' @param fit A KFAS fitting result or \code{NULL}.
+#' @param kfs A KFAS filtering and smoothing result or \code{NULL}.
+#' @param temp_data Validated temperature time series.
+#' @param exogenous_data Validated exogenous time series or \code{NULL}.
+#' @param model_call Matched call to \code{tempssm()}.
+#' @param converged Logical scalar indicating optimization convergence.
+#' @param exo_names Optional character vector of exogenous state names.
+#' @param state_names Character vector of all state names.
+#' @inheritParams tempssm
+#'
+#' @return An object of class \code{"tempssm"}.
+#'
+#' @keywords internal
+#' @noRd
+.new_tempssm_result <- function(model,
+                                fit,
+                                kfs,
+                                temp_data,
+                                exogenous_data,
+                                ar_order,
+                                use_season,
+                                model_call,
+                                converged,
+                                exo_names,
+                                state_names) {
+  if (!is.null(kfs)) {
+    colnames(kfs$alphahat) <- state_names
+  }
+
+  out <- list(
+    model = model,
+    fit = fit,
+    kfs = kfs,
+    temp_data = temp_data,
+    exogenous_data = exogenous_data,
+    ar_order = ar_order,
+    use_season = use_season,
+    call = model_call,
+    converged = converged,
+    state_map = list(
+      exogenous = exo_names,
+      all = state_names
+    )
+  )
+
+  class(out) <- "tempssm"
+  out
+}
+
+
+#' Fit a prepared tempssm model with KFAS
+#'
+#' This helper performs the two-stage optimization used by \code{tempssm()},
+#' then runs Kalman filtering and smoothing on the second-stage fitted model.
+#'
+#' @param build_ssm A prepared \code{KFAS::SSModel} object.
+#' @param updatefn Parameter update function passed to \code{KFAS::fitSSM()}.
+#' @inheritParams tempssm
+#'
+#' @return A named list containing the second-stage \code{fit} and the
+#'   filtering and smoothing result \code{kfs}.
+#'
+#' @keywords internal
+#' @noRd
+.fit_tempssm_kfas <- function(build_ssm,
+                              updatefn,
+                              inits,
+                              maxit,
+                              reltol) {
+  control <- list(maxit = maxit, reltol = reltol)
+
+  .tempssm_cli_inform("Optimizing model parameters (stage 1)")
+  fit_stage1 <- fitSSM(
+    build_ssm,
+    inits = inits,
+    updatefn = updatefn,
+    method = "Nelder-Mead",
+    control = control
+  )
+
+  .tempssm_cli_inform("Refining optimization (stage 2)")
+  fit_stage2 <- fitSSM(
+    build_ssm,
+    inits = fit_stage1$optim.out$par,
+    updatefn = updatefn,
+    method = "BFGS",
+    control = control
+  )
+
+  .tempssm_cli_inform("Running Kalman filtering and smoothing")
+  kfs <- KFS(
+    fit_stage2$model,
+    filtering = c("state", "mean"),
+    smoothing = c("state", "mean", "disturbance")
+  )
+
+  list(fit = fit_stage2, kfs = kfs)
+}
+
+
 #' Check stationarity of autoregressive coefficients
 #'
 #' @param ar_coefs Numeric vector of autoregressive coefficients.
@@ -400,7 +580,7 @@ NULL
     return(TRUE)
   }
 
-  if (any(!is.finite(ar_coefs))) {
+  if (!all(is.finite(ar_coefs))) {
     return(FALSE)
   }
 
@@ -647,21 +827,9 @@ tempssm <- function(temp_data,
       H_idx <- param_idx_list$H
 
       ## ---- Exogenous handling ------------------------------------------
-      if (is.null(exo_data)) {
-        .tempssm_cli_debug("No exogenous variables used")
-
-        exo_name <- NULL
-        exo_mat <- NULL
-      } else {
-        .tempssm_cli_inform("Including exogenous variables in the model")
-
-        exo_name <- colnames(exo_data)
-        exo_mat <- as.matrix(exo_data)
-
-        .tempssm_cli_debug(
-          "Exogenous variables: {paste(exo_name, collapse = ', ')}"
-        )
-      }
+      exogenous <- .prepare_tempssm_exogenous(exo_data)
+      exo_name <- exogenous$exo_names
+      exo_mat <- exogenous$exo_matrix
 
       ## ---- Model definition --------------------------------------------
       build_ssm <- .define_build_model(
@@ -683,64 +851,28 @@ tempssm <- function(temp_data,
         H_idx = H_idx
       )
 
-      ## ---- Optimization -------------------------------------------------
-      .tempssm_cli_inform("Optimizing model parameters (stage 1)")
-
-      fit1 <- fitSSM(
-        build_ssm,
+      ## ---- Optimization and smoothing ----------------------------------
+      fitted <- .fit_tempssm_kfas(
+        build_ssm = build_ssm,
+        updatefn = update_func_common,
         inits = inits,
-        updatefn = update_func_common,
-        method = "Nelder-Mead",
-        control = list(maxit = maxit, reltol = reltol)
+        maxit = maxit,
+        reltol = reltol
       )
-
-      .tempssm_cli_inform("Refining optimization (stage 2)")
-
-      fit2 <- fitSSM(
-        build_ssm,
-        inits = fit1$optim.out$par,
-        updatefn = update_func_common,
-        method = "BFGS",
-        control = list(maxit = maxit, reltol = reltol)
-      )
-
-      ## ---- KFS ----------------------------------------------------------
-      .tempssm_cli_inform("Running Kalman filtering and smoothing")
-
-      kfs <- KFS(
-        fit2$model,
-        filtering = c("state", "mean"),
-        smoothing = c("state", "mean", "disturbance")
-      )
+      fit2 <- fitted$fit
+      kfs <- fitted$kfs
 
       ## ---- State names --------------------------------------------------
-      state_names <- character(ncol(kfs$alphahat))
-      idx <- 1
-
-      if (!is.null(exo_name)) {
-        state_names[idx:(idx + length(exo_name) - 1)] <- exo_name
-        idx <- idx + length(exo_name)
-      }
-
-      state_names[idx] <- "level"
-      idx <- idx + 1
-      state_names[idx] <- "slope"
-      idx <- idx + 1
-
-      if (use_season) {
-        n_season <- freq - 1
-        state_names[idx:(idx + n_season - 1)] <-
-          paste0("sea_dummy", seq_len(n_season))
-        idx <- idx + n_season
-      }
-
-      if (ar_order > 0) {
-        state_names[idx:(idx + ar_order - 1)] <-
-          paste0("arima", seq_len(ar_order))
-      }
+      state_names <- .make_tempssm_state_names(
+        exo_names = exo_name,
+        freq = freq,
+        use_season = use_season,
+        ar_order = ar_order,
+        n_states = ncol(kfs$alphahat)
+      )
 
       ## ---- Output -------------------------------------------------------
-      out <- list(
+      out <- .new_tempssm_result(
         model = fit2$model,
         fit = fit2,
         kfs = kfs,
@@ -748,16 +880,11 @@ tempssm <- function(temp_data,
         exogenous_data = exo_data,
         ar_order = ar_order,
         use_season = use_season,
-        call = model_call,
+        model_call = model_call,
         converged = fit2$optim.out$convergence == 0,
-        state_map = list(
-          exogenous = exo_name,
-          all       = state_names
-        )
+        exo_names = exo_name,
+        state_names = state_names
       )
-
-      colnames(out$kfs$alphahat) <- state_names
-      class(out) <- "tempssm"
 
       ## ---- Completion message ------------------------------------------
       if (out$converged) {
@@ -773,7 +900,7 @@ tempssm <- function(temp_data,
         "Model fitting failed: {conditionMessage(e)}"
       )
 
-      out <- list(
+      out <- .new_tempssm_result(
         model = NULL,
         fit = NULL,
         kfs = NULL,
@@ -781,15 +908,12 @@ tempssm <- function(temp_data,
         exogenous_data = exo_data,
         ar_order = ar_order,
         use_season = use_season,
-        call = model_call,
+        model_call = model_call,
         converged = FALSE,
-        state_map = list(
-          exogenous = exo_name,
-          all       = state_names
-        )
+        exo_names = exo_name,
+        state_names = state_names
       )
 
-      class(out) <- "tempssm"
       return(out)
     }
   ) # close tryCatch

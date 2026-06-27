@@ -50,7 +50,7 @@ test_that(".prepare_tempssm_controls preserves valid supplied controls", {
   )
 
   expect_identical(controls$ar_order, 3)
-  expect_identical(controls$use_season, FALSE)
+  expect_false(controls$use_season)
   expect_identical(controls$maxit, 1000)
   expect_identical(controls$reltol, 1e-10)
   expect_identical(controls$na_action, "allow")

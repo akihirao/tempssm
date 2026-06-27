@@ -5,7 +5,7 @@ test_that("base R nottem data retain known monthly time-series properties", {
   expect_identical(stats::start(nottem), c(1920, 1))
   expect_identical(stats::end(nottem), c(1939, 12))
   expect_identical(stats::frequency(nottem), 12)
-  expect_identical(length(nottem), 240L)
+  expect_length(nottem, 240L)
   expect_equal(as.numeric(nottem[1:6]), c(40.6, 40.8, 44.4, 46.7, 54.1, 58.5))
 })
 
@@ -35,8 +35,8 @@ test_that("time-series CV splitting works with the standard nottem data", {
   expect_length(folds, 5)
   expect_identical(stats::start(folds[[1]]$train_ts), c(1920, 1))
   expect_identical(stats::start(folds[[1]]$test_ts), c(1930, 1))
-  expect_identical(length(folds[[1]]$train_ts), 120L)
-  expect_identical(length(folds[[1]]$test_ts), 12L)
+  expect_length(folds[[1]]$train_ts, 120L)
+  expect_length(folds[[1]]$test_ts, 12L)
 })
 
 

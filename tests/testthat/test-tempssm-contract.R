@@ -45,16 +45,17 @@ test_that("tempssm returns a well-formed failure object for fitting errors", {
 
 test_that("tempssm distinguishes non-convergence from fitting errors", {
   temp_ts <- ts(rnorm(12), frequency = 4)
-  fit_count <- 0L
+  fit_state <- new.env(parent = emptyenv())
+  fit_state$count <- 0L
 
   testthat::local_mocked_bindings(
     fitSSM = function(model, inits, ...) {
-      fit_count <<- fit_count + 1L
+      fit_state$count <- fit_state$count + 1L
       list(
         model = model,
         optim.out = list(
           par = inits,
-          convergence = if (fit_count == 2L) 1 else 0
+          convergence = if (fit_state$count == 2L) 1 else 0
         )
       )
     },

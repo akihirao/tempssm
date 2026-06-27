@@ -30,20 +30,19 @@ test_that("literal condition messages in R code are unique", {
 
 
 find_condition_expectations <- function(expr, file) {
-  calls <- list()
-
   walk <- function(node) {
     if (!is.call(node)) {
-      return(invisible(NULL))
+      return(list())
     }
 
     call_name <- as.character(node[[1L]])[[1L]]
     if (identical(call_name, "function")) {
-      return(invisible(NULL))
+      return(list())
     }
 
+    calls <- list()
     if (call_name %in% c("expect_error", "expect_warning", "expect_message")) {
-      calls[[length(calls) + 1L]] <<- list(
+      calls[[1L]] <- list(
         file = file,
         call = paste(deparse(node, width.cutoff = 80), collapse = " "),
         n_args = length(as.list(node)) - 1L
@@ -55,15 +54,17 @@ find_condition_expectations <- function(expr, file) {
       if (is.null(child)) {
         next
       }
-      tryCatch(
+      child_calls <- tryCatch(
         walk(child),
-        missingArgError = function(e) NULL
+        missingArgError = function(e) list()
       )
+      calls <- c(calls, child_calls)
     }
+
+    calls
   }
 
   walk(expr)
-  calls
 }
 
 

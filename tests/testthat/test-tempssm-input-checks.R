@@ -125,16 +125,23 @@ test_that("tempssm validates na_action choices strictly", {
 test_that("tempssm warns for high AR orders", {
   temp_ts <- ts(rnorm(36), start = c(2000, 1), frequency = 12)
 
-  warnings <- character(0)
+  warning_state <- new.env(parent = emptyenv())
+  warning_state$messages <- character(0)
   withCallingHandlers(
     tempssm(temp_ts, ar_order = 5, maxit = 1, reltol = 1e-4),
     warning = function(w) {
-      warnings <<- c(warnings, conditionMessage(w))
+      warning_state$messages <- c(
+        warning_state$messages,
+        conditionMessage(w)
+      )
       invokeRestart("muffleWarning")
     }
   )
 
-  expect_true(any(grepl("ar_order.*greater than 4", warnings)))
+  expect_true(any(grepl(
+    "ar_order.*greater than 4",
+    warning_state$messages
+  )))
 })
 
 

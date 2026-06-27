@@ -2,7 +2,7 @@ test_that("tempssm logLik method matches the underlying KFAS model", {
   tempssm_loglik <- logLik(res_tempssm)
   kfas_loglik <- stats::logLik(res_tempssm$model)
 
-  expect_equal(as.numeric(tempssm_loglik), as.numeric(kfas_loglik))
+  expect_identical(as.numeric(tempssm_loglik), as.numeric(kfas_loglik))
   expect_identical(attr(tempssm_loglik, "nobs"), length(res_tempssm$temp_data))
   expect_identical(
     attr(tempssm_loglik, "df"),
@@ -15,8 +15,8 @@ test_that("tempssm AIC uses the KFAS log-likelihood with tempssm df", {
   kfas_loglik <- as.numeric(stats::logLik(res_tempssm$model))
   expected_aic <- -2 * kfas_loglik + 2 * length(res_tempssm$fit$optim.out$par)
 
-  expect_equal(AIC(res_tempssm), expected_aic)
-  expect_equal(get_aic(res_tempssm), expected_aic)
+  expect_identical(AIC(res_tempssm), expected_aic)
+  expect_identical(get_aic(res_tempssm), expected_aic)
 })
 
 
@@ -28,10 +28,16 @@ test_that("component accessors match KFAS smoothed states", {
   kfas_states <- res_tempssm$kfs$alphahat
   freq <- stats::frequency(res_tempssm$temp_data)
 
-  expect_equal(as.numeric(level_ts), as.numeric(kfas_states[, "level"]))
-  expect_equal(as.numeric(drift_ts), as.numeric(kfas_states[, "slope"] * freq))
-  expect_equal(as.numeric(season_ts), as.numeric(kfas_states[, "sea_dummy1"]))
-  expect_equal(as.numeric(ar1_ts), as.numeric(kfas_states[, "arima1"]))
+  expect_identical(as.numeric(level_ts), as.numeric(kfas_states[, "level"]))
+  expect_identical(
+    as.numeric(drift_ts),
+    as.numeric(kfas_states[, "slope"] * freq)
+  )
+  expect_identical(
+    as.numeric(season_ts),
+    as.numeric(kfas_states[, "sea_dummy1"])
+  )
+  expect_identical(as.numeric(ar1_ts), as.numeric(kfas_states[, "arima1"]))
 })
 
 
@@ -44,24 +50,36 @@ test_that("component confidence intervals match KFAS confint output", {
   season_ci <- get_season_ts(res_tempssm, ci = TRUE, ci_level = 0.95)
   ar1_ci <- get_ar1_ts(res_tempssm, ci = TRUE, ci_level = 0.95)
 
-  expect_equal(as.numeric(level_ci[, "lwr"]), as.numeric(ci_obj$level[, "lwr"]))
-  expect_equal(as.numeric(level_ci[, "upr"]), as.numeric(ci_obj$level[, "upr"]))
-  expect_equal(
+  expect_identical(
+    as.numeric(level_ci[, "lwr"]),
+    as.numeric(ci_obj$level[, "lwr"])
+  )
+  expect_identical(
+    as.numeric(level_ci[, "upr"]),
+    as.numeric(ci_obj$level[, "upr"])
+  )
+  expect_identical(
     as.numeric(drift_ci[, "lwr"]),
     as.numeric(ci_obj$slope[, "lwr"] * freq)
   )
-  expect_equal(
+  expect_identical(
     as.numeric(drift_ci[, "upr"]),
     as.numeric(ci_obj$slope[, "upr"] * freq)
   )
-  expect_equal(
+  expect_identical(
     as.numeric(season_ci[, "lwr"]),
     as.numeric(ci_obj$sea_dummy1[, "lwr"])
   )
-  expect_equal(
+  expect_identical(
     as.numeric(season_ci[, "upr"]),
     as.numeric(ci_obj$sea_dummy1[, "upr"])
   )
-  expect_equal(as.numeric(ar1_ci[, "lwr"]), as.numeric(ci_obj$arima1[, "lwr"]))
-  expect_equal(as.numeric(ar1_ci[, "upr"]), as.numeric(ci_obj$arima1[, "upr"]))
+  expect_identical(
+    as.numeric(ar1_ci[, "lwr"]),
+    as.numeric(ci_obj$arima1[, "lwr"])
+  )
+  expect_identical(
+    as.numeric(ar1_ci[, "upr"]),
+    as.numeric(ci_obj$arima1[, "upr"])
+  )
 })

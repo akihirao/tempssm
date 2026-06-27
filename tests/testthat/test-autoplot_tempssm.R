@@ -29,8 +29,8 @@ test_that("autoplot.tempssm returns gtable for all components", {
   g <- autoplot(res_tempssm, ci = FALSE)
 
   expect_s3_class(g, "gtable")
-  expect_identical(length(g$heights), 2L)
-  expect_identical(length(g$widths), 2L)
+  expect_length(g$heights, 2L)
+  expect_length(g$widths, 2L)
 })
 
 
@@ -48,8 +48,8 @@ test_that("autoplot.tempssm accepts manual layout for all components", {
   g <- autoplot(res_tempssm, ci = FALSE, nrow = 4, ncol = 1)
 
   expect_s3_class(g, "gtable")
-  expect_identical(length(g$heights), 4L)
-  expect_identical(length(g$widths), 1L)
+  expect_length(g$heights, 4L)
+  expect_length(g$widths, 1L)
 })
 
 

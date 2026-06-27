@@ -378,6 +378,165 @@ ts_cv_run_fold <- function(fold,
 }
 
 
+#' Validate controls for rolling time-series splits
+#'
+#' @inheritParams ts_train_test_split
+#' @param n_obs Number of observations in the validated temperature series.
+#'
+#' @return A named list containing validated split controls.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_ts_split_controls <- function(initial,
+                                       horizon,
+                                       step,
+                                       fixed_window,
+                                       allow_partial,
+                                       n_obs) {
+  .tempssm_check_length_one(initial, "initial")
+  .tempssm_check_length_one(horizon, "horizon")
+  .tempssm_check_length_one(step, "step")
+  .tempssm_check_numeric(initial, "initial")
+  .tempssm_check_numeric(horizon, "horizon")
+  .tempssm_check_numeric(step, "step")
+
+  counts <- c(initial, horizon, step)
+  valid_counts <- all(c(
+    !anyNA(counts),
+    all(is.finite(counts)),
+    all(.tempssm_is_integerish(counts)),
+    all(counts >= 1)
+  ))
+  if (!valid_counts) {
+    cli::cli_abort(
+      "`initial`, `horizon`, and `step` must be positive integers."
+    )
+  }
+
+  .tempssm_check_length_one(fixed_window, "fixed_window")
+  .tempssm_check_logical(fixed_window, "fixed_window")
+  if (is.na(fixed_window)) {
+    cli::cli_abort(
+      "{.arg fixed_window} must be a logical scalar."
+    )
+  }
+
+  .tempssm_check_length_one(allow_partial, "allow_partial")
+  .tempssm_check_logical(allow_partial, "allow_partial")
+  if (is.na(allow_partial)) {
+    cli::cli_abort(
+      "{.arg allow_partial} must be a logical scalar."
+    )
+  }
+
+  if (initial >= n_obs) {
+    cli::cli_abort(
+      "`initial` must be smaller than the length of the time series."
+    )
+  }
+
+  list(
+    initial = initial,
+    horizon = horizon,
+    step = step,
+    fixed_window = fixed_window,
+    allow_partial = allow_partial
+  )
+}
+
+
+#' Generate positional bounds for rolling time-series splits
+#'
+#' This helper computes all train and test boundaries before time-series data
+#' are sliced. It assumes that split controls have already been validated.
+#'
+#' @inheritParams ts_train_test_split
+#' @param n_obs Number of observations in the validated temperature series.
+#'
+#' @return A data frame with numeric columns `train_start`, `train_end`,
+#'   `test_start`, and `test_end`.
+#'
+#' @keywords internal
+#' @noRd
+.make_rolling_split_bounds <- function(n_obs,
+                                       initial,
+                                       horizon,
+                                       step,
+                                       fixed_window,
+                                       allow_partial) {
+  train_end <- as.numeric(seq.int(initial, n_obs - 1, by = step))
+
+  if (!allow_partial) {
+    train_end <- train_end[train_end + horizon <= n_obs]
+  }
+
+  if (length(train_end) == 0L) {
+    return(data.frame(
+      train_start = numeric(),
+      train_end = numeric(),
+      test_start = numeric(),
+      test_end = numeric()
+    ))
+  }
+
+  train_start <- if (fixed_window) {
+    pmax(1, train_end - initial + 1)
+  } else {
+    rep(1, length(train_end))
+  }
+
+  data.frame(
+    train_start = train_start,
+    train_end = train_end,
+    test_start = train_end + 1,
+    test_end = pmin(train_end + horizon, n_obs)
+  )
+}
+
+
+#' Build one rolling train/test fold
+#'
+#' @param fold_id Numeric fold identifier.
+#' @param train_start Numeric training start position.
+#' @param train_end Numeric training end position.
+#' @param test_start Numeric test start position.
+#' @param test_end Numeric test end position.
+#' @inheritParams ts_train_test_split
+#'
+#' @return A named list representing one rolling split.
+#'
+#' @keywords internal
+#' @noRd
+.build_ts_split_fold <- function(fold_id,
+                                 temp_data,
+                                 exo_data,
+                                 train_start,
+                                 train_end,
+                                 test_start,
+                                 test_end) {
+  .tempssm_cli_debug(
+    paste0(
+      "Fold {fold_id}: train[{train_start}:{train_end}], ",
+      "test[{test_start}:{test_end}]"
+    )
+  )
+
+  time_index <- time(temp_data)
+
+  list(
+    fold = fold_id,
+    train_ts = .ts_slice(temp_data, train_start, train_end),
+    test_ts = .ts_slice(temp_data, test_start, test_end),
+    exo_train_ts = .ts_slice(exo_data, train_start, train_end),
+    exo_test_ts = .ts_slice(exo_data, test_start, test_end),
+    train_idx = c(train_start, train_end),
+    test_idx = c(test_start, test_end),
+    train_range = time_index[c(train_start, train_end)],
+    test_range = time_index[c(test_start, test_end)]
+  )
+}
+
+
 #' Generate rolling train/test splits for time series
 #'
 #' @description
@@ -484,48 +643,20 @@ ts_train_test_split <- function(temp_data,
   exo_data <- model_inputs$exo_data
   freq <- model_inputs$frequency
 
-  .tempssm_check_length_one(initial, "initial")
-  .tempssm_check_length_one(horizon, "horizon")
-  .tempssm_check_length_one(step, "step")
-  .tempssm_check_numeric(initial, "initial")
-  .tempssm_check_numeric(horizon, "horizon")
-  .tempssm_check_numeric(step, "step")
-
-  if (!is.numeric(initial) ||
-      !is.numeric(horizon) ||
-      !is.numeric(step) ||
-      anyNA(c(initial, horizon, step)) ||
-      any(!is.finite(c(initial, horizon, step))) ||
-      any(!.tempssm_is_integerish(c(initial, horizon, step))) ||
-      any(c(initial, horizon, step) < 1)) {
-    cli::cli_abort(
-      "`initial`, `horizon`, and `step` must be positive integers."
-    )
-  }
-
-  .tempssm_check_length_one(fixed_window, "fixed_window")
-  .tempssm_check_logical(fixed_window, "fixed_window")
-  if (!is.logical(fixed_window) || is.na(fixed_window)) {
-    cli::cli_abort(
-      "{.arg fixed_window} must be a logical scalar."
-    )
-  }
-
-  .tempssm_check_length_one(allow_partial, "allow_partial")
-  .tempssm_check_logical(allow_partial, "allow_partial")
-  if (!is.logical(allow_partial) || is.na(allow_partial)) {
-    cli::cli_abort(
-      "{.arg allow_partial} must be a logical scalar."
-    )
-  }
-
   n <- model_inputs$n_obs
-
-  if (initial >= n) {
-    cli::cli_abort(
-      "`initial` must be smaller than the length of the time series."
-    )
-  }
+  controls <- .prepare_ts_split_controls(
+    initial = initial,
+    horizon = horizon,
+    step = step,
+    fixed_window = fixed_window,
+    allow_partial = allow_partial,
+    n_obs = n
+  )
+  initial <- controls$initial
+  horizon <- controls$horizon
+  step <- controls$step
+  fixed_window <- controls$fixed_window
+  allow_partial <- controls$allow_partial
 
   .tempssm_cli_debug("Series length: {n}, frequency: {freq}")
 
@@ -537,50 +668,26 @@ ts_train_test_split <- function(temp_data,
   }
 
   ## ---- Rolling split --------------------------------------------------
-  folds <- list()
-  k <- 1
-  train_end <- initial
+  bounds <- .make_rolling_split_bounds(
+    n_obs = n,
+    initial = initial,
+    horizon = horizon,
+    step = step,
+    fixed_window = fixed_window,
+    allow_partial = allow_partial
+  )
+  folds <- vector("list", nrow(bounds))
 
-  while (TRUE) {
-    train_start <- if (fixed_window) {
-      max(1, train_end - initial + 1)
-    } else {
-      1
-    }
-
-    test_start <- train_end + 1
-    test_end <- train_end + horizon
-
-    if (test_start > n) break
-
-    if (test_end > n) {
-      if (!allow_partial) break
-      test_end <- n
-    }
-
-    .tempssm_cli_debug(
-      paste0(
-        "Fold {k}: train[{train_start}:{train_end}], ",
-        "test[{test_start}:{test_end}]"
-      )
+  for (idx in seq_len(nrow(bounds))) {
+    folds[[idx]] <- .build_ts_split_fold(
+      fold_id = as.numeric(idx),
+      temp_data = temp_data,
+      exo_data = exo_data,
+      train_start = bounds$train_start[[idx]],
+      train_end = bounds$train_end[[idx]],
+      test_start = bounds$test_start[[idx]],
+      test_end = bounds$test_end[[idx]]
     )
-
-    folds[[k]] <- list(
-      fold = k,
-      train_ts = .ts_slice(temp_data, train_start, train_end),
-      test_ts = .ts_slice(temp_data, test_start, test_end),
-      exo_train_ts = .ts_slice(exo_data, train_start, train_end),
-      exo_test_ts = .ts_slice(exo_data, test_start, test_end),
-      train_idx = c(train_start, train_end),
-      test_idx = c(test_start, test_end),
-      train_range = time(temp_data)[c(train_start, train_end)],
-      test_range = time(temp_data)[c(test_start, test_end)]
-    )
-
-    train_end <- train_end + step
-    if (train_end >= n) break
-
-    k <- k + 1
   }
 
   ## ---- Completion -----------------------------------------------------
@@ -614,10 +721,30 @@ ts_train_test_split <- function(temp_data,
     cli::cli_abort("Input must be a {.cls ts} object.")
   }
 
-  n <- length(x)
+  .tempssm_check_length_one(i_start, "i_start")
+  .tempssm_check_length_one(i_end, "i_end")
+  .tempssm_check_numeric(i_start, "i_start")
+  .tempssm_check_numeric(i_end, "i_end")
 
-  if (i_start < 1 || i_end > n || i_start > i_end) {
-    cli::cli_abort("Invalid slice indices for time series.")
+  n <- NROW(x)
+  indices <- c(i_start, i_end)
+  valid_indices <- all(c(
+    !anyNA(indices),
+    all(is.finite(indices)),
+    all(.tempssm_is_integerish(indices)),
+    i_start >= 1,
+    i_end <= n,
+    i_start <= i_end
+  ))
+
+  if (!valid_indices) {
+    cli::cli_abort(
+      c(
+        "Invalid slice indices.",
+        "i" = "{.arg i_start} and {.arg i_end} must define an integer range.",
+        "i" = "The range must lie within the time series."
+      )
+    )
   }
 
   stats::window(
