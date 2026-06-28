@@ -51,7 +51,7 @@
 #' @noRd
 .tempssm_component_plot_data <- function(component_ts, value_name, ci) {
   component_df <- data.frame(
-    time = time(component_ts),
+    time = as.numeric(stats::time(component_ts)),
     value = as.numeric(component_ts[, value_name])
   )
 
@@ -443,7 +443,7 @@ plot_temp_dev <- function(ts, connect_missing = FALSE) {
 
   anom <- tempssm::compute_temp_anomaly(ts)
   anom_df <- data.frame(
-    time = time(anom),
+    time = as.numeric(stats::time(anom)),
     anomaly = as.numeric(anom)
   )
 
