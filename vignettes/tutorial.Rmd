@@ -267,6 +267,10 @@ a relatively stable positive rate of change. The shaded gray areas
 represent 95% confidence intervals for the estimated latent states,
 illustrating the uncertainty associated with each of estimated components.
 
+Although the observed time series contains missing values, the state-space 
+framework allows latent states to be estimated for the entire time span, 
+including unobserved periods.
+
 The standard plotting interface is `plot(res)`. The ggplot2-style interface
 `autoplot(res)` is also available and produces the same component plot by
 default.
