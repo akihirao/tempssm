@@ -390,8 +390,8 @@ autoplot_ar1 <- function(res,
     fun = "autoplot_ar1",
     getter = get_ar1_ts,
     value_name = "ar1",
-    title = "Autoregressive (1)",
-    ci_title = "Autoregressive (1)",
+    title = "Autoregressive (1) component",
+    ci_title = "Autoregressive (1) component",
     debug_name = "ar1"
   )
 }
