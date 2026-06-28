@@ -54,6 +54,9 @@ consistent handling of variable names within the \pkg{tempssm} framework.
 \details{
 The shared time window is determined using \code{ts.intersect()}, and both
 temperature and exogenous series are trimmed accordingly.
+The two inputs must have the same frequency, but that frequency is not fixed;
+quarterly, monthly, twice-monthly, and other regular \code{ts} frequencies
+are supported.
 
 For univariate series, variable names are assigned via
 \code{set_ts_name()} rather than \code{colnames()} in order to maintain

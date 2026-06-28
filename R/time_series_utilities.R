@@ -380,6 +380,150 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 }
 
 
+#' Resolve a current time-series argument and its compatibility alias
+#'
+#' @param current Current argument, which may be missing.
+#' @param legacy Compatibility alias, or \code{NULL}.
+#' @param current_name Name of the current argument.
+#' @param legacy_name Name of the compatibility alias.
+#'
+#' @return The resolved argument value.
+#'
+#' @keywords internal
+#' @noRd
+.resolve_trim_ts_alias <- function(current,
+                                   legacy,
+                                   current_name,
+                                   legacy_name) {
+  if (missing(current)) {
+    return(legacy)
+  }
+
+  if (!is.null(legacy)) {
+    cli::cli_abort(
+      "Use either {.arg {current_name}} or {.arg {legacy_name}}, not both."
+    )
+  }
+
+  current
+}
+
+
+#' Validate and prepare names for overlapping time series
+#'
+#' @inheritParams trim_ts_overlap
+#' @param num_exo_variable Number of exogenous variables.
+#'
+#' @return A named list containing temperature and exogenous variable names.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_trim_ts_names <- function(temp_name, exo_name, num_exo_variable) {
+  .tempssm_check_length_one(temp_name, "temp_name")
+  .tempssm_check_character(temp_name, "temp_name")
+  if (anyNA(temp_name)) {
+    cli::cli_abort(
+      "{.arg temp_name} must be a character scalar."
+    )
+  }
+
+  if (is.null(exo_name)) {
+    cli::cli_warn(
+      "`exo_name` not supplied; assigning default names: var1, var2, ..."
+    )
+    exo_name <- paste0("var", seq_len(num_exo_variable))
+  } else {
+    .tempssm_check_character(exo_name, "exo_name")
+    if (length(exo_name) != num_exo_variable) {
+      cli::cli_abort(
+        c(
+          "Length of {.arg exo_name} must equal ",
+          "the number of exogenous variables."
+        )
+      )
+    }
+    if (anyNA(exo_name)) {
+      cli::cli_abort(
+        "{.arg exo_name} must not contain missing values."
+      )
+    }
+  }
+
+  list(
+    temp_name = temp_name,
+    exo_name = exo_name
+  )
+}
+
+
+#' Intersect and split temperature and exogenous time series
+#'
+#' @inheritParams trim_ts_overlap
+#'
+#' @return A named list containing overlapping temperature and exogenous
+#'   time series.
+#'
+#' @keywords internal
+#' @noRd
+.intersect_trim_ts <- function(temp_data, exo_data) {
+  same_frequency <- isTRUE(all.equal(
+    stats::frequency(temp_data),
+    stats::frequency(exo_data)
+  ))
+  if (!same_frequency) {
+    cli::cli_abort(
+      "{.arg temp_data} and {.arg exo_data} must have the same frequency."
+    )
+  }
+
+  overlap <- suppressWarnings(
+    stats::ts.intersect(temp_data, exo_data)
+  )
+  if (is.null(overlap) || NROW(overlap) == 0L) {
+    cli::cli_abort(
+      c(
+        "No overlapping time period found ",
+        "between {.arg temp_data} and {.arg exo_data}."
+      )
+    )
+  }
+
+  list(
+    temperature = overlap[, 1L, drop = FALSE],
+    exogenous = overlap[, -1L, drop = FALSE]
+  )
+}
+
+
+#' Construct a labeled overlapping time-series result
+#'
+#' @param overlap Overlapping series returned by \code{.intersect_trim_ts()}.
+#' @inheritParams trim_ts_overlap
+#'
+#' @return A named list containing labeled temperature and exogenous series.
+#'
+#' @keywords internal
+#' @noRd
+.new_trimmed_ts_result <- function(overlap, temp_name, exo_name) {
+  temperature <- set_ts_name(
+    overlap$temperature,
+    label = temp_name
+  )
+  exogenous <- overlap$exogenous
+
+  if (NCOL(exogenous) == 1L) {
+    exogenous <- set_ts_name(exogenous, label = exo_name)
+  } else {
+    colnames(exogenous) <- exo_name
+  }
+
+  list(
+    temperature = temperature,
+    exogenous = exogenous
+  )
+}
+
+
 #' Trim and align temperature and exogenous time series over their shared period
 #'
 #' @description
@@ -419,6 +563,9 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 #' @details
 #' The shared time window is determined using \code{ts.intersect()}, and both
 #' temperature and exogenous series are trimmed accordingly.
+#' The two inputs must have the same frequency, but that frequency is not fixed;
+#' quarterly, monthly, twice-monthly, and other regular \code{ts} frequencies
+#' are supported.
 #'
 #' For univariate series, variable names are assigned via
 #' \code{set_ts_name()} rather than \code{colnames()} in order to maintain
@@ -459,58 +606,33 @@ trim_ts_overlap <- function(
   exo_ts = NULL
 ) {
   ## ---- backward-compatible aliases -----------------------------------
-  if (missing(temp_data)) {
-    temp_data <- temp_ts
-  } else if (!is.null(temp_ts)) {
-    cli::cli_abort("Use either {.arg temp_data} or {.arg temp_ts}, not both.")
-  }
-
-  if (missing(exo_data)) {
-    exo_data <- exo_ts
-  } else if (!is.null(exo_ts)) {
-    cli::cli_abort("Use either {.arg exo_data} or {.arg exo_ts}, not both.")
-  }
+  temp_data <- .resolve_trim_ts_alias(
+    temp_data,
+    legacy = temp_ts,
+    current_name = "temp_data",
+    legacy_name = "temp_ts"
+  )
+  exo_data <- .resolve_trim_ts_alias(
+    exo_data,
+    legacy = exo_ts,
+    current_name = "exo_data",
+    legacy_name = "exo_ts"
+  )
 
   ## ---- basic checks ---------------------------------------------------
   .tempssm_check_univariate_ts(temp_data, "temp_data")
-
-  if (!inherits(exo_data, "ts")) {
-    cli::cli_abort("`exo_data` must be an object of class {.cls ts}.")
-  }
-
-  .tempssm_check_length_one(temp_name, "temp_name")
-  .tempssm_check_character(temp_name, "temp_name")
-  if (!is.character(temp_name) || is.na(temp_name)) {
-    cli::cli_abort(
-      "{.arg temp_name} must be a character scalar."
-    )
-  }
+  .tempssm_check_class(exo_data, "exo_data", "ts")
 
   num_exo_variable <- NCOL(exo_data)
 
   ## ---- exo name handling ----------------------------------------------
-  if (is.null(exo_name)) {
-    cli::cli_warn(
-      "`exo_name` not supplied; assigning default names: var1, var2, ..."
-    )
-    exo_name <- paste0("var", seq_len(num_exo_variable))
-  } else {
-    .tempssm_check_character(exo_name, "exo_name")
-    if (!is.character(exo_name)) {
-      cli::cli_abort(
-        "{.arg exo_name} must be a character vector."
-      )
-    }
-
-    if (length(exo_name) != num_exo_variable) {
-      cli::cli_abort(
-        c(
-          "Length of {.arg exo_name} must equal ",
-          "the number of exogenous variables."
-        )
-      )
-    }
-  }
+  variable_names <- .prepare_trim_ts_names(
+    temp_name = temp_name,
+    exo_name = exo_name,
+    num_exo_variable = num_exo_variable
+  )
+  temp_name <- variable_names$temp_name
+  exo_name <- variable_names$exo_name
 
   .tempssm_cli_debug(
     paste0(
@@ -520,40 +642,20 @@ trim_ts_overlap <- function(
   )
 
   ## ---- overlap --------------------------------------------------------
-  temp_exo_ts_overlap <- stats::ts.intersect(temp_data, exo_data)
+  overlap <- .intersect_trim_ts(temp_data, exo_data)
 
-  if (is.null(temp_exo_ts_overlap) || NROW(temp_exo_ts_overlap) == 0) {
-    cli::cli_abort(
-      c(
-        "No overlapping time period found ",
-        "between {.arg temp_data} and {.arg exo_data}."
-      )
-    )
-  }
-
-  temp_ts_overlap <- temp_exo_ts_overlap[, 1, drop = FALSE]
-  exo_ts_overlap <- temp_exo_ts_overlap[, -1, drop = FALSE]
-
-  .tempssm_cli_debug("Overlap length: {NROW(temp_ts_overlap)}")
+  .tempssm_cli_debug("Overlap length: {NROW(overlap$temperature)}")
 
   ## ---- labels ---------------------------------------------------------
-  temp_ts_overlap <- set_ts_name(temp_ts_overlap, label = temp_name)
-
-  if (num_exo_variable == 1) {
-    exo_ts_overlap <- set_ts_name(exo_ts_overlap, label = exo_name)
-  } else {
-    colnames(exo_ts_overlap) <- exo_name
-  }
-
-  ## ---- output ---------------------------------------------------------
-  out <- list(
-    temperature = temp_ts_overlap,
-    exogenous   = exo_ts_overlap
+  out <- .new_trimmed_ts_result(
+    overlap = overlap,
+    temp_name = temp_name,
+    exo_name = exo_name
   )
 
   ## ---- inform ---------------------------------------------------------
   .tempssm_cli_inform(
-    "Trimmed series to {NROW(temp_ts_overlap)} overlapping observation{?s}"
+    "Trimmed series to {NROW(out$temperature)} overlapping observation{?s}"
   )
 
   return(out)
@@ -977,79 +1079,63 @@ read_monthly_temp_ts <- function(csv) {
 }
 
 
-#' Convert a daily zoo object to a monthly \code{ts} object
+#' Validate controls for daily-to-monthly aggregation
 #'
-#' @param zoo_obj A \code{zoo} object with daily observations. The index must
-#'   be of class \code{Date} or \code{POSIXt}, and the object must include a
-#'   numeric column named by \code{var}.
+#' @inheritParams daily_zoo_to_monthly_ts
 #'
-#' @param var A character string specifying the name of the variable
-#'   to be aggregated (default: \code{"Temp"}).
+#' @return A named list containing validated aggregation controls.
 #'
-#' @param na.rm Logical scalar; should missing values be removed before
-#'   averaging?
-#'
-#' @param na_prop_max Numeric scalar giving the maximum allowed proportion of
-#'   NA values within a month. If the proportion of missing values exceeds this
-#'   threshold, the monthly mean is set to NA. Default is \code{1} (no
-#'   additional filtering).
-#'
-#' @details
-#' Daily observations are grouped by calendar month using
-#' \code{zoo::as.yearmon()}. The resulting monthly series is represented as a
-#' regular base R \code{ts} object with \code{frequency = 12}. Month lengths
-#' are not converted to a fixed day count; the calendar index determines month
-#' membership. Months with no observations between the first and last
-#' observed months are represented explicitly as \code{NA}.
-#'
-#' @return A univariate monthly \code{ts} object with \code{frequency = 12}.
-#'
-#' @examples
-#' \dontrun{
-#' sst_zoo <- get_jma_sst_zoo(sea_area_id = 138)
-#' sst_ts_monthly <- daily_zoo_to_monthly_ts(sst_zoo)
-#' }
-#'
-#' @importFrom zoo index coredata as.yearmon
-#' @importFrom stats ts start aggregate
-#'
-#' @export
-daily_zoo_to_monthly_ts <- function(zoo_obj,
-                                    var = "Temp",
-                                    na.rm = TRUE,
-                                    na_prop_max = 1) {
-  ## ---- input check ----------------------------------------------------
-  if (!inherits(zoo_obj, "zoo")) {
-    cli::cli_abort("Input must be a {.cls zoo} object.")
-  }
-
+#' @keywords internal
+#' @noRd
+.prepare_daily_zoo_controls <- function(var, na.rm, na_prop_max) {
   .tempssm_check_length_one(var, "var")
   .tempssm_check_character(var, "var")
-  if (!is.character(var) || is.na(var)) {
+  if (is.na(var)) {
     cli::cli_abort("{.arg var} must be a character scalar.")
   }
 
   .tempssm_check_length_one(na.rm, "na.rm")
   .tempssm_check_logical(na.rm, "na.rm")
-  if (!is.logical(na.rm) || is.na(na.rm)) {
+  if (is.na(na.rm)) {
     cli::cli_abort("{.arg na.rm} must be a logical scalar.")
-  }
-
-  if (!var %in% colnames(zoo_obj)) {
-    cli::cli_abort(
-      "Variable {.val {var}} not found in the zoo object."
-    )
   }
 
   .tempssm_check_length_one(na_prop_max, "na_prop_max")
   .tempssm_check_numeric(na_prop_max, "na_prop_max")
-  if (!is.numeric(na_prop_max) ||
-      is.na(na_prop_max) ||
+  if (is.na(na_prop_max) ||
       !is.finite(na_prop_max) ||
       na_prop_max < 0 ||
       na_prop_max > 1) {
     cli::cli_abort(
       "`na_prop_max` must be between 0 and 1 for daily_zoo_to_monthly_ts()."
+    )
+  }
+
+  list(
+    var = var,
+    na.rm = na.rm,
+    na_prop_max = na_prop_max
+  )
+}
+
+
+#' Validate and select data for daily-to-monthly aggregation
+#'
+#' @inheritParams daily_zoo_to_monthly_ts
+#'
+#' @return A named list containing the selected one-column code{zoo} object,
+#'   its time index, and numeric values.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_daily_zoo_data <- function(zoo_obj, var) {
+  if (!inherits(zoo_obj, "zoo")) {
+    cli::cli_abort("Input must be a {.cls zoo} object.")
+  }
+
+  if (!var %in% colnames(zoo_obj)) {
+    cli::cli_abort(
+      "Variable {.val {var}} not found in the zoo object."
     )
   }
 
@@ -1078,7 +1164,8 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
     )
   }
 
-  selected_values <- zoo::coredata(zoo_obj[, var, drop = FALSE])
+  selected_zoo <- zoo_obj[, var, drop = FALSE]
+  selected_values <- zoo::coredata(selected_zoo)
   if (is.data.frame(selected_values)) {
     selected_values <- selected_values[[1L]]
   } else if (is.matrix(selected_values)) {
@@ -1092,28 +1179,58 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
     )
   }
 
-  .tempssm_cli_debug(
-    "Aggregating daily zoo data to monthly ts (var={var})"
+  list(
+    selected_zoo = selected_zoo,
+    index = idx,
+    values = selected_values
   )
+}
 
-  ## ---- custom monthly summary ----------------------------------------
-  monthly_fun <- function(x) {
-    if (all(is.na(x))) {
-      return(NA_real_)
-    }
 
-    na_prop <- mean(is.na(x))
-
-    if (na_prop > na_prop_max) {
-      return(NA_real_)
-    }
-
-    mean(x, na.rm = na.rm)
+#' Summarize one month of daily values
+#'
+#' @param x Numeric values observed within one calendar month.
+#' @inheritParams daily_zoo_to_monthly_ts
+#'
+#' @return A numeric scalar containing the monthly mean or code{NA_real_}.
+#'
+#' @keywords internal
+#' @noRd
+.daily_month_mean <- function(x, na.rm, na_prop_max) {
+  if (all(is.na(x))) {
+    return(NA_real_)
   }
 
-  ## ---- aggregation ----------------------------------------------------
+  if (mean(is.na(x)) > na_prop_max) {
+    return(NA_real_)
+  }
+
+  mean(x, na.rm = na.rm)
+}
+
+
+#' Aggregate selected daily zoo data by calendar month
+#'
+#' @param selected_zoo A validated one-column daily code{zoo} object.
+#' @inheritParams daily_zoo_to_monthly_ts
+#'
+#' @return A one-column monthly code{zoo} object.
+#'
+#' @keywords internal
+#' @noRd
+.aggregate_daily_zoo_monthly <- function(selected_zoo,
+                                         na.rm,
+                                         na_prop_max) {
+  monthly_fun <- function(x) {
+    .daily_month_mean(
+      x,
+      na.rm = na.rm,
+      na_prop_max = na_prop_max
+    )
+  }
+
   zoo_monthly <- stats::aggregate(
-    zoo_obj[, var, drop = FALSE],
+    selected_zoo,
     zoo::as.yearmon,
     monthly_fun
   )
@@ -1124,11 +1241,26 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
     )
   }
 
+  zoo_monthly
+}
+
+
+#' Convert monthly zoo data to a regular monthly time series
+#'
+#' @param zoo_monthly A validated one-column monthly code{zoo} object.
+#' @param var Character scalar used as the output column name.
+#'
+#' @return A one-column monthly code{ts} object.
+#'
+#' @keywords internal
+#' @noRd
+.monthly_zoo_to_ts <- function(zoo_monthly, var) {
   monthly_values <- .strip_units_values(
     zoo::coredata(zoo_monthly),
     arg_name = var
   )
   .tempssm_check_no_undefined(monthly_values, var)
+
   monthly_index <- zoo::index(zoo_monthly)
   ym_index <- as.integer(format(monthly_index, "%Y")) * 12 +
     as.integer(format(monthly_index, "%m"))
@@ -1138,7 +1270,6 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
     context = "the aggregated monthly zoo index"
   )
 
-  ## ---- construct ts ---------------------------------------------------
   start_ym <- completed$ym_index[1]
   start_year <- (start_ym - 1) %/% 12
   start_month <- start_ym - start_year * 12
@@ -1152,16 +1283,87 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
     start = c(start_year, start_month),
     frequency = 12
   )
-
   colnames(ts_monthly) <- var
 
-  ## ---- optional warning (data quality) -------------------------------
-  na_ratio <- mean(is.na(ts_monthly))
-  if (na_ratio > 0.3) {
+  if (mean(is.na(ts_monthly)) > 0.3) {
     cli::cli_warn(
       "More than 30% of aggregated monthly values are missing."
     )
   }
+
+  ts_monthly
+}
+
+
+#' Convert a daily zoo object to a monthly \code{ts} object
+#'
+#' @param zoo_obj A \code{zoo} object with daily observations. The index must
+#'   be of class \code{Date} or \code{POSIXt}, and the object must include a
+#'   numeric column named by \code{var}.
+#'
+#' @param var A character string specifying the name of the variable
+#'   to be aggregated (default: \code{"Temp"}).
+#'
+#' @param na.rm Logical scalar; should missing values be removed before
+#'   averaging?
+#'
+#' @param na_prop_max Numeric scalar giving the maximum allowed proportion of
+#'   NA values within a month. If the proportion of missing values exceeds this
+#'   threshold, the monthly mean is set to NA. Default is \code{1} (no
+#'   additional filtering).
+#'
+#' @details
+#' Daily observations are grouped by calendar month using
+#' \code{zoo::as.yearmon()}. The resulting monthly series is represented as a
+#' regular base R \code{ts} object with \code{frequency = 12}. Month lengths
+#' are not converted to a fixed day count; the calendar index determines month
+#' membership. Months with no observations between the first and last
+#' observed months are represented explicitly as \code{NA}.
+#'
+#' The missing-value proportion is calculated from records present within each
+#' month. Unobserved calendar days are not counted as missing; incorporating
+#' expected daily coverage may be considered in a future version.
+#'
+#' @return A univariate monthly \code{ts} object with \code{frequency = 12}.
+#'
+#' @examples
+#' \dontrun{
+#' sst_zoo <- get_jma_sst_zoo(sea_area_id = 138)
+#' sst_ts_monthly <- daily_zoo_to_monthly_ts(sst_zoo)
+#' }
+#'
+#' @importFrom zoo index coredata as.yearmon
+#' @importFrom stats ts start aggregate
+#'
+#' @export
+daily_zoo_to_monthly_ts <- function(zoo_obj,
+                                    var = "Temp",
+                                    na.rm = TRUE,
+                                    na_prop_max = 1) {
+  ## ---- input check ----------------------------------------------------
+  controls <- .prepare_daily_zoo_controls(
+    var = var,
+    na.rm = na.rm,
+    na_prop_max = na_prop_max
+  )
+  var <- controls$var
+  na.rm <- controls$na.rm
+  na_prop_max <- controls$na_prop_max
+
+  prepared_data <- .prepare_daily_zoo_data(zoo_obj, var = var)
+  selected_zoo <- prepared_data$selected_zoo
+
+  .tempssm_cli_debug(
+    "Aggregating daily zoo data to monthly ts (var={var})"
+  )
+
+  ## ---- aggregation ----------------------------------------------------
+  zoo_monthly <- .aggregate_daily_zoo_monthly(
+    selected_zoo = selected_zoo,
+    na.rm = na.rm,
+    na_prop_max = na_prop_max
+  )
+  ts_monthly <- .monthly_zoo_to_ts(zoo_monthly, var = var)
 
   ## ---- inform ---------------------------------------------------------
   .tempssm_cli_inform(
@@ -1568,6 +1770,72 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 }
 
 
+#' Validate a JMA sea area identifier
+#'
+#' @inheritParams get_jma_sst_zoo
+#'
+#' @return The validated sea area identifier unchanged.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_jma_sea_area_id <- function(sea_area_id) {
+  .tempssm_check_length_one(sea_area_id, "sea_area_id")
+  if (!(is.character(sea_area_id) || is.numeric(sea_area_id))) {
+    cli::cli_abort(
+      "{.arg sea_area_id} must be character or numeric."
+    )
+  }
+
+  sea_area_id
+}
+
+
+#' Validate the monthly missing-value threshold for JMA SST data
+#'
+#' @inheritParams get_jma_sst_ts
+#'
+#' @return The validated threshold unchanged.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_jma_na_prop_max <- function(na_prop_max) {
+  .tempssm_check_length_one(na_prop_max, "na_prop_max")
+  .tempssm_check_numeric(na_prop_max, "na_prop_max")
+
+  if (is.na(na_prop_max) ||
+      !is.finite(na_prop_max) ||
+      na_prop_max < 0 ||
+      na_prop_max > 1) {
+    cli::cli_abort(
+      "`na_prop_max` must be between 0 and 1 for get_jma_sst_ts()."
+    )
+  }
+
+  na_prop_max
+}
+
+
+#' Retrieve and prepare daily JMA SST data
+#'
+#' @inheritParams get_jma_sst_zoo
+#'
+#' @return A one-column code{zoo} object containing daily SST values.
+#'
+#' @keywords internal
+#' @noRd
+.retrieve_jma_sst_zoo <- function(sea_area_id) {
+  raw <- .fetch_jma_raw(sea_area_id)
+  sst_tidy <- .parse_jma_csv(raw)
+
+  .check_na_ratio(
+    sst_tidy$Temp,
+    msg = "More than 30% of SST values are missing in retrieved data."
+  )
+
+  .build_sst_zoo(sst_tidy)
+}
+
+
 #' Retrieve daily mean sea-surface temperature as a zoo object from JMA
 #'
 #' This function downloads publicly available daily mean
@@ -1612,30 +1880,14 @@ compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
 #'
 #' @export
 get_jma_sst_zoo <- function(sea_area_id) {
-  .tempssm_check_length_one(sea_area_id, "sea_area_id")
-  if (!(is.character(sea_area_id) || is.numeric(sea_area_id))) {
-    cli::cli_abort(
-      "{.arg sea_area_id} must be character or numeric."
-    )
-  }
-
-  raw <- .fetch_jma_raw(sea_area_id)
-
-  sst_tidy <- .parse_jma_csv(raw)
-
-  .check_na_ratio(
-    sst_tidy$Temp,
-    msg = "More than 30% of SST values are missing in retrieved data."
-  )
-
-  out <- .build_sst_zoo(sst_tidy)
+  sea_area_id <- .prepare_jma_sea_area_id(sea_area_id)
+  out <- .retrieve_jma_sst_zoo(sea_area_id)
 
   .tempssm_cli_inform(
     paste0(
-      "Retrieved SST data with {nrow(sst_tidy)} ",
+      "Retrieved SST data with {NROW(out)} ",
       "observation{?s} for area {sea_area_id}"
     )
-    
   )
 
   out
@@ -1653,14 +1905,7 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #' @importFrom httr2 request req_user_agent req_error
 #' @importFrom httr2 req_perform resp_body_raw resp_status
 #'
-#' @param sea_area_id
-#' Character or numeric scalar giving the JMA sea area ID
-#' (numeric values are accepted and internally coerced to character).
-#' For example, "138" corresponding to the coastal sea off southern Ibaraki.
-#' A list of sea area IDs and their corresponding regions is available at:
-#' \url{
-#' https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html
-#' }
+#' @inheritParams get_jma_sst_zoo
 #'
 #' @param na_prop_max Numeric scalar giving the maximum allowed proportion of
 #'   NA values within a month. If the proportion of missing values exceeds this
@@ -1669,9 +1914,10 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #'
 #' @details
 #' The function retrieves a text-format dataset from the JMA website,
-#' parses daily observations, and constructs a \code{zoo} object
-#' with calendar dates as the index.
-#' Missing values in the original dataset are represented as \code{NA}.
+#' using the same retrieval and parsing pathway as \code{get_jma_sst_zoo()}.
+#' The daily data are then aggregated by
+#' \code{daily_zoo_to_monthly_ts()}. Missing values in the original dataset
+#' are represented as \code{NA}.
 #'
 #' To comply with good API usage practices, HTTP requests sent by this
 #' function include a custom \emph{User-Agent} string identifying the
@@ -1691,35 +1937,9 @@ get_jma_sst_zoo <- function(sea_area_id) {
 #'
 #' @export
 get_jma_sst_ts <- function(sea_area_id, na_prop_max = 1) {
-  .tempssm_check_length_one(sea_area_id, "sea_area_id")
-  .tempssm_check_length_one(na_prop_max, "na_prop_max")
-  if (!(is.character(sea_area_id) || is.numeric(sea_area_id))) {
-    cli::cli_abort(
-      "{.arg sea_area_id} must be character or numeric."
-    )
-  }
-  .tempssm_check_numeric(na_prop_max, "na_prop_max")
-
-  if (!is.numeric(na_prop_max) ||
-      is.na(na_prop_max) ||
-      !is.finite(na_prop_max) ||
-      na_prop_max < 0 ||
-      na_prop_max > 1) {
-    cli::cli_abort(
-      "`na_prop_max` must be between 0 and 1 for get_jma_sst_ts()."
-    )
-  }
-
-  raw <- .fetch_jma_raw(sea_area_id)
-
-  sst_tidy <- .parse_jma_csv(raw)
-
-  .check_na_ratio(
-    sst_tidy$Temp,
-    msg = "More than 30% of daily SST values are missing."
-  )
-
-  sst_zoo <- .build_sst_zoo(sst_tidy)
+  sea_area_id <- .prepare_jma_sea_area_id(sea_area_id)
+  na_prop_max <- .prepare_jma_na_prop_max(na_prop_max)
+  sst_zoo <- .retrieve_jma_sst_zoo(sea_area_id)
 
   .tempssm_cli_debug("Aggregating daily data to monthly time series")
 

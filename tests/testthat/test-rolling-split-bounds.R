@@ -73,8 +73,8 @@ test_that(".make_rolling_split_bounds can return no complete bounds", {
   )
 
   expect_s3_class(bounds, "data.frame")
-  expect_identical(
-    names(bounds),
+  expect_named(
+    bounds,
     c("train_start", "train_end", "test_start", "test_end")
   )
   expect_identical(nrow(bounds), 0L)

@@ -35,6 +35,10 @@ regular base R \code{ts} object with \code{frequency = 12}. Month lengths
 are not converted to a fixed day count; the calendar index determines month
 membership. Months with no observations between the first and last
 observed months are represented explicitly as \code{NA}.
+
+The missing-value proportion is calculated from records present within each
+month. Unobserved calendar days are not counted as missing; incorporating
+expected daily coverage may be considered in a future version.
 }
 \examples{
 \dontrun{

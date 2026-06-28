@@ -19,25 +19,60 @@
 }
 
 
+#' Check whether a confidence level is valid
+#'
+#' @param ci_level Numeric confidence level between 0 and 1.
+#'
+#' @return A logical scalar.
+#' @noRd
+.tempssm_is_valid_ci_level <- function(ci_level) {
+  if (!is.numeric(ci_level) || length(ci_level) != 1L) {
+    return(FALSE)
+  }
+
+  all(c(
+    !anyNA(ci_level),
+    is.finite(ci_level),
+    ci_level > 0,
+    ci_level < 1
+  ))
+}
+
+
 #' Check confidence interval arguments for tempssm accessors
 #'
+#' @inheritParams .tempssm_is_valid_ci_level
 #' @param ci Logical; if \code{TRUE}, confidence intervals are requested.
-#' @param ci_level Numeric confidence level between 0 and 1.
 #' @param fun Character scalar naming the calling function.
 #'
 #' @return Invisibly returns \code{NULL}.
 #' @noRd
 .tempssm_check_accessor_ci <- function(ci, ci_level, fun) {
-  if (ci) {
-    if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-        ci_level <= 0 || ci_level >= 1) {
-      stop(
-        "`ci_level` must be a numeric value between 0 and 1: ",
-        fun,
-        "().",
-        call. = FALSE
-      )
-    }
+  valid_ci <- all(c(
+    is.logical(ci),
+    length(ci) == 1L,
+    !anyNA(ci)
+  ))
+  if (!valid_ci) {
+    stop(
+      "`ci` must be a non-missing logical scalar for ",
+      fun,
+      "().",
+      call. = FALSE
+    )
+  }
+
+  if (!ci) {
+    return(invisible(NULL))
+  }
+
+  if (!.tempssm_is_valid_ci_level(ci_level)) {
+    stop(
+      "`ci_level` must be a numeric value between 0 and 1 for ",
+      fun,
+      "().",
+      call. = FALSE
+    )
   }
 
   invisible(NULL)
@@ -371,16 +406,163 @@ get_tempssm_params <- function(res) {
 }
 
 
+#' Resolve exogenous states in smoothing results
+#'
+#' @param res A validated object of class \code{"tempssm"}.
+#'
+#' @return \code{NULL} when coefficients are unavailable, otherwise a named
+#'   list containing exogenous variable names, smoothing results, smoothed
+#'   states, and state positions.
+#'
+#' @noRd
+.tempssm_exo_state_info <- function(res) {
+  if (isFALSE(res$converged)) {
+    return(NULL)
+  }
+
+  exo_vars <- res$state_map$exogenous
+  if (length(exo_vars) == 0L) {
+    return(NULL)
+  }
+
+  kfs <- res$kfs
+  alpha_hat <- kfs$alphahat
+  if (is.null(kfs) || is.null(alpha_hat) || !is.matrix(alpha_hat)) {
+    stop(
+      "Smoothing results for exogenous states are not available.",
+      call. = FALSE
+    )
+  }
+
+  exo_idx <- match(exo_vars, colnames(alpha_hat))
+  if (anyNA(exo_idx)) {
+    stop(
+      "Exogenous states listed in `state_map` were not found in model states.",
+      call. = FALSE
+    )
+  }
+
+  list(
+    variables = exo_vars,
+    kfs = kfs,
+    alpha_hat = alpha_hat,
+    indices = exo_idx
+  )
+}
+
+
+#' Extract the first confidence bounds for one exogenous state
+#'
+#' @param state_ci Confidence intervals for one smoothed state.
+#'
+#' @return A numeric vector containing lower and upper bounds.
+#'
+#' @noRd
+.tempssm_first_exo_ci_bounds <- function(state_ci) {
+  valid_shape <- all(c(
+    is.matrix(state_ci) || is.data.frame(state_ci),
+    NROW(state_ci) >= 1L,
+    all(c("lwr", "upr") %in% colnames(state_ci))
+  ))
+  if (!valid_shape) {
+    stop(
+      "Confidence intervals for all exogenous states are not available.",
+      call. = FALSE
+    )
+  }
+
+  bounds <- unlist(
+    state_ci[1L, c("lwr", "upr"), drop = TRUE],
+    use.names = FALSE
+  )
+  if (!is.numeric(bounds) || length(bounds) != 2L) {
+    stop(
+      "Confidence intervals for all exogenous states must be numeric.",
+      call. = FALSE
+    )
+  }
+
+  as.numeric(bounds)
+}
+
+
+#' Extract confidence intervals for exogenous states by KFAS position
+#'
+#' KFAS may label exogenous states differently in code{alphahat} and
+#' code{confint()} output. The state positions resolved from code{alphahat}
+#' are therefore applied to the confidence interval list.
+#'
+#' @param kfs Kalman filtering and smoothing results.
+#' @param indices Integer positions of exogenous states.
+#' @param ci_level Numeric confidence level between 0 and 1.
+#'
+#' @return A numeric matrix with columns code{lwr} and code{upr}.
+#'
+#' @noRd
+.tempssm_exo_ci_matrix <- function(kfs, indices, ci_level) {
+  ci_all <- stats::confint(kfs, level = ci_level)
+  if (!is.list(ci_all)) {
+    stop(
+      "Confidence intervals for exogenous states are not available.",
+      call. = FALSE
+    )
+  }
+
+  ci_exo <- ci_all[indices]
+  ci_values <- vapply(
+    ci_exo,
+    .tempssm_first_exo_ci_bounds,
+    numeric(2)
+  )
+  ci_mat <- t(ci_values)
+  dimnames(ci_mat) <- list(NULL, c("lwr", "upr"))
+
+  ci_mat
+}
+
+
+#' Construct an exogenous coefficient result
+#'
+#' @param state_info Exogenous state information returned by
+#'   \code{.tempssm_exo_state_info()}.
+#' @param ci_mat Numeric confidence interval matrix returned by
+#'   \code{.tempssm_exo_ci_matrix()}.
+#'
+#' @return A data frame containing coefficient estimates and intervals.
+#'
+#' @noRd
+.new_exo_coef_result <- function(state_info, ci_mat) {
+  beta_hat <- state_info$alpha_hat[
+    1L,
+    state_info$indices,
+    drop = TRUE
+  ]
+
+  data.frame(
+    Variable = state_info$variables,
+    Coefficient = as.numeric(beta_hat),
+    lwr = ci_mat[, "lwr"],
+    upr = ci_mat[, "upr"],
+    row.names = NULL
+  )
+}
+
+
 #' Extract coefficients of exogenous variables with confidence intervals
 #'
 #' Extracts estimated regression coefficients for exogenous variable(s)
 #' included in a \code{tempssm} model, together with confidence intervals
 #' based on Kalman smoothing results.
 #'
-#' If the fitted model does not include exogenous variables,
-#' the function returns \code{NULL}.
+#' If the fitted model did not converge or does not include exogenous
+#' variables, the function returns \code{NULL}.
 #'
 #' @inheritParams get_level_ts
+#'
+#' @details
+#' Exogenous coefficients are represented as static regression states. The
+#' returned estimates and confidence limits are taken from the first smoothed
+#' time point because these states are constant over time.
 #'
 #' @return
 #' A \code{data.frame} with the following columns:
@@ -390,77 +572,35 @@ get_tempssm_params <- function(res) {
 #'   \item{lwr}{Lower bound of the confidence interval}
 #'   \item{upr}{Upper bound of the confidence interval}
 #' }
-#' Returns \code{NULL} if no exogenous variables are included in the model.
+#' Returns \code{NULL} if the model did not converge or no exogenous variables
+#' are included.
 #'
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
 #' data(pdo)
-#  niigata_sst_pdo <- ts.intersect(niigata_sst,pdo)
-#' colnames(niigata_sst_pdo) <- c("Temp", "PDO")
-#' niigata_sst_common <- niigata_sst_pdo[, "Temp"]
-#' pdo_common <- niigata_sst_pdo[, "PDO"]
-#' pdo_common <- set_ts_name(nao_common, label = "PDO")
-#' res <- ssm(temp_data = niigata_sst_common, exo_data = pdo_common)
-#' get_exo_coef_ci(res)
+#' common_data <- ts.intersect(niigata_sst, pdo)
+#' temp_data <- common_data[, "niigata_sst"]
+#' exo_data <- common_data[, "pdo", drop = FALSE]
+#' res <- tempssm(temp_data = temp_data, exo_data = exo_data)
+#' get_exo_coef(res)
 #' }
 #'
-#' @importFrom utils head
 #' @export
 get_exo_coef <- function(res, ci_level = 0.95) {
-  if (!inherits(res, "tempssm")) {
-    stop("`res` must be an object of class 'tempssm' for get_exo_coef().",
-      call. = FALSE
-    )
-  }
+  .tempssm_check_accessor_input(res, "get_exo_coef")
+  .tempssm_check_accessor_ci(TRUE, ci_level, "get_exo_coef")
 
-  if (!is.numeric(ci_level) || length(ci_level) != 1 ||
-    ci_level <= 0 || ci_level >= 1) {
-    stop(
-      "`ci_level` must be a numeric value between 0 and 1 for get_exo_coef().",
-      call. = FALSE
-    )
-  }
-
-  ## ---- handle non-convergence or no exogenous variables ----
-  if (isFALSE(res$converged)) {
+  state_info <- .tempssm_exo_state_info(res)
+  if (is.null(state_info)) {
     return(NULL)
   }
 
-  exo_vars <- res$state_map$exogenous
-  if (is.null(exo_vars) || length(exo_vars) == 0) {
-    return(NULL)
-  }
-
-  ## ---- extract states ----
-  kfs <- res$kfs
-  alpha_hat <- kfs$alphahat
-  state_names <- colnames(alpha_hat)
-
-  exo_idx <- match(exo_vars, state_names)
-  if (anyNA(exo_idx)) {
-    stop(
-      "Exogenous states listed in `state_map` were not found in model states.",
-      call. = FALSE
-    )
-  }
-
-  beta_hat <- alpha_hat[, exo_idx, drop = FALSE]
-
-  ## ---- confidence intervals ----
-  ci_all <- stats::confint(kfs, level = ci_level)
-  ci_exo <- ci_all[exo_idx]
-
-  ci_mat <- do.call(
-    rbind,
-    lapply(ci_exo, function(x) x[1, c("lwr", "upr")])
+  ci_mat <- .tempssm_exo_ci_matrix(
+    kfs = state_info$kfs,
+    indices = state_info$indices,
+    ci_level = ci_level
   )
 
-  data.frame(
-    Variable    = exo_vars,
-    Coefficient = as.numeric(beta_hat[1, , drop = TRUE]),
-    lwr         = ci_mat[, "lwr"],
-    upr         = ci_mat[, "upr"],
-    row.names   = NULL
-  )
+  .new_exo_coef_result(state_info, ci_mat)
 }

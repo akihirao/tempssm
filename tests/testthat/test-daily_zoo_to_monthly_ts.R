@@ -17,6 +17,72 @@ test_that("daily_zoo_to_monthly_ts works for valid input", {
 })
 
 
+test_that("monthly means and the missing-value threshold are exact", {
+  dates <- as.Date(c(
+    "2001-01-01", "2001-01-02", "2001-01-03", "2001-01-04",
+    "2001-02-01", "2001-02-02", "2001-02-03", "2001-02-04"
+  ))
+  zoo_obj <- zoo::zoo(
+    data.frame(Temp = c(1, 3, NA, 5, 2, 4, 6, 8)),
+    order.by = dates
+  )
+
+  at_threshold <- daily_zoo_to_monthly_ts(
+    zoo_obj,
+    na_prop_max = 0.25
+  )
+  expect_warning(
+    below_threshold <- daily_zoo_to_monthly_ts(
+      zoo_obj,
+      na_prop_max = 0.24
+    ),
+    "More than 30%"
+  )
+
+  expect_identical(as.numeric(at_threshold), c(3, 5))
+  expect_true(is.na(as.numeric(below_threshold)[1]))
+  expect_identical(as.numeric(below_threshold)[2], 5)
+})
+
+
+test_that("na.rm FALSE preserves missing monthly means", {
+  dates <- as.Date(c(
+    "2001-01-01", "2001-01-02",
+    "2001-02-01", "2001-02-02"
+  ))
+  zoo_obj <- zoo::zoo(
+    data.frame(Temp = c(1, NA, 3, 5)),
+    order.by = dates
+  )
+
+  expect_warning(
+    result <- daily_zoo_to_monthly_ts(zoo_obj, na.rm = FALSE),
+    "More than 30%"
+  )
+
+  expect_true(is.na(as.numeric(result)[1]))
+  expect_identical(as.numeric(result)[2], 4)
+})
+
+
+test_that("POSIXct indices are aggregated by calendar month", {
+  dates <- as.POSIXct(
+    c("2001-01-01", "2001-01-02", "2001-02-01", "2001-02-02"),
+    tz = "UTC"
+  )
+  zoo_obj <- zoo::zoo(
+    data.frame(Temp = c(1, 3, 4, 8)),
+    order.by = dates
+  )
+
+  result <- daily_zoo_to_monthly_ts(zoo_obj)
+
+  expect_identical(as.numeric(result), c(2, 6))
+  expect_identical(stats::start(result), c(2001, 1))
+  expect_identical(stats::frequency(result), 12)
+})
+
+
 test_that("var argument selects correct column", {
   dates <- seq.Date(as.Date("2001-01-01"), by = "day", length.out = 30)
 

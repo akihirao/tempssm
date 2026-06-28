@@ -19,7 +19,8 @@ A \code{data.frame} with the following columns:
 \item{lwr}{Lower bound of the confidence interval}
 \item{upr}{Upper bound of the confidence interval}
 }
-Returns \code{NULL} if no exogenous variables are included in the model.
+Returns \code{NULL} if the model did not converge or no exogenous variables
+are included.
 }
 \description{
 Extracts estimated regression coefficients for exogenous variable(s)
@@ -27,19 +28,22 @@ included in a \code{tempssm} model, together with confidence intervals
 based on Kalman smoothing results.
 }
 \details{
-If the fitted model does not include exogenous variables,
-the function returns \code{NULL}.
+If the fitted model did not converge or does not include exogenous
+variables, the function returns \code{NULL}.
+
+Exogenous coefficients are represented as static regression states. The
+returned estimates and confidence limits are taken from the first smoothed
+time point because these states are constant over time.
 }
 \examples{
 \dontrun{
 data(niigata_sst)
 data(pdo)
-colnames(niigata_sst_pdo) <- c("Temp", "PDO")
-niigata_sst_common <- niigata_sst_pdo[, "Temp"]
-pdo_common <- niigata_sst_pdo[, "PDO"]
-pdo_common <- set_ts_name(nao_common, label = "PDO")
-res <- ssm(temp_data = niigata_sst_common, exo_data = pdo_common)
-get_exo_coef_ci(res)
+common_data <- ts.intersect(niigata_sst, pdo)
+temp_data <- common_data[, "niigata_sst"]
+exo_data <- common_data[, "pdo", drop = FALSE]
+res <- tempssm(temp_data = temp_data, exo_data = exo_data)
+get_exo_coef(res)
 }
 
 }

@@ -741,8 +741,7 @@ ts_train_test_split <- function(temp_data,
     cli::cli_abort(
       c(
         "Invalid slice indices.",
-        "i" = "{.arg i_start} and {.arg i_end} must define an integer range.",
-        "i" = "The range must lie within the time series."
+        "i" = "{.arg i_start}:{.arg i_end} must be a valid in-series range."
       )
     )
   }
