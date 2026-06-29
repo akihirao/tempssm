@@ -13,8 +13,9 @@ A \code{ts} object with:
 }
 }
 \source{
-NSF NCAR. Data obtained from the NCAR website:
-\url{https://climatedataguide.ucar.edu/climate-data/}
+NSF NCAR. Hurrell North Atlantic Oscillation (NAO) Index
+(station-based):
+\url{https://climatedataguide.ucar.edu/climate-data/hurrell-north-atlantic-oscillation-nao-index-station-based}
 }
 \usage{
 nao

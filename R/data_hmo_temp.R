@@ -20,9 +20,10 @@
 #' Missing values, if any, are encoded as \code{NA}.
 #'
 #' @source
-#' Global Historical Climatology Network monthly (GHCNm).
-#' Data obtained from the NOAA land-based station products:
-#' \url{https://www.ncei.noaa.gov/products/land-based-station}
+#' Global Historical Climatology Network monthly (GHCNm), Version 4.
+#' Data obtained from the NOAA National Centers for Environmental Information
+#' GHCNm product page:
+#' \url{https://www.ncei.noaa.gov/products/land-based-station/global-historical-climatology-network-monthly}
 #'
 #' @examples
 #' data(hmo_temp)

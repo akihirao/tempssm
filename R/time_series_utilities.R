@@ -315,7 +315,7 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 
 #' Strip units from a \code{ts} object while preserving time attributes
 #'
-#' @param x A \code{ts} object.
+#' @inheritParams .tempssm_check_ts_order
 #' @param arg_name Name of the argument being converted.
 #'
 #' @return A \code{ts} object without units.
@@ -756,6 +756,95 @@ split_multi_ts <- function(multi_ts) {
 }
 
 
+#' Prepare a monthly data frame and its year-month index
+#'
+#' @inheritParams convert_monthly_df_to_ts
+#'
+#' @return A list containing the sorted data frame and its integer year-month
+#'   index.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_monthly_df_index <- function(df) {
+  if (!is.data.frame(df)) {
+    cli::cli_abort("`df` must be a data frame.")
+  }
+
+  required_cols <- c("Date", "Temp")
+
+  if (!all(required_cols %in% names(df))) {
+    cli::cli_abort(
+      paste0(
+        "The data frame must contain columns: ",
+        "{paste(required_cols, collapse = ', ')}."
+      )
+    )
+  }
+
+  date_col <- df[["Date"]]
+
+  if (!inherits(date_col, "Date")) {
+    cli::cli_abort("The {.col Date} column must be of class {.cls Date}.")
+  }
+
+  if (anyNA(date_col)) {
+    cli::cli_abort("The {.col Date} column must not contain missing values.")
+  }
+
+  .tempssm_cli_debug("Validating input data frame with {nrow(df)} rows")
+
+  if (length(date_col) > 1 && any(diff(date_col) < 0)) {
+    cli::cli_warn(
+      "Input data are not ordered by {.col Date}; sorting before conversion."
+    )
+  }
+
+  df <- df[order(date_col), , drop = FALSE]
+  date_col <- df[["Date"]]
+  ym_index <- as.integer(format(date_col, "%Y")) * 12 +
+    as.integer(format(date_col, "%m"))
+
+  if (anyDuplicated(ym_index)) {
+    cli::cli_abort("The {.col Date} column must not contain duplicate months.")
+  }
+
+  list(
+    data = df,
+    ym_index = ym_index
+  )
+}
+
+
+#' Extract validated temperature values from a monthly data frame
+#'
+#' @inheritParams convert_monthly_df_to_ts
+#'
+#' @return A numeric vector containing monthly temperature values.
+#'
+#' @keywords internal
+#' @noRd
+.extract_monthly_df_temp_values <- function(df) {
+  temp_col <- df[["Temp"]]
+
+  if (is.list(temp_col) && !inherits(temp_col, "units")) {
+    cli::cli_abort(
+      "The {.col Temp} column must be numeric, not a list column."
+    )
+  }
+
+  temp_values <- .strip_units_values(temp_col, arg_name = "Temp")
+
+  if (!is.numeric(temp_values)) {
+    cli::cli_abort(
+      "The {.col Temp} column must be numeric."
+    )
+  }
+
+  .tempssm_check_no_undefined(temp_values, "Temp")
+  temp_values
+}
+
+
 #' Convert a data frame of monthly temperature time series to a \code{ts} object
 #'
 #' @details
@@ -822,78 +911,11 @@ split_multi_ts <- function(multi_ts) {
 #'
 #' @export
 convert_monthly_df_to_ts <- function(df) {
-  ## ---- input check ----------------------------------------------------
-  if (!is.data.frame(df)) {
-    cli::cli_abort(
-      "`df` must be a data frame."
-    )
-  }
-
-  required_cols <- c("Date", "Temp")
-
-  if (!all(required_cols %in% names(df))) {
-    cli::cli_abort(
-      paste0(
-        "The data frame must contain columns: ",
-        "{paste(required_cols, collapse = ', ')}."
-        )
-    )
-  }
-
-  date_col <- df[["Date"]]
-
-  if (!inherits(date_col, "Date")) {
-    cli::cli_abort(
-      "The {.col Date} column must be of class {.cls Date}."
-    )
-  }
-
-  if (anyNA(date_col)) {
-    cli::cli_abort(
-      "The {.col Date} column must not contain missing values."
-    )
-  }
-
-  .tempssm_cli_debug("Validating input data frame with {nrow(df)} rows")
-
-  if (length(date_col) > 1 && any(diff(date_col) < 0)) {
-    cli::cli_warn(
-      "Input data are not ordered by {.col Date}; sorting before conversion."
-    )
-  }
-
-  ## ---- sort -----------------------------------------------------------
-  df <- df[order(date_col), , drop = FALSE]
-  date_col <- df[["Date"]]
-
-  ## ---- check regularity ----------------------------------------------
-  ym_index <- as.integer(format(date_col, "%Y")) * 12 +
-    as.integer(format(date_col, "%m"))
-
-  if (anyDuplicated(ym_index)) {
-    cli::cli_abort(
-      "The {.col Date} column must not contain duplicate months."
-    )
-  }
-
-  ## ---- construct ts ---------------------------------------------------
-  temp_col <- df[["Temp"]]
-  if (is.list(temp_col) && !inherits(temp_col, "units")) {
-    cli::cli_abort(
-      "The {.col Temp} column must be numeric, not a list column."
-    )
-  }
-
-  temp_values <- .strip_units_values(temp_col, arg_name = "Temp")
-  if (!is.numeric(temp_values)) {
-    cli::cli_abort(
-      "The {.col Temp} column must be numeric."
-    )
-  }
-  .tempssm_check_no_undefined(temp_values, "Temp")
+  prepared <- .prepare_monthly_df_index(df)
+  temp_values <- .extract_monthly_df_temp_values(prepared$data)
 
   completed <- .complete_monthly_values(
-    ym_index = ym_index,
+    ym_index = prepared$ym_index,
     values = temp_values,
     context = "the {.col Date} column"
   )
