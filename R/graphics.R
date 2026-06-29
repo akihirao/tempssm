@@ -1,10 +1,8 @@
 #' Check common inputs for component autoplot functions
 #'
-#' @param res An object expected to inherit from \code{"tempssm"}.
-#' @param ci Logical; if \code{TRUE}, confidence intervals are drawn.
-#' @param ci_level Numeric confidence level between 0 and 1.
+#' @inheritParams .tempssm_check_accessor_input
+#' @inheritParams .tempssm_check_accessor_ci
 #' @param show_ci_in_title Logical; should the CI level be shown in the title?
-#' @param fun Character scalar naming the calling function.
 #'
 #' @return Invisibly returns \code{NULL}.
 #' @noRd
@@ -45,7 +43,7 @@
 #'
 #' @param component_ts A multivariate \code{ts} object returned by an accessor.
 #' @param value_name Character scalar naming the point estimate column.
-#' @param ci Logical; if \code{TRUE}, include lower and upper intervals.
+#' @inheritParams .tempssm_check_accessor_ci
 #'
 #' @return A tibble with \code{time}, component, and optional CI columns.
 #' @noRd
@@ -71,9 +69,7 @@
 #'
 #' @param title Character scalar used for the default title.
 #' @param ci_title Character scalar used when the CI level is shown.
-#' @param ci Logical; whether confidence intervals are drawn.
-#' @param ci_level Numeric confidence level between 0 and 1.
-#' @param show_ci_in_title Logical; whether the CI level is shown in the title.
+#' @inheritParams .tempssm_check_component_plot_input
 #'
 #' @return A character scalar containing the plot title.
 #' @noRd
@@ -93,7 +89,7 @@
 #' @param plot A \code{ggplot} object.
 #' @param plot_title Character scalar containing the plot title.
 #' @param ylab Label of the y-axis.
-#' @param ci Logical; whether confidence intervals are drawn.
+#' @inheritParams .tempssm_check_accessor_ci
 #' @param linewidth Optional line width passed to \code{geom_line()}.
 #'
 #' @return A \code{ggplot} object with common component layers.
@@ -128,18 +124,12 @@
 
 #' Create a ggplot object for one tempssm component
 #'
-#' @param res An object of class \code{"tempssm"}.
-#' @param ci Logical; if \code{TRUE}, confidence intervals are drawn.
-#' @param ci_level Numeric confidence level between 0 and 1.
-#' @param ylab Label of y-axis.
-#' @param show_ci_in_title Logical; should the CI level be shown in the title?
-#' @param fun Character scalar naming the calling function.
+#' @inheritParams .tempssm_check_component_plot_input
+#' @inheritParams .tempssm_add_component_layers
 #' @param getter Function used to extract the component time series.
-#' @param value_name Character scalar naming the component column.
-#' @param title Character scalar used when CI is not shown in the title.
-#' @param ci_title Character scalar used when CI is shown in the title.
+#' @inheritParams .tempssm_component_plot_data
+#' @inheritParams .tempssm_component_plot_title
 #' @param debug_name Character scalar used in debug messages.
-#' @param linewidth Optional line width passed to \code{geom_line()}.
 #'
 #' @return A \code{ggplot} object.
 #' @noRd

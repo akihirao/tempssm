@@ -25,9 +25,7 @@
 
 #' Check that an argument is numeric
 #'
-#' @param x Object to check.
-#' @param arg_name Name of the argument being checked.
-#' @param allow_null Logical scalar indicating whether \code{NULL} is allowed.
+#' @inheritParams .tempssm_check_length_one
 #'
 #' @return Invisibly returns \code{x}.
 #'
@@ -50,8 +48,7 @@
 
 #' Check that numeric-like values are not undefined
 #'
-#' @param x Object to check.
-#' @param arg_name Name of the argument being checked.
+#' @inheritParams .tempssm_check_length_one
 #'
 #' @return Invisibly returns \code{x}.
 #'
@@ -203,8 +200,7 @@
 
 #' Check that an argument is a univariate time series
 #'
-#' @param x Object to check.
-#' @param arg_name Name of the argument being checked.
+#' @inheritParams .tempssm_check_length_one
 #'
 #' @return Invisibly returns \code{x}.
 #'

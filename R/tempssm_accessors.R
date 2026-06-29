@@ -42,8 +42,8 @@
 #' Check confidence interval arguments for tempssm accessors
 #'
 #' @inheritParams .tempssm_is_valid_ci_level
+#' @inheritParams .tempssm_check_accessor_input
 #' @param ci Logical; if \code{TRUE}, confidence intervals are requested.
-#' @param fun Character scalar naming the calling function.
 #'
 #' @return Invisibly returns \code{NULL}.
 #' @noRd
@@ -81,7 +81,7 @@
 
 #' Check whether a smoothed state is available
 #'
-#' @param res An object of class \code{"tempssm"}.
+#' @inheritParams .tempssm_check_accessor_input
 #' @param state Character scalar naming a state in \code{res$kfs$alphahat}.
 #' @param message Character scalar used when the state is unavailable.
 #'
@@ -99,8 +99,7 @@
 
 #' Convert a smoothed state to a ts object
 #'
-#' @param res An object of class \code{"tempssm"}.
-#' @param state Character scalar naming a state in \code{res$kfs$alphahat}.
+#' @inheritParams .tempssm_check_state_available
 #' @param scale Numeric multiplier applied to the extracted state.
 #'
 #' @return A univariate \code{ts} object.
@@ -116,11 +115,10 @@
 
 #' Convert state confidence intervals to a multivariate ts object
 #'
-#' @param res An object of class \code{"tempssm"}.
+#' @inheritParams .tempssm_state_ts
+#' @inheritParams .tempssm_is_valid_ci_level
 #' @param state Character scalar naming a state in \code{stats::confint()}.
 #' @param output_name Character scalar used for the point estimate column.
-#' @param ci_level Numeric confidence level between 0 and 1.
-#' @param scale Numeric multiplier applied to estimates and intervals.
 #' @param message Character scalar used when the state interval is unavailable.
 #'
 #' @return A multivariate \code{ts} object.
@@ -151,12 +149,10 @@
 
 #' Extract a smoothed state as a time series
 #'
-#' @param res An object of class \code{"tempssm"}.
-#' @param state Character scalar naming the smoothed state.
+#' @inheritParams .tempssm_check_accessor_input
+#' @inheritParams .tempssm_check_accessor_ci
+#' @inheritParams .tempssm_check_state_available
 #' @param output_name Character scalar used for the output column.
-#' @param ci Logical; if \code{TRUE}, confidence intervals are returned.
-#' @param ci_level Numeric confidence level between 0 and 1.
-#' @param fun Character scalar naming the calling function.
 #' @param missing_msg Character scalar used when the state is unavailable.
 #' @param ci_missing_msg Character scalar used when intervals are unavailable.
 #' @param scale_by_frequency Logical; if \code{TRUE}, scale by time frequency.
@@ -467,7 +463,7 @@ get_tempssm_params <- function(res) {
 #'
 #' @param kfs Kalman filtering and smoothing results.
 #' @param indices Integer positions of exogenous states.
-#' @param ci_level Numeric confidence level between 0 and 1.
+#' @inheritParams .tempssm_is_valid_ci_level
 #'
 #' @return A numeric matrix with columns code{lwr} and code{upr}.
 #'

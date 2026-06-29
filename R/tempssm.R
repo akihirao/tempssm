@@ -173,7 +173,7 @@ NULL
 #' Prepare an optional finite numeric control
 #'
 #' @param x A numeric scalar or \code{NULL}.
-#' @param arg_name Name of the argument being checked.
+#' @inheritParams .tempssm_check_length_one
 #' @param default Numeric scalar used when \code{x} is \code{NULL}.
 #'
 #' @return A finite numeric scalar.
@@ -405,6 +405,7 @@ NULL
 
 #' Construct a tempssm result object
 #'
+#' @inheritParams .make_tempssm_state_names
 #' @param model A fitted KFAS model or \code{NULL}.
 #' @param fit A KFAS fitting result or \code{NULL}.
 #' @param kfs A KFAS filtering and smoothing result or \code{NULL}.
@@ -412,7 +413,6 @@ NULL
 #' @param exogenous_data Validated exogenous time series or \code{NULL}.
 #' @param model_call Matched call to \code{tempssm()}.
 #' @param converged Logical scalar indicating optimization convergence.
-#' @param exo_names Optional character vector of exogenous state names.
 #' @param state_names Character vector of all state names.
 #' @inheritParams tempssm
 #'
@@ -902,8 +902,7 @@ tempssm <- function(temp_data,
 #' exogenous components are included, ensuring consistency with the model
 #' defined in \code{.define_build_model()}.
 #'
-#' @param y A numeric vector or univariate \code{ts} object representing
-#'   the observed time series.
+#' @inheritParams .define_build_model
 #' @param freq Integer indicating the seasonal frequency.
 #' @inheritParams tempssm
 #' @param exo_mat Optional matrix of exogenous regressors.
@@ -1074,8 +1073,8 @@ tempssm <- function(temp_data,
 
 #' Check strict ordering of a \code{ts} time index
 #'
+#' @inheritParams .tempssm_check_length_one
 #' @param x A \code{ts} object.
-#' @param arg_name Name of the argument being checked.
 #'
 #' @return Invisibly returns \code{x}.
 #'
@@ -1096,8 +1095,7 @@ tempssm <- function(temp_data,
 
 #' Handle explicit missing values in a \code{ts} object
 #'
-#' @param x A \code{ts} object.
-#' @param arg_name Name of the argument being checked.
+#' @inheritParams .tempssm_check_ts_order
 #' @param na_action Missing-value handling policy.
 #'
 #' @return Invisibly returns \code{x}.
@@ -1235,7 +1233,6 @@ tempssm <- function(temp_data,
 #'   variables are allowed after assigning default names.
 #' @param default_exo_names Logical; if \code{TRUE}, default names are assigned
 #'   to unnamed exogenous variables.
-#' @param na_action Missing-value handling policy.
 #'
 #' @return A named list containing validated \code{temp_data}, validated or
 #'   \code{NULL} \code{exo_data}, the common frequency, and the number of
