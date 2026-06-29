@@ -55,13 +55,13 @@
   if (is.null(res) || !isTRUE(res$converged)) {
     cli::cli_warn("Model did not converge for fold {fold$fold}")
 
-    return(list(
-      fold      = fold$fold,
+    model <- if (!is.null(res)) res$model else NULL
+    return(.new_ts_cv_fold_result(
+      fold_id = fold$fold,
       converged = FALSE,
-      y_train   = y_train,
-      y_test    = y_test,
-      y_pred    = NULL,
-      model     = if (!is.null(res)) res$model else NULL
+      y_train = y_train,
+      y_test = y_test,
+      model = model
     ))
   }
   NULL
@@ -227,6 +227,188 @@
 }
 
 
+#' Prepare model controls for time-series cross-validation
+#'
+#' @inheritParams tempssm
+#'
+#' @return A named list containing validated model controls.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_ts_cv_model_controls <- function(ar_order, use_season) {
+  .validate_ar_order(ar_order)
+  .validate_use_season(use_season)
+
+  list(
+    ar_order = ar_order,
+    use_season = use_season
+  )
+}
+
+
+#' Validate the basic structure of a cross-validation fold
+#'
+#' @param fold A cross-validation fold.
+#'
+#' @return Invisibly returns \code{fold}.
+#'
+#' @keywords internal
+#' @noRd
+.validate_ts_cv_fold_structure <- function(fold) {
+  valid <- is.list(fold) &&
+    !is.null(fold$fold) &&
+    !is.null(fold$train_ts) &&
+    !is.null(fold$test_ts)
+
+  if (!valid) {
+    cli::cli_abort("`fold` must be valid.")
+  }
+
+  invisible(fold)
+}
+
+
+#' Validate a cross-validation fold identifier
+#'
+#' @param fold_id Fold identifier to validate.
+#'
+#' @return Invisibly returns \code{fold_id}.
+#'
+#' @keywords internal
+#' @noRd
+.validate_ts_cv_fold_id <- function(fold_id) {
+  .tempssm_check_length_one(fold_id, "fold$fold")
+  .tempssm_check_numeric(fold_id, "fold$fold")
+
+  valid <- !is.na(fold_id) &&
+    fold_id >= 1 &&
+    .tempssm_is_integerish(fold_id)
+  if (!valid) {
+    cli::cli_abort("{.arg fold$fold} must be a positive integer.")
+  }
+
+  invisible(fold_id)
+}
+
+
+#' Prepare exogenous series in a cross-validation fold
+#'
+#' @param fold A cross-validation fold.
+#' @param y_train Training response series.
+#' @param y_test Test response series.
+#'
+#' @return A named list containing checked training and test exogenous series.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_ts_cv_fold_exogenous <- function(fold, y_train, y_test) {
+  has_train <- !is.null(fold$exo_train_ts)
+  has_test <- !is.null(fold$exo_test_ts)
+
+  if (has_train != has_test) {
+    cli::cli_abort(
+      "Exogenous fold series must both be supplied or both be {.code NULL}."
+    )
+  }
+
+  if (!has_train) {
+    return(list(train = NULL, test = NULL))
+  }
+
+  list(
+    train = .tempssm_check_exo_ts(y_train, fold$exo_train_ts),
+    test = .tempssm_check_exo_ts(y_test, fold$exo_test_ts)
+  )
+}
+
+
+#' Prepare one fold for time-series cross-validation
+#'
+#' @param fold A cross-validation fold.
+#'
+#' @return A named list containing validated and named fold inputs.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_ts_cv_fold <- function(fold) {
+  .validate_ts_cv_fold_structure(fold)
+  .validate_ts_cv_fold_id(fold$fold)
+
+  y_train <- fold$train_ts
+  y_test <- fold$test_ts
+  .tempssm_check_univariate_ts(y_train, "fold$train_ts")
+  .tempssm_check_univariate_ts(y_test, "fold$test_ts")
+
+  exogenous <- .prepare_ts_cv_fold_exogenous(fold, y_train, y_test)
+
+  list(
+    id = fold$fold,
+    y_train = y_train,
+    y_test = y_test,
+    y_train_named = set_ts_name(y_train, label = "Temp", quiet = TRUE),
+    y_test_named = set_ts_name(y_test, label = "Temp", quiet = TRUE),
+    exo_train = exogenous$train,
+    exo_test = exogenous$test
+  )
+}
+
+
+#' Generate predictions for one cross-validation fold
+#'
+#' @param res A fitted \code{tempssm} object.
+#' @param fold_data Prepared fold data from \code{.prepare_ts_cv_fold()}.
+#' @param controls Model controls from \code{.prepare_ts_cv_model_controls()}.
+#'
+#' @return Predictions for the test period.
+#'
+#' @keywords internal
+#' @noRd
+.predict_ts_cv_fold <- function(res, fold_data, controls) {
+  if (is.null(fold_data$exo_train)) {
+    return(.predict_no_exo(res$model, NROW(fold_data$y_test_named)))
+  }
+
+  .predict_with_exo(
+    res,
+    fold_data$y_train_named,
+    fold_data$y_test_named,
+    fold_data$exo_test,
+    controls$ar_order,
+    controls$use_season
+  )
+}
+
+
+#' Construct a standardized cross-validation fold result
+#'
+#' @param fold_id Fold identifier.
+#' @param converged Whether model fitting converged.
+#' @param y_train Training response series.
+#' @param y_test Test response series.
+#' @param y_pred Predictions for the test period, or \code{NULL}.
+#' @param model Fitted state-space model, or \code{NULL}.
+#'
+#' @return A standardized cross-validation fold result.
+#'
+#' @keywords internal
+#' @noRd
+.new_ts_cv_fold_result <- function(fold_id,
+                                   converged,
+                                   y_train,
+                                   y_test,
+                                   y_pred = NULL,
+                                   model = NULL) {
+  list(
+    fold = fold_id,
+    converged = converged,
+    y_train = y_train,
+    y_test = y_test,
+    y_pred = y_pred,
+    model = model
+  )
+}
+
+
 #' Run time series cross-validation for a single fold
 #'
 #' @description
@@ -266,8 +448,7 @@
 #'   \item{y_test}{Test time series of class \code{ts}.}
 #'   \item{y_pred}{Predicted values for the test period, as returned by
 #'   \code{stats::predict()}.}
-#'   \item{model}{A fitted \code{tempssm} object, or \code{NULL} if fitting
-#'   failed.}
+#'   \item{model}{A fitted state-space model, or \code{NULL} if fitting failed.}
 #' }
 #'
 #' @details
@@ -311,69 +492,38 @@
 ts_cv_run_fold <- function(fold,
                            ar_order = 1,
                            use_season = TRUE) {
-  if (!is.list(fold) || is.null(fold$train_ts) || is.null(fold$test_ts)) {
-    cli::cli_abort("`fold` must be valid.")
-  }
+  controls <- .prepare_ts_cv_model_controls(ar_order, use_season)
+  fold_data <- .prepare_ts_cv_fold(fold)
 
-  .tempssm_cli_inform("Running CV for fold {fold$fold}")
-
-  .tempssm_check_length_one(ar_order, "ar_order")
-  .tempssm_check_numeric(ar_order, "ar_order")
-  if (is.na(ar_order) || ar_order < 1 || !.tempssm_is_integerish(ar_order)) {
-    cli::cli_abort(
-      "The argument {.arg ar_order} must be an integer >= 1."
-    )
-  }
-
-  .tempssm_check_length_one(use_season, "use_season")
-  .tempssm_check_logical(use_season, "use_season")
-  if (is.na(use_season)) {
-    cli::cli_abort(
-      "{.arg use_season} must be a logical scalar."
-    )
-  }
-
-  y_train <- fold$train_ts
-  y_test <- fold$test_ts
-  .tempssm_check_univariate_ts(y_train, "fold$train_ts")
-  .tempssm_check_univariate_ts(y_test, "fold$test_ts")
-
-  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
-  y_test_named <- set_ts_name(y_test, label = "Temp", quiet = TRUE)
+  .tempssm_cli_inform("Running CV for fold {fold_data$id}")
 
   res <- .fit_tempssm_safe(
-    y_train_named,
-    fold$exo_train_ts,
-    ar_order,
-    use_season,
-    fold$fold
+    fold_data$y_train_named,
+    fold_data$exo_train,
+    controls$ar_order,
+    controls$use_season,
+    fold_data$id
   )
 
-  fail <- .handle_non_convergence(res, fold, y_train, y_test)
+  fail <- .handle_non_convergence(
+    res,
+    fold,
+    fold_data$y_train,
+    fold_data$y_test
+  )
   if (!is.null(fail)) {
     return(fail)
   }
 
-  if (is.null(fold$exo_train_ts)) {
-    y_pred <- .predict_no_exo(res$model, NROW(y_test_named))
-  } else {
-    y_pred <- .predict_with_exo(
-      res,
-      y_train_named,
-      y_test_named,
-      fold$exo_test_ts,
-      ar_order,
-      use_season
-    )
-  }
+  y_pred <- .predict_ts_cv_fold(res, fold_data, controls)
 
-  list(
-    fold      = fold$fold,
+  .new_ts_cv_fold_result(
+    fold_id = fold_data$id,
     converged = TRUE,
-    y_train   = y_train,
-    y_test    = y_test,
-    y_pred    = y_pred,
-    model     = res$model
+    y_train = fold_data$y_train,
+    y_test = fold_data$y_test,
+    y_pred = y_pred,
+    model = res$model
   )
 }
 
@@ -754,6 +904,210 @@ ts_train_test_split <- function(temp_data,
 }
 
 
+#' Validate a logical cross-validation execution control
+#'
+#' @param x Value to validate.
+#' @param arg_name Argument name used in error messages.
+#'
+#' @return Invisibly returns \code{x}.
+#'
+#' @keywords internal
+#' @noRd
+.validate_ts_cv_logical_control <- function(x, arg_name) {
+  .tempssm_check_length_one(x, arg_name)
+  .tempssm_check_logical(x, arg_name)
+
+  if (is.na(x)) {
+    cli::cli_abort("{.arg {arg_name}} must be a logical scalar.")
+  }
+
+  invisible(x)
+}
+
+
+#' Validate the number of cross-validation workers
+#'
+#' @param workers Number of workers to validate.
+#'
+#' @return Invisibly returns \code{workers}.
+#'
+#' @keywords internal
+#' @noRd
+.validate_ts_cv_workers <- function(workers) {
+  .tempssm_check_length_one(workers, "workers")
+  .tempssm_check_numeric(workers, "workers")
+
+  valid <- !is.na(workers) &&
+    is.finite(workers) &&
+    workers >= 1 &&
+    .tempssm_is_integerish(workers)
+  if (!valid) {
+    cli::cli_abort(
+      "{.arg workers} must be a positive integer scalar."
+    )
+  }
+
+  invisible(workers)
+}
+
+
+#' Prepare execution controls for time-series cross-validation
+#'
+#' @param parallel Whether folds should be evaluated in parallel.
+#' @param workers Number of parallel workers.
+#' @param progress Whether progress should be reported.
+#'
+#' @return A named list containing validated execution controls.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_ts_cv_run_controls <- function(parallel, workers, progress) {
+  .validate_ts_cv_logical_control(parallel, "parallel")
+  .validate_ts_cv_workers(workers)
+  .validate_ts_cv_logical_control(progress, "progress")
+
+  list(
+    parallel = parallel,
+    workers = workers,
+    progress = progress
+  )
+}
+
+
+#' Validate folds before cross-validation execution
+#'
+#' @param folds List of cross-validation folds.
+#'
+#' @return Invisibly returns \code{folds}.
+#'
+#' @keywords internal
+#' @noRd
+.validate_ts_cv_folds <- function(folds) {
+  if (!is.list(folds)) {
+    cli::cli_abort("`folds` must be a list of fold objects.")
+  }
+
+  lapply(folds, .prepare_ts_cv_fold)
+  invisible(folds)
+}
+
+
+#' Run one fold with prepared model controls
+#'
+#' @param fold A cross-validation fold.
+#' @param model_controls Validated model controls.
+#'
+#' @return A result from \code{ts_cv_run_fold()}.
+#'
+#' @keywords internal
+#' @noRd
+.run_one_ts_cv_fold <- function(fold, model_controls) {
+  ts_cv_run_fold(
+    fold = fold,
+    ar_order = model_controls$ar_order,
+    use_season = model_controls$use_season
+  )
+}
+
+
+#' Run folds without progress reporting
+#'
+#' @inheritParams .validate_ts_cv_folds
+#' @param model_controls Validated model controls.
+#'
+#' @return A list of cross-validation fold results.
+#'
+#' @keywords internal
+#' @noRd
+.run_ts_cv_folds_basic <- function(folds, model_controls) {
+  future.apply::future_lapply(
+    folds,
+    .run_one_ts_cv_fold,
+    model_controls = model_controls,
+    future.seed = TRUE
+  )
+}
+
+
+#' Run folds with progress reporting
+#'
+#' @inheritParams .run_ts_cv_folds_basic
+#'
+#' @return A list of cross-validation fold results.
+#'
+#' @keywords internal
+#' @noRd
+.run_ts_cv_folds_with_progress <- function(folds, model_controls) {
+  progressr::with_progress({
+    progress <- progressr::progressor(along = folds)
+
+    future.apply::future_lapply(
+      folds,
+      function(fold) {
+        result <- .run_one_ts_cv_fold(fold, model_controls)
+        progress()
+        result
+      },
+      future.seed = TRUE
+    )
+  })
+}
+
+
+#' Run folds using the requested progress behavior
+#'
+#' @inheritParams .run_ts_cv_folds_basic
+#' @param progress Whether progress should be reported.
+#'
+#' @return A list of cross-validation fold results.
+#'
+#' @keywords internal
+#' @noRd
+.run_ts_cv_folds <- function(folds, model_controls, progress) {
+  if (length(folds) == 0L) {
+    return(list())
+  }
+
+  if (!progress) {
+    return(.run_ts_cv_folds_basic(folds, model_controls))
+  }
+
+  if (!requireNamespace("progressr", quietly = TRUE)) {
+    cli::cli_warn(
+      "progressr not installed; running without progress bar"
+    )
+    return(.run_ts_cv_folds_basic(folds, model_controls))
+  }
+
+  .run_ts_cv_folds_with_progress(folds, model_controls)
+}
+
+
+#' Evaluate code with a temporary future plan
+#'
+#' @inheritParams .prepare_ts_cv_run_controls
+#' @param code Zero-argument function containing code to evaluate.
+#'
+#' @return The value returned by \code{code()}.
+#'
+#' @keywords internal
+#' @noRd
+.with_ts_cv_plan <- function(parallel, workers, code) {
+  old_plan <- future::plan()
+  on.exit(future::plan(old_plan), add = TRUE)
+
+  if (parallel) {
+    future::plan(future::multisession, workers = workers)
+    .tempssm_cli_debug("Parallel execution with {workers} workers")
+  } else {
+    future::plan(future::sequential)
+    .tempssm_cli_debug("Sequential execution")
+  }
+
+  code()
+}
+
+
 
 #' Run time series cross-validation over multiple folds
 #'
@@ -785,6 +1139,11 @@ ts_train_test_split <- function(temp_data,
 #' @return
 #' A list of named lists. Each element corresponds to one fold and contains
 #' the output of \code{ts_cv_run_fold()}.
+#'
+#' @details
+#' The requested \pkg{future} execution plan is used only while folds are
+#' evaluated. The plan that was active before calling this function is restored
+#' on exit, including when fold evaluation raises an error.
 #'
 #' @examples
 #' \dontrun{
@@ -825,112 +1184,32 @@ ts_cv_run <- function(
   workers = future::availableCores(),
   progress = FALSE
 ) {
-  ## ---- input check ----------------------------------------------------
-  if (!is.list(folds)) {
-    cli::cli_abort("`folds` must be a list of fold objects.")
-  }
-
-  .tempssm_check_length_one(ar_order, "ar_order")
-  .tempssm_check_numeric(ar_order, "ar_order")
-  if (is.na(ar_order) || ar_order < 1 || !.tempssm_is_integerish(ar_order)) {
-    cli::cli_abort(
-      "The argument {.arg ar_order} must be an integer >= 1."
-    )
-  }
-
-  .tempssm_check_length_one(use_season, "use_season")
-  .tempssm_check_logical(use_season, "use_season")
-  if (is.na(use_season)) {
-    cli::cli_abort(
-      "{.arg use_season} must be a logical scalar."
-    )
-  }
-
-  .tempssm_check_length_one(parallel, "parallel")
-  .tempssm_check_logical(parallel, "parallel")
-  if (is.na(parallel)) {
-    cli::cli_abort(
-      "{.arg parallel} must be a logical scalar."
-    )
-  }
-
-  .tempssm_check_length_one(workers, "workers")
-  .tempssm_check_numeric(workers, "workers")
-  if (is.na(workers) || !is.finite(workers) ||
-      workers < 1 || !.tempssm_is_integerish(workers)) {
-    cli::cli_abort(
-      "{.arg workers} must be a positive integer scalar."
-    )
-  }
-
-  .tempssm_check_length_one(progress, "progress")
-  .tempssm_check_logical(progress, "progress")
-  if (is.na(progress)) {
-    cli::cli_abort(
-      "{.arg progress} must be a logical scalar."
-    )
-  }
+  model_controls <- .prepare_ts_cv_model_controls(ar_order, use_season)
+  run_controls <- .prepare_ts_cv_run_controls(parallel, workers, progress)
+  .validate_ts_cv_folds(folds)
 
   n_folds <- length(folds)
-
   .tempssm_cli_inform(
     "Running cross-validation on {n_folds} fold{?s}"
   )
 
-  ## ---- plan -----------------------------------------------------------
-  if (parallel) {
-    future::plan(future::multisession, workers = workers)
-    .tempssm_cli_debug("Parallel execution with {workers} workers")
-  } else {
-    future::plan(future::sequential)
-    .tempssm_cli_debug("Sequential execution")
-  }
-
-  ## ---- runner function -----------------------------------------------
-  run_one <- function(f) {
-    ts_cv_run_fold(
-      fold = f,
-      ar_order = ar_order,
-      use_season = use_season
-    )
-  }
-
-  ## ---- execution ------------------------------------------------------
-
-  if (progress && requireNamespace("progressr", quietly = TRUE)) {
-    res <- progressr::with_progress({
-      p <- progressr::progressor(along = folds)
-
-      future.apply::future_lapply(
+  res <- .with_ts_cv_plan(
+    run_controls$parallel,
+    run_controls$workers,
+    function() {
+      .run_ts_cv_folds(
         folds,
-        function(f) {
-          out <- run_one(f)
-          p()
-          out
-        },
-        future.seed = TRUE
-      )
-    })
-  } else {
-    if (progress) {
-      cli::cli_warn(
-        "progressr not installed; running without progress bar"
+        model_controls,
+        run_controls$progress
       )
     }
+  )
 
-    res <- future.apply::future_lapply(
-      folds,
-      run_one,
-      future.seed = TRUE
-    )
-  }
-
-  ## ---- completion -----------------------------------------------------
   .tempssm_cli_inform(
     "Completed cross-validation over {n_folds} fold{?s}"
   )
 
-  return(res)
+  res
 }
 
 

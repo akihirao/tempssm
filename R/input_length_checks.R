@@ -84,6 +84,53 @@
 }
 
 
+#' Validate an autoregressive order
+#'
+#' @inheritParams tempssm
+#'
+#' @return Invisibly returns \code{ar_order}.
+#'
+#' @keywords internal
+#' @noRd
+.validate_ar_order <- function(ar_order) {
+  .tempssm_check_length_one(ar_order, "ar_order")
+  .tempssm_check_numeric(ar_order, "ar_order")
+
+  valid <- !is.na(ar_order) &&
+    ar_order >= 1 &&
+    .tempssm_is_integerish(ar_order)
+  if (!valid) {
+    cli::cli_abort(
+      "The argument {.arg ar_order} must be an integer >= 1."
+    )
+  }
+
+  invisible(ar_order)
+}
+
+
+#' Validate whether a seasonal component should be used
+#'
+#' @inheritParams tempssm
+#'
+#' @return Invisibly returns \code{use_season}.
+#'
+#' @keywords internal
+#' @noRd
+.validate_use_season <- function(use_season) {
+  .tempssm_check_length_one(use_season, "use_season")
+  .tempssm_check_logical(use_season, "use_season")
+
+  if (is.na(use_season)) {
+    cli::cli_abort(
+      "{.arg use_season} must be a logical scalar."
+    )
+  }
+
+  invisible(use_season)
+}
+
+
 #' Check that an argument is logical
 #'
 #' @inheritParams .tempssm_check_numeric

@@ -67,6 +67,65 @@
 }
 
 
+#' Build a title for a tempssm component plot
+#'
+#' @param title Character scalar used for the default title.
+#' @param ci_title Character scalar used when the CI level is shown.
+#' @param ci Logical; whether confidence intervals are drawn.
+#' @param ci_level Numeric confidence level between 0 and 1.
+#' @param show_ci_in_title Logical; whether the CI level is shown in the title.
+#'
+#' @return A character scalar containing the plot title.
+#' @noRd
+.tempssm_component_plot_title <- function(title, ci_title, ci, ci_level,
+                                          show_ci_in_title) {
+  if (!ci || !show_ci_in_title) {
+    return(title)
+  }
+
+  ci_label <- paste0(round(ci_level * 100), "% CI")
+  paste0(ci_title, " (", ci_label, ")")
+}
+
+
+#' Add common layers to a tempssm component plot
+#'
+#' @param plot A \code{ggplot} object.
+#' @param plot_title Character scalar containing the plot title.
+#' @param ylab Label of the y-axis.
+#' @param ci Logical; whether confidence intervals are drawn.
+#' @param linewidth Optional line width passed to \code{geom_line()}.
+#'
+#' @return A \code{ggplot} object with common component layers.
+#' @noRd
+.tempssm_add_component_layers <- function(plot, plot_title, ylab, ci,
+                                          linewidth) {
+  if (is.null(linewidth)) {
+    plot <- plot + ggplot2::geom_line()
+  } else {
+    plot <- plot + ggplot2::geom_line(linewidth = linewidth)
+  }
+
+  plot <- plot +
+    ggplot2::labs(
+      title = plot_title,
+      x = "Time (year)",
+      y = ylab
+    )
+
+  if (ci) {
+    .tempssm_cli_debug("Including confidence intervals in plot")
+    plot <- plot +
+      ggplot2::geom_ribbon(
+        ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
+        alpha = 0.3
+      )
+  }
+
+  plot
+}
+
+
 #' Create a ggplot object for one tempssm component
 #'
 #' @param res An object of class \code{"tempssm"}.
@@ -107,38 +166,26 @@
     ci = ci
   )
 
-  plot_title <- title
-  if (ci && show_ci_in_title) {
-    ci_lab <- paste0(round(ci_level * 100), "% CI")
-    plot_title <- paste0(ci_title, " (", ci_lab, ")")
-  }
+  plot_title <- .tempssm_component_plot_title(
+    title,
+    ci_title,
+    ci,
+    ci_level,
+    show_ci_in_title
+  )
 
   p <- ggplot2::ggplot(
     component_tidy,
     ggplot2::aes(x = .data$time, y = .data$value)
   )
 
-  if (is.null(linewidth)) {
-    p <- p + ggplot2::geom_line()
-  } else {
-    p <- p + ggplot2::geom_line(linewidth = linewidth)
-  }
-
-  p <- p +
-    ggplot2::labs(
-      title = plot_title,
-      x = "Time (year)",
-      y = ylab
-    )
-
-  if (ci) {
-    .tempssm_cli_debug("Including confidence intervals in plot")
-    p <- p +
-      ggplot2::geom_ribbon(
-        ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
-        alpha = 0.3
-      )
-  }
+  p <- .tempssm_add_component_layers(
+    p,
+    plot_title,
+    ylab,
+    ci,
+    linewidth
+  )
 
   .tempssm_cli_debug("{debug_name} plot created successfully")
 

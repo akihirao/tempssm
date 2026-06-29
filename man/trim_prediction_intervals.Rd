@@ -19,8 +19,10 @@ calculated as \code{upr - lwr}.}
 \value{
 An object of the same basic class as \code{pred}, truncated to the
 longest leading sequence whose prediction interval width is less than or
-equal to \code{max_width}. If \code{pred} is a \code{ts} object, the
-returned object preserves its time scale.
+equal to \code{max_width}. If \code{pred} is a \code{ts} object and at
+least one row is retained, the returned object preserves its time scale.
+A zero-row result is returned as a matrix because base R does not support
+zero-length \code{ts} objects.
 }
 \description{
 Trims forecast or prediction intervals to the longest leading forecast

@@ -375,34 +375,7 @@ get_tempssm_params <- function(res) {
     )
   }
 
-  model <- res$model
-  pars <- res$fit$optim.out$par
-  ar_order <- res$ar_order
-  use_season <- res$use_season
-
-  if (use_season) {
-    ar_idx <- 3:(2 + ar_order)
-    var_idx <- 3 + ar_order
-    H_idx <- 4 + ar_order
-
-    Q_season_est <- exp(pars[2])
-  } else {
-    ar_idx <- 2:(1 + ar_order)
-    var_idx <- 2 + ar_order
-    H_idx <- 3 + ar_order
-
-    Q_season_est <- NA
-  }
-
-  params <- list(
-    H = exp(pars[H_idx]), # observed error
-    Q_trend = exp(pars[1]), # process error for level component
-    Q_season = Q_season_est, # process error for seasonal component
-    Q_ar = exp(pars[var_idx]), # process error for AR
-    ARs = .tempssm_transform_ar(pars[ar_idx]) # the AR(s) coefficient
-  )
-
-  return(params)
+  .extract_tempssm_params(res)
 }
 
 

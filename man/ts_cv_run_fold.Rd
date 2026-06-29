@@ -28,8 +28,7 @@ A named list with the following components:
 \item{y_test}{Test time series of class \code{ts}.}
 \item{y_pred}{Predicted values for the test period, as returned by
 \code{stats::predict()}.}
-\item{model}{A fitted \code{tempssm} object, or \code{NULL} if fitting
-failed.}
+\item{model}{A fitted state-space model, or \code{NULL} if fitting failed.}
 }
 }
 \description{

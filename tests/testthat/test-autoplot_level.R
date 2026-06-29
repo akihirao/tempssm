@@ -7,6 +7,18 @@ test_that("autoplot_level returns a ggplot object", {
 })
 
 
+test_that("autoplot_level adds confidence interval layers when requested", {
+  with_ci <- autoplot_level(res_tempssm, ci = TRUE)
+  without_ci <- autoplot_level(res_tempssm, ci = FALSE)
+
+  expect_length(with_ci$layers, 2L)
+  expect_s3_class(with_ci$layers[[1]]$geom, "GeomLine")
+  expect_s3_class(with_ci$layers[[2]]$geom, "GeomRibbon")
+  expect_length(without_ci$layers, 1L)
+  expect_s3_class(without_ci$layers[[1]]$geom, "GeomLine")
+})
+
+
 test_that("autoplot_level hides CI label in title by default", {
   p1 <- autoplot_level(res_tempssm)
   p2 <- autoplot_level(res_tempssm, show_ci_in_title = TRUE)

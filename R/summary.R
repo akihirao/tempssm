@@ -1,3 +1,27 @@
+#' Validate input for a tempssm summary
+#'
+#' @param object An object expected to contain fitted \code{tempssm} results.
+#'
+#' @return Invisibly returns \code{object}.
+#'
+#' @keywords internal
+#' @noRd
+.validate_tempssm_summary_input <- function(object) {
+  if (!inherits(object, "tempssm")) {
+    cli::cli_abort("`object` must be an object of class {.cls tempssm}.")
+  }
+
+  if (is.null(object$fit) || is.null(object$fit$optim.out) ||
+      is.null(object$fit$optim.out$par)) {
+    cli::cli_abort(
+      "Summary is not available because the fitted model results are missing."
+    )
+  }
+
+  invisible(object)
+}
+
+
 #' Summary method for tempssm objects
 #'
 #' Provides a concise summary of a fitted linear Gaussian
@@ -35,66 +59,27 @@
 #'
 #' @export
 summary.tempssm <- function(object, ...) {
-  if (!inherits(object, "tempssm")) {
-    cli::cli_abort("`object` must be an object of class {.cls tempssm}.")
-  }
-
-  if (is.null(object$fit) || is.null(object$fit$optim.out) ||
-      is.null(object$fit$optim.out$par)) {
-    cli::cli_abort(
-      "Summary is not available because the fitted model results are missing."
-    )
-  }
+  .validate_tempssm_summary_input(object)
 
   opt <- object$fit$optim.out
-  pars <- opt$par
-  ar_order <- object$ar_order
-  use_season <- object$use_season
-  state_map <- object$state_map
-
-  ## ---- Parameter indexing ------------------------------------------
-  param_idx_list <- .get_param_index(ar_order = ar_order,
-                                     use_season = use_season)
-  
-  ar_idx <- param_idx_list$ar
-  var_idx <- param_idx_list$var
-  H_idx <- param_idx_list$H
-  
-  ## --- indices (as before) ----
-  if (use_season) {
-    Q_season_est <- exp(pars[2])
-  } else {
-    Q_season_est <- NA
-  }
-
-  ## --- likelihood & information criteria ---
+  params <- .extract_tempssm_params(object)
   ll <- logLik.tempssm(object)
-  k <- attr(ll, "df")
-  aic <- AIC.tempssm(object)
-
-  ## --- exogenous variables ---
   exo_data <- object$exogenous_data
   exogenous_variable <- if (is.null(exo_data)) NULL else colnames(exo_data)
-  exogenous_coef <- get_exo_coef(object)
 
   res <- list(
     call = object$call,
     logLik = as.numeric(ll),
-    k = k,
-    AIC = aic,
+    k = attr(ll, "df"),
+    AIC = AIC.tempssm(object),
     convergence = opt$convergence == 0,
-    variances = list(
-      H         = exp(pars[H_idx]),
-      Q_trend   = exp(pars[1]),
-      Q_season  = Q_season_est,
-      Q_ar      = exp(pars[var_idx])
-    ),
+    variances = params[c("H", "Q_trend", "Q_season", "Q_ar")],
     coef_ar = list(
-      AR_order = ar_order,
-      AR_coef  = .tempssm_transform_ar(pars[ar_idx])
+      AR_order = object$ar_order,
+      AR_coef = params$ARs
     ),
     exogenous = exogenous_variable,
-    exogenous_coef = exogenous_coef
+    exogenous_coef = get_exo_coef(object)
   )
 
   class(res) <- "summary.tempssm"

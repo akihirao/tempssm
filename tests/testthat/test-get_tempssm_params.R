@@ -22,6 +22,14 @@ test_that("get_tempssm_params returns numeric values", {
 })
 
 
+test_that("internal and public parameter extraction agree", {
+  expect_identical(
+    .extract_tempssm_params(res_tempssm),
+    get_tempssm_params(res_tempssm)
+  )
+})
+
+
 test_that("Q_season is NA when seasonal is not used", {
   bad_res <- res_tempssm
   bad_res$use_season <- FALSE

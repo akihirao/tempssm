@@ -25,7 +25,7 @@ test_that("summary contains expected components", {
     "exogenous_coef"
   )
 
-  expect_true(all(expected_names %in% names(s)))
+  expect_named(s, expected_names)
 })
 
 
@@ -37,6 +37,19 @@ test_that("summary uses logLik() and AIC() methods consistently", {
   expect_identical(s$logLik, as.numeric(ll))
   expect_identical(s$k, attr(ll, "df"))
   expect_identical(s$AIC, aic)
+})
+
+
+test_that("summary uses the canonical fitted parameter values", {
+  s <- summary(res_tempssm)
+  params <- get_tempssm_params(res_tempssm)
+
+  expect_identical(
+    s$variances,
+    params[c("H", "Q_trend", "Q_season", "Q_ar")]
+  )
+  expect_identical(s$coef_ar$AR_order, res_tempssm$ar_order)
+  expect_identical(s$coef_ar$AR_coef, params$ARs)
 })
 
 

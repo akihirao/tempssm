@@ -47,6 +47,11 @@ Apply \code{ts_cv_run_fold()} to multiple train/test splits and
 collect the results. This function orchestrates time series
 cross-validation but does not compute evaluation metrics.
 }
+\details{
+The requested \pkg{future} execution plan is used only while folds are
+evaluated. The plan that was active before calling this function is restored
+on exit, including when fold evaluation raises an error.
+}
 \examples{
 \dontrun{
 data(yamaguchi_sst)
