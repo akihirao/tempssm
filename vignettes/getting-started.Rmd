@@ -10,7 +10,7 @@ output:
 #  md_document:
 #    variant: gfm+tex_math_dollars
 vignette: >
-  %\VignetteIndexEntry{tempssm tutorial}
+  %\VignetteIndexEntry{tempssm: State-space modeling for temperature time series in R}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

@@ -11,9 +11,7 @@ get_jma_sst_zoo(sea_area_id)
 (numeric values are accepted and internally coerced to character).
 For example, 138 corresponding to the coastal sea off southern Ibaraki.
 A list of sea area IDs and their corresponding regions is available at:
-\url{
-https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html
-}}
+\url{https://www.data.jma.go.jp/kaiyou/data/db/kaikyo/series/engan/eg_areano.html}}
 }
 \value{
 A \code{zoo} object of daily mean sea-surface temperature with a

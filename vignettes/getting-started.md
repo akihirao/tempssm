@@ -225,7 +225,7 @@ plt_niigata_sst <- forecast::autoplot(niigata_sst) +
 plot(plt_niigata_sst)
 ```
 
-![](tutorial_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](getting-started_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
 ### Applying a Linear Gaussian State-Space Model
 
@@ -286,7 +286,7 @@ underlying trend behavior to be examined more clearly.
 plot(res)
 ```
 
-![](tutorial_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](getting-started_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
 
 The level component shows a persistent upward trend in sea surface
 temperature over the study period, while the drift component indicates a
@@ -319,7 +319,7 @@ print(diag)
 plot_tempssm_residual_diagnostics(res)
 ```
 
-![](tutorial_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](getting-started_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 Autocorrelation of residuals was not significant by Ljung-Box test (P \>
 0.05).

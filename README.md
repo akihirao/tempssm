@@ -60,7 +60,7 @@ devtools::install_github("akihirao/tempssm")
 
 A short tutorial is available in the package vignette:
 
-<https://github.com/akihirao/tempssm/blob/main/vignettes/tutorial.pdf>
+<https://github.com/akihirao/tempssm/blob/main/vignettes/getting-started.pdf>
 
 A comprehensive reference manual (English) is available here:
 
