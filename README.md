@@ -99,7 +99,7 @@ summary(res)
 plot(res)
 ```
 
-![Example output from plot(res)](vignettes/fig/myfig.png)
+![Example output from plot(res)](man/figures/myfig.png)
 
 The panels show the estimated model components; gray ribbons indicate
 pointwise 95% confidence intervals.
