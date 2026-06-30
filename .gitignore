@@ -1,0 +1,12 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
+generate_example_data.R
+data/SST_area138.csv
+data/temp_MtFuji.csv
+data/test_bad_data.csv
+tests/testthat/Rplots.pdf
+
+docs
