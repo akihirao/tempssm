@@ -382,6 +382,24 @@ runtime dependency and keeps the internal state-space calculations numeric.</p>
 original units externally and reattach or label them after model fitting.</p>
     </div>
     <div class="section level2">
+    <h2 id="message-control">Message control<a class="anchor" aria-label="anchor" href="#message-control"></a></h2>
+
+
+<p>Package messages are controlled by the global
+<code>tempssm.verbosity</code> option. The default value, <code>"inform"</code>, displays
+analysis-relevant information such as the treatment of missing response
+observations. Use <code>"debug"</code> to additionally display model-fitting
+progress, including optimization and Kalman filtering stages. Use
+<code>"none"</code> to suppress both informational and debug messages. For example:
+<code>options(tempssm.verbosity = "debug")</code>.</p>
+<p>The <code>TEMPSSM_VERBOSITY</code> environment variable accepts the same values
+and takes precedence over the R option. Warnings and errors, including
+non-convergence warnings, are never suppressed by these verbosity settings.
+The <code>na_action</code> argument independently controls the condition issued
+for missing observations in <code>temp_data</code>; use <code>"allow"</code> to handle
+those observations silently.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Helske, J. (2017). KFAS: Exponential family state space models in R.
 <em>Journal of Statistical Software</em>, 78(10), 1–39.

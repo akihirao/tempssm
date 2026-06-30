@@ -364,6 +364,23 @@ Users who need formal units in downstream presentation should store the
 original units externally and reattach or label them after model
 fitting.
 
+## Message control
+
+Package messages are controlled by the global `tempssm.verbosity`
+option. The default value, `"inform"`, displays analysis-relevant
+information such as the treatment of missing response observations. Use
+`"debug"` to additionally display model-fitting progress, including
+optimization and Kalman filtering stages. Use `"none"` to suppress both
+informational and debug messages. For example:
+`options(tempssm.verbosity = "debug")`.
+
+The `TEMPSSM_VERBOSITY` environment variable accepts the same values and
+takes precedence over the R option. Warnings and errors, including
+non-convergence warnings, are never suppressed by these verbosity
+settings. The `na_action` argument independently controls the condition
+issued for missing observations in `temp_data`; use `"allow"` to handle
+those observations silently.
+
 ## References
 
 Helske, J. (2017). KFAS: Exponential family state space models in R.
