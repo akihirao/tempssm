@@ -5,8 +5,6 @@ temperature time series. The package focuses on linear Gaussian state-space
 models estimated by Kalman filtering and smoothing, using the `KFAS` package
 as the computational backend (Helske, 2017).
 
-The package was previously named `ThermoSSM` and has been renamed to `tempssm`.
-
 ## Key Features
 
 - Fits linear Gaussian state-space models to temperature time series.
