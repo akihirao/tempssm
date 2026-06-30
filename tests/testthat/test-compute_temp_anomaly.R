@@ -119,6 +119,52 @@ test_that("baseline with no data triggers error", {
 })
 
 
+test_that("baseline must be a numeric vector of length two", {
+  temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
+
+  invalid_baselines <- list(
+    "2000-2001",
+    2000,
+    c(2000, 2001, 2002),
+    c(2000 + 0i, 2001 + 0i)
+  )
+
+  for (baseline in invalid_baselines) {
+    expect_error(
+      compute_temp_anomaly(temp_ts, baseline = baseline),
+      "numeric vector of length 2"
+    )
+  }
+})
+
+
+test_that("baseline years must be complete finite values", {
+  temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
+  cases <- list(
+    list(baseline = c(NA, 2001), message = "missing"),
+    list(baseline = c(2000, Inf), message = "finite"),
+    list(baseline = c(2000.5, 2001), message = "whole years")
+  )
+
+  for (case in cases) {
+    expect_error(
+      compute_temp_anomaly(temp_ts, baseline = case$baseline),
+      case$message
+    )
+  }
+})
+
+
+test_that("baseline start year must not exceed end year", {
+  temp_ts <- ts(rnorm(24), start = c(2000, 1), frequency = 12)
+
+  expect_error(
+    compute_temp_anomaly(temp_ts, baseline = c(2001, 2000)),
+    "start year must be <= end year"
+  )
+})
+
+
 test_that("output values are numeric", {
   temp_ts <- ts(rnorm(24), frequency = 12)
 

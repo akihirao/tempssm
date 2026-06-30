@@ -380,6 +380,37 @@ set_ts_name <- function(ts_in, label, quiet = FALSE) {
 }
 
 
+#' Construct a monthly time series from a year-month index
+#'
+#' @inheritParams .complete_monthly_values
+#'
+#' @return A univariate monthly \code{ts} object.
+#'
+#' @keywords internal
+#' @noRd
+.monthly_values_to_ts <- function(ym_index, values, context) {
+  completed <- .complete_monthly_values(
+    ym_index = ym_index,
+    values = values,
+    context = context
+  )
+
+  start_ym <- completed$ym_index[1]
+  start_year <- (start_ym - 1) %/% 12
+  start_month <- start_ym - start_year * 12
+
+  .tempssm_cli_debug(
+    "Creating ts object starting at {start_year}-{start_month}"
+  )
+
+  stats::ts(
+    completed$values,
+    start = c(start_year, start_month),
+    frequency = 12
+  )
+}
+
+
 #' Resolve a current time-series argument and its compatibility alias
 #'
 #' @param current Current argument, which may be missing.
@@ -914,24 +945,10 @@ convert_monthly_df_to_ts <- function(df) {
   prepared <- .prepare_monthly_df_index(df)
   temp_values <- .extract_monthly_df_temp_values(prepared$data)
 
-  completed <- .complete_monthly_values(
+  ts_out <- .monthly_values_to_ts(
     ym_index = prepared$ym_index,
     values = temp_values,
     context = "the {.col Date} column"
-  )
-
-  start_ym <- completed$ym_index[1]
-  start_year <- (start_ym - 1) %/% 12
-  start_month <- start_ym - start_year * 12
-
-  .tempssm_cli_debug(
-    "Creating ts object starting at {start_year}-{start_month}"
-  )
-
-  ts_out <- stats::ts(
-    completed$values,
-    start = c(start_year, start_month),
-    frequency = 12
   )
 
   ## ---- inform ---------------------------------------------------------
@@ -943,6 +960,111 @@ convert_monthly_df_to_ts <- function(df) {
   )
 
   return(ts_out)
+}
+
+
+#' Read and perform structural validation of a monthly temperature CSV file
+#'
+#' @inheritParams read_monthly_temp_ts
+#'
+#' @return A data frame containing the parsed CSV data.
+#'
+#' @keywords internal
+#' @noRd
+.read_monthly_temp_csv <- function(csv) {
+  if (!is.character(csv) || length(csv) != 1) {
+    cli::cli_abort("`csv` must be a file path (character scalar).")
+  }
+
+  if (!file.exists(csv)) {
+    cli::cli_abort("File does not exist: {csv}")
+  }
+
+  .tempssm_cli_debug("Reading CSV file: {csv}")
+
+  raw_data <- tryCatch(
+    readr::read_csv(csv, show_col_types = FALSE),
+    error = function(e) {
+      cli::cli_abort("Failed to read CSV file: {conditionMessage(e)}")
+    }
+  )
+
+  .tempssm_cli_debug(
+    "Columns in input: {paste(names(raw_data), collapse = ', ')}"
+  )
+
+  required_cols <- c("Year", "Month", "Temp")
+
+  if (!all(required_cols %in% names(raw_data))) {
+    cli::cli_abort(
+      paste0(
+        "The CSV file must contain columns: ",
+        "{paste(required_cols, collapse = ', ')}."
+      )
+    )
+  }
+
+  if (nrow(raw_data) == 0) {
+    cli::cli_abort("The input CSV file contains no rows.")
+  }
+
+  raw_data
+}
+
+
+#' Validate a CSV year-month index
+#'
+#' @param raw_data A data frame containing code{Year} and code{Month} columns.
+#'
+#' @return An integer vector encoding the year and month of each observation.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_monthly_csv_index <- function(raw_data) {
+  year <- raw_data[["Year"]]
+  month <- raw_data[["Month"]]
+
+  if (anyNA(year) || anyNA(month)) {
+    cli::cli_abort(
+      "{.col Year} and {.col Month} must not contain missing values."
+    )
+  }
+
+  if (!is.numeric(year) || !is.numeric(month)) {
+    cli::cli_abort(
+      "The {.col Year} and {.col Month} columns must be numeric."
+    )
+  }
+
+  .tempssm_check_no_undefined(year, "Year")
+  .tempssm_check_no_undefined(month, "Month")
+
+  if (!all(.tempssm_is_integerish(year)) ||
+      !all(.tempssm_is_integerish(month))) {
+    cli::cli_abort(
+      "The {.col Year} and {.col Month} columns must contain whole numbers."
+    )
+  }
+
+  if (any(month < 1 | month > 12)) {
+    cli::cli_abort("Detected invalid month values outside 1-12.")
+  }
+
+  ym_index <- as.integer(year) * 12L + as.integer(month)
+
+  if (anyDuplicated(ym_index)) {
+    cli::cli_abort(
+      "The CSV file must not contain duplicate year-month rows."
+    )
+  }
+
+  if (length(ym_index) > 1 && any(diff(ym_index) <= 0)) {
+    cli::cli_abort(
+      "The CSV file must be ordered by strictly increasing year-month values."
+    )
+  }
+
+  ym_index
 }
 
 
@@ -1003,93 +1125,14 @@ convert_monthly_df_to_ts <- function(df) {
 #'
 #' @export
 read_monthly_temp_ts <- function(csv) {
-  ## ---- input check ----------------------------------------------------
-  if (!is.character(csv) || length(csv) != 1) {
-    cli::cli_abort("`csv` must be a file path (character scalar).")
-  }
+  raw_data <- .read_monthly_temp_csv(csv)
+  ym_index <- .prepare_monthly_csv_index(raw_data)
+  temp_values <- .extract_monthly_df_temp_values(raw_data)
 
-  if (!file.exists(csv)) {
-    cli::cli_abort("File does not exist: {csv}")
-  }
-
-  .tempssm_cli_debug("Reading CSV file: {csv}")
-
-  ## ---- read -----------------------------------------------------------
-  raw_data <- tryCatch(
-    readr::read_csv(csv, show_col_types = FALSE),
-    error = function(e) {
-      cli::cli_abort("Failed to read CSV file: {conditionMessage(e)}")
-    }
-  )
-
-  .tempssm_cli_debug(
-    "Columns in input: {paste(names(raw_data), collapse = ', ')}"
-  )
-
-  ## ---- column check ---------------------------------------------------
-  required_cols <- c("Year", "Month", "Temp")
-
-  if (!all(required_cols %in% names(raw_data))) {
-    cli::cli_abort(
-      paste0(
-        "The CSV file must contain columns: ",
-        "{paste(required_cols, collapse = ', ')}."
-      )
-    )
-  }
-
-  ## ---- basic validation -----------------------------------------------
-  if (nrow(raw_data) == 0) {
-    cli::cli_abort("The input CSV file contains no rows.")
-  }
-
-  ## ---- time index validation ------------------------------------------
-  if (any(raw_data$Month < 1 | raw_data$Month > 12, na.rm = TRUE)) {
-    cli::cli_abort("Detected invalid month values outside 1-12.")
-  }
-
-  if (anyNA(raw_data$Year) || anyNA(raw_data$Month)) {
-    cli::cli_abort(
-      c(
-        "The {.col Year} and {.col Month} columns ",
-        "must not contain missing values."
-      )
-    )
-  }
-
-  ym_index <- as.integer(raw_data$Year) * 12 + as.integer(raw_data$Month)
-
-  if (anyDuplicated(ym_index)) {
-    cli::cli_abort(
-      "The CSV file must not contain duplicate year-month rows."
-    )
-  }
-
-  if (length(ym_index) > 1 && any(diff(ym_index) <= 0)) {
-    cli::cli_abort(
-      "The CSV file must be ordered by strictly increasing year-month values."
-    )
-  }
-
-  ## ---- construct ts ---------------------------------------------------
-  completed <- .complete_monthly_values(
+  ts_out <- .monthly_values_to_ts(
     ym_index = ym_index,
-    values = raw_data$Temp,
+    values = temp_values,
     context = "the CSV year-month index"
-  )
-
-  start_ym <- completed$ym_index[1]
-  start_year <- (start_ym - 1) %/% 12
-  start_month <- start_ym - start_year * 12
-
-  .tempssm_cli_debug(
-    "Creating ts object starting at {start_year}-{start_month}"
-  )
-
-  ts_out <- stats::ts(
-    completed$values,
-    start = c(start_year, start_month),
-    frequency = 12
   )
 
   ## ---- inform ---------------------------------------------------------
@@ -1399,6 +1442,30 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
 }
 
 
+#' Validate a seasonal time-series frequency
+#'
+#' @inheritParams compute_monthly_climatology
+#'
+#' @return An integer scalar giving the validated seasonal frequency.
+#'
+#' @keywords internal
+#' @noRd
+.validate_seasonal_ts_frequency <- function(temp_ts) {
+  .tempssm_check_univariate_ts(temp_ts, "temp_ts")
+
+  freq <- stats::frequency(temp_ts)
+  freq_int <- as.integer(round(freq))
+
+  if (freq <= 1 || abs(freq - freq_int) > sqrt(.Machine$double.eps)) {
+    cli::cli_abort(
+      "Time series must have an integer frequency greater than 1."
+    )
+  }
+
+  freq_int
+}
+
+
 #' Compute seasonal climatology (mean seasonal cycle)
 #'
 #' @param temp_ts Univariate temperature time series of class \code{ts}.
@@ -1428,17 +1495,7 @@ daily_zoo_to_monthly_ts <- function(zoo_obj,
 #'
 #' @export
 compute_monthly_climatology <- function(temp_ts) {
-  ## ---- input check ----------------------------------------------------
-  .tempssm_check_univariate_ts(temp_ts, "temp_ts")
-
-  freq <- stats::frequency(temp_ts)
-  freq_int <- as.integer(round(freq))
-
-  if (freq <= 1 || abs(freq - freq_int) > sqrt(.Machine$double.eps)) {
-    cli::cli_abort(
-      "Time series must have an integer frequency greater than 1."
-    )
-  }
+  freq_int <- .validate_seasonal_ts_frequency(temp_ts)
 
   .tempssm_cli_debug(
     "Computing seasonal climatology for {length(temp_ts)} observations"
@@ -1463,6 +1520,66 @@ compute_monthly_climatology <- function(temp_ts) {
   .tempssm_cli_debug("Computed climatology for {freq_int} seasonal periods")
 
   return(out)
+}
+
+
+#' Select a baseline period for temperature anomaly calculation
+#'
+#' @inheritParams compute_temp_anomaly
+#' @param freq_int Integer scalar giving the validated seasonal frequency.
+#'
+#' @return A univariate \code{ts} object containing the baseline period.
+#'
+#' @keywords internal
+#' @noRd
+.select_anomaly_baseline <- function(temp_ts, baseline, freq_int) {
+  if (is.null(baseline)) {
+    .tempssm_cli_debug("Using full period for climatology")
+    return(temp_ts)
+  }
+
+  if (!is.numeric(baseline) ||
+      is.complex(baseline) ||
+      length(baseline) != 2L) {
+    cli::cli_abort(
+      "{.arg baseline} must be a numeric vector of length 2."
+    )
+  }
+
+  if (anyNA(baseline)) {
+    cli::cli_abort("{.arg baseline} must not contain missing values.")
+  }
+
+  if (!all(is.finite(baseline))) {
+    cli::cli_abort("{.arg baseline} must contain finite values.")
+  }
+
+  if (!all(.tempssm_is_integerish(baseline))) {
+    cli::cli_abort("{.arg baseline} must contain whole years.")
+  }
+
+  if (baseline[1] > baseline[2]) {
+    cli::cli_abort("{.arg baseline} start year must be <= end year.")
+  }
+
+  .tempssm_cli_debug(
+    "Using baseline period: {baseline[1]}-{baseline[2]}"
+  )
+
+  ts_start <- stats::start(temp_ts)[1]
+  ts_end <- stats::end(temp_ts)[1]
+
+  if (max(baseline[1], ts_start) > min(baseline[2], ts_end)) {
+    cli::cli_abort("No data available in the specified baseline period.")
+  }
+
+  ts_base <- stats::window(
+    temp_ts,
+    start = c(baseline[1], 1),
+    end = c(baseline[2], freq_int)
+  )
+
+  ts_base
 }
 
 
@@ -1511,67 +1628,8 @@ compute_monthly_climatology <- function(temp_ts) {
 #'
 #' @export
 compute_temp_anomaly <- function(temp_ts, baseline = NULL) {
-  ## ---- input check ----------------------------------------------------
-  .tempssm_check_univariate_ts(temp_ts, "temp_ts")
-
-  freq <- stats::frequency(temp_ts)
-  freq_int <- as.integer(round(freq))
-
-  if (freq <= 1 || abs(freq - freq_int) > sqrt(.Machine$double.eps)) {
-    cli::cli_abort(
-      "Time series must have an integer frequency greater than 1."
-    )
-  }
-
-  ## ---- baseline selection ---------------------------------------------
-  if (is.null(baseline)) {
-    .tempssm_cli_debug("Using full period for climatology")
-    ts_base <- temp_ts
-  } else {
-    if (!is.numeric(baseline) || length(baseline) != 2) {
-      cli::cli_abort(
-        paste0(
-          "`baseline` must be a numeric vector of ",
-          "length 2 (start_year, end_year)."
-        )
-      )
-    }
-
-    .tempssm_cli_debug(
-      "Using baseline period: {baseline[1]}-{baseline[2]}"
-    )
-
-    ## ---- baseline validation --------------------------------------------
-    ts_start <- stats::start(temp_ts)[1]
-    ts_end <- stats::end(temp_ts)[1]
-
-    if (baseline[1] > baseline[2]) {
-      cli::cli_abort("`baseline` start year must be <= end year.")
-    }
-
-    if (baseline[2] < ts_start || baseline[1] > ts_end) {
-      cli::cli_abort(
-        "No data available in the specified baseline period."
-      )
-    }
-
-    # Check for overlap
-    if (max(baseline[1], ts_start) > min(baseline[2], ts_end)) {
-      cli::cli_abort("No data available in the specified baseline period.")
-    }
-
-    ts_base <- stats::window(
-      temp_ts,
-      start = c(baseline[1], 1),
-      end   = c(baseline[2], freq_int)
-    )
-
-    if (length(ts_base) == 0) {
-      cli::cli_abort(
-        "No data available in the specified baseline period."
-      )
-    }
-  }
+  freq_int <- .validate_seasonal_ts_frequency(temp_ts)
+  ts_base <- .select_anomaly_baseline(temp_ts, baseline, freq_int)
 
   ## ---- climatology ----------------------------------------------------
   .tempssm_cli_debug("Computing seasonal climatology")

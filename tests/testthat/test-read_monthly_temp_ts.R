@@ -155,3 +155,67 @@ test_that("implicit missing months in CSV input are explicit NA values", {
   expect_length(ts_out, 3)
   expect_identical(as.numeric(ts_out), c(10.4, NA, 13.6))
 })
+
+
+test_that("missing Year or Month values trigger error", {
+  rows <- c(
+    "NA,1,10.4",
+    "2001,NA,10.4"
+  )
+
+  for (row in rows) {
+    tmp <- tempfile(fileext = ".csv")
+    writeLines(c("Year,Month,Temp", row), tmp)
+
+    expect_error(
+      read_monthly_temp_ts(tmp),
+      "must not contain missing values"
+    )
+  }
+})
+
+
+test_that("Year and Month columns must contain whole numeric values", {
+  cases <- list(
+    list(row = "year,1,10.4", message = "must be numeric"),
+    list(row = "2001,month,10.4", message = "must be numeric"),
+    list(row = "2001.5,1,10.4", message = "whole numbers"),
+    list(row = "2001,1.5,10.4", message = "whole numbers")
+  )
+
+  for (case in cases) {
+    tmp <- tempfile(fileext = ".csv")
+    writeLines(c("Year,Month,Temp", case$row), tmp)
+
+    expect_error(
+      read_monthly_temp_ts(tmp),
+      case$message
+    )
+  }
+})
+
+
+test_that("Temp column must be numeric", {
+  tmp <- tempfile(fileext = ".csv")
+  writeLines(c("Year,Month,Temp", "2001,1,warm"), tmp)
+
+  expect_error(
+    read_monthly_temp_ts(tmp),
+    "Temp.*numeric"
+  )
+})
+
+
+test_that("undefined Temp values trigger error", {
+  cases <- c("NaN", "Inf", "-Inf")
+
+  for (value in cases) {
+    tmp <- tempfile(fileext = ".csv")
+    writeLines(c("Year,Month,Temp", paste("2001,1", value, sep = ",")), tmp)
+
+    expect_error(
+      read_monthly_temp_ts(tmp),
+      "NaN|Inf"
+    )
+  }
+})
