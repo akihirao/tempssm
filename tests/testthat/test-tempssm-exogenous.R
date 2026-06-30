@@ -18,6 +18,10 @@ test_that(".prepare_tempssm_exogenous preserves covariate data and names", {
   withr::local_envvar(TEMPSSM_VERBOSITY = "")
   withr::local_options(list(tempssm.verbosity = "inform"))
 
+  expect_silent(.prepare_tempssm_exogenous(exo_data))
+
+  withr::local_options(list(tempssm.verbosity = "debug"))
+
   expect_message(
     exogenous <- .prepare_tempssm_exogenous(exo_data),
     "Including exogenous variables"

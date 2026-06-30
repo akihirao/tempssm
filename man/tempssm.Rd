@@ -312,6 +312,24 @@ Users who need formal units in downstream presentation should store the
 original units externally and reattach or label them after model fitting.
 }
 
+\section{Message control}{
+
+Package messages are controlled by the global
+\code{tempssm.verbosity} option. The default value, \code{"inform"}, displays
+analysis-relevant information such as the treatment of missing response
+observations. Use \code{"debug"} to additionally display model-fitting
+progress, including optimization and Kalman filtering stages. Use
+\code{"none"} to suppress both informational and debug messages. For example:
+\code{options(tempssm.verbosity = "debug")}.
+
+The \code{TEMPSSM_VERBOSITY} environment variable accepts the same values
+and takes precedence over the R option. Warnings and errors, including
+non-convergence warnings, are never suppressed by these verbosity settings.
+The \code{na_action} argument independently controls the condition issued
+for missing observations in \code{temp_data}; use \code{"allow"} to handle
+those observations silently.
+}
+
 \examples{
 \dontrun{
 data(niigata_sst)

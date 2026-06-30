@@ -344,7 +344,7 @@ NULL
     return(list(exo_names = NULL, exo_matrix = NULL))
   }
 
-  .tempssm_cli_inform("Including exogenous variables in the model")
+  .tempssm_cli_debug("Including exogenous variables in the model")
 
   exo_names <- colnames(exo_data)
   exo_matrix <- as.matrix(exo_data)
@@ -477,7 +477,7 @@ NULL
                               reltol) {
   control <- list(maxit = maxit, reltol = reltol)
 
-  .tempssm_cli_inform("Optimizing model parameters (stage 1)")
+  .tempssm_cli_debug("Optimizing model parameters (stage 1)")
   fit_stage1 <- fitSSM(
     build_ssm,
     inits = inits,
@@ -486,7 +486,7 @@ NULL
     control = control
   )
 
-  .tempssm_cli_inform("Refining optimization (stage 2)")
+  .tempssm_cli_debug("Refining optimization (stage 2)")
   fit_stage2 <- fitSSM(
     build_ssm,
     inits = fit_stage1$optim.out$par,
@@ -495,7 +495,7 @@ NULL
     control = control
   )
 
-  .tempssm_cli_inform("Running Kalman filtering and smoothing")
+  .tempssm_cli_debug("Running Kalman filtering and smoothing")
   kfs <- KFS(
     fit_stage2$model,
     filtering = c("state", "mean"),
@@ -577,6 +577,22 @@ NULL
 #'   \code{exo_data} are always rejected; exogenous covariates must be completed
 #'   before model fitting.
 #'
+#' @section Message control:
+#' Package messages are controlled by the global
+#' \code{tempssm.verbosity} option. The default value, \code{"inform"}, displays
+#' analysis-relevant information such as the treatment of missing response
+#' observations. Use \code{"debug"} to additionally display model-fitting
+#' progress, including optimization and Kalman filtering stages. Use
+#' \code{"none"} to suppress both informational and debug messages. For example:
+#' \code{options(tempssm.verbosity = "debug")}.
+#'
+#' The \code{TEMPSSM_VERBOSITY} environment variable accepts the same values
+#' and takes precedence over the R option. Warnings and errors, including
+#' non-convergence warnings, are never suppressed by these verbosity settings.
+#' The \code{na_action} argument independently controls the condition issued
+#' for missing observations in \code{temp_data}; use \code{"allow"} to handle
+#' those observations silently.
+#'
 #' @return An object of class \code{"tempssm"}, a named list containing:
 #' \describe{
 #'   \item{model}{Fitted \code{SSModel} object, or \code{NULL} if fitting
@@ -655,7 +671,7 @@ tempssm <- function(temp_data,
   tryCatch(
     {
       ## ---- Start message -----------------------------------------------
-      .tempssm_cli_inform(
+      .tempssm_cli_debug(
         paste0(
           "Fitting state-space model (",
           "AR order: {ar_order}, ",
@@ -739,7 +755,7 @@ tempssm <- function(temp_data,
 
       ## ---- Completion message ------------------------------------------
       if (out$converged) {
-        .tempssm_cli_inform("Model fitting completed successfully")
+        .tempssm_cli_debug("Model fitting completed successfully")
       } else {
         cli::cli_warn("Model fitting finished but did not converge")
       }
