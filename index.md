@@ -105,7 +105,7 @@ summary(res)
 plot(res)
 ```
 
-![Example output from plot(res)](articles/fig/myfig.png)
+![Example output from plot(res)](reference/figures/myfig.png)
 
 Example output from plot(res)
 
