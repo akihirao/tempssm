@@ -1,0 +1,342 @@
+# tempssm
+
+`tempssm` provides a practical R interface for state-space analysis of
+temperature time series. The package focuses on linear Gaussian
+state-space models estimated by Kalman filtering and smoothing, using
+the `KFAS` package as the computational backend (Helske, 2017).
+
+The package was previously named `ThermoSSM` and has been renamed to
+`tempssm`.
+
+## Key Features
+
+- Fits linear Gaussian state-space models to temperature time series.
+- Represents temperature dynamics using interpretable latent components:
+  level, seasonal variation, autoregressive structure, and optional
+  exogenous effects.
+- Supports arbitrary integer seasonal frequencies, while the current
+  examples and validation focus primarily on monthly temperature data.
+- Allows the autoregressive order to be specified by the user.
+- Provides S3 methods for summaries, diagnostics, accessors, and plots.
+- Includes time-series cross-validation tools for model evaluation.
+
+## Prior Art and Scope
+
+`tempssm` provides a domain-focused workflow for analyzing temperature
+time series with linear Gaussian state-space models. It brings together
+model construction, component extraction, uncertainty summaries,
+residual diagnostics, visualization, and time-series cross-validation in
+a single R package interface tailored to temperature applications.
+
+The package builds on established statistical methodology, including
+linear Gaussian state-space modeling, Kalman filtering, and Kalman
+smoothing. Model estimation is handled through the `KFAS` package, which
+provides a general framework for state-space models in R.
+
+The initial implementation was adapted from the supplementary code
+provided by Baba (2024), accompanying Baba et al. (2024), which analyzed
+sea temperature trends using a linear Gaussian state-space model. The
+supplementary code is publicly available at:
+
+<https://github.com/logics-of-blue/sea-temperature-trend-jogashima>
+
+Compared with that prior implementation, `tempssm` extends the workflow
+into a reusable R package interface with input validation, documented S3
+methods, tests, diagnostics, cross-validation utilities, and examples
+for broader temperature time-series analysis.
+
+## Installation
+
+``` r
+
+# Install from Github
+# install.packages("pak")
+pak::pack("akihirao/tempssm")
+
+# Alternative
+# install.packages("devtools")
+devtools::install_github("akihirao/tempssm")
+```
+
+## Documentation
+
+A short tutorial is available in the package vignette:
+
+<https://github.com/akihirao/tempssm/blob/main/vignettes/getting-started.pdf>
+
+A comprehensive reference manual (English) is available here:
+
+<https://github.com/akihirao/tempssm/blob/main/tools/manual/tempssm_manual.pdf>
+
+For Japanese users, a detailed manual is also provided:
+
+<https://github.com/akihirao/tempssm/blob/main/tools/manual/tempssm_manual.pdf>
+
+## Basic Usage
+
+### Load the Package and Example Data
+
+This example uses monthly sea surface temperature (SST) data off
+Niigata, Japan, from February 2002 to December 2023.
+
+``` r
+
+library(tempssm)
+data(niigata_sst)
+```
+
+### Fit a State-Space Model
+
+The function
+[`tempssm()`](https://akihirao.github.io/tempssm/reference/tempssm.md)
+fits a linear Gaussian state-space model to a temperature time series.
+
+``` r
+
+res <- tempssm(niigata_sst)
+```
+
+The returned object is an S3 object of class `"tempssm"`. Results can be
+inspected with standard methods.
+
+``` r
+
+summary(res)
+plot(res)
+```
+
+![Example output from plot(res)](articles/fig/myfig.png)
+
+Example output from plot(res)
+
+The panels show the estimated model components; gray ribbons indicate
+pointwise 95% confidence intervals.
+
+In this example, the estimated level component suggests a gradual
+increase in SST, with an average annual increase of approximately 0.05
+°C.
+
+The ggplot2-style interface is also available:
+
+``` r
+
+autoplot(res)
+```
+
+By default, `plot(res)` and `autoplot(res)` produce the same component
+plot.
+
+### Use Your Own Data
+
+If you already have a `ts` object, pass it directly to
+[`tempssm()`](https://akihirao.github.io/tempssm/reference/tempssm.md).
+
+``` r
+
+res <- tempssm(my_ts)
+```
+
+For monthly temperature data stored in a CSV file, prepare columns named
+`Year`, `Month`, and `Temp`.
+
+``` text
+Year,Month,Temp
+2010,8,13.6
+2010,9,6.8
+2010,10,NA
+2010,11,-1.4
+...
+```
+
+Use `NA` for missing temperature values, and keep the corresponding
+`Year` and `Month` entries. The CSV file should be comma-separated and
+UTF-8 encoded.
+
+``` r
+
+my_ts <- tempssm::read_monthly_temp_ts("temperature.csv")
+res <- tempssm(my_ts)
+```
+
+[`read_monthly_temp_ts()`](https://akihirao.github.io/tempssm/reference/read_monthly_temp_ts.md)
+uses base R’s [`ts()`](https://rdrr.io/r/stats/ts.html) representation
+internally. You can also construct a `ts` object manually if finer
+control is needed.
+
+## References
+
+Baba, S. (2024). Supplementary code and test data for estimating sea
+temperature trends using a linear Gaussian state-space model. GitHub
+repository:
+<https://github.com/logics-of-blue/sea-temperature-trend-jogashima>
+
+Baba, S., Ishii, H., and Yoshiyama, T. (2024). Estimating sea
+temperature trends using a linear Gaussian state-space model in
+Jogashima, Kanagawa, Japan. *Bulletin of the Japanese Society of
+Fisheries Oceanography*, 88(3), 190-199.
+<https://doi.org/10.34423/jsfo.88.3_190>
+
+Helske, J. (2017). KFAS: Exponential family state space models in R.
+*Journal of Statistical Software*, 78(10), 1-39.
+<https://doi.org/10.18637/jss.v078.i10>
+
+# Package index
+
+## All functions
+
+- [`AIC(`*`<tempssm>`*`)`](https://akihirao.github.io/tempssm/reference/AIC.tempssm.md)
+  : AIC method for tempssm objects (S3 method)
+
+- [`autoplot(`*`<tempssm>`*`)`](https://akihirao.github.io/tempssm/reference/autoplot.tempssm.md)
+  : Autoplot method for tempssm objects
+
+- [`autoplot_ar1()`](https://akihirao.github.io/tempssm/reference/autoplot_ar1.md)
+  : Plot the estimated autoregressive component from a tempssm model
+
+- [`autoplot_drift()`](https://akihirao.github.io/tempssm/reference/autoplot_drift.md)
+  : Plot the estimated drift (slope) component from a tempssm model
+
+- [`autoplot_level()`](https://akihirao.github.io/tempssm/reference/autoplot_level.md)
+  : Plot the estimated level component from a tempssm model
+
+- [`autoplot_season()`](https://akihirao.github.io/tempssm/reference/autoplot_season.md)
+  : Plot the estimated seasonal component from a tempssm model
+
+- [`compute_cv_metrics()`](https://akihirao.github.io/tempssm/reference/compute_cv_metrics.md)
+  : Compute forecast accuracy metrics for a CV fold
+
+- [`compute_monthly_climatology()`](https://akihirao.github.io/tempssm/reference/compute_monthly_climatology.md)
+  : Compute seasonal climatology (mean seasonal cycle)
+
+- [`compute_temp_anomaly()`](https://akihirao.github.io/tempssm/reference/compute_temp_anomaly.md)
+  : Compute seasonal temperature anomalies
+
+- [`convert_monthly_df_to_ts()`](https://akihirao.github.io/tempssm/reference/convert_monthly_df_to_ts.md)
+  :
+
+  Convert a data frame of monthly temperature time series to a `ts`
+  object
+
+- [`daily_zoo_to_monthly_ts()`](https://akihirao.github.io/tempssm/reference/daily_zoo_to_monthly_ts.md)
+  :
+
+  Convert a daily zoo object to a monthly `ts` object
+
+- [`diagnose_residuals()`](https://akihirao.github.io/tempssm/reference/diagnose_residuals.md)
+  : Residual diagnostics for tempssm models
+
+- [`fuji_temp`](https://akihirao.github.io/tempssm/reference/fuji_temp.md)
+  : Monthly mean air temperature at the summit of Mt. Fuji
+
+- [`get_aic()`](https://akihirao.github.io/tempssm/reference/get_aic.md)
+  : Extract the Akaike Information Criterion (AIC)
+
+- [`get_ar1_ts()`](https://akihirao.github.io/tempssm/reference/get_ar1_ts.md)
+  : Extract the smoothed first autoregressive component (AR1) as a time
+  series
+
+- [`get_drift_ts()`](https://akihirao.github.io/tempssm/reference/get_drift_ts.md)
+  : Extract the smoothed drift (slope) component as a time series
+
+- [`get_exo_coef()`](https://akihirao.github.io/tempssm/reference/get_exo_coef.md)
+  : Extract coefficients of exogenous variables with confidence
+  intervals
+
+- [`get_jma_sst_ts()`](https://akihirao.github.io/tempssm/reference/get_jma_sst_ts.md)
+  : Retrieve daily mean sea-surface temperature as a monthly ts object
+  from JMA
+
+- [`get_jma_sst_zoo()`](https://akihirao.github.io/tempssm/reference/get_jma_sst_zoo.md)
+  : Retrieve daily mean sea-surface temperature as a zoo object from JMA
+
+- [`get_level_ts()`](https://akihirao.github.io/tempssm/reference/get_level_ts.md)
+  : Extract the level component as a time series
+
+- [`get_season_ts()`](https://akihirao.github.io/tempssm/reference/get_season_ts.md)
+  : Extract the smoothed seasonal component as a time series
+
+- [`get_tempssm_params()`](https://akihirao.github.io/tempssm/reference/get_tempssm_params.md)
+  : Extract estimated parameters in the fitted models
+
+- [`get_tempssm_residuals()`](https://akihirao.github.io/tempssm/reference/get_tempssm_residuals.md)
+  : Extract standardized recursive residuals
+
+- [`hmo_temp`](https://akihirao.github.io/tempssm/reference/hmo_temp.md)
+  : Monthly mean air temperature at Hohenpeissenberg Meteorological
+  Observatory
+
+- [`logLik(`*`<tempssm>`*`)`](https://akihirao.github.io/tempssm/reference/logLik.tempssm.md)
+  : Log-likelihood method for tempssm objects (S3 method)
+
+- [`nao`](https://akihirao.github.io/tempssm/reference/nao.md) : North
+  Atlantic Oscillation: NAO (Hurrell)
+
+- [`niigata_sst`](https://akihirao.github.io/tempssm/reference/niigata_sst.md)
+  : Monthly mean sea surface temperature off Niigata, Japan
+
+- [`pdo`](https://akihirao.github.io/tempssm/reference/pdo.md) : Pacific
+  Decadal Oscillation (PDO) index (JMA)
+
+- [`plot(`*`<tempssm>`*`)`](https://akihirao.github.io/tempssm/reference/plot.tempssm.md)
+  : Plot method for tempssm objects
+
+- [`plot_temp_dev()`](https://akihirao.github.io/tempssm/reference/plot_temp_dev.md)
+  : Plot temperature anomalies
+
+- [`plot_tempssm_residual_diagnostics()`](https://akihirao.github.io/tempssm/reference/plot_tempssm_residual_diagnostics.md)
+  : Plot residual diagnostics for tempssm models
+
+- [`print(`*`<summary.tempssm>`*`)`](https://akihirao.github.io/tempssm/reference/print.summary.tempssm.md)
+  : Print method for summary of tempssm objects
+
+- [`print(`*`<tempssm>`*`)`](https://akihirao.github.io/tempssm/reference/print.tempssm.md)
+  : Print method for tempssm objects
+
+- [`read_monthly_temp_ts()`](https://akihirao.github.io/tempssm/reference/read_monthly_temp_ts.md)
+  :
+
+  Read and convert a monthly temperature CSV file to a `ts` object
+
+- [`set_ts_name()`](https://akihirao.github.io/tempssm/reference/set_ts_name.md)
+  : Assign variable names to a ts object
+
+- [`soi`](https://akihirao.github.io/tempssm/reference/soi.md) :
+  Southern Oscillation Index (SOI)
+
+- [`split_multi_ts()`](https://akihirao.github.io/tempssm/reference/split_multi_ts.md)
+  : Split a multivariate ts object into univariate ts objects
+
+- [`summary(`*`<tempssm>`*`)`](https://akihirao.github.io/tempssm/reference/summary.tempssm.md)
+  : Summary method for tempssm objects
+
+- [`tempssm()`](https://akihirao.github.io/tempssm/reference/tempssm.md)
+  : tempssm: State space models for temperature time series
+
+- [`trim_prediction_intervals()`](https://akihirao.github.io/tempssm/reference/trim_prediction_intervals.md)
+  : Trim forecast intervals by maximum interval width
+
+- [`trim_ts_overlap()`](https://akihirao.github.io/tempssm/reference/trim_ts_overlap.md)
+  : Trim and align temperature and exogenous time series over their
+  shared period
+
+- [`ts_cv_collect()`](https://akihirao.github.io/tempssm/reference/ts_cv_collect.md)
+  : Collect time series cross-validation results into a tibble
+
+- [`ts_cv_run()`](https://akihirao.github.io/tempssm/reference/ts_cv_run.md)
+  : Run time series cross-validation over multiple folds
+
+- [`ts_cv_run_fold()`](https://akihirao.github.io/tempssm/reference/ts_cv_run_fold.md)
+  : Run time series cross-validation for a single fold
+
+- [`ts_train_test_split()`](https://akihirao.github.io/tempssm/reference/ts_train_test_split.md)
+  : Generate rolling train/test splits for time series
+
+- [`yamaguchi_sst`](https://akihirao.github.io/tempssm/reference/yamaguchi_sst.md)
+  : Montly mean temperature time series off Yamaguchi Prefecture
+
+# Articles
+
+### All vignettes
+
+- [tempssm: State-space modeling for temperature time series in
+  R](https://akihirao.github.io/tempssm/articles/getting-started.md):
