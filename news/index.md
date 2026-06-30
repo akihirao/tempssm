@@ -17,3 +17,14 @@
 - Replaced patchwork-based
   [`autoplot.tempssm()`](https://akihirao.github.io/tempssm/reference/autoplot.tempssm.md)
   composition with an internal gtable layout helper.
+
+## tempssm 0.2.2
+
+- Major update of core function tempssm().
+
+## tempssm 0.2.1
+
+- The package was previously named `ThermoSSM` and has been renamed to
+  `tempssm`.
+- Generalized the seasonal component to support models with or without
+  seasonality.
