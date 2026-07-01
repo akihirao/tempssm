@@ -11,6 +11,7 @@ test_that(".fit_tempssm_kfas preserves the two-stage KFAS workflow", {
     fitSSM = function(model,
                       inits,
                       updatefn,
+                      marginal,
                       method,
                       control) {
       stage <- length(calls$fits) + 1L
@@ -18,6 +19,7 @@ test_that(".fit_tempssm_kfas preserves the two-stage KFAS workflow", {
         model = model,
         inits = inits,
         updatefn = updatefn,
+        marginal = marginal,
         method = method,
         control = control
       )
@@ -44,6 +46,7 @@ test_that(".fit_tempssm_kfas preserves the two-stage KFAS workflow", {
     build_ssm = build_ssm,
     updatefn = updatefn,
     inits = inits,
+    marginal = TRUE,
     maxit = 1000,
     reltol = 1e-10
   )
@@ -53,6 +56,8 @@ test_that(".fit_tempssm_kfas preserves the two-stage KFAS workflow", {
   expect_identical(calls$fits[[2]]$method, "BFGS")
   expect_identical(calls$fits[[1]]$inits, inits)
   expect_identical(calls$fits[[2]]$inits, inits + 1)
+  expect_true(calls$fits[[1]]$marginal)
+  expect_true(calls$fits[[2]]$marginal)
   expect_identical(
     calls$fits[[1]]$control,
     list(maxit = 1000, reltol = 1e-10)
@@ -79,6 +84,7 @@ test_that(".fit_tempssm_kfas leaves fitting errors to its caller", {
       build_ssm = list(),
       updatefn = function(pars, model) model,
       inits = c(-13, 0.5, -0.3, -5),
+      marginal = FALSE,
       maxit = 1000,
       reltol = 1e-10
     ),

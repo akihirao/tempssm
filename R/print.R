@@ -51,9 +51,16 @@ print.tempssm <- function(x, ...) {
 
   # Convergence information
   opt <- x$fit$optim.out
+  ll <- logLik(x)
+  likelihood_type <- if (isTRUE(attr(ll, "marginal"))) {
+    "marginal"
+  } else {
+    "diffuse"
+  }
   cat("Optimization:\n")
   cat("  Converged   :", opt$convergence == 0, "\n")
-  cat("  LogLik      :", round(logLik(x$fit$model), 2), "\n\n")
+  cat("  Likelihood  :", likelihood_type, "\n")
+  cat("  LogLik      :", round(ll, 2), "\n\n")
 
   cat("Use summary() for detailed results.\n")
 

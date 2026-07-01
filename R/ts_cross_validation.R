@@ -17,13 +17,15 @@
                               exo_train,
                               ar_order,
                               use_season,
-                              fold_id) {
+                              fold_id,
+                              marginal = FALSE) {
   tryCatch(
     tempssm(
       temp_data = y_train,
       exo_data = exo_train,
       ar_order = ar_order,
-      use_season = use_season
+      use_season = use_season,
+      marginal = marginal
     ),
     error = function(e) {
       cli::cli_warn(
@@ -235,13 +237,17 @@
 #'
 #' @keywords internal
 #' @noRd
-.prepare_ts_cv_model_controls <- function(ar_order, use_season) {
+.prepare_ts_cv_model_controls <- function(ar_order,
+                                          use_season,
+                                          marginal = FALSE) {
   .validate_ar_order(ar_order)
   .validate_use_season(use_season)
+  .validate_marginal(marginal)
 
   list(
     ar_order = ar_order,
-    use_season = use_season
+    use_season = use_season,
+    marginal = marginal
   )
 }
 
@@ -491,18 +497,24 @@
 #' @export
 ts_cv_run_fold <- function(fold,
                            ar_order = 1,
-                           use_season = TRUE) {
-  controls <- .prepare_ts_cv_model_controls(ar_order, use_season)
+                           use_season = TRUE,
+                           marginal = FALSE) {
+  controls <- .prepare_ts_cv_model_controls(
+    ar_order,
+    use_season,
+    marginal
+  )
   fold_data <- .prepare_ts_cv_fold(fold)
 
   .tempssm_cli_inform("Running CV for fold {fold_data$id}")
 
   res <- .fit_tempssm_safe(
-    fold_data$y_train_named,
-    fold_data$exo_train,
-    controls$ar_order,
-    controls$use_season,
-    fold_data$id
+    y_train = fold_data$y_train_named,
+    exo_train = fold_data$exo_train,
+    ar_order = controls$ar_order,
+    use_season = controls$use_season,
+    fold_id = fold_data$id,
+    marginal = controls$marginal
   )
 
   fail <- .handle_non_convergence(
@@ -1005,7 +1017,8 @@ ts_train_test_split <- function(temp_data,
   ts_cv_run_fold(
     fold = fold,
     ar_order = model_controls$ar_order,
-    use_season = model_controls$use_season
+    use_season = model_controls$use_season,
+    marginal = model_controls$marginal
   )
 }
 
@@ -1182,9 +1195,14 @@ ts_cv_run <- function(
   use_season = TRUE,
   parallel = TRUE,
   workers = future::availableCores(),
-  progress = FALSE
+  progress = FALSE,
+  marginal = FALSE
 ) {
-  model_controls <- .prepare_ts_cv_model_controls(ar_order, use_season)
+  model_controls <- .prepare_ts_cv_model_controls(
+    ar_order,
+    use_season,
+    marginal
+  )
   run_controls <- .prepare_ts_cv_run_controls(parallel, workers, progress)
   .validate_ts_cv_folds(folds)
 

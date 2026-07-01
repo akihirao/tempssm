@@ -4,10 +4,15 @@
 \alias{get_aic}
 \title{Extract the Akaike Information Criterion (AIC)}
 \usage{
-get_aic(res)
+get_aic(res, marginal = NULL)
 }
 \arguments{
 \item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
+
+\item{marginal}{Logical scalar or \code{NULL}. If \code{NULL}, use the
+likelihood setting stored when the model was fitted. Set to \code{TRUE} or
+\code{FALSE} to evaluate the fitted parameters with the marginal or diffuse
+likelihood, respectively. An explicit value does not refit the model.}
 }
 \value{
 A numeric scalar representing the AIC of the fitted model.

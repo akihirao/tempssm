@@ -11,6 +11,15 @@ test_that("tempssm logLik method matches the underlying KFAS model", {
 })
 
 
+test_that("marginal logLik matches the underlying KFAS model", {
+  tempssm_loglik <- logLik(res_tempssm, marginal = TRUE)
+  kfas_loglik <- stats::logLik(res_tempssm$model, marginal = TRUE)
+
+  expect_identical(as.numeric(tempssm_loglik), as.numeric(kfas_loglik))
+  expect_true(attr(tempssm_loglik, "marginal"))
+})
+
+
 test_that("tempssm AIC uses the KFAS log-likelihood with tempssm df", {
   kfas_loglik <- as.numeric(stats::logLik(res_tempssm$model))
   expected_aic <- -2 * kfas_loglik + 2 * length(res_tempssm$fit$optim.out$par)

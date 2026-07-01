@@ -98,8 +98,9 @@
 #' prediction, and confidence-interval calculations are not reimplemented
 #' independently; they are delegated to the established `KFAS` backend. Unit
 #' tests explicitly compare `tempssm` wrappers with the underlying `KFAS`
-#' objects by checking that `logLik.tempssm()` matches
-#' `stats::logLik(res$model)`, AIC is computed from the `KFAS` log-likelihood
+#' objects by checking that `logLik.tempssm()` matches the registered `KFAS`
+#' method reached through `stats::logLik(res$model)` for both diffuse and
+#' marginal likelihoods. AIC is computed from the selected `KFAS` likelihood
 #' and the `tempssm` parameter count, component accessors match
 #' `res$kfs$alphahat`, and component confidence intervals match
 #' `stats::confint(res$kfs)`.

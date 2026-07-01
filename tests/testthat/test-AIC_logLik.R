@@ -15,3 +15,12 @@ test_that("AIC.tempssm returns same value as get_aic", {
 
   expect_identical(a1, a2)
 })
+
+
+test_that("AIC follows the selected likelihood setting", {
+  ll <- logLik(res_tempssm, marginal = TRUE)
+  expected <- -2 * as.numeric(ll) + 2 * attr(ll, "df")
+
+  expect_identical(AIC(res_tempssm, marginal = TRUE), expected)
+  expect_identical(get_aic(res_tempssm, marginal = TRUE), expected)
+})

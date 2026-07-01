@@ -30,10 +30,12 @@
 #' @param object An object of class \code{"tempssm"} returned
 #' by \code{tempssm()}.
 #' @param ... Additional arguments (currently not used).
+#' @inheritParams logLik.tempssm
 #'
 #' @return
 #' An object of class \code{"summary.tempssm"}, implemented as a named list
-#' with components \code{call}, \code{logLik}, \code{k}, \code{AIC},
+#' with components \code{call}, \code{logLik}, \code{marginal}, \code{k},
+#' \code{AIC},
 #' \code{convergence}, \code{variances}, \code{coef_ar},
 #' \code{exogenous}, and \code{exogenous_coef}.
 #'
@@ -58,20 +60,21 @@
 #' }
 #'
 #' @export
-summary.tempssm <- function(object, ...) {
+summary.tempssm <- function(object, ..., marginal = NULL) {
   .validate_tempssm_summary_input(object)
 
   opt <- object$fit$optim.out
   params <- .extract_tempssm_params(object)
-  ll <- logLik.tempssm(object)
+  ll <- logLik.tempssm(object, marginal = marginal)
   exo_data <- object$exogenous_data
   exogenous_variable <- if (is.null(exo_data)) NULL else colnames(exo_data)
 
   res <- list(
     call = object$call,
     logLik = as.numeric(ll),
+    marginal = attr(ll, "marginal"),
     k = attr(ll, "df"),
-    AIC = AIC.tempssm(object),
+    AIC = -2 * as.numeric(ll) + 2 * attr(ll, "df"),
     convergence = opt$convergence == 0,
     variances = params[c("H", "Q_trend", "Q_season", "Q_ar")],
     coef_ar = list(
@@ -130,6 +133,8 @@ print.summary.tempssm <- function(x, ...) {
   cat("\n")
 
   cat("Model fit:\n")
+  likelihood_type <- if (isTRUE(x$marginal)) "marginal" else "diffuse"
+  cat("  Likelihood type:", likelihood_type, "\n")
   cat("  Log-likelihood :", round(x$logLik, 2), "\n")
   cat("  k              :", x$k, "\n")
   cat("  AIC            :", round(x$AIC, 2), "\n")

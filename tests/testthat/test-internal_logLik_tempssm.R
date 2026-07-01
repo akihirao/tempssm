@@ -7,7 +7,7 @@ test_that(".internal_logLik_tempssm returns correct structure", {
 
   expect_named(
     res,
-    c("logLik", "df", "nobs")
+    c("logLik", "df", "nobs", "marginal")
   )
 })
 
@@ -18,6 +18,7 @@ test_that(".internal_logLik_tempssm returns numeric values", {
   expect_type(res$logLik, "double")
   expect_type(res$df, "integer")
   expect_type(res$nobs, "integer")
+  expect_type(res$marginal, "logical")
 })
 
 
@@ -54,6 +55,46 @@ test_that("logLik matches stats::logLik output", {
   expected <- as.numeric(stats::logLik(res_tempssm$model))
 
   expect_identical(out$logLik, expected)
+})
+
+
+test_that("logLik can evaluate diffuse and marginal likelihoods", {
+  diffuse <- .internal_logLik_tempssm(res_tempssm, marginal = FALSE)
+  marginal <- .internal_logLik_tempssm(res_tempssm, marginal = TRUE)
+
+  expect_identical(
+    diffuse$logLik,
+    as.numeric(stats::logLik(res_tempssm$model, marginal = FALSE))
+  )
+  expect_identical(
+    marginal$logLik,
+    as.numeric(stats::logLik(res_tempssm$model, marginal = TRUE))
+  )
+  expect_false(diffuse$marginal)
+  expect_true(marginal$marginal)
+})
+
+
+test_that("logLik uses stored setting and supports legacy objects", {
+  marginal_res <- res_tempssm
+  marginal_res$marginal <- TRUE
+  expect_true(attr(logLik(marginal_res), "marginal"))
+
+  legacy_res <- res_tempssm
+  legacy_res$marginal <- NULL
+  expect_false(attr(logLik(legacy_res), "marginal"))
+})
+
+
+test_that("logLik validates explicit marginal setting", {
+  expect_error(
+    logLik(res_tempssm, marginal = NA),
+    "marginal.*logical scalar"
+  )
+  expect_error(
+    logLik(res_tempssm, marginal = c(TRUE, FALSE)),
+    "marginal.*length one"
+  )
 })
 
 

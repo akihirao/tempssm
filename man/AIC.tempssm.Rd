@@ -4,20 +4,22 @@
 \alias{AIC.tempssm}
 \title{AIC method for tempssm objects (S3 method)}
 \usage{
-\method{AIC}{tempssm}(object, ..., k = 2)
+\method{AIC}{tempssm}(object, ..., k = 2, marginal = NULL)
 }
 \arguments{
 \item{object}{An object of class \code{"tempssm"}, typically returned by
 \code{tempssm()}.}
 
 \item{...}{Additional arguments passed to the generic \code{AIC()} function.
-These are currently ignored but are included for compatibility
-with the generic interface.}
+These are currently ignored.}
 
 \item{k}{Numeric penalty coefficient for the number of parameters.
-This argument is included for compatibility with
-\code{\link[stats]{AIC}} but is not used in the \pkg{tempssm} method,
-where the standard AIC definition (\code{k = 2}) is applied.}
+The default \code{k = 2} gives the standard AIC definition.}
+
+\item{marginal}{Logical scalar or \code{NULL}. If \code{NULL}, use the
+likelihood setting stored when the model was fitted. Set to \code{TRUE} or
+\code{FALSE} to evaluate the fitted parameters with the marginal or diffuse
+likelihood, respectively. An explicit value does not refit the model.}
 }
 \value{
 A numeric scalar giving the AIC of the fitted \code{tempssm} model.

@@ -39,6 +39,7 @@ test_that("warnings are not suppressed by the verbosity setting", {
     .prepare_tempssm_controls(
       ar_order = 5,
       use_season = TRUE,
+      marginal = FALSE,
       maxit = NULL,
       reltol = NULL,
       na_action = "inform"

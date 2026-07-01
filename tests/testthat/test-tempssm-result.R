@@ -11,6 +11,7 @@ test_that(".new_tempssm_result constructs fitted results", {
     exogenous_data = NULL,
     ar_order = 1,
     use_season = FALSE,
+    marginal = FALSE,
     model_call = quote(tempssm(temp_data = temp_data)),
     converged = TRUE,
     exo_names = NULL,
@@ -28,6 +29,7 @@ test_that(".new_tempssm_result constructs fitted results", {
       "exogenous_data",
       "ar_order",
       "use_season",
+      "marginal",
       "call",
       "converged",
       "state_map"
@@ -36,6 +38,7 @@ test_that(".new_tempssm_result constructs fitted results", {
   expect_identical(colnames(res$kfs$alphahat), state_names)
   expect_identical(res$state_map$all, state_names)
   expect_true(res$converged)
+  expect_false(res$marginal)
 })
 
 
@@ -50,6 +53,7 @@ test_that(".new_tempssm_result constructs fitting-error results", {
     exogenous_data = NULL,
     ar_order = 1,
     use_season = TRUE,
+    marginal = TRUE,
     model_call = quote(tempssm(temp_data = temp_data)),
     converged = FALSE,
     exo_names = NULL,
@@ -61,6 +65,7 @@ test_that(".new_tempssm_result constructs fitting-error results", {
   expect_null(res$fit)
   expect_null(res$kfs)
   expect_false(res$converged)
+  expect_true(res$marginal)
   expect_identical(res$temp_data, temp_data)
   expect_identical(res$state_map$all, character(0))
 })

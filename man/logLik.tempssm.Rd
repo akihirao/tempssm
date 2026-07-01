@@ -4,15 +4,19 @@
 \alias{logLik.tempssm}
 \title{Log-likelihood method for tempssm objects (S3 method)}
 \usage{
-\method{logLik}{tempssm}(object, ...)
+\method{logLik}{tempssm}(object, ..., marginal = NULL)
 }
 \arguments{
 \item{object}{An object of class \code{"tempssm"}, typically returned by
 \code{tempssm()}.}
 
 \item{...}{Additional arguments passed to the generic \code{logLik()} function.
-These are currently ignored but are included for compatibility
-with the generic interface.}
+These are currently ignored.}
+
+\item{marginal}{Logical scalar or \code{NULL}. If \code{NULL}, use the
+likelihood setting stored when the model was fitted. Set to \code{TRUE} or
+\code{FALSE} to evaluate the fitted parameters with the marginal or diffuse
+likelihood, respectively. An explicit value does not refit the model.}
 }
 \value{
 An object of class \code{"logLik"} containing the numeric log-likelihood,
@@ -20,6 +24,12 @@ with \code{df} and \code{nobs} attributes.
 }
 \description{
 Log-likelihood method for tempssm objects (S3 method)
+}
+\details{
+The implementation calls the public \code{stats::logLik()} generic on the
+fitted \code{SSModel} object. S3 dispatch then invokes KFAS's registered
+\code{logLik.SSModel} method; that method is not exported for direct use.
+The \code{marginal} argument is passed to the KFAS method.
 }
 \examples{
 \dontrun{
@@ -30,6 +40,7 @@ res <- tempssm(niigata_sst)
 
 # extract log-likelihood
 ll <- logLik(res)
+marginal_ll <- logLik(res, marginal = TRUE)
 
 ll
 

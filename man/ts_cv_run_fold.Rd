@@ -4,7 +4,7 @@
 \alias{ts_cv_run_fold}
 \title{Run time series cross-validation for a single fold}
 \usage{
-ts_cv_run_fold(fold, ar_order = 1, use_season = TRUE)
+ts_cv_run_fold(fold, ar_order = 1, use_season = TRUE, marginal = FALSE)
 }
 \arguments{
 \item{fold}{A single fold object returned by \code{ts_train_test_split()}.}
@@ -18,6 +18,13 @@ unstable estimation.}
 
 \item{use_season}{Logical scalar; should the seasonal component be
 considered? Defaults to \code{TRUE}.}
+
+\item{marginal}{Logical scalar specifying the likelihood used during
+parameter estimation. If \code{FALSE} (the default), KFAS uses the
+diffuse likelihood. If \code{TRUE}, KFAS uses the marginal likelihood,
+which adds the diffuse-initialization correction term. The selected
+setting is stored in the fitted object and used by default by
+\code{logLik()}, \code{AIC()}, and \code{summary()} methods.}
 }
 \value{
 A named list with the following components:

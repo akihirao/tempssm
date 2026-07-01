@@ -13,7 +13,8 @@ tempssm(
   maxit = NULL,
   reltol = NULL,
   use_season = TRUE,
-  na_action = c("inform", "warn", "error", "allow")
+  na_action = c("inform", "warn", "error", "allow"),
+  marginal = FALSE
 )
 }
 \arguments{
@@ -59,6 +60,13 @@ warning and proceed, \code{"error"} to stop, or \code{"allow"} to proceed
 silently. The default is \code{"inform"}. Missing values in
 \code{exo_data} are always rejected; exogenous covariates must be completed
 before model fitting.}
+
+\item{marginal}{Logical scalar specifying the likelihood used during
+parameter estimation. If \code{FALSE} (the default), KFAS uses the
+diffuse likelihood. If \code{TRUE}, KFAS uses the marginal likelihood,
+which adds the diffuse-initialization correction term. The selected
+setting is stored in the fitted object and used by default by
+\code{logLik()}, \code{AIC()}, and \code{summary()} methods.}
 }
 \value{
 An object of class \code{"tempssm"}, a named list containing:
@@ -74,6 +82,8 @@ error.}
 estimation, or \code{NULL}.}
 \item{ar_order}{Order of the autoregressive component.}
 \item{use_season}{Logical; whether to include a seasonal component.}
+\item{marginal}{Logical; whether marginal likelihood was used during
+parameter estimation.}
 \item{call}{Matched function call.}
 \item{converged}{Logical; whether the second optimization stage
 converged.}

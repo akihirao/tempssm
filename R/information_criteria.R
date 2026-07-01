@@ -36,16 +36,47 @@
 }
 
 
-######################################
+#' Resolve the likelihood setting for a fitted model
+#'
+#' @param res A fitted \code{tempssm} object.
+#' @inheritParams logLik.tempssm
+#'
+#' @return A logical scalar.
+#'
 #' @keywords internal
 #' @noRd
-.internal_logLik_tempssm <- function(res) {
+.resolve_tempssm_marginal <- function(res, marginal = NULL) {
+  if (is.null(marginal)) {
+    # Objects created before marginal was stored used KFAS's FALSE default.
+    return(isTRUE(res$marginal))
+  }
+
+  .validate_marginal(marginal)
+  marginal
+}
+
+
+######################################
+#' Extract log-likelihood components from a fitted model
+#'
+#' @param res A fitted \code{tempssm} object.
+#' @inheritParams logLik.tempssm
+#'
+#' @return A named list containing the log-likelihood, degrees of freedom,
+#'   number of observations, and resolved likelihood setting.
+#'
+#' @keywords internal
+#' @noRd
+.internal_logLik_tempssm <- function(res, marginal = NULL) {
   ## ---- validation ----------------------------------------------------
   .validate_tempssm_for_ic(res)
+  marginal <- .resolve_tempssm_marginal(res, marginal)
 
   ## ---- logLik extraction ---------------------------------------------
   ll <- tryCatch(
-    as.numeric(stats::logLik(res$model)),
+    # stats::logLik() dispatches SSModel objects to KFAS's registered
+    # logLik.SSModel method; KFAS does not export the method directly.
+    as.numeric(stats::logLik(res$model, marginal = marginal)),
     error = function(e) {
       cli::cli_abort(
         "Failed to extract log-likelihood from the fitted model."
@@ -72,7 +103,8 @@
   return(list(
     logLik = ll,
     df     = df,
-    nobs   = nobs
+    nobs   = nobs,
+    marginal = marginal
   ))
 }
 
@@ -85,10 +117,20 @@
 #'
 #' @param ...
 #' Additional arguments passed to the generic \code{logLik()} function.
-#' These are currently ignored but are included for compatibility
-#' with the generic interface.
+#' These are currently ignored.
+#'
+#' @param marginal Logical scalar or \code{NULL}. If \code{NULL}, use the
+#' likelihood setting stored when the model was fitted. Set to \code{TRUE} or
+#' \code{FALSE} to evaluate the fitted parameters with the marginal or diffuse
+#' likelihood, respectively. An explicit value does not refit the model.
 #'
 #' @method logLik tempssm
+#'
+#' @details
+#' The implementation calls the public \code{stats::logLik()} generic on the
+#' fitted \code{SSModel} object. S3 dispatch then invokes KFAS's registered
+#' \code{logLik.SSModel} method; that method is not exported for direct use.
+#' The \code{marginal} argument is passed to the KFAS method.
 #'
 #' @return
 #' An object of class \code{"logLik"} containing the numeric log-likelihood,
@@ -107,6 +149,7 @@
 #'
 #' # extract log-likelihood
 #' ll <- logLik(res)
+#' marginal_ll <- logLik(res, marginal = TRUE)
 #'
 #' ll
 #'
@@ -116,14 +159,15 @@
 #' }
 #'
 #' @export
-logLik.tempssm <- function(object, ...) {
-  info <- .internal_logLik_tempssm(object)
+logLik.tempssm <- function(object, ..., marginal = NULL) {
+  info <- .internal_logLik_tempssm(object, marginal = marginal)
 
   structure(
     info$logLik,
     class = "logLik",
     df    = info$df,
-    nobs  = info$nobs
+    nobs  = info$nobs,
+    marginal = info$marginal
   )
 }
 
@@ -141,14 +185,13 @@ logLik.tempssm <- function(object, ...) {
 #'
 #' @param ...
 #' Additional arguments passed to the generic \code{AIC()} function.
-#' These are currently ignored but are included for compatibility
-#' with the generic interface.
+#' These are currently ignored.
+#'
+#' @inheritParams logLik.tempssm
 #'
 #' @param k
 #' Numeric penalty coefficient for the number of parameters.
-#' This argument is included for compatibility with
-#' \code{\link[stats]{AIC}} but is not used in the \pkg{tempssm} method,
-#' where the standard AIC definition (\code{k = 2}) is applied.
+#' The default \code{k = 2} gives the standard AIC definition.
 #'
 #' @return
 #' A numeric scalar giving the AIC of the fitted \code{tempssm} model.
@@ -162,8 +205,8 @@ logLik.tempssm <- function(object, ...) {
 #'
 #' @method AIC tempssm
 #' @export
-AIC.tempssm <- function(object, ..., k = 2) {
-  ll <- logLik.tempssm(object)
+AIC.tempssm <- function(object, ..., k = 2, marginal = NULL) {
+  ll <- logLik.tempssm(object, marginal = marginal)
   -2 * as.numeric(ll) + k * attr(ll, "df")
 }
 
@@ -176,6 +219,7 @@ AIC.tempssm <- function(object, ..., k = 2) {
 #' number of estimated parameters.
 #'
 #' @inheritParams get_level_ts
+#' @inheritParams logLik.tempssm
 #'
 #' @details
 #' The number of parameters is determined from the optimization results
@@ -193,6 +237,6 @@ AIC.tempssm <- function(object, ..., k = 2) {
 #' res <- tempssm(niigata_sst)
 #' aic <- get_aic(res)
 #' }
-get_aic <- function(res) {
-  AIC.tempssm(res)
+get_aic <- function(res, marginal = NULL) {
+  AIC.tempssm(res, marginal = marginal)
 }

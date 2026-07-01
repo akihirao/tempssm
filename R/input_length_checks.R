@@ -128,6 +128,28 @@
 }
 
 
+#' Validate the marginal-likelihood control
+#'
+#' @inheritParams tempssm
+#'
+#' @return Invisibly returns \code{marginal}.
+#'
+#' @keywords internal
+#' @noRd
+.validate_marginal <- function(marginal) {
+  .tempssm_check_length_one(marginal, "marginal")
+  .tempssm_check_logical(marginal, "marginal")
+
+  if (is.na(marginal)) {
+    cli::cli_abort(
+      "{.arg marginal} must be a logical scalar."
+    )
+  }
+
+  invisible(marginal)
+}
+
+
 #' Check that an argument is logical
 #'
 #' @inheritParams .tempssm_check_numeric

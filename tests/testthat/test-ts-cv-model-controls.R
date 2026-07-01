@@ -4,9 +4,10 @@ test_that("CV model controls preserve valid values", {
     use_season = FALSE
   )
 
-  expect_named(controls, c("ar_order", "use_season"))
+  expect_named(controls, c("ar_order", "use_season", "marginal"))
   expect_identical(controls$ar_order, 2)
   expect_false(controls$use_season)
+  expect_false(controls$marginal)
 })
 
 
@@ -50,5 +51,16 @@ test_that("CV model controls reject invalid seasonal controls", {
   expect_error(
     .prepare_ts_cv_model_controls(1, c(TRUE, FALSE)),
     "use_season.*length one"
+  )
+})
+
+
+test_that("CV model controls validate marginal likelihood", {
+  controls <- .prepare_ts_cv_model_controls(1, TRUE, TRUE)
+  expect_true(controls$marginal)
+
+  expect_error(
+    .prepare_ts_cv_model_controls(1, TRUE, NA),
+    "marginal.*logical scalar"
   )
 })

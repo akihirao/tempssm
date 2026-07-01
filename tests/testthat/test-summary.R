@@ -16,6 +16,7 @@ test_that("summary contains expected components", {
   expected_names <- c(
     "call",
     "logLik",
+    "marginal",
     "k",
     "AIC",
     "convergence",
@@ -35,8 +36,19 @@ test_that("summary uses logLik() and AIC() methods consistently", {
   aic <- AIC(res_tempssm)
 
   expect_identical(s$logLik, as.numeric(ll))
+  expect_identical(s$marginal, attr(ll, "marginal"))
   expect_identical(s$k, attr(ll, "df"))
   expect_identical(s$AIC, aic)
+})
+
+
+test_that("summary can use marginal likelihood", {
+  s <- summary(res_tempssm, marginal = TRUE)
+  ll <- logLik(res_tempssm, marginal = TRUE)
+
+  expect_true(s$marginal)
+  expect_identical(s$logLik, as.numeric(ll))
+  expect_identical(s$AIC, -2 * as.numeric(ll) + 2 * attr(ll, "df"))
 })
 
 

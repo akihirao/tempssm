@@ -213,11 +213,13 @@ NULL
 #' @noRd
 .prepare_tempssm_controls <- function(ar_order,
                                       use_season,
+                                      marginal,
                                       maxit,
                                       reltol,
                                       na_action) {
   .validate_ar_order(ar_order)
   .validate_use_season(use_season)
+  .validate_marginal(marginal)
 
   na_action <- match.arg(
     na_action,
@@ -236,6 +238,7 @@ NULL
   list(
     ar_order = ar_order,
     use_season = use_season,
+    marginal = marginal,
     maxit = maxit,
     reltol = reltol,
     na_action = na_action
@@ -427,6 +430,7 @@ NULL
                                 exogenous_data,
                                 ar_order,
                                 use_season,
+                                marginal,
                                 model_call,
                                 converged,
                                 exo_names,
@@ -443,6 +447,7 @@ NULL
     exogenous_data = exogenous_data,
     ar_order = ar_order,
     use_season = use_season,
+    marginal = marginal,
     call = model_call,
     converged = converged,
     state_map = list(
@@ -473,6 +478,7 @@ NULL
 .fit_tempssm_kfas <- function(build_ssm,
                               updatefn,
                               inits,
+                              marginal,
                               maxit,
                               reltol) {
   control <- list(maxit = maxit, reltol = reltol)
@@ -482,6 +488,7 @@ NULL
     build_ssm,
     inits = inits,
     updatefn = updatefn,
+    marginal = marginal,
     method = "Nelder-Mead",
     control = control
   )
@@ -491,6 +498,7 @@ NULL
     build_ssm,
     inits = fit_stage1$optim.out$par,
     updatefn = updatefn,
+    marginal = marginal,
     method = "BFGS",
     control = control
   )
@@ -558,6 +566,13 @@ NULL
 #' @param use_season Logical scalar; should the seasonal component be
 #' considered? Defaults to \code{TRUE}.
 #'
+#' @param marginal Logical scalar specifying the likelihood used during
+#'   parameter estimation. If \code{FALSE} (the default), KFAS uses the
+#'   diffuse likelihood. If \code{TRUE}, KFAS uses the marginal likelihood,
+#'   which adds the diffuse-initialization correction term. The selected
+#'   setting is stored in the fitted object and used by default by
+#'   \code{logLik()}, \code{AIC()}, and \code{summary()} methods.
+#'
 #' @param inits Optional numeric vector of initial parameter values.
 #'  If \code{NULL}, default values are used. When supplied, its length must
 #'  match the number of variance and autoregressive parameters implied by
@@ -608,6 +623,8 @@ NULL
 #'   estimation, or \code{NULL}.}
 #'   \item{ar_order}{Order of the autoregressive component.}
 #'   \item{use_season}{Logical; whether to include a seasonal component.}
+#'   \item{marginal}{Logical; whether marginal likelihood was used during
+#'   parameter estimation.}
 #'   \item{call}{Matched function call.}
 #'   \item{converged}{Logical; whether the second optimization stage
 #'   converged.}
@@ -630,7 +647,8 @@ tempssm <- function(temp_data,
                     maxit = NULL,
                     reltol = NULL,
                     use_season = TRUE,
-                    na_action = c("inform", "warn", "error", "allow")) {
+                    na_action = c("inform", "warn", "error", "allow"),
+                    marginal = FALSE) {
   model_call <- match.call()
 
   if (missing(na_action)) {
@@ -639,12 +657,14 @@ tempssm <- function(temp_data,
   controls <- .prepare_tempssm_controls(
     ar_order = ar_order,
     use_season = use_season,
+    marginal = marginal,
     maxit = maxit,
     reltol = reltol,
     na_action = na_action
   )
   ar_order <- controls$ar_order
   use_season <- controls$use_season
+  marginal <- controls$marginal
   maxit <- controls$maxit
   reltol <- controls$reltol
   na_action <- controls$na_action
@@ -724,6 +744,7 @@ tempssm <- function(temp_data,
       build_ssm = build_ssm,
       updatefn = update_func_common,
       inits = inits,
+      marginal = marginal,
       maxit = maxit,
       reltol = reltol
     ),
@@ -743,6 +764,7 @@ tempssm <- function(temp_data,
       exogenous_data = exo_data,
       ar_order = ar_order,
       use_season = use_season,
+      marginal = marginal,
       model_call = model_call,
       converged = FALSE,
       exo_names = exo_name,
@@ -771,6 +793,7 @@ tempssm <- function(temp_data,
     exogenous_data = exo_data,
     ar_order = ar_order,
     use_season = use_season,
+    marginal = marginal,
     model_call = model_call,
     converged = fit2$optim.out$convergence == 0,
     exo_names = exo_name,

@@ -68,11 +68,12 @@ test_that("ts_cv_run preserves fold order and forwards model controls", {
   ))
 
   testthat::local_mocked_bindings(
-    ts_cv_run_fold = function(fold, ar_order, use_season) {
+    ts_cv_run_fold = function(fold, ar_order, use_season, marginal) {
       list(
         fold = fold$fold,
         ar_order = ar_order,
-        use_season = use_season
+        use_season = use_season,
+        marginal = marginal
       )
     },
     .package = "tempssm"
@@ -82,6 +83,7 @@ test_that("ts_cv_run preserves fold order and forwards model controls", {
     folds,
     ar_order = 2,
     use_season = FALSE,
+    marginal = TRUE,
     parallel = FALSE,
     workers = 1,
     progress = FALSE
@@ -90,6 +92,7 @@ test_that("ts_cv_run preserves fold order and forwards model controls", {
   expect_identical(vapply(res, `[[`, numeric(1), "fold"), c(2, 1))
   expect_identical(vapply(res, `[[`, numeric(1), "ar_order"), c(2, 2))
   expect_false(any(vapply(res, `[[`, logical(1), "use_season")))
+  expect_true(all(vapply(res, `[[`, logical(1), "marginal")))
 })
 
 
@@ -171,7 +174,7 @@ test_that("ts_cv_run supports progress reporting", {
   )
 
   testthat::local_mocked_bindings(
-    ts_cv_run_fold = function(fold, ar_order, use_season) {
+    ts_cv_run_fold = function(fold, ar_order, use_season, marginal) {
       list(fold = fold$fold, converged = TRUE)
     },
     .package = "tempssm"

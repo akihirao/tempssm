@@ -4,17 +4,23 @@
 \alias{summary.tempssm}
 \title{Summary method for tempssm objects}
 \usage{
-\method{summary}{tempssm}(object, ...)
+\method{summary}{tempssm}(object, ..., marginal = NULL)
 }
 \arguments{
 \item{object}{An object of class \code{"tempssm"} returned
 by \code{tempssm()}.}
 
 \item{...}{Additional arguments (currently not used).}
+
+\item{marginal}{Logical scalar or \code{NULL}. If \code{NULL}, use the
+likelihood setting stored when the model was fitted. Set to \code{TRUE} or
+\code{FALSE} to evaluate the fitted parameters with the marginal or diffuse
+likelihood, respectively. An explicit value does not refit the model.}
 }
 \value{
 An object of class \code{"summary.tempssm"}, implemented as a named list
-with components \code{call}, \code{logLik}, \code{k}, \code{AIC},
+with components \code{call}, \code{logLik}, \code{marginal}, \code{k},
+\code{AIC},
 \code{convergence}, \code{variances}, \code{coef_ar},
 \code{exogenous}, and \code{exogenous_coef}.
 }

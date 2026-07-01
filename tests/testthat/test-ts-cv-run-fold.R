@@ -98,6 +98,35 @@ test_that("ts_cv_run_fold dispatches exogenous forecasts", {
 })
 
 
+test_that("ts_cv_run_fold forwards marginal likelihood control", {
+  fold <- list(
+    fold = 6L,
+    train_ts = ts(1:24, frequency = 12),
+    test_ts = ts(25:30, start = c(3, 1), frequency = 12),
+    exo_train_ts = NULL,
+    exo_test_ts = NULL
+  )
+  observed <- new.env(parent = emptyenv())
+  fitted_result <- structure(
+    list(converged = TRUE, model = list(id = "fitted")),
+    class = "tempssm"
+  )
+
+  testthat::local_mocked_bindings(
+    .fit_tempssm_safe = function(...) {
+      observed$args <- list(...)
+      fitted_result
+    },
+    .predict_no_exo = function(model, h) seq_len(h),
+    .package = "tempssm"
+  )
+
+  ts_cv_run_fold(fold, marginal = TRUE)
+
+  expect_true(observed$args$marginal)
+})
+
+
 test_that("ts_cv_run_fold returns the documented failure structure", {
   fold <- list(
     fold = 5L,
