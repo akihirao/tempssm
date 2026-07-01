@@ -11,8 +11,8 @@ set_ts_name(ts_in, label, quiet = FALSE)
 
 \item{label}{A character string or character vector specifying variable names.
 For a univariate series, must be a length-one character string.
-For a multivariate series, must be either length one (recycled) or the same
-length as the number of columns in \code{ts_in}.}
+For a multivariate series, its length must equal the number of columns in
+\code{ts_in}.}
 
 \item{quiet}{Logical scalar; if \code{TRUE}, suppresses the informational message.}
 }

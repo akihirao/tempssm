@@ -121,11 +121,13 @@ time-invariant variances. The model does not currently include
 time-varying volatility or automatic stationarity tests for the observed
 input series.
 
-Invalid arguments and model inputs raise an error before fitting begins. If
-the fitting backend raises an error, the function issues a warning and
-returns a \code{"tempssm"} object with \code{converged = FALSE} and
-\code{NULL} model, fit, and filtering components. If optimization completes
-without convergence, the available fitted components are retained and
+Invalid arguments and model inputs raise an error before fitting begins.
+Errors raised by the KFAS fitting or filtering backend issue a warning and
+return a \code{"tempssm"} object with \code{converged = FALSE} and
+\code{NULL} model, fit, and filtering components. Errors in model
+construction, state-name assignment, or result construction are propagated
+rather than converted to a failed fit. If optimization completes without
+convergence, the available fitted components are retained and
 \code{converged} is set to \code{FALSE}.
 }
 \section{Life Cycle and Development Status}{

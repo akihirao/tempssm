@@ -527,11 +527,13 @@ NULL
 #' time-varying volatility or automatic stationarity tests for the observed
 #' input series.
 #'
-#' Invalid arguments and model inputs raise an error before fitting begins. If
-#' the fitting backend raises an error, the function issues a warning and
-#' returns a \code{"tempssm"} object with \code{converged = FALSE} and
-#' \code{NULL} model, fit, and filtering components. If optimization completes
-#' without convergence, the available fitted components are retained and
+#' Invalid arguments and model inputs raise an error before fitting begins.
+#' Errors raised by the KFAS fitting or filtering backend issue a warning and
+#' return a \code{"tempssm"} object with \code{converged = FALSE} and
+#' \code{NULL} model, fit, and filtering components. Errors in model
+#' construction, state-name assignment, or result construction are propagated
+#' rather than converted to a failed fit. If optimization completes without
+#' convergence, the available fitted components are retained and
 #' \code{converged} is set to \code{FALSE}.
 #'
 #' @param temp_data A temperature time series of class \code{ts}.
@@ -630,8 +632,6 @@ tempssm <- function(temp_data,
                     use_season = TRUE,
                     na_action = c("inform", "warn", "error", "allow")) {
   model_call <- match.call()
-  exo_name <- NULL
-  state_names <- character(0)
 
   if (missing(na_action)) {
     na_action <- "inform"
@@ -668,122 +668,123 @@ tempssm <- function(temp_data,
   y <- temp_data
   freq <- model_inputs$frequency
 
-  tryCatch(
-    {
-      ## ---- Start message -----------------------------------------------
-      .tempssm_cli_debug(
-        paste0(
-          "Fitting state-space model (",
-          "AR order: {ar_order}, ",
-          "seasonal: {use_season})"
-        )
-      )
+  ## ---- Start message ---------------------------------------------------
+  .tempssm_cli_debug(
+    paste0(
+      "Fitting state-space model (",
+      "AR order: {ar_order}, ",
+      "seasonal: {use_season})"
+    )
+  )
 
-      .tempssm_cli_debug("Time series frequency: {freq}")
+  .tempssm_cli_debug("Time series frequency: {freq}")
 
-      .tempssm_cli_debug(
-        "Optimization settings: maxit={maxit}, reltol={reltol}"
-      )
+  .tempssm_cli_debug(
+    "Optimization settings: maxit={maxit}, reltol={reltol}"
+  )
 
-      ## ---- Parameter indexing ------------------------------------------
-      param_idx_list <- .get_param_index(ar_order = ar_order,
-                       use_season = use_season)
+  ## ---- Parameter indexing --------------------------------------------
+  param_idx_list <- .get_param_index(
+    ar_order = ar_order,
+    use_season = use_season
+  )
 
-      ar_idx <- param_idx_list$ar
-      var_idx <- param_idx_list$var
-      H_idx <- param_idx_list$H
+  ar_idx <- param_idx_list$ar
+  var_idx <- param_idx_list$var
+  H_idx <- param_idx_list$H
 
-      ## ---- Exogenous handling ------------------------------------------
-      exogenous <- .prepare_tempssm_exogenous(exo_data)
-      exo_name <- exogenous$exo_names
-      exo_mat <- exogenous$exo_matrix
+  ## ---- Exogenous handling --------------------------------------------
+  exogenous <- .prepare_tempssm_exogenous(exo_data)
+  exo_name <- exogenous$exo_names
+  exo_mat <- exogenous$exo_matrix
 
-      ## ---- Model definition --------------------------------------------
-      build_ssm <- .define_build_model(
-        y = y,
-        freq = freq,
-        use_season = use_season,
-        exo_mat = exo_mat,
-        ar_order = ar_order
-      )
+  ## ---- Model definition ----------------------------------------------
+  build_ssm <- .define_build_model(
+    y = y,
+    freq = freq,
+    use_season = use_season,
+    exo_mat = exo_mat,
+    ar_order = ar_order
+  )
 
-      update_func_common <- .define_update_func(
-        y = y,
-        freq = freq,
-        use_season = use_season,
-        exo_mat = exo_mat,
-        ar_order = ar_order,
-        ar_idx = ar_idx,
-        var_idx = var_idx,
-        H_idx = H_idx
-      )
+  update_func_common <- .define_update_func(
+    y = y,
+    freq = freq,
+    use_season = use_season,
+    exo_mat = exo_mat,
+    ar_order = ar_order,
+    ar_idx = ar_idx,
+    var_idx = var_idx,
+    H_idx = H_idx
+  )
 
-      ## ---- Optimization and smoothing ----------------------------------
-      fitted <- .fit_tempssm_kfas(
-        build_ssm = build_ssm,
-        updatefn = update_func_common,
-        inits = inits,
-        maxit = maxit,
-        reltol = reltol
-      )
-      fit2 <- fitted$fit
-      kfs <- fitted$kfs
+  ## ---- Optimization and smoothing ------------------------------------
+  fitted <- tryCatch(
+    .fit_tempssm_kfas(
+      build_ssm = build_ssm,
+      updatefn = update_func_common,
+      inits = inits,
+      maxit = maxit,
+      reltol = reltol
+    ),
+    error = identity
+  )
 
-      ## ---- State names --------------------------------------------------
-      state_names <- .make_tempssm_state_names(
-        exo_names = exo_name,
-        freq = freq,
-        use_season = use_season,
-        ar_order = ar_order,
-        n_states = ncol(kfs$alphahat)
-      )
+  if (inherits(fitted, "error")) {
+    cli::cli_warn(
+      "Model fitting failed: {conditionMessage(fitted)}"
+    )
 
-      ## ---- Output -------------------------------------------------------
-      out <- .new_tempssm_result(
-        model = fit2$model,
-        fit = fit2,
-        kfs = kfs,
-        temp_data = temp_data,
-        exogenous_data = exo_data,
-        ar_order = ar_order,
-        use_season = use_season,
-        model_call = model_call,
-        converged = fit2$optim.out$convergence == 0,
-        exo_names = exo_name,
-        state_names = state_names
-      )
+    return(.new_tempssm_result(
+      model = NULL,
+      fit = NULL,
+      kfs = NULL,
+      temp_data = temp_data,
+      exogenous_data = exo_data,
+      ar_order = ar_order,
+      use_season = use_season,
+      model_call = model_call,
+      converged = FALSE,
+      exo_names = exo_name,
+      state_names = character(0)
+    ))
+  }
 
-      ## ---- Completion message ------------------------------------------
-      if (out$converged) {
-        .tempssm_cli_debug("Model fitting completed successfully")
-      } else {
-        cli::cli_warn("Model fitting finished but did not converge")
-      }
+  fit2 <- fitted$fit
+  kfs <- fitted$kfs
 
-      return(out)
-    },
-    error = function(e) {
-      cli::cli_warn(
-        "Model fitting failed: {conditionMessage(e)}"
-      )
+  ## ---- State names ----------------------------------------------------
+  state_names <- .make_tempssm_state_names(
+    exo_names = exo_name,
+    freq = freq,
+    use_season = use_season,
+    ar_order = ar_order,
+    n_states = ncol(kfs$alphahat)
+  )
 
-      out <- .new_tempssm_result(
-        model = NULL,
-        fit = NULL,
-        kfs = NULL,
-        temp_data = temp_data,
-        exogenous_data = exo_data,
-        ar_order = ar_order,
-        use_season = use_season,
-        model_call = model_call,
-        converged = FALSE,
-        exo_names = exo_name,
-        state_names = state_names
-      )
+  ## ---- Output ---------------------------------------------------------
+  out <- .new_tempssm_result(
+    model = fit2$model,
+    fit = fit2,
+    kfs = kfs,
+    temp_data = temp_data,
+    exogenous_data = exo_data,
+    ar_order = ar_order,
+    use_season = use_season,
+    model_call = model_call,
+    converged = fit2$optim.out$convergence == 0,
+    exo_names = exo_name,
+    state_names = state_names
+  )
 
-      return(out)
-    }
-  ) # close tryCatch
+  ## ---- Completion message --------------------------------------------
+  if (out$converged) {
+    .tempssm_cli_debug("Model fitting completed successfully")
+  } else {
+    cli::cli_warn("Model fitting finished but did not converge")
+  }
+
+  out
 }
 
 

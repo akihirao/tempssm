@@ -18,11 +18,11 @@ test_that("tempssm rejects invalid model inputs before fitting", {
 })
 
 
-test_that("tempssm returns a well-formed failure object for fitting errors", {
+test_that("tempssm returns a failure object for KFAS fitting errors", {
   temp_ts <- ts(rnorm(12), frequency = 4)
 
   testthat::local_mocked_bindings(
-    .define_build_model = function(...) {
+    .fit_tempssm_kfas = function(...) {
       stop("synthetic fitting failure")
     },
     .package = "tempssm"
@@ -40,6 +40,49 @@ test_that("tempssm returns a well-formed failure object for fitting errors", {
   expect_null(res$kfs)
   expect_identical(res$temp_data, temp_ts)
   expect_identical(res$call, quote(tempssm(temp_data = temp_ts)))
+})
+
+
+test_that("tempssm does not mask model construction errors", {
+  temp_ts <- ts(rnorm(12), frequency = 4)
+
+  testthat::local_mocked_bindings(
+    .define_build_model = function(...) {
+      stop("synthetic model construction failure")
+    },
+    .package = "tempssm"
+  )
+
+  expect_error(
+    tempssm(temp_ts),
+    "synthetic model construction failure"
+  )
+})
+
+
+test_that("tempssm does not mask post-fitting assembly errors", {
+  temp_ts <- ts(rnorm(12), frequency = 4)
+
+  testthat::local_mocked_bindings(
+    .fit_tempssm_kfas = function(...) {
+      list(
+        fit = list(
+          model = list(),
+          optim.out = list(convergence = 0)
+        ),
+        kfs = list(alphahat = matrix(0, nrow = 12, ncol = 1))
+      )
+    },
+    .make_tempssm_state_names = function(...) {
+      stop("synthetic state-name failure")
+    },
+    .package = "tempssm"
+  )
+
+  expect_error(
+    tempssm(temp_ts),
+    "synthetic state-name failure"
+  )
 })
 
 

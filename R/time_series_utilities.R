@@ -162,6 +162,32 @@
 #' @noRd
 NULL
 
+
+#' Validate and prepare labels for a time-series object
+#'
+#' @inheritParams set_ts_name
+#' @param n_col Integer number of series in \code{ts_in}.
+#'
+#' @return A character vector with one label per series.
+#'
+#' @keywords internal
+#' @noRd
+.prepare_ts_labels <- function(label, n_col) {
+  .tempssm_check_character(label, "label")
+
+  if (length(label) != n_col) {
+    cli::cli_abort(
+      paste0(
+        "Length of {.arg label} must equal the number of series ",
+        "in {.arg ts_in}."
+      )
+    )
+  }
+
+  label
+}
+
+
 #' Assign variable names to a ts object
 #'
 #' @description
@@ -180,8 +206,8 @@ NULL
 #' @param label
 #' A character string or character vector specifying variable names.
 #' For a univariate series, must be a length-one character string.
-#' For a multivariate series, must be either length one (recycled) or the same
-#' length as the number of columns in \code{ts_in}.
+#' For a multivariate series, its length must equal the number of columns in
+#' \code{ts_in}.
 #'
 #' @param quiet
 #' Logical scalar; if \code{TRUE}, suppresses the informational message.
@@ -226,40 +252,20 @@ NULL
 #' @export
 set_ts_name <- function(ts_in, label, quiet = FALSE) {
   ## ---- input check ----------------------------------------------------
-  if (!inherits(ts_in, "ts")) {
-    cli::cli_abort(
-      "`ts_in` must be an object of class {.cls ts}."
-    )
-  }
+  .tempssm_check_class(ts_in, "ts_in", "ts")
 
   ts_in <- .strip_units_ts(ts_in, arg_name = "ts_in")
 
   n_col <- NCOL(ts_in)
+  label <- .prepare_ts_labels(label, n_col)
 
-  if (!is.character(label)) {
-    cli::cli_abort("`label` must be a character vector.")
-  }
-
-  if (!(length(label) == 1L || length(label) == n_col)) {
-    cli::cli_abort(
-      paste0(
-        "Length of {.arg label} must be 1 or equal to ",
-        "the number of series in {.arg ts_in}."
-      )
-    )
-  }
-
-  if (!is.logical(quiet) || length(quiet) != 1L || is.na(quiet)) {
+  .tempssm_check_length_one(quiet, "quiet")
+  .tempssm_check_logical(quiet, "quiet")
+  if (is.na(quiet)) {
     cli::cli_abort("`quiet` must be a single logical value.")
   }
 
   .tempssm_cli_debug("Assigning variable names to {.cls ts} object")
-
-  ## ---- recycle label --------------------------------------------------
-  if (length(label) == 1L) {
-    .tempssm_cli_debug("Recycling label to {n_col} column{?s}")
-    label <- rep(label, n_col)
-  }
 
   ## ---- ensure matrix form --------------------------------------------
   x <- if (is.null(dim(ts_in))) {

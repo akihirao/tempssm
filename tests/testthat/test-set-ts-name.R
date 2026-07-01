@@ -38,18 +38,16 @@ test_that("set_ts_name works for multivariate ts with matching labels", {
 })
 
 
-test_that("single label is recycled for multivariate ts", {
+test_that("multivariate ts requires one label per column", {
   ts_multi <- ts(
     matrix(rnorm(120), ncol = 4),
     start = c(2010, 1),
     frequency = 12
   )
 
-  ts_named <- set_ts_name(ts_multi, label = "exo")
-
-  expect_identical(
-    colnames(ts_named),
-    rep("exo", 4)
+  expect_error(
+    set_ts_name(ts_multi, label = "exo"),
+    "must equal the number of series"
   )
 })
 
@@ -82,7 +80,7 @@ test_that("non-character label triggers error", {
 
   expect_error(
     set_ts_name(ts_uni, label = 1),
-    "`label` must be a character vector"
+    "`label` must be character"
   )
 })
 
@@ -156,5 +154,15 @@ test_that("invalid quiet value triggers error", {
   expect_error(
     set_ts_name(ts_uni, label = "x", quiet = NA),
     "`quiet` must be a single logical value"
+  )
+
+  expect_error(
+    set_ts_name(ts_uni, label = "x", quiet = "yes"),
+    "`quiet` must be logical"
+  )
+
+  expect_error(
+    set_ts_name(ts_uni, label = "x", quiet = c(TRUE, FALSE)),
+    "`quiet` must have length one"
   )
 })
