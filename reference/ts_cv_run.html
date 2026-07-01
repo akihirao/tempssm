@@ -55,7 +55,8 @@ cross-validation but does not compute evaluation metrics.</p>
 <span>  use_season <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  workers <span class="op">=</span> <span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">availableCores</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  progress <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  progress <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  marginal <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -97,6 +98,15 @@ returned by <code><a href="https://parallelly.futureverse.org/reference/availabl
 <dd><p>Logical scalar; if <code>TRUE</code>, a progress bar is displayed during execution
 using the <span class="pkg">progressr</span> package. If <code>FALSE</code>, no progress bar
 is shown. Default is <code>FALSE</code>.</p></dd>
+
+
+<dt id="arg-marginal">marginal<a class="anchor" aria-label="anchor" href="#arg-marginal"></a></dt>
+<dd><p>Logical scalar specifying the likelihood used during
+parameter estimation. If <code>FALSE</code> (the default), KFAS uses the
+diffuse likelihood. If <code>TRUE</code>, KFAS uses the marginal likelihood,
+which adds the diffuse-initialization correction term. The selected
+setting is stored in the fitted object and used by default by
+<code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code>, <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>, and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> methods.</p></dd>
 
 </dl></div>
     <div class="section level2">

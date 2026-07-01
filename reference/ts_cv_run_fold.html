@@ -91,7 +91,7 @@ This part is subject to future improvement.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ts_cv_run_fold</span><span class="op">(</span><span class="va">fold</span>, ar_order <span class="op">=</span> <span class="fl">1</span>, use_season <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">ts_cv_run_fold</span><span class="op">(</span><span class="va">fold</span>, ar_order <span class="op">=</span> <span class="fl">1</span>, use_season <span class="op">=</span> <span class="cn">TRUE</span>, marginal <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -114,6 +114,15 @@ unstable estimation.</p></dd>
 <dt id="arg-use-season">use_season<a class="anchor" aria-label="anchor" href="#arg-use-season"></a></dt>
 <dd><p>Logical scalar; should the seasonal component be
 considered? Defaults to <code>TRUE</code>.</p></dd>
+
+
+<dt id="arg-marginal">marginal<a class="anchor" aria-label="anchor" href="#arg-marginal"></a></dt>
+<dd><p>Logical scalar specifying the likelihood used during
+parameter estimation. If <code>FALSE</code> (the default), KFAS uses the
+diffuse likelihood. If <code>TRUE</code>, KFAS uses the marginal likelihood,
+which adds the diffuse-initialization correction term. The selected
+setting is stored in the fitted object and used by default by
+<code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code>, <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>, and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> methods.</p></dd>
 
 </dl></div>
     <div class="section level2">

@@ -28,7 +28,7 @@ to model specification. This part is subject to future improvement.
 ## Usage
 
 ``` r
-ts_cv_run_fold(fold, ar_order = 1, use_season = TRUE)
+ts_cv_run_fold(fold, ar_order = 1, use_season = TRUE, marginal = FALSE)
 ```
 
 ## Arguments
@@ -50,6 +50,17 @@ ts_cv_run_fold(fold, ar_order = 1, use_season = TRUE)
 
   Logical scalar; should the seasonal component be considered? Defaults
   to `TRUE`.
+
+- marginal:
+
+  Logical scalar specifying the likelihood used during parameter
+  estimation. If `FALSE` (the default), KFAS uses the diffuse
+  likelihood. If `TRUE`, KFAS uses the marginal likelihood, which adds
+  the diffuse-initialization correction term. The selected setting is
+  stored in the fitted object and used by default by
+  [`logLik()`](https://rdrr.io/r/stats/logLik.html),
+  [`AIC()`](https://rdrr.io/r/stats/AIC.html), and
+  [`summary()`](https://rdrr.io/r/base/summary.html) methods.
 
 ## Value
 

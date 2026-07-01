@@ -69,7 +69,8 @@ frequency greater than 1.</p>
 <span>  maxit <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  reltol <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  use_season <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  na_action <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"inform"</span>, <span class="st">"warn"</span>, <span class="st">"error"</span>, <span class="st">"allow"</span><span class="op">)</span></span>
+<span>  na_action <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"inform"</span>, <span class="st">"warn"</span>, <span class="st">"error"</span>, <span class="st">"allow"</span><span class="op">)</span>,</span>
+<span>  marginal <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -135,6 +136,15 @@ silently. The default is <code>"inform"</code>. Missing values in
 <code>exo_data</code> are always rejected; exogenous covariates must be completed
 before model fitting.</p></dd>
 
+
+<dt id="arg-marginal">marginal<a class="anchor" aria-label="anchor" href="#arg-marginal"></a></dt>
+<dd><p>Logical scalar specifying the likelihood used during
+parameter estimation. If <code>FALSE</code> (the default), KFAS uses the
+diffuse likelihood. If <code>TRUE</code>, KFAS uses the marginal likelihood,
+which adds the diffuse-initialization correction term. The selected
+setting is stored in the fitted object and used by default by
+<code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code>, <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>, and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> methods.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -162,6 +172,10 @@ estimation, or <code>NULL</code>.</p></dd>
 
 <dt>use_season</dt>
 <dd><p>Logical; whether to include a seasonal component.</p></dd>
+
+<dt>marginal</dt>
+<dd><p>Logical; whether marginal likelihood was used during
+parameter estimation.</p></dd>
 
 <dt>call</dt>
 <dd><p>Matched function call.</p></dd>

@@ -15,7 +15,8 @@ ts_cv_run(
   use_season = TRUE,
   parallel = TRUE,
   workers = future::availableCores(),
-  progress = FALSE
+  progress = FALSE,
+  marginal = FALSE
 )
 ```
 
@@ -56,6 +57,17 @@ ts_cv_run(
   Logical scalar; if `TRUE`, a progress bar is displayed during
   execution using the progressr package. If `FALSE`, no progress bar is
   shown. Default is `FALSE`.
+
+- marginal:
+
+  Logical scalar specifying the likelihood used during parameter
+  estimation. If `FALSE` (the default), KFAS uses the diffuse
+  likelihood. If `TRUE`, KFAS uses the marginal likelihood, which adds
+  the diffuse-initialization correction term. The selected setting is
+  stored in the fitted object and used by default by
+  [`logLik()`](https://rdrr.io/r/stats/logLik.html),
+  [`AIC()`](https://rdrr.io/r/stats/AIC.html), and
+  [`summary()`](https://rdrr.io/r/base/summary.html) methods.
 
 ## Value
 

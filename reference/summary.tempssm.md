@@ -8,7 +8,7 @@ estimated by
 
 ``` r
 # S3 method for class 'tempssm'
-summary(object, ...)
+summary(object, ..., marginal = NULL)
 ```
 
 ## Arguments
@@ -22,11 +22,18 @@ summary(object, ...)
 
   Additional arguments (currently not used).
 
+- marginal:
+
+  Logical scalar or `NULL`. If `NULL`, use the likelihood setting stored
+  when the model was fitted. Set to `TRUE` or `FALSE` to evaluate the
+  fitted parameters with the marginal or diffuse likelihood,
+  respectively. An explicit value does not refit the model.
+
 ## Value
 
 An object of class `"summary.tempssm"`, implemented as a named list with
-components `call`, `logLik`, `k`, `AIC`, `convergence`, `variances`,
-`coef_ar`, `exogenous`, and `exogenous_coef`.
+components `call`, `logLik`, `marginal`, `k`, `AIC`, `convergence`,
+`variances`, `coef_ar`, `exogenous`, and `exogenous_coef`.
 
 ## Examples
 

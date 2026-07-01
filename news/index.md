@@ -9,6 +9,8 @@
   susceptibility, and extended test workflows.
 - Clarified missing-value handling for temperature responses and
   exogenous covariates.
+- Added a `marginal` option to select diffuse or marginal likelihood
+  consistently during KFAS model fitting and likelihood evaluation.
 
 ## tempssm 0.2.3.1
 

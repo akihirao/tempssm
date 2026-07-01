@@ -44,7 +44,7 @@
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'tempssm'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, marginal <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -58,14 +58,27 @@
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments passed to the generic <code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code> function.
-These are currently ignored but are included for compatibility
-with the generic interface.</p></dd>
+These are currently ignored.</p></dd>
+
+
+<dt id="arg-marginal">marginal<a class="anchor" aria-label="anchor" href="#arg-marginal"></a></dt>
+<dd><p>Logical scalar or <code>NULL</code>. If <code>NULL</code>, use the
+likelihood setting stored when the model was fitted. Set to <code>TRUE</code> or
+<code>FALSE</code> to evaluate the fitted parameters with the marginal or diffuse
+likelihood, respectively. An explicit value does not refit the model.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>"logLik"</code> containing the numeric log-likelihood,
 with <code>df</code> and <code>nobs</code> attributes.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>The implementation calls the public <code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">stats::logLik()</a></code> generic on the
+fitted <code>SSModel</code> object. S3 dispatch then invokes KFAS's registered
+<code>logLik.SSModel</code> method; that method is not exported for direct use.
+The <code>marginal</code> argument is passed to the KFAS method.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -83,6 +96,7 @@ with <code>df</code> and <code>nobs</code> attributes.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># extract log-likelihood</span></span></span>
 <span class="r-in"><span><span class="va">ll</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">marginal_ll</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik</a></span><span class="op">(</span><span class="va">res</span>, marginal <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">ll</span></span></span>
 <span class="r-in"><span></span></span>

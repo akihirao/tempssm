@@ -47,7 +47,7 @@ state-space model estimated by <code><a href="tempssm.html">tempssm()</a></code>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'tempssm'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, marginal <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -62,11 +62,19 @@ by <code><a href="tempssm.html">tempssm()</a></code>.</p></dd>
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments (currently not used).</p></dd>
 
+
+<dt id="arg-marginal">marginal<a class="anchor" aria-label="anchor" href="#arg-marginal"></a></dt>
+<dd><p>Logical scalar or <code>NULL</code>. If <code>NULL</code>, use the
+likelihood setting stored when the model was fitted. Set to <code>TRUE</code> or
+<code>FALSE</code> to evaluate the fitted parameters with the marginal or diffuse
+likelihood, respectively. An explicit value does not refit the model.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>"summary.tempssm"</code>, implemented as a named list
-with components <code>call</code>, <code>logLik</code>, <code>k</code>, <code>AIC</code>,
+with components <code>call</code>, <code>logLik</code>, <code>marginal</code>, <code>k</code>,
+<code>AIC</code>,
 <code>convergence</code>, <code>variances</code>, <code>coef_ar</code>,
 <code>exogenous</code>, and <code>exogenous_coef</code>.</p>
     </div>

@@ -9,7 +9,7 @@ This method extends the generic
 
 ``` r
 # S3 method for class 'tempssm'
-AIC(object, ..., k = 2)
+AIC(object, ..., k = 2, marginal = NULL)
 ```
 
 ## Arguments
@@ -23,16 +23,19 @@ AIC(object, ..., k = 2)
 
   Additional arguments passed to the generic
   [`AIC()`](https://rdrr.io/r/stats/AIC.html) function. These are
-  currently ignored but are included for compatibility with the generic
-  interface.
+  currently ignored.
 
 - k:
 
-  Numeric penalty coefficient for the number of parameters. This
-  argument is included for compatibility with
-  [`AIC`](https://rdrr.io/r/stats/AIC.html) but is not used in the
-  tempssm method, where the standard AIC definition (`k = 2`) is
-  applied.
+  Numeric penalty coefficient for the number of parameters. The default
+  `k = 2` gives the standard AIC definition.
+
+- marginal:
+
+  Logical scalar or `NULL`. If `NULL`, use the likelihood setting stored
+  when the model was fitted. Set to `TRUE` or `FALSE` to evaluate the
+  fitted parameters with the marginal or diffuse likelihood,
+  respectively. An explicit value does not refit the model.
 
 ## Value
 

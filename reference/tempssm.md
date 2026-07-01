@@ -20,7 +20,8 @@ tempssm(
   maxit = NULL,
   reltol = NULL,
   use_season = TRUE,
-  na_action = c("inform", "warn", "error", "allow")
+  na_action = c("inform", "warn", "error", "allow"),
+  marginal = FALSE
 )
 ```
 
@@ -79,6 +80,17 @@ tempssm(
   default is `"inform"`. Missing values in `exo_data` are always
   rejected; exogenous covariates must be completed before model fitting.
 
+- marginal:
+
+  Logical scalar specifying the likelihood used during parameter
+  estimation. If `FALSE` (the default), KFAS uses the diffuse
+  likelihood. If `TRUE`, KFAS uses the marginal likelihood, which adds
+  the diffuse-initialization correction term. The selected setting is
+  stored in the fitted object and used by default by
+  [`logLik()`](https://rdrr.io/r/stats/logLik.html),
+  [`AIC()`](https://rdrr.io/r/stats/AIC.html), and
+  [`summary()`](https://rdrr.io/r/base/summary.html) methods.
+
 ## Value
 
 An object of class `"tempssm"`, a named list containing:
@@ -111,6 +123,11 @@ An object of class `"tempssm"`, a named list containing:
 - use_season:
 
   Logical; whether to include a seasonal component.
+
+- marginal:
+
+  Logical; whether marginal likelihood was used during parameter
+  estimation.
 
 - call:
 

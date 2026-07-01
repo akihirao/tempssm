@@ -7,7 +7,7 @@ parameters.
 ## Usage
 
 ``` r
-get_aic(res)
+get_aic(res, marginal = NULL)
 ```
 
 ## Arguments
@@ -16,6 +16,13 @@ get_aic(res)
 
   An object of class `"tempssm"` returned by
   [`tempssm()`](https://akihirao.github.io/tempssm/reference/tempssm.md).
+
+- marginal:
+
+  Logical scalar or `NULL`. If `NULL`, use the likelihood setting stored
+  when the model was fitted. Set to `TRUE` or `FALSE` to evaluate the
+  fitted parameters with the marginal or diffuse likelihood,
+  respectively. An explicit value does not refit the model.
 
 ## Value
 
