@@ -25,8 +25,8 @@ set_ts_name(ts_in, label, quiet = FALSE)
 
   A character string or character vector specifying variable names. For
   a univariate series, must be a length-one character string. For a
-  multivariate series, must be either length one (recycled) or the same
-  length as the number of columns in `ts_in`.
+  multivariate series, its length must equal the number of columns in
+  `ts_in`.
 
 - quiet:
 

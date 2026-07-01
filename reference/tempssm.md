@@ -160,9 +160,11 @@ time-varying volatility or automatic stationarity tests for the observed
 input series.
 
 Invalid arguments and model inputs raise an error before fitting begins.
-If the fitting backend raises an error, the function issues a warning
-and returns a `"tempssm"` object with `converged = FALSE` and `NULL`
-model, fit, and filtering components. If optimization completes without
+Errors raised by the KFAS fitting or filtering backend issue a warning
+and return a `"tempssm"` object with `converged = FALSE` and `NULL`
+model, fit, and filtering components. Errors in model construction,
+state-name assignment, or result construction are propagated rather than
+converted to a failed fit. If optimization completes without
 convergence, the available fitted components are retained and
 `converged` is set to `FALSE`.
 
