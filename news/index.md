@@ -19,6 +19,9 @@
   [`predict.tempssm()`](https://akihirao.github.io/tempssm/reference/predict.tempssm.md)
   for forecasts beyond the sample period, including models supplied with
   explicit future exogenous values, with a one-step-ahead default.
+- Added an explicit `exo_strategy = "last"` option for simplified
+  one-step persistence forecasts using the final observed exogenous
+  values.
 
 ## tempssm 0.2.3.1
 

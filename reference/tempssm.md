@@ -281,7 +281,9 @@ future observations depend on accumulated uncertainty in the latent
 state dynamics and observation equation. In `tempssm`, forecast
 intervals are obtained from the underlying `KFAS` state-space model via
 `predict(res, n.ahead = h, interval = "prediction")`. Models with
-exogenous variables also require future values in `new_exo_data`. With
+exogenous variables also require future values in `new_exo_data`. For a
+simplified one-step forecast, `exo_strategy = "last"` carries the final
+observed exogenous values forward under a persistence assumption. With
 `interval = "prediction"`, the returned object includes point forecasts
 and prediction interval bounds, conventionally named `fit`, `lwr`, and
 `upr`, which provide a direct indication of forecast uncertainty.

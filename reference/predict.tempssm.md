@@ -12,6 +12,7 @@ predict(
   object,
   n.ahead = 1L,
   new_exo_data = NULL,
+  exo_strategy = c("provided", "last"),
   interval = c("none", "confidence", "prediction"),
   level = 0.95,
   ...
@@ -37,6 +38,13 @@ predict(
   `ts` object. It is required for a model fitted with exogenous
   variables and must continue directly after the fitted response series,
   with matching frequency, column names, and column order.
+
+- exo_strategy:
+
+  Character scalar specifying how future exogenous values are obtained.
+  The default, `"provided"`, requires `new_exo_data` for an exogenous
+  model. `"last"` enables a one-step persistence forecast by carrying
+  each exogenous variable's final observed value forward.
 
 - interval:
 
@@ -68,7 +76,12 @@ uncertainty.
 
 For a model fitted with exogenous variables, `new_exo_data` must provide
 known or assumed future covariate values. Missing or non-finite future
-values are rejected; the method never assumes zero-valued covariates.
+values are rejected; the method never assumes zero-valued covariates. As
+a simplified alternative for one-step forecasting,
+`exo_strategy = "last"` implements last observation carried forward.
+This is a persistence assumption, not a forecast model for the
+covariates. Resulting intervals are conditional on those fixed exogenous
+values and do not include uncertainty about their future evolution.
 
 This method produces forecasts beyond the end of the sample. It does not
 return in-sample one-step-ahead predictions.
@@ -100,5 +113,8 @@ exo_next <- ts(
   frequency = frequency(exo)
 )
 predict(res_exo, new_exo_data = exo_next)
+
+# Simplified one-step forecast under a persistence assumption
+predict(res_exo, exo_strategy = "last")
 } # }
 ```

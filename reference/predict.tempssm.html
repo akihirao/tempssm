@@ -54,6 +54,7 @@ single time point.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  n.ahead <span class="op">=</span> <span class="fl">1L</span>,</span>
 <span>  new_exo_data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  exo_strategy <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"provided"</span>, <span class="st">"last"</span><span class="op">)</span>,</span>
 <span>  interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"confidence"</span>, <span class="st">"prediction"</span><span class="op">)</span>,</span>
 <span>  level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -80,6 +81,13 @@ inferred from <code>new_exo_data</code> when <code>n.ahead</code> is omitted.</p
 multivariate <code>ts</code> object. It is required for a model fitted with
 exogenous variables and must continue directly after the fitted response
 series, with matching frequency, column names, and column order.</p></dd>
+
+
+<dt id="arg-exo-strategy">exo_strategy<a class="anchor" aria-label="anchor" href="#arg-exo-strategy"></a></dt>
+<dd><p>Character scalar specifying how future exogenous values
+are obtained. The default, <code>"provided"</code>, requires <code>new_exo_data</code> for an
+exogenous model. <code>"last"</code> enables a one-step persistence forecast by
+carrying each exogenous variable's final observed value forward.</p></dd>
 
 
 <dt id="arg-interval">interval<a class="anchor" aria-label="anchor" href="#arg-interval"></a></dt>
@@ -111,7 +119,12 @@ state conditional on the fitted model parameters, but not parameter
 estimation uncertainty.</p>
 <p>For a model fitted with exogenous variables, <code>new_exo_data</code> must provide
 known or assumed future covariate values. Missing or non-finite future
-values are rejected; the method never assumes zero-valued covariates.</p>
+values are rejected; the method never assumes zero-valued covariates.
+As a simplified alternative for one-step forecasting,
+<code>exo_strategy = "last"</code> implements last observation carried forward. This
+is a persistence assumption, not a forecast model for the covariates.
+Resulting intervals are conditional on those fixed exogenous values and do
+not include uncertainty about their future evolution.</p>
 <p>This method produces forecasts beyond the end of the sample. It does not
 return in-sample one-step-ahead predictions.</p>
     </div>
@@ -142,6 +155,9 @@ return in-sample one-step-ahead predictions.</p>
 <span class="r-in"><span>  frequency <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/time.html" class="external-link">frequency</a></span><span class="op">(</span><span class="va">exo</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">res_exo</span>, new_exo_data <span class="op">=</span> <span class="va">exo_next</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Simplified one-step forecast under a persistence assumption</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">res_exo</span>, exo_strategy <span class="op">=</span> <span class="st">"last"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
