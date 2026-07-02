@@ -50,11 +50,10 @@
   : Extract the Akaike Information Criterion (AIC)
 
 - [`get_ar1_ts()`](https://akihirao.github.io/tempssm/reference/get_ar1_ts.md)
-  : Extract the smoothed first autoregressive component (AR1) as a time
-  series
+  : Extract the first autoregressive component (AR1) as a time series
 
 - [`get_drift_ts()`](https://akihirao.github.io/tempssm/reference/get_drift_ts.md)
-  : Extract the smoothed drift (slope) component as a time series
+  : Extract the drift (slope) component as a time series
 
 - [`get_exo_coef()`](https://akihirao.github.io/tempssm/reference/get_exo_coef.md)
   : Extract coefficients of exogenous variables with confidence
@@ -71,7 +70,7 @@
   : Extract the level component as a time series
 
 - [`get_season_ts()`](https://akihirao.github.io/tempssm/reference/get_season_ts.md)
-  : Extract the smoothed seasonal component as a time series
+  : Extract the seasonal component as a time series
 
 - [`get_tempssm_params()`](https://akihirao.github.io/tempssm/reference/get_tempssm_params.md)
   : Extract estimated parameters in the fitted models
