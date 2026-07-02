@@ -13,6 +13,10 @@
 #'   multivariate `ts` object. It is required for a model fitted with
 #'   exogenous variables and must continue directly after the fitted response
 #'   series, with matching frequency, column names, and column order.
+#' @param exo_strategy Character scalar specifying how future exogenous values
+#'   are obtained. The default, `"provided"`, requires `new_exo_data` for an
+#'   exogenous model. `"last"` enables a one-step persistence forecast by
+#'   carrying each exogenous variable's final observed value forward.
 #' @param interval Character scalar specifying the interval type. One of
 #'   `"none"`, `"confidence"`, or `"prediction"`.
 #' @param level Numeric scalar between 0 and 1 specifying the confidence level
@@ -33,6 +37,11 @@
 #' For a model fitted with exogenous variables, `new_exo_data` must provide
 #' known or assumed future covariate values. Missing or non-finite future
 #' values are rejected; the method never assumes zero-valued covariates.
+#' As a simplified alternative for one-step forecasting,
+#' `exo_strategy = "last"` implements last observation carried forward. This
+#' is a persistence assumption, not a forecast model for the covariates.
+#' Resulting intervals are conditional on those fixed exogenous values and do
+#' not include uncertainty about their future evolution.
 #'
 #' This method produces forecasts beyond the end of the sample. It does not
 #' return in-sample one-step-ahead predictions.
@@ -62,6 +71,9 @@
 #'   frequency = frequency(exo)
 #' )
 #' predict(res_exo, new_exo_data = exo_next)
+#'
+#' # Simplified one-step forecast under a persistence assumption
+#' predict(res_exo, exo_strategy = "last")
 #' }
 #'
 #' @method predict tempssm
@@ -69,6 +81,7 @@
 predict.tempssm <- function(object,
                             n.ahead = 1L,
                             new_exo_data = NULL,
+                            exo_strategy = c("provided", "last"),
                             interval = c(
                               "none",
                               "confidence",
@@ -76,11 +89,13 @@ predict.tempssm <- function(object,
                             ),
                             level = 0.95,
                             ...) {
+  exo_strategy <- match.arg(exo_strategy)
   request <- .prepare_tempssm_forecast(
     object = object,
     n.ahead = n.ahead,
     n_ahead_missing = missing(n.ahead),
     new_exo_data = new_exo_data,
+    exo_strategy = exo_strategy,
     level = level
   )
   interval <- match.arg(interval)
@@ -109,6 +124,7 @@ predict.tempssm <- function(object,
                                       n.ahead,
                                       n_ahead_missing,
                                       new_exo_data,
+                                      exo_strategy,
                                       level) {
   if (!inherits(object, "tempssm")) {
     cli::cli_abort(
@@ -123,7 +139,21 @@ predict.tempssm <- function(object,
   }
 
   has_exogenous <- !is.null(object$exogenous_data)
-  if (has_exogenous && is.null(new_exo_data)) {
+  if (!has_exogenous && !identical(exo_strategy, "provided")) {
+    cli::cli_abort(
+      "{.arg exo_strategy} can only be used with an exogenous model."
+    )
+  }
+  if (identical(exo_strategy, "last") && !is.null(new_exo_data)) {
+    cli::cli_abort(
+      paste0(
+        "{.arg new_exo_data} must be {.code NULL} when ",
+        "{.code exo_strategy = \"last\"}."
+      )
+    )
+  }
+  if (has_exogenous && identical(exo_strategy, "provided") &&
+      is.null(new_exo_data)) {
     cli::cli_abort(
       "{.arg new_exo_data} is required for a model with exogenous variables."
     )
@@ -138,11 +168,27 @@ predict.tempssm <- function(object,
   }
 
   if (has_exogenous && n_ahead_missing) {
-    n.ahead <- NROW(new_exo_data)
+    n.ahead <- if (identical(exo_strategy, "last")) {
+      1L
+    } else {
+      NROW(new_exo_data)
+    }
   }
   .validate_tempssm_forecast_controls(n.ahead, level)
 
   if (has_exogenous) {
+    if (identical(exo_strategy, "last")) {
+      if (n.ahead != 1L) {
+        cli::cli_abort(
+          "{.code exo_strategy = \"last\"} is limited to one-step forecasts."
+        )
+      }
+      new_exo_data <- .make_last_exogenous_forecast(object)
+      .tempssm_cli_inform(c(
+        "Using the last observed exogenous value for one-step forecasting.",
+        "i" = "This applies a persistence assumption to future covariates."
+      ))
+    }
     new_exo_data <- .validate_tempssm_future_exogenous(
       object,
       new_exo_data,
@@ -151,6 +197,33 @@ predict.tempssm <- function(object,
   }
 
   list(n.ahead = as.integer(n.ahead), new_exo_data = new_exo_data)
+}
+
+
+#' Carry the final exogenous observation forward by one time point
+#'
+#' @inheritParams predict.tempssm
+#'
+#' @return A one-row `ts` object with the fitted exogenous column structure.
+#'
+#' @keywords internal
+#' @noRd
+.make_last_exogenous_forecast <- function(object) {
+  fitted_exogenous <- object$exogenous_data
+  last_values <- fitted_exogenous[
+    NROW(fitted_exogenous),
+    ,
+    drop = FALSE
+  ]
+  frequency <- stats::frequency(fitted_exogenous)
+  fitted_time <- as.numeric(stats::time(fitted_exogenous))
+  next_time <- fitted_time[length(fitted_time)] + 1 / frequency
+
+  stats::ts(
+    as.matrix(last_values),
+    start = next_time,
+    frequency = frequency
+  )
 }
 
 

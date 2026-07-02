@@ -84,6 +84,81 @@ test_that("predict.tempssm returns intervals for exogenous forecasts", {
 })
 
 
+test_that("predict.tempssm carries exogenous values forward explicitly", {
+  last_values <- as.numeric(
+    res_tempssm_exo$exogenous_data[
+      NROW(res_tempssm_exo$exogenous_data),
+      ,
+      drop = TRUE
+    ]
+  )
+  explicit_future <- make_future_exogenous(last_values)
+  expected <- predict(
+    res_tempssm_exo,
+    new_exo_data = explicit_future
+  )
+
+  withr::local_options(list(tempssm.verbosity = "inform"))
+  expect_message(
+    pred <- predict(res_tempssm_exo, exo_strategy = "last"),
+    "persistence assumption"
+  )
+
+  expect_identical(pred, expected)
+  expect_length(pred, 1L)
+})
+
+
+test_that("last exogenous strategy is restricted to its stated scope", {
+  future_exogenous <- make_future_exogenous(0.1)
+
+  expect_error(
+    predict(
+      res_tempssm_exo,
+      new_exo_data = future_exogenous,
+      exo_strategy = "last"
+    ),
+    "new_exo_data.*NULL"
+  )
+  expect_error(
+    predict(
+      res_tempssm_exo,
+      n.ahead = 2L,
+      exo_strategy = "last"
+    ),
+    "limited to one-step"
+  )
+  expect_error(
+    predict(res_tempssm, exo_strategy = "last"),
+    "only be used with an exogenous model"
+  )
+})
+
+
+test_that("last exogenous strategy preserves multiple covariates", {
+  fitted_exogenous <- ts(
+    matrix(
+      1:8,
+      ncol = 2,
+      dimnames = list(NULL, c("x1", "x2"))
+    ),
+    start = c(2000, 1),
+    frequency = 4
+  )
+  object <- structure(
+    list(exogenous_data = fitted_exogenous),
+    class = "tempssm"
+  )
+
+  future_exogenous <- .make_last_exogenous_forecast(object)
+
+  expect_s3_class(future_exogenous, "mts")
+  expect_identical(as.numeric(future_exogenous), c(4, 8))
+  expect_identical(colnames(future_exogenous), c("x1", "x2"))
+  expect_identical(stats::start(future_exogenous), c(2001, 1))
+})
+
+
 test_that("predict.tempssm requires covariates only for exogenous models", {
   expect_error(
     predict(res_tempssm_exo),

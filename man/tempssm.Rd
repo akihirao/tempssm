@@ -236,6 +236,8 @@ dynamics and observation equation. In \code{tempssm}, forecast intervals are
 obtained from the underlying \code{KFAS} state-space model via
 \code{predict(res, n.ahead = h, interval = "prediction")}. Models with
 exogenous variables also require future values in \code{new_exo_data}.
+For a simplified one-step forecast, \code{exo_strategy = "last"} carries the
+final observed exogenous values forward under a persistence assumption.
 With \code{interval = "prediction"}, the returned object includes point
 forecasts and prediction interval bounds, conventionally named \code{fit},
 \code{lwr}, and \code{upr}, which provide a direct indication of forecast
