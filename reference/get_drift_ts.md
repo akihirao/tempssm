@@ -33,20 +33,22 @@ get_drift_ts(
   Character scalar specifying the state estimate to return. Use
   `"smoothed"` (the default) for estimates conditional on all
   observations, or `"filtered"` for estimates conditional on
-  observations up to each time point. Filtered confidence intervals are
-  not currently supported, so `estimate = "filtered"` requires
-  `ci = FALSE`.
+  observations up to each time point.
 
 ## Value
 
 A univariate `ts` object of the selected drift estimate (in degrees
 Celsius per year). If `ci = TRUE`, a multivariate `ts` object with
-columns `drift`, `lwr`, and `upr` is returned.
+columns `drift`, `lwr`, and `upr` is returned. Filtered output has
+intentional `NA` values during the diffuse phase.
 
 ## Details
 
 The drift component is scaled to represent change per year. For example,
-monthly data (frequency = 12) are multiplied by 12.
+monthly data (frequency = 12) are multiplied by 12. See
+[`get_level_ts`](https://akihirao.github.io/tempssm/reference/get_level_ts.md)
+for the distinction between smoothed and filtered estimates and the
+handling of the diffuse phase.
 
 ## Examples
 

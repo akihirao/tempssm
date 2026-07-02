@@ -33,20 +33,22 @@ get_ar1_ts(
   Character scalar specifying the state estimate to return. Use
   `"smoothed"` (the default) for estimates conditional on all
   observations, or `"filtered"` for estimates conditional on
-  observations up to each time point. Filtered confidence intervals are
-  not currently supported, so `estimate = "filtered"` requires
-  `ci = FALSE`.
+  observations up to each time point.
 
 ## Value
 
 A univariate `ts` object of the selected AR1 estimate (in degrees
 Celsius). If `ci = TRUE`, a multivariate `ts` object with columns `ar1`,
-`lwr`, and `upr` is returned.
+`lwr`, and `upr` is returned. Filtered output has intentional `NA`
+values during the diffuse phase.
 
 ## Details
 
 The AR1 component represents short-term autocorrelated deviations from
-the level and seasonal structure.
+the level and seasonal structure. See
+[`get_level_ts`](https://akihirao.github.io/tempssm/reference/get_level_ts.md)
+for the distinction between smoothed and filtered estimates and the
+handling of the diffuse phase.
 
 ## Examples
 

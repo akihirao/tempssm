@@ -71,9 +71,7 @@
 <dd><p>Character scalar specifying the state estimate to return.
 Use <code>"smoothed"</code> (the default) for estimates conditional on all
 observations, or <code>"filtered"</code> for estimates conditional on
-observations up to each time point. Filtered confidence intervals are not
-currently supported, so <code>estimate = "filtered"</code> requires
-<code>ci = FALSE</code>.</p></dd>
+observations up to each time point.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -81,7 +79,8 @@ currently supported, so <code>estimate = "filtered"</code> requires
     <p>A univariate <code>ts</code> object of the selected level estimate
 (in degrees Celsius).
 If <code>ci = TRUE</code>, a multivariate <code>ts</code> object with columns
-<code>level</code>, <code>lwr</code>, and <code>upr</code> is returned.</p>
+<code>level</code>, <code>lwr</code>, and <code>upr</code> is returned. Filtered output has
+intentional <code>NA</code> values during the diffuse phase.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
@@ -89,6 +88,16 @@ If <code>ci = TRUE</code>, a multivariate <code>ts</code> object with columns
 smoothed states condition on all observations in the fitted series. In both
 cases, model parameters are those estimated from the complete input series;
 requesting filtered states does not refit the model sequentially.</p>
+<p>For filtered estimates, pointwise confidence intervals are calculated from
+the filtered state covariance matrices stored in <code>res$kfs$Ptt</code>. These
+intervals condition on the fitted model parameters and do not include
+parameter-estimation uncertainty.</p>
+<p>During exact diffuse initialization, KFAS reports only the non-diffuse part
+of the filtered state covariance in <code>Ptt</code>, and individual state
+components may not yet be sufficiently identified. Therefore filtered point
+estimates and confidence bounds through <code>res$kfs$d</code> are intentionally
+returned as <code>NA</code>. The first reported filtered result is at time
+<code>res$kfs$d + 1</code>. Smoothed estimates are not masked.</p>
     </div>
 
     <div class="section level2">
@@ -98,6 +107,11 @@ requesting filtered states does not refit the model sequentially.</p>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="tempssm.html">tempssm</a></span><span class="op">(</span><span class="va">niigata_sst</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">level_ts</span> <span class="op">&lt;-</span> <span class="fu">get_level_ts</span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">filtered_level</span> <span class="op">&lt;-</span> <span class="fu">get_level_ts</span><span class="op">(</span><span class="va">res</span>, estimate <span class="op">=</span> <span class="st">"filtered"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">filtered_level_ci</span> <span class="op">&lt;-</span> <span class="fu">get_level_ts</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">res</span>,</span></span>
+<span class="r-in"><span>  ci <span class="op">=</span> <span class="cn">TRUE</span>,</span></span>
+<span class="r-in"><span>  estimate <span class="op">=</span> <span class="st">"filtered"</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

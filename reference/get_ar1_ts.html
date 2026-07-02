@@ -71,9 +71,7 @@
 <dd><p>Character scalar specifying the state estimate to return.
 Use <code>"smoothed"</code> (the default) for estimates conditional on all
 observations, or <code>"filtered"</code> for estimates conditional on
-observations up to each time point. Filtered confidence intervals are not
-currently supported, so <code>estimate = "filtered"</code> requires
-<code>ci = FALSE</code>.</p></dd>
+observations up to each time point.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -81,12 +79,15 @@ currently supported, so <code>estimate = "filtered"</code> requires
     <p>A univariate <code>ts</code> object of the selected AR1 estimate
 (in degrees Celsius).
 If <code>ci = TRUE</code>, a multivariate <code>ts</code> object with columns
-<code>ar1</code>, <code>lwr</code>, and <code>upr</code> is returned.</p>
+<code>ar1</code>, <code>lwr</code>, and <code>upr</code> is returned. Filtered output has
+intentional <code>NA</code> values during the diffuse phase.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The AR1 component represents short-term autocorrelated deviations
-from the level and seasonal structure.</p>
+from the level and seasonal structure.
+See <code><a href="get_level_ts.html">get_level_ts</a></code> for the distinction between smoothed and
+filtered estimates and the handling of the diffuse phase.</p>
     </div>
 
     <div class="section level2">

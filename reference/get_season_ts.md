@@ -33,20 +33,23 @@ get_season_ts(
   Character scalar specifying the state estimate to return. Use
   `"smoothed"` (the default) for estimates conditional on all
   observations, or `"filtered"` for estimates conditional on
-  observations up to each time point. Filtered confidence intervals are
-  not currently supported, so `estimate = "filtered"` requires
-  `ci = FALSE`.
+  observations up to each time point.
 
 ## Value
 
 A univariate `ts` object of the selected seasonal estimate (in degrees
 Celsius). If `ci = TRUE`, a multivariate `ts` object with columns
-`season`, `lwr`, and `upr` is returned.
+`season`, `lwr`, and `upr` is returned. Filtered output has intentional
+`NA` values during the diffuse phase.
 
 ## Details
 
 The seasonal component represents recurrent intra-year variability
 captured by seasonal dummy state components in the state space model.
+See
+[`get_level_ts`](https://akihirao.github.io/tempssm/reference/get_level_ts.md)
+for the distinction between smoothed and filtered estimates and the
+handling of the diffuse phase.
 
 ## Examples
 
