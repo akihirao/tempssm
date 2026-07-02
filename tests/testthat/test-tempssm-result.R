@@ -1,6 +1,9 @@
 test_that(".new_tempssm_result constructs fitted results", {
   temp_data <- ts(seq_len(8), frequency = 4)
-  kfs <- list(alphahat = matrix(0, nrow = 8, ncol = 3))
+  kfs <- list(
+    alphahat = matrix(0, nrow = 8, ncol = 3),
+    att = matrix(0, nrow = 8, ncol = 3)
+  )
   state_names <- c("level", "slope", "arima1")
 
   res <- .new_tempssm_result(
@@ -36,6 +39,7 @@ test_that(".new_tempssm_result constructs fitted results", {
     )
   )
   expect_identical(colnames(res$kfs$alphahat), state_names)
+  expect_identical(colnames(res$kfs$att), state_names)
   expect_identical(res$state_map$all, state_names)
   expect_true(res$converged)
   expect_false(res$marginal)

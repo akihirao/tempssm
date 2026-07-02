@@ -2,9 +2,14 @@
 % Please edit documentation in R/tempssm_accessors.R
 \name{get_ar1_ts}
 \alias{get_ar1_ts}
-\title{Extract the smoothed first autoregressive component (AR1) as a time series}
+\title{Extract the first autoregressive component (AR1) as a time series}
 \usage{
-get_ar1_ts(res, ci = FALSE, ci_level = 0.95)
+get_ar1_ts(
+  res,
+  ci = FALSE,
+  ci_level = 0.95,
+  estimate = c("smoothed", "filtered")
+)
 }
 \arguments{
 \item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
@@ -12,15 +17,22 @@ get_ar1_ts(res, ci = FALSE, ci_level = 0.95)
 \item{ci}{Logical; if TRUE, pointwise confidence intervals are returned.}
 
 \item{ci_level}{Numeric confidence level between 0 and 1 (default: 0.95).}
+
+\item{estimate}{Character scalar specifying the state estimate to return.
+Use \code{"smoothed"} (the default) for estimates conditional on all
+observations, or \code{"filtered"} for estimates conditional on
+observations up to each time point. Filtered confidence intervals are not
+currently supported, so \code{estimate = "filtered"} requires
+\code{ci = FALSE}.}
 }
 \value{
-A univariate \code{ts} object of the smoothed AR1 component
+A univariate \code{ts} object of the selected AR1 estimate
 (in degrees Celsius).
 If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 \code{ar1}, \code{lwr}, and \code{upr} is returned.
 }
 \description{
-Extract the smoothed first autoregressive component (AR1) as a time series
+Extract the first autoregressive component (AR1) as a time series
 }
 \details{
 The AR1 component represents short-term autocorrelated deviations

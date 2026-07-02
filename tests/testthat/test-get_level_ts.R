@@ -26,6 +26,34 @@ test_that("get_level_ts checks inputs correctly", {
     get_level_ts(res_tempssm, ci = TRUE, ci_level = 1.2),
     "`ci_level` must be a numeric value between 0 and 1."
   )
+
+  expect_error(
+    get_level_ts(res_tempssm, estimate = "predicted"),
+    "arg.*should be one of"
+  )
+})
+
+
+test_that("filtered estimates are returned without confidence intervals", {
+  filtered <- get_level_ts(res_tempssm, estimate = "filtered")
+
+  expect_s3_class(filtered, "ts")
+  expect_identical(NCOL(filtered), 1L)
+  expect_error(
+    get_level_ts(res_tempssm, ci = TRUE, estimate = "filtered"),
+    "Confidence intervals for filtered estimates.*not currently supported"
+  )
+})
+
+
+test_that("get_level_ts validates filtered state availability", {
+  bad_res <- res_tempssm
+  bad_res$kfs$att <- NULL
+
+  expect_error(
+    get_level_ts(bad_res, estimate = "filtered"),
+    "Level component not found in the filtering results"
+  )
 })
 
 

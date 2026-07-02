@@ -50,6 +50,27 @@ test_that("component accessors match KFAS smoothed states", {
 })
 
 
+test_that("component accessors match KFAS filtered states", {
+  level_ts <- get_level_ts(res_tempssm, estimate = "filtered")
+  drift_ts <- get_drift_ts(res_tempssm, estimate = "filtered")
+  season_ts <- get_season_ts(res_tempssm, estimate = "filtered")
+  ar1_ts <- get_ar1_ts(res_tempssm, estimate = "filtered")
+  kfas_states <- res_tempssm$kfs$att
+  freq <- stats::frequency(res_tempssm$temp_data)
+
+  expect_identical(as.numeric(level_ts), as.numeric(kfas_states[, "level"]))
+  expect_identical(
+    as.numeric(drift_ts),
+    as.numeric(kfas_states[, "slope"] * freq)
+  )
+  expect_identical(
+    as.numeric(season_ts),
+    as.numeric(kfas_states[, "sea_dummy1"])
+  )
+  expect_identical(as.numeric(ar1_ts), as.numeric(kfas_states[, "arima1"]))
+})
+
+
 test_that("component confidence intervals match KFAS confint output", {
   ci_obj <- stats::confint(res_tempssm$kfs, level = 0.95)
   freq <- stats::frequency(res_tempssm$temp_data)

@@ -79,17 +79,47 @@
 }
 
 
-#' Check whether a smoothed state is available
+#' Validate the requested state estimate
+#'
+#' @param estimate Character scalar specifying whether to extract smoothed or
+#'   filtered state estimates.
+#'
+#' @return Either \code{"smoothed"} or \code{"filtered"}.
+#' @noRd
+.tempssm_match_estimate <- function(estimate) {
+  match.arg(estimate, c("smoothed", "filtered"))
+}
+
+
+#' Select a state-estimate matrix
 #'
 #' @inheritParams .tempssm_check_accessor_input
-#' @param state Character scalar naming a state in \code{res$kfs$alphahat}.
+#' @inheritParams .tempssm_match_estimate
+#'
+#' @return A state-estimate matrix, or \code{NULL} if unavailable.
+#' @noRd
+.tempssm_state_matrix <- function(res, estimate) {
+  if (identical(estimate, "filtered")) {
+    return(res$kfs$att)
+  }
+
+  res$kfs$alphahat
+}
+
+
+#' Check whether a state estimate is available
+#'
+#' @inheritParams .tempssm_check_accessor_input
+#' @inheritParams .tempssm_match_estimate
+#' @param state Character scalar naming a state in the selected estimate
+#'   matrix.
 #' @param message Character scalar used when the state is unavailable.
 #'
 #' @return Invisibly returns \code{NULL}.
 #' @noRd
-.tempssm_check_state_available <- function(res, state, message) {
-  alphahat <- res$kfs$alphahat
-  if (is.null(alphahat) || !state %in% colnames(alphahat)) {
+.tempssm_check_state_available <- function(res, state, estimate, message) {
+  state_matrix <- .tempssm_state_matrix(res, estimate)
+  if (is.null(state_matrix) || !state %in% colnames(state_matrix)) {
     stop(message, call. = FALSE)
   }
 
@@ -97,16 +127,18 @@
 }
 
 
-#' Convert a smoothed state to a ts object
+#' Convert a state estimate to a ts object
 #'
 #' @inheritParams .tempssm_check_state_available
 #' @param scale Numeric multiplier applied to the extracted state.
 #'
 #' @return A univariate \code{ts} object.
 #' @noRd
-.tempssm_state_ts <- function(res, state, scale = 1) {
+.tempssm_state_ts <- function(res, state, estimate, scale = 1) {
+  state_matrix <- .tempssm_state_matrix(res, estimate)
+
   ts(
-    res$kfs$alphahat[, state] * scale,
+    state_matrix[, state] * scale,
     start = start(res$temp_data),
     frequency = frequency(res$temp_data)
   )
@@ -131,7 +163,12 @@
     stop(message, call. = FALSE)
   }
 
-  point <- .tempssm_state_ts(res, state, scale = scale)
+  point <- .tempssm_state_ts(
+    res,
+    state,
+    estimate = "smoothed",
+    scale = scale
+  )
   values <- cbind(
     point,
     lwr = ci_obj[[state]][, "lwr"] * scale,
@@ -147,7 +184,7 @@
 }
 
 
-#' Extract a smoothed state as a time series
+#' Extract a state estimate as a time series
 #'
 #' @inheritParams .tempssm_check_accessor_input
 #' @inheritParams .tempssm_check_accessor_ci
@@ -162,10 +199,33 @@
 .tempssm_extract_state_ts <- function(res, state, output_name, ci = FALSE,
                                       ci_level = 0.95, fun, missing_msg,
                                       ci_missing_msg,
-                                      scale_by_frequency = FALSE) {
+                                      scale_by_frequency = FALSE,
+                                      estimate = c("smoothed", "filtered")) {
   .tempssm_check_accessor_input(res, fun)
+  estimate <- .tempssm_match_estimate(estimate)
   .tempssm_check_accessor_ci(ci, ci_level, fun)
-  .tempssm_check_state_available(res, state, missing_msg)
+
+  if (identical(estimate, "filtered") && ci) {
+    stop(
+      paste0(
+        "Confidence intervals for filtered estimates are not currently ",
+        "supported; use `ci = FALSE`."
+      ),
+      call. = FALSE
+    )
+  }
+
+  estimate_missing_msg <- if (identical(estimate, "filtered")) {
+    gsub("smoothing", "filtering", missing_msg, fixed = TRUE)
+  } else {
+    missing_msg
+  }
+  .tempssm_check_state_available(
+    res,
+    state,
+    estimate,
+    estimate_missing_msg
+  )
 
   scale <- 1
   if (scale_by_frequency) {
@@ -185,7 +245,7 @@
     )
   }
 
-  .tempssm_state_ts(res, state, scale = scale)
+  .tempssm_state_ts(res, state, estimate = estimate, scale = scale)
 }
 
 
@@ -194,9 +254,21 @@
 #' @param res An object of class \code{"tempssm"} returned by \code{tempssm()}.
 #' @param ci Logical; if TRUE, pointwise confidence intervals are returned.
 #' @param ci_level Numeric confidence level between 0 and 1 (default: 0.95).
+#' @param estimate Character scalar specifying the state estimate to return.
+#'   Use \code{"smoothed"} (the default) for estimates conditional on all
+#'   observations, or \code{"filtered"} for estimates conditional on
+#'   observations up to each time point. Filtered confidence intervals are not
+#'   currently supported, so \code{estimate = "filtered"} requires
+#'   \code{ci = FALSE}.
+#'
+#' @details
+#' Filtered states condition on observations up to each time point, whereas
+#' smoothed states condition on all observations in the fitted series. In both
+#' cases, model parameters are those estimated from the complete input series;
+#' requesting filtered states does not refit the model sequentially.
 #'
 #' @return
-#' A univariate \code{ts} object of the smoothed level component
+#' A univariate \code{ts} object of the selected level estimate
 #' (in degrees Celsius).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 #' \code{level}, \code{lwr}, and \code{upr} is returned.
@@ -208,14 +280,17 @@
 #' data(niigata_sst)
 #' res <- tempssm(niigata_sst)
 #' level_ts <- get_level_ts(res)
+#' filtered_level <- get_level_ts(res, estimate = "filtered")
 #' }
-get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
+get_level_ts <- function(res, ci = FALSE, ci_level = 0.95,
+                         estimate = c("smoothed", "filtered")) {
   .tempssm_extract_state_ts(
     res = res,
     state = "level",
     output_name = "level",
     ci = ci,
     ci_level = ci_level,
+    estimate = estimate,
     fun = "get_level_ts",
     missing_msg = "Level component not found in the smoothing results.",
     ci_missing_msg = "Level component not found in confidence intervals."
@@ -223,7 +298,7 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 }
 
 
-#' Extract the smoothed drift (slope) component as a time series
+#' Extract the drift (slope) component as a time series
 #'
 #' @inheritParams get_level_ts
 #'
@@ -232,7 +307,7 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' For example, monthly data (frequency = 12) are multiplied by 12.
 #'
 #' @return
-#' A univariate \code{ts} object of the smoothed drift component
+#' A univariate \code{ts} object of the selected drift estimate
 #' (in degrees Celsius per year).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 #' \code{drift}, \code{lwr}, and \code{upr} is returned.
@@ -245,13 +320,15 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' res <- tempssm(niigata_sst)
 #' drift <- get_drift_ts(res)
 #' }
-get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
+get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95,
+                         estimate = c("smoothed", "filtered")) {
   .tempssm_extract_state_ts(
     res = res,
     state = "slope",
     output_name = "drift",
     ci = ci,
     ci_level = ci_level,
+    estimate = estimate,
     fun = "get_drift_ts",
     missing_msg = "Drift (slope) component not found in smoothing results.",
     ci_missing_msg = "Slope component not found in confidence intervals.",
@@ -260,7 +337,7 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 }
 
 
-#' Extract the smoothed seasonal component as a time series
+#' Extract the seasonal component as a time series
 #'
 #' @inheritParams get_level_ts
 #'
@@ -269,7 +346,7 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' captured by seasonal dummy state components in the state space model.
 #'
 #' @return
-#' A univariate \code{ts} object of the smoothed seasonal component
+#' A univariate \code{ts} object of the selected seasonal estimate
 #' (in degrees Celsius).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 #' \code{season}, \code{lwr}, and \code{upr} is returned.
@@ -282,7 +359,8 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' res <- tempssm(niigata_sst)
 #' season_ts <- get_season_ts(res)
 #' }
-get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
+get_season_ts <- function(res, ci = FALSE, ci_level = 0.95,
+                          estimate = c("smoothed", "filtered")) {
   .tempssm_check_accessor_input(res, "get_season_ts")
   if (!res$use_season) {
     stop("Seasonal component is not included in the model.", call. = FALSE)
@@ -294,6 +372,7 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
     output_name = "season",
     ci = ci,
     ci_level = ci_level,
+    estimate = estimate,
     fun = "get_season_ts",
     missing_msg = "Seasonal component not found in the smoothing results.",
     ci_missing_msg = "Seasonal component not found in confidence intervals."
@@ -301,7 +380,7 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 }
 
 
-#' Extract the smoothed first autoregressive component (AR1) as a time series
+#' Extract the first autoregressive component (AR1) as a time series
 #'
 #' @inheritParams get_level_ts
 #'
@@ -310,7 +389,7 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' from the level and seasonal structure.
 #'
 #' @return
-#' A univariate \code{ts} object of the smoothed AR1 component
+#' A univariate \code{ts} object of the selected AR1 estimate
 #' (in degrees Celsius).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 #' \code{ar1}, \code{lwr}, and \code{upr} is returned.
@@ -323,13 +402,15 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95) {
 #' res <- tempssm(niigata_sst)
 #' ar1_ts <- get_ar1_ts(res)
 #' }
-get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95) {
+get_ar1_ts <- function(res, ci = FALSE, ci_level = 0.95,
+                       estimate = c("smoothed", "filtered")) {
   .tempssm_extract_state_ts(
     res = res,
     state = "arima1",
     output_name = "ar1",
     ci = ci,
     ci_level = ci_level,
+    estimate = estimate,
     fun = "get_ar1_ts",
     missing_msg = paste0(
       "First autoregressive component (AR1) not found ",

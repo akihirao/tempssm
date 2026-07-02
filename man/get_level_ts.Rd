@@ -4,7 +4,12 @@
 \alias{get_level_ts}
 \title{Extract the level component as a time series}
 \usage{
-get_level_ts(res, ci = FALSE, ci_level = 0.95)
+get_level_ts(
+  res,
+  ci = FALSE,
+  ci_level = 0.95,
+  estimate = c("smoothed", "filtered")
+)
 }
 \arguments{
 \item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
@@ -12,9 +17,16 @@ get_level_ts(res, ci = FALSE, ci_level = 0.95)
 \item{ci}{Logical; if TRUE, pointwise confidence intervals are returned.}
 
 \item{ci_level}{Numeric confidence level between 0 and 1 (default: 0.95).}
+
+\item{estimate}{Character scalar specifying the state estimate to return.
+Use \code{"smoothed"} (the default) for estimates conditional on all
+observations, or \code{"filtered"} for estimates conditional on
+observations up to each time point. Filtered confidence intervals are not
+currently supported, so \code{estimate = "filtered"} requires
+\code{ci = FALSE}.}
 }
 \value{
-A univariate \code{ts} object of the smoothed level component
+A univariate \code{ts} object of the selected level estimate
 (in degrees Celsius).
 If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 \code{level}, \code{lwr}, and \code{upr} is returned.
@@ -22,10 +34,17 @@ If \code{ci = TRUE}, a multivariate \code{ts} object with columns
 \description{
 Extract the level component as a time series
 }
+\details{
+Filtered states condition on observations up to each time point, whereas
+smoothed states condition on all observations in the fitted series. In both
+cases, model parameters are those estimated from the complete input series;
+requesting filtered states does not refit the model sequentially.
+}
 \examples{
 \dontrun{
 data(niigata_sst)
 res <- tempssm(niigata_sst)
 level_ts <- get_level_ts(res)
+filtered_level <- get_level_ts(res, estimate = "filtered")
 }
 }

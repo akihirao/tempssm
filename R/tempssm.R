@@ -437,6 +437,9 @@ NULL
                                 state_names) {
   if (!is.null(kfs)) {
     colnames(kfs$alphahat) <- state_names
+    if (!is.null(kfs$att)) {
+      colnames(kfs$att) <- state_names
+    }
   }
 
   out <- list(
