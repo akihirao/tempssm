@@ -422,7 +422,7 @@ https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 
 ## Author
 
-Akira Hirao and Momoko Ichinokawa
+Akira S. Hirao, Shinya Baba, and Momoko Ichinokawa
 
 ## Examples
 

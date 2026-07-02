@@ -2,7 +2,7 @@
 
 ## Authors
 
-- **Akira Hirao**. Author, maintainer.
+- **Akira S. Hirao**. Author, maintainer.
 
 - **Shinya Baba**. Author.
 
