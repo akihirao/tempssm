@@ -1,13 +1,18 @@
 #' Forecast from a fitted tempssm model
 #'
 #' Produces forecasts after the end of the observed sample from a fitted
-#' `tempssm` model without exogenous variables. By default, the method
-#' returns the forecast for the next single time point.
+#' `tempssm` model. By default, the method returns the forecast for the next
+#' single time point.
 #'
 #' @param object A fitted object of class `"tempssm"` returned by
 #'   [tempssm()].
 #' @param n.ahead Positive integer giving the forecast horizon. The default is
-#'   one time point.
+#'   one time point. For a model with exogenous variables, the horizon is
+#'   inferred from `new_exo_data` when `n.ahead` is omitted.
+#' @param new_exo_data Optional future exogenous variables as a univariate or
+#'   multivariate `ts` object. It is required for a model fitted with
+#'   exogenous variables and must continue directly after the fitted response
+#'   series, with matching frequency, column names, and column order.
 #' @param interval Character scalar specifying the interval type. One of
 #'   `"none"`, `"confidence"`, or `"prediction"`.
 #' @param level Numeric scalar between 0 and 1 specifying the confidence level
@@ -25,10 +30,9 @@
 #' state conditional on the fitted model parameters, but not parameter
 #' estimation uncertainty.
 #'
-#' Models fitted with exogenous variables are not yet supported by this
-#' method because future values of those variables must be supplied explicitly.
-#' Such models produce an informative error rather than assuming zero-valued
-#' future covariates.
+#' For a model fitted with exogenous variables, `new_exo_data` must provide
+#' known or assumed future covariate values. Missing or non-finite future
+#' values are rejected; the method never assumes zero-valued covariates.
 #'
 #' This method produces forecasts beyond the end of the sample. It does not
 #' return in-sample one-step-ahead predictions.
@@ -43,12 +47,28 @@
 #'
 #' # Forecast the next 12 time points with prediction intervals
 #' predict(res, n.ahead = 12, interval = "prediction", level = 0.95)
+#'
+#' # Models with exogenous variables require future covariate values
+#' exo <- ts(
+#'   matrix(seq_along(niigata_sst), ncol = 1),
+#'   start = start(niigata_sst),
+#'   frequency = frequency(niigata_sst)
+#' )
+#' colnames(exo) <- "index"
+#' res_exo <- tempssm(niigata_sst, exo_data = exo)
+#' exo_next <- ts(
+#'   matrix(NROW(exo) + 1, ncol = 1, dimnames = list(NULL, "index")),
+#'   start = tsp(exo)[2] + 1 / frequency(exo),
+#'   frequency = frequency(exo)
+#' )
+#' predict(res_exo, new_exo_data = exo_next)
 #' }
 #'
 #' @method predict tempssm
 #' @export
 predict.tempssm <- function(object,
                             n.ahead = 1L,
+                            new_exo_data = NULL,
                             interval = c(
                               "none",
                               "confidence",
@@ -56,12 +76,19 @@ predict.tempssm <- function(object,
                             ),
                             level = 0.95,
                             ...) {
-  .validate_tempssm_forecast(object, n.ahead, level)
+  request <- .prepare_tempssm_forecast(
+    object = object,
+    n.ahead = n.ahead,
+    n_ahead_missing = missing(n.ahead),
+    new_exo_data = new_exo_data,
+    level = level
+  )
   interval <- match.arg(interval)
 
-  .predict_no_exo(
-    model = object$model,
-    h = n.ahead,
+  .predict_tempssm_backend(
+    object = object,
+    n.ahead = request$n.ahead,
+    new_exo_data = request$new_exo_data,
     interval = interval,
     level = level,
     ...
@@ -69,15 +96,20 @@ predict.tempssm <- function(object,
 }
 
 
-#' Validate a forecast request for a tempssm model
+#' Prepare a forecast request for a tempssm model
 #'
 #' @inheritParams predict.tempssm
+#' @param n_ahead_missing Logical indicating whether `n.ahead` was omitted.
 #'
-#' @return Invisibly returns `NULL`.
+#' @return A list containing the forecast horizon and future exogenous data.
 #'
 #' @keywords internal
 #' @noRd
-.validate_tempssm_forecast <- function(object, n.ahead, level) {
+.prepare_tempssm_forecast <- function(object,
+                                      n.ahead,
+                                      n_ahead_missing,
+                                      new_exo_data,
+                                      level) {
   if (!inherits(object, "tempssm")) {
     cli::cli_abort(
       "{.arg object} must be an object of class {.cls tempssm}."
@@ -90,13 +122,47 @@ predict.tempssm <- function(object,
     )
   }
 
-  if (!is.null(object$exogenous_data)) {
-    cli::cli_abort(c(
-      "Forecasting models with exogenous variables is not yet supported.",
-      "i" = "Future exogenous values must be supplied explicitly."
-    ))
+  has_exogenous <- !is.null(object$exogenous_data)
+  if (has_exogenous && is.null(new_exo_data)) {
+    cli::cli_abort(
+      "{.arg new_exo_data} is required for a model with exogenous variables."
+    )
+  }
+  if (!has_exogenous && !is.null(new_exo_data)) {
+    cli::cli_abort(
+      paste0(
+        "{.arg new_exo_data} must be {.code NULL} because the model ",
+        "was fitted without exogenous variables."
+      )
+    )
   }
 
+  if (has_exogenous && n_ahead_missing) {
+    n.ahead <- NROW(new_exo_data)
+  }
+  .validate_tempssm_forecast_controls(n.ahead, level)
+
+  if (has_exogenous) {
+    new_exo_data <- .validate_tempssm_future_exogenous(
+      object,
+      new_exo_data,
+      n.ahead
+    )
+  }
+
+  list(n.ahead = as.integer(n.ahead), new_exo_data = new_exo_data)
+}
+
+
+#' Validate controls for a tempssm forecast
+#'
+#' @inheritParams predict.tempssm
+#'
+#' @return Invisibly returns `NULL`.
+#'
+#' @keywords internal
+#' @noRd
+.validate_tempssm_forecast_controls <- function(n.ahead, level) {
   valid_horizon <- is.numeric(n.ahead) &&
     length(n.ahead) == 1L &&
     !is.na(n.ahead) &&
@@ -122,6 +188,157 @@ predict.tempssm <- function(object,
   }
 
   invisible(NULL)
+}
+
+
+#' Validate future exogenous data for forecasting
+#'
+#' @inheritParams predict.tempssm
+#'
+#' @return A validated `ts` object of future exogenous values.
+#'
+#' @keywords internal
+#' @noRd
+.validate_tempssm_future_exogenous <- function(object,
+                                               new_exo_data,
+                                               n.ahead) {
+  if (!inherits(new_exo_data, "ts")) {
+    cli::cli_abort(
+      "{.arg new_exo_data} must be a {.cls ts} object."
+    )
+  }
+  if (!is.numeric(new_exo_data)) {
+    cli::cli_abort(
+      "{.arg new_exo_data} must contain numeric values."
+    )
+  }
+  if (anyNA(new_exo_data) || !all(is.finite(new_exo_data))) {
+    cli::cli_abort(
+      "{.arg new_exo_data} must not contain missing or non-finite values."
+    )
+  }
+  if (NROW(new_exo_data) != n.ahead) {
+    cli::cli_abort(
+      "The number of rows in {.arg new_exo_data} must equal {.arg n.ahead}."
+    )
+  }
+
+  fitted_exogenous <- object$exogenous_data
+  if (NCOL(new_exo_data) != NCOL(fitted_exogenous)) {
+    cli::cli_abort(
+      "{.arg new_exo_data} must have {NCOL(fitted_exogenous)} column{?s}."
+    )
+  }
+  if (!identical(colnames(new_exo_data), colnames(fitted_exogenous))) {
+    cli::cli_abort(
+      paste0(
+        "Column names and order of {.arg new_exo_data} must match ",
+        "the fitted exogenous variables."
+      )
+    )
+  }
+
+  fitted_frequency <- stats::frequency(object$temp_data)
+  if (!isTRUE(all.equal(
+    stats::frequency(new_exo_data),
+    fitted_frequency
+  ))) {
+    cli::cli_abort(
+      "Frequency of {.arg new_exo_data} must match the fitted data."
+    )
+  }
+
+  fitted_time <- as.numeric(stats::time(object$temp_data))
+  fitted_end <- fitted_time[length(fitted_time)]
+  expected_time <- fitted_end +
+    seq_len(n.ahead) / fitted_frequency
+  if (!isTRUE(all.equal(
+    as.numeric(stats::time(new_exo_data)),
+    as.numeric(expected_time)
+  ))) {
+    cli::cli_abort(
+      paste0(
+        "{.arg new_exo_data} must begin at the first time point after ",
+        "the fitted data and be regularly spaced."
+      )
+    )
+  }
+
+  new_exo_data
+}
+
+
+#' Forecast through the appropriate tempssm backend
+#'
+#' @inheritParams predict.tempssm
+#'
+#' @return An object returned by `stats::predict()`.
+#'
+#' @keywords internal
+#' @noRd
+.predict_tempssm_backend <- function(object,
+                                     n.ahead,
+                                     new_exo_data = NULL,
+                                     interval = "none",
+                                     level = 0.95,
+                                     ...) {
+  if (is.null(new_exo_data)) {
+    return(.predict_no_exo(
+      model = object$model,
+      h = n.ahead,
+      interval = interval,
+      level = level,
+      ...
+    ))
+  }
+
+  .predict_with_exo(
+    res = object,
+    exo_test = new_exo_data,
+    interval = interval,
+    level = level,
+    ...
+  )
+}
+
+
+#' Generate forecasts with exogenous variables
+#'
+#' @inheritParams get_level_ts
+#' @param exo_test Future exogenous data as a `ts` object.
+#' @inheritParams predict.tempssm
+#'
+#' @return An object returned by `stats::predict()`.
+#'
+#' @keywords internal
+#' @noRd
+.predict_with_exo <- function(res,
+                              exo_test,
+                              interval = "none",
+                              level = 0.95,
+                              ...) {
+  if (!inherits(res, "tempssm") ||
+      is.null(res$model) ||
+      is.null(res$fit$optim.out$par)) {
+    cli::cli_abort("{.arg res} must be a fitted {.cls tempssm} object.")
+  }
+
+  newdata <- .build_newdata_ssm(
+    pars = res$fit$optim.out$par,
+    exo_mat = as.matrix(exo_test),
+    n_ahead = NROW(exo_test),
+    freq = stats::frequency(res$temp_data),
+    ar_order = res$ar_order,
+    use_season = res$use_season
+  )
+
+  stats::predict(
+    res$model,
+    newdata = newdata,
+    interval = interval,
+    level = level,
+    ...
+  )
 }
 
 

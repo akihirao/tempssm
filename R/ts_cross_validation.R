@@ -102,60 +102,11 @@
 }
 
 
-#' Generate predictions with exogenous variables for CV fold
-#'
-#' Internal helper to generate forecasts for a test period when
-#' exogenous variables are present. The function reuses a fitted
-#' \code{tempssm} model, reconstructs a state-space model for the test
-#' period using estimated parameters, and applies \code{predict()}.
-#'
-#' The test-period state-space model is constructed via
-#' \code{.build_newdata_ssm()}.
-#'
-#' @inheritParams get_level_ts
-#' @param y_train_named Named training temperature \code{ts}.
-#' @param y_test_named Named test temperature \code{ts}.
-#' @param exo_test Exogenous test data (\code{ts}).
-#' @inheritParams tempssm
-#'
-#' @return An object returned by \code{stats::predict()}.
-#'
-#' @keywords internal
-#' @noRd
-.predict_with_exo <- function(res, y_train_named, y_test_named,
-                              exo_test,
-                              ar_order, use_season) {
-  if (!inherits(res, "tempssm") ||
-      is.null(res$model) ||
-      is.null(res$fit$optim.out$par)) {
-    cli::cli_abort("`res` must be a fitted {.cls tempssm} object.")
-  }
-
-  train_model <- res$model
-  train_pars <- res$fit$optim.out$par
-  freq <- frequency(y_train_named)
-
-  exo_mat <- as.matrix(exo_test)
-  n_ahead <- NROW(y_test_named)
-
-  newdata <- .build_newdata_ssm(
-    train_pars,
-    exo_mat,
-    n_ahead,
-    freq,
-    ar_order,
-    use_season
-  )
-
-  stats::predict(train_model, newdata = newdata)
-}
-
-
 #' Build SSModel for prediction with exogenous variables
 #'
 #' Internal helper to construct a \code{KFAS::SSModel} object for
-#' the test period using estimated parameters. This is used when
-#' generating forecasts with exogenous variables in cross-validation.
+#' a future period using estimated parameters. It is shared by direct
+#' forecasting and cross-validation with exogenous variables.
 #'
 #' The function maps a parameter vector (on unconstrained scale)
 #' to a fully specified state-space model, applying appropriate
@@ -376,24 +327,16 @@
 #'
 #' @inheritParams get_level_ts
 #' @param fold_data Prepared fold data from \code{.prepare_ts_cv_fold()}.
-#' @param controls Model controls from \code{.prepare_ts_cv_model_controls()}.
 #'
 #' @return Predictions for the test period.
 #'
 #' @keywords internal
 #' @noRd
-.predict_ts_cv_fold <- function(res, fold_data, controls) {
-  if (is.null(fold_data$exo_train)) {
-    return(.predict_no_exo(res$model, NROW(fold_data$y_test_named)))
-  }
-
-  .predict_with_exo(
-    res,
-    fold_data$y_train_named,
-    fold_data$y_test_named,
-    fold_data$exo_test,
-    controls$ar_order,
-    controls$use_season
+.predict_ts_cv_fold <- function(res, fold_data) {
+  .predict_tempssm_backend(
+    object = res,
+    n.ahead = NROW(fold_data$y_test_named),
+    new_exo_data = fold_data$exo_test
   )
 }
 
@@ -540,7 +483,7 @@ ts_cv_run_fold <- function(fold,
     return(fail)
   }
 
-  y_pred <- .predict_ts_cv_fold(res, fold_data, controls)
+  y_pred <- .predict_ts_cv_fold(res, fold_data)
 
   .new_ts_cv_fold_result(
     fold_id = fold_data$id,

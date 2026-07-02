@@ -36,7 +36,7 @@ test_that("ts_cv_run_fold returns the documented success structure", {
 
   testthat::local_mocked_bindings(
     .fit_tempssm_safe = function(...) fitted_result,
-    .predict_no_exo = function(model, h) seq_len(h),
+    .predict_no_exo = function(model, h, ...) seq_len(h),
     .package = "tempssm"
   )
 
@@ -79,12 +79,9 @@ test_that("ts_cv_run_fold dispatches exogenous forecasts", {
 
   testthat::local_mocked_bindings(
     .fit_tempssm_safe = function(...) fitted_result,
-    .predict_with_exo = function(res, y_train_named, y_test_named,
-                                 exo_test, ar_order, use_season) {
+    .predict_with_exo = function(res, exo_test, ...) {
       observed$exo_test <- exo_test
-      observed$ar_order <- ar_order
-      observed$use_season <- use_season
-      rep(10, NROW(y_test_named))
+      rep(10, NROW(exo_test))
     },
     .package = "tempssm"
   )
@@ -93,8 +90,6 @@ test_that("ts_cv_run_fold dispatches exogenous forecasts", {
 
   expect_identical(res$y_pred, rep(10, NROW(fold$test_ts)))
   expect_identical(observed$exo_test, fold$exo_test_ts)
-  expect_identical(observed$ar_order, 2)
-  expect_false(observed$use_season)
 })
 
 
@@ -117,7 +112,7 @@ test_that("ts_cv_run_fold forwards marginal likelihood control", {
       observed$args <- list(...)
       fitted_result
     },
-    .predict_no_exo = function(model, h) seq_len(h),
+    .predict_no_exo = function(model, h, ...) seq_len(h),
     .package = "tempssm"
   )
 

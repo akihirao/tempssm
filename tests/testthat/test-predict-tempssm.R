@@ -1,9 +1,27 @@
+make_future_exogenous <- function(values,
+                                   start = c(2010, 1),
+                                   frequency = 12) {
+  ts(
+    matrix(
+      values,
+      ncol = 1,
+      dimnames = list(
+        NULL,
+        colnames(res_tempssm_exo$exogenous_data)
+      )
+    ),
+    start = start,
+    frequency = frequency
+  )
+}
+
+
 test_that("predict.tempssm forecasts the next time point by default", {
   pred <- predict(res_tempssm)
 
   expect_s3_class(pred, "ts")
   expect_length(pred, 1L)
-  expect_equal(
+  expect_identical(
     as.numeric(stats::time(pred)[1L]),
     as.numeric(tail(stats::time(res_tempssm$temp_data), 1L)) +
       1 / stats::frequency(res_tempssm$temp_data)
@@ -15,7 +33,7 @@ test_that("predict.tempssm agrees with the KFAS model forecast", {
   pred <- predict(res_tempssm, n.ahead = 4L)
   expected <- stats::predict(res_tempssm$model, n.ahead = 4L)
 
-  expect_equal(pred, expected)
+  expect_identical(pred, expected)
 })
 
 
@@ -35,10 +53,91 @@ test_that("predict.tempssm returns requested prediction intervals", {
 })
 
 
-test_that("predict.tempssm rejects unsupported exogenous forecasts", {
+test_that("predict.tempssm forecasts with future exogenous values", {
+  future_exogenous <- make_future_exogenous(c(0.1, 0.2, 0.3))
+
+  pred <- predict(
+    res_tempssm_exo,
+    new_exo_data = future_exogenous
+  )
+  expected <- .predict_with_exo(res_tempssm_exo, future_exogenous)
+
+  expect_s3_class(pred, "ts")
+  expect_length(pred, 3L)
+  expect_identical(pred, expected)
+  expect_identical(stats::start(pred), c(2010, 1))
+})
+
+
+test_that("predict.tempssm returns intervals for exogenous forecasts", {
+  future_exogenous <- make_future_exogenous(c(0.1, 0.2))
+
+  pred <- predict(
+    res_tempssm_exo,
+    new_exo_data = future_exogenous,
+    interval = "prediction"
+  )
+
+  expect_s3_class(pred, "mts")
+  expect_identical(colnames(pred), c("fit", "lwr", "upr"))
+  expect_identical(NROW(pred), 2L)
+})
+
+
+test_that("predict.tempssm requires covariates only for exogenous models", {
   expect_error(
     predict(res_tempssm_exo),
-    "exogenous variables is not yet supported"
+    "new_exo_data.*required"
+  )
+  expect_error(
+    predict(
+      res_tempssm,
+      new_exo_data = ts(1, start = c(2010, 1), frequency = 12)
+    ),
+    "new_exo_data.*NULL"
+  )
+})
+
+
+test_that("predict.tempssm validates future exogenous structure", {
+  valid <- make_future_exogenous(c(0.1, 0.2))
+
+  expect_error(
+    predict(res_tempssm_exo, n.ahead = 1L, new_exo_data = valid),
+    "number of rows.*n.ahead"
+  )
+  expect_error(
+    predict(res_tempssm_exo, new_exo_data = unclass(valid)),
+    "new_exo_data.*ts"
+  )
+
+  missing_value <- valid
+  missing_value[1L, 1L] <- NA_real_
+  expect_error(
+    predict(res_tempssm_exo, new_exo_data = missing_value),
+    "missing or non-finite"
+  )
+
+  wrong_name <- valid
+  colnames(wrong_name) <- "wrong"
+  expect_error(
+    predict(res_tempssm_exo, new_exo_data = wrong_name),
+    "Column names and order"
+  )
+
+  wrong_frequency <- make_future_exogenous(
+    c(0.1, 0.2),
+    frequency = 4
+  )
+  expect_error(
+    predict(res_tempssm_exo, new_exo_data = wrong_frequency),
+    "Frequency"
+  )
+
+  wrong_start <- stats::window(valid, start = c(2010, 2))
+  expect_error(
+    predict(res_tempssm_exo, new_exo_data = wrong_start),
+    "first time point after"
   )
 })
 

@@ -7,6 +7,7 @@
 \method{predict}{tempssm}(
   object,
   n.ahead = 1L,
+  new_exo_data = NULL,
   interval = c("none", "confidence", "prediction"),
   level = 0.95,
   ...
@@ -17,7 +18,13 @@
 \code{\link[=tempssm]{tempssm()}}.}
 
 \item{n.ahead}{Positive integer giving the forecast horizon. The default is
-one time point.}
+one time point. For a model with exogenous variables, the horizon is
+inferred from \code{new_exo_data} when \code{n.ahead} is omitted.}
+
+\item{new_exo_data}{Optional future exogenous variables as a univariate or
+multivariate \code{ts} object. It is required for a model fitted with
+exogenous variables and must continue directly after the fitted response
+series, with matching frequency, column names, and column order.}
 
 \item{interval}{Character scalar specifying the interval type. One of
 \code{"none"}, \code{"confidence"}, or \code{"prediction"}.}
@@ -35,8 +42,8 @@ columns \code{fit}, \code{lwr}, and \code{upr}.
 }
 \description{
 Produces forecasts after the end of the observed sample from a fitted
-\code{tempssm} model without exogenous variables. By default, the method
-returns the forecast for the next single time point.
+\code{tempssm} model. By default, the method returns the forecast for the next
+single time point.
 }
 \details{
 Forecasts begin at the first regular time point after the end of
@@ -44,10 +51,9 @@ Forecasts begin at the first regular time point after the end of
 state conditional on the fitted model parameters, but not parameter
 estimation uncertainty.
 
-Models fitted with exogenous variables are not yet supported by this
-method because future values of those variables must be supplied explicitly.
-Such models produce an informative error rather than assuming zero-valued
-future covariates.
+For a model fitted with exogenous variables, \code{new_exo_data} must provide
+known or assumed future covariate values. Missing or non-finite future
+values are rejected; the method never assumes zero-valued covariates.
 
 This method produces forecasts beyond the end of the sample. It does not
 return in-sample one-step-ahead predictions.
@@ -62,6 +68,21 @@ predict(res)
 
 # Forecast the next 12 time points with prediction intervals
 predict(res, n.ahead = 12, interval = "prediction", level = 0.95)
+
+# Models with exogenous variables require future covariate values
+exo <- ts(
+  matrix(seq_along(niigata_sst), ncol = 1),
+  start = start(niigata_sst),
+  frequency = frequency(niigata_sst)
+)
+colnames(exo) <- "index"
+res_exo <- tempssm(niigata_sst, exo_data = exo)
+exo_next <- ts(
+  matrix(NROW(exo) + 1, ncol = 1, dimnames = list(NULL, "index")),
+  start = tsp(exo)[2] + 1 / frequency(exo),
+  frequency = frequency(exo)
+)
+predict(res_exo, new_exo_data = exo_next)
 }
 
 }

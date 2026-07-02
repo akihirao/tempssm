@@ -1,93 +1,44 @@
-# tests/testthat/test-predict_with_exo
+# tests/testthat/test-predict_with_exo.R
 
-
-test_that(".predict_with_exo runs without error", {
+test_that(".predict_with_exo returns forecasts for future covariates", {
   y_train <- window(temp_ts_small, end = c(2002, 12))
-  y_test <- window(temp_ts_small, start = c(2003, 1))
-
   x_train <- window(exo_ts_small, end = c(2002, 12))
   x_test <- window(exo_ts_small, start = c(2003, 1))
+  y_train <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
+  res <- tempssm(y_train, x_train)
 
-  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
-  y_test_named <- set_ts_name(y_test, label = "Temp", quiet = TRUE)
+  pred <- .predict_with_exo(res, x_test)
 
-  res <- tempssm(y_train_named, x_train)
-
-  expect_no_error({
-    .predict_with_exo(
-      res,
-      y_train_named,
-      y_test_named,
-      x_test,
-      ar_order = 1,
-      use_season = TRUE
-    )
-  })
+  expect_s3_class(pred, "ts")
+  expect_length(pred, NROW(x_test))
 })
 
 
-# test_that("prediction length matches test length", {
-#
-#  y_train <- window(temp_ts_small, end = c(2002, 12))
-#  y_test  <- window(temp_ts_small, start = c(2003, 1))
-#
-#  x_train <- window(exo_ts_small, end = c(2002, 12))
-#  x_test  <- window(exo_ts_small, start = c(2003, 1))
-#
-#  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
-#  y_test_named <- set_ts_name(y_test, label = "Temp", quiet = TRUE)
-#
-#  res <- tempssm(y_train_named, x_train)
-#
-#  pred <- .predict_with_exo(
-#    res,
-#    y_train_named,
-#    y_test_named,
-#    x_test,
-#    ar_order = 1,
-#    use_season = FALSE
-#  )
-#
-#  expect_identical(length(pred), length(y_test))
-# })
-
-
-test_that("prediction output has valid type", {
+test_that(".predict_with_exo supports prediction intervals", {
   y_train <- window(temp_ts_small, end = c(2002, 12))
-  y_test <- window(temp_ts_small, start = c(2003, 1))
-
   x_train <- window(exo_ts_small, end = c(2002, 12))
   x_test <- window(exo_ts_small, start = c(2003, 1))
-
-  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
-  y_test_named <- set_ts_name(y_test, label = "Temp", quiet = TRUE)
-
-  res <- tempssm(y_train_named, x_train)
+  y_train <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
+  res <- tempssm(y_train, x_train)
 
   pred <- .predict_with_exo(
     res,
-    y_train_named,
-    y_test_named,
     x_test,
-    ar_order = 1,
-    use_season = TRUE
+    interval = "prediction",
+    level = 0.9
   )
 
-  expect_true(is.numeric(pred) || inherits(pred, "ts"))
+  expect_s3_class(pred, "mts")
+  expect_identical(colnames(pred), c("fit", "lwr", "upr"))
 })
 
 
-test_that(".predict_with_exo reuses fitted tempssm object", {
+test_that(".predict_with_exo reuses the fitted tempssm object", {
   y_train <- window(temp_ts_small, end = c(2002, 12))
-  y_test <- window(temp_ts_small, start = c(2003, 1))
-
   x_train <- window(exo_ts_small, end = c(2002, 12))
   x_test <- window(exo_ts_small, start = c(2003, 1))
-
-  y_train_named <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
-  y_test_named <- set_ts_name(y_test, label = "Temp", quiet = TRUE)
-
-  res <- tempssm(y_train_named, x_train)
+  y_train <- set_ts_name(y_train, label = "Temp", quiet = TRUE)
+  res <- tempssm(y_train, x_train)
 
   mockery::stub(
     .predict_with_exo,
@@ -97,14 +48,5 @@ test_that(".predict_with_exo reuses fitted tempssm object", {
     }
   )
 
-  expect_no_error(
-    .predict_with_exo(
-      res,
-      y_train_named,
-      y_test_named,
-      x_test,
-      ar_order = 1,
-      use_season = TRUE
-    )
-  )
+  expect_no_error(.predict_with_exo(res, x_test))
 })

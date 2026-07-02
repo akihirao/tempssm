@@ -234,8 +234,8 @@ Forecast uncertainty generally increases with forecast horizon because
 future observations depend on accumulated uncertainty in the latent state
 dynamics and observation equation. In \code{tempssm}, forecast intervals are
 obtained from the underlying \code{KFAS} state-space model via
-\code{predict(res, n.ahead = h, interval = "prediction")} for models without
-exogenous variables.
+\code{predict(res, n.ahead = h, interval = "prediction")}. Models with
+exogenous variables also require future values in \code{new_exo_data}.
 With \code{interval = "prediction"}, the returned object includes point
 forecasts and prediction interval bounds, conventionally named \code{fit},
 \code{lwr}, and \code{upr}, which provide a direct indication of forecast
