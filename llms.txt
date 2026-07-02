@@ -285,6 +285,9 @@ Helske, J. (2017). KFAS: Exponential family state space models in R.
 - [`plot_tempssm_residual_diagnostics()`](https://akihirao.github.io/tempssm/reference/plot_tempssm_residual_diagnostics.md)
   : Plot residual diagnostics for tempssm models
 
+- [`predict(`*`<tempssm>`*`)`](https://akihirao.github.io/tempssm/reference/predict.tempssm.md)
+  : Forecast from a fitted tempssm model
+
 - [`print(`*`<summary.tempssm>`*`)`](https://akihirao.github.io/tempssm/reference/print.summary.tempssm.md)
   : Print method for summary of tempssm objects
 

@@ -312,8 +312,9 @@ counts of observations, not calendar durations.</p>
 <p>Forecast uncertainty generally increases with forecast horizon because
 future observations depend on accumulated uncertainty in the latent state
 dynamics and observation equation. In <code>tempssm</code>, forecast intervals are
-obtained from the underlying <code>KFAS</code> state-space model, for example via
-<code>stats::predict(res$model, n.ahead = h, interval = "prediction")</code>.
+obtained from the underlying <code>KFAS</code> state-space model via
+<code>predict(res, n.ahead = h, interval = "prediction")</code> for models without
+exogenous variables.
 With <code>interval = "prediction"</code>, the returned object includes point
 forecasts and prediction interval bounds, conventionally named <code>fit</code>,
 <code>lwr</code>, and <code>upr</code>, which provide a direct indication of forecast
@@ -325,10 +326,10 @@ forecast horizon for which the prediction interval width, defined as
 <p>Cross-validation helpers such as <code><a href="ts_cv_run_fold.html">ts_cv_run_fold()</a></code> return point forecasts
 for accuracy scoring. They are intended for evaluating predictive
 performance rather than for representing full forecast uncertainty. Users
-who need prediction intervals should call <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">stats::predict()</a></code> on the fitted
-<code>KFAS</code> model as shown above.</p>
+who need prediction intervals should call <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> on the fitted
+<code>tempssm</code> object as shown above.</p>
 <p>Forecast and observed values are kept distinct in package outputs. Direct
-calls to <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">stats::predict()</a></code> return forecast values only. In time-series
+calls to <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> return forecast values only. In time-series
 cross-validation results, observed test values are stored in <code>y_test</code>, while
 forecasts are stored separately in <code>y_pred</code>.</p>
     </div>

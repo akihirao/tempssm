@@ -279,12 +279,12 @@ counts of observations, not calendar durations.
 Forecast uncertainty generally increases with forecast horizon because
 future observations depend on accumulated uncertainty in the latent
 state dynamics and observation equation. In `tempssm`, forecast
-intervals are obtained from the underlying `KFAS` state-space model, for
-example via
-`stats::predict(res$model, n.ahead = h, interval = "prediction")`. With
-`interval = "prediction"`, the returned object includes point forecasts
-and prediction interval bounds, conventionally named `fit`, `lwr`, and
-`upr`, which provide a direct indication of forecast uncertainty.
+intervals are obtained from the underlying `KFAS` state-space model via
+`predict(res, n.ahead = h, interval = "prediction")` for models without
+exogenous variables. With `interval = "prediction"`, the returned object
+includes point forecasts and prediction interval bounds, conventionally
+named `fit`, `lwr`, and `upr`, which provide a direct indication of
+forecast uncertainty.
 
 Users can trim forecasts to a chosen error margin with
 [`trim_prediction_intervals()`](https://akihirao.github.io/tempssm/reference/trim_prediction_intervals.md).
@@ -297,14 +297,13 @@ Cross-validation helpers such as
 return point forecasts for accuracy scoring. They are intended for
 evaluating predictive performance rather than for representing full
 forecast uncertainty. Users who need prediction intervals should call
-[`stats::predict()`](https://rdrr.io/r/stats/predict.html) on the fitted
-`KFAS` model as shown above.
+[`predict()`](https://rdrr.io/r/stats/predict.html) on the fitted
+`tempssm` object as shown above.
 
 Forecast and observed values are kept distinct in package outputs.
-Direct calls to
-[`stats::predict()`](https://rdrr.io/r/stats/predict.html) return
-forecast values only. In time-series cross-validation results, observed
-test values are stored in `y_test`, while forecasts are stored
+Direct calls to [`predict()`](https://rdrr.io/r/stats/predict.html)
+return forecast values only. In time-series cross-validation results,
+observed test values are stored in `y_test`, while forecasts are stored
 separately in `y_pred`.
 
 ## Forecast Scale and Transformations

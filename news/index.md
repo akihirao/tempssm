@@ -15,6 +15,10 @@
   [`compare_tempssm_aic()`](https://akihirao.github.io/tempssm/reference/compare_tempssm_aic.md)
   for validated AIC comparison across fitted models using the same
   response data and likelihood type.
+- Added
+  [`predict.tempssm()`](https://akihirao.github.io/tempssm/reference/predict.tempssm.md)
+  for forecasts beyond the sample period from models without exogenous
+  variables, with a one-step-ahead default.
 
 ## tempssm 0.2.3.1
 
