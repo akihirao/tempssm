@@ -9,6 +9,8 @@
   covariates.
 * Added a `marginal` option to select diffuse or marginal likelihood
   consistently during KFAS model fitting and likelihood evaluation.
+* Added `compare_tempssm_aic()` for validated AIC comparison across fitted
+  models using the same response data and likelihood type.
 
 # tempssm 0.2.3.1
 
