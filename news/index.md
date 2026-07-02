@@ -17,8 +17,8 @@
   response data and likelihood type.
 - Added
   [`predict.tempssm()`](https://akihirao.github.io/tempssm/reference/predict.tempssm.md)
-  for forecasts beyond the sample period from models without exogenous
-  variables, with a one-step-ahead default.
+  for forecasts beyond the sample period, including models supplied with
+  explicit future exogenous values, with a one-step-ahead default.
 
 ## tempssm 0.2.3.1
 
