@@ -99,7 +99,7 @@
 #' The test-period state-space model is constructed via
 #' \code{.build_newdata_ssm()}.
 #'
-#' @param res A fitted \code{tempssm} object.
+#' @inheritParams get_level_ts
 #' @param y_train_named Named training temperature \code{ts}.
 #' @param y_test_named Named test temperature \code{ts}.
 #' @param exo_test Exogenous test data (\code{ts}).
@@ -361,7 +361,7 @@
 
 #' Generate predictions for one cross-validation fold
 #'
-#' @param res A fitted \code{tempssm} object.
+#' @inheritParams get_level_ts
 #' @param fold_data Prepared fold data from \code{.prepare_ts_cv_fold()}.
 #' @param controls Model controls from \code{.prepare_ts_cv_model_controls()}.
 #'

@@ -367,5 +367,5 @@ https://github.com/logics-of-blue/sea-temperature-trend-jogashima
 \url{https://github.com/akihirao/tempssm}
 }
 \author{
-Akira Hirao and Momoko Ichinokawa
+Akira S. Hirao, Shinya Baba, and Momoko Ichinokawa
 }

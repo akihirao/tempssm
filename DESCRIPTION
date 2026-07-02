@@ -4,7 +4,7 @@ Title: Linear Gaussian State-Space Models for Temperature Time Series
 Version: 0.2.4
 Authors@R: c(
     person(
-      given="Akira", family="Hirao",
+      given = c("Akira", "S."), family = "Hirao",
       email = "akihirao@gmail.com",
       role = c("aut", "cre")),
     person(

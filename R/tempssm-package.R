@@ -298,7 +298,7 @@ NULL
 #' original units externally and reattach or label them after model fitting.
 #'
 #' @author
-#' Akira Hirao and Momoko Ichinokawa
+#' Akira S. Hirao, Shinya Baba, and Momoko Ichinokawa
 #'
 #' @references
 #' Helske, J. (2017). KFAS: Exponential family state space models in R.

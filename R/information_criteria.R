@@ -38,7 +38,7 @@
 
 #' Resolve the likelihood setting for a fitted model
 #'
-#' @param res A fitted \code{tempssm} object.
+#' @inheritParams get_level_ts
 #' @inheritParams logLik.tempssm
 #'
 #' @return A logical scalar.
@@ -59,7 +59,7 @@
 ######################################
 #' Extract log-likelihood components from a fitted model
 #'
-#' @param res A fitted \code{tempssm} object.
+#' @inheritParams get_level_ts
 #' @inheritParams logLik.tempssm
 #'
 #' @return A named list containing the log-likelihood, degrees of freedom,
