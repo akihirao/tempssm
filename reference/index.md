@@ -20,6 +20,9 @@
 - [`autoplot_season()`](https://akihirao.github.io/tempssm/reference/autoplot_season.md)
   : Plot the estimated seasonal component from a tempssm model
 
+- [`compare_tempssm_aic()`](https://akihirao.github.io/tempssm/reference/compare_tempssm_aic.md)
+  : Compare AIC across fitted tempssm models
+
 - [`compute_cv_metrics()`](https://akihirao.github.io/tempssm/reference/compute_cv_metrics.md)
   : Compute forecast accuracy metrics for a CV fold
 
