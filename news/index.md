@@ -1,5 +1,34 @@
 # Changelog
 
+## tempssm 0.2.5
+
+- Added a `marginal` option to select diffuse or marginal likelihood
+  consistently during KFAS model fitting, likelihood evaluation,
+  summaries, information criteria, and time-series cross-validation.
+- Extended the component accessors to return either smoothed or filtered
+  state estimates. Filtered confidence intervals are available, with
+  estimates and intervals during the exact diffuse phase reported as
+  `NA`.
+- Added
+  [`compare_tempssm_aic()`](https://akihirao.github.io/tempssm/reference/compare_tempssm_aic.md)
+  for validated AIC comparison across fitted models using the same
+  response data and likelihood type.
+- Added
+  [`predict.tempssm()`](https://akihirao.github.io/tempssm/reference/predict.tempssm.md)
+  for forecasts beyond the sample period, including models supplied with
+  explicit future exogenous values. An explicit `exo_strategy = "last"`
+  option provides a simplified one-step persistence forecast using the
+  final observed exogenous values.
+- Classified model-fitting messages by verbosity so routine progress
+  details can be controlled with `options(tempssm.verbosity = ...)` or
+  the `TEMPSSM_VERBOSITY` environment variable.
+- Added a pkgdown site workflow, renamed the introductory vignette to
+  `getting-started`, and updated package documentation and links.
+- Refactored model fitting, cross-validation, forecasting, plotting, and
+  time-series utilities into focused internal helpers, with expanded
+  contract and regression tests.
+- Updated the package creator’s displayed name to Akira S. Hirao.
+
 ## tempssm 0.2.4
 
 - Updated package authorship metadata and related documentation to
@@ -9,19 +38,6 @@
   susceptibility, and extended test workflows.
 - Clarified missing-value handling for temperature responses and
   exogenous covariates.
-- Added a `marginal` option to select diffuse or marginal likelihood
-  consistently during KFAS model fitting and likelihood evaluation.
-- Added
-  [`compare_tempssm_aic()`](https://akihirao.github.io/tempssm/reference/compare_tempssm_aic.md)
-  for validated AIC comparison across fitted models using the same
-  response data and likelihood type.
-- Added
-  [`predict.tempssm()`](https://akihirao.github.io/tempssm/reference/predict.tempssm.md)
-  for forecasts beyond the sample period, including models supplied with
-  explicit future exogenous values, with a one-step-ahead default.
-- Added an explicit `exo_strategy = "last"` option for simplified
-  one-step persistence forecasts using the final observed exogenous
-  values.
 
 ## tempssm 0.2.3.1
 

@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tempssm</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.4</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.5</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,14 +37,21 @@
     </div>
 
     <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.5" id="tempssm-025">tempssm 0.2.5<a class="anchor" aria-label="anchor" href="#tempssm-025"></a></h2>
+<ul><li>Added a <code>marginal</code> option to select diffuse or marginal likelihood consistently during KFAS model fitting, likelihood evaluation, summaries, information criteria, and time-series cross-validation.</li>
+<li>Extended the component accessors to return either smoothed or filtered state estimates. Filtered confidence intervals are available, with estimates and intervals during the exact diffuse phase reported as <code>NA</code>.</li>
+<li>Added <code><a href="../reference/compare_tempssm_aic.html">compare_tempssm_aic()</a></code> for validated AIC comparison across fitted models using the same response data and likelihood type.</li>
+<li>Added <code><a href="../reference/predict.tempssm.html">predict.tempssm()</a></code> for forecasts beyond the sample period, including models supplied with explicit future exogenous values. An explicit <code>exo_strategy = "last"</code> option provides a simplified one-step persistence forecast using the final observed exogenous values.</li>
+<li>Classified model-fitting messages by verbosity so routine progress details can be controlled with <code>options(tempssm.verbosity = ...)</code> or the <code>TEMPSSM_VERBOSITY</code> environment variable.</li>
+<li>Added a pkgdown site workflow, renamed the introductory vignette to <code>getting-started</code>, and updated package documentation and links.</li>
+<li>Refactored model fitting, cross-validation, forecasting, plotting, and time-series utilities into focused internal helpers, with expanded contract and regression tests.</li>
+<li>Updated the package creator’s displayed name to Akira S. Hirao.</li>
+</ul></div>
+    <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.4" id="tempssm-024">tempssm 0.2.4<a class="anchor" aria-label="anchor" href="#tempssm-024"></a></h2>
 <ul><li>Updated package authorship metadata and related documentation to reflect the current contributor and co-author list.</li>
 <li>Added rOpenSci statistical software standards documentation and supporting tests for parameter recovery, edge cases, noise susceptibility, and extended test workflows.</li>
 <li>Clarified missing-value handling for temperature responses and exogenous covariates.</li>
-<li>Added a <code>marginal</code> option to select diffuse or marginal likelihood consistently during KFAS model fitting and likelihood evaluation.</li>
-<li>Added <code><a href="../reference/compare_tempssm_aic.html">compare_tempssm_aic()</a></code> for validated AIC comparison across fitted models using the same response data and likelihood type.</li>
-<li>Added <code><a href="../reference/predict.tempssm.html">predict.tempssm()</a></code> for forecasts beyond the sample period, including models supplied with explicit future exogenous values, with a one-step-ahead default.</li>
-<li>Added an explicit <code>exo_strategy = "last"</code> option for simplified one-step persistence forecasts using the final observed exogenous values.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.3.1" id="tempssm-0231">tempssm 0.2.3.1<a class="anchor" aria-label="anchor" href="#tempssm-0231"></a></h2>
