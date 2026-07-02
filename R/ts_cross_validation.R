@@ -79,13 +79,26 @@
 #' @param model A fitted model object (typically \code{SSModel} 
 #' from \code{tempssm}).
 #' @param h Integer; forecast horizon.
+#' @param interval Character scalar specifying the interval type.
+#' @param level Numeric scalar specifying the interval confidence level.
+#' @param ... Additional arguments passed to [stats::predict()].
 #'
 #' @return An object returned by \code{stats::predict()}.
 #'
 #' @keywords internal
 #' @noRd
-.predict_no_exo <- function(model, h) {
-  stats::predict(model, n.ahead = h)
+.predict_no_exo <- function(model,
+                            h,
+                            interval = "none",
+                            level = 0.95,
+                            ...) {
+  stats::predict(
+    model,
+    n.ahead = h,
+    interval = interval,
+    level = level,
+    ...
+  )
 }
 
 

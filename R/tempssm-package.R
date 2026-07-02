@@ -213,8 +213,9 @@ NULL
 #' Forecast uncertainty generally increases with forecast horizon because
 #' future observations depend on accumulated uncertainty in the latent state
 #' dynamics and observation equation. In `tempssm`, forecast intervals are
-#' obtained from the underlying `KFAS` state-space model, for example via
-#' `stats::predict(res$model, n.ahead = h, interval = "prediction")`.
+#' obtained from the underlying `KFAS` state-space model via
+#' `predict(res, n.ahead = h, interval = "prediction")` for models without
+#' exogenous variables.
 #' With `interval = "prediction"`, the returned object includes point
 #' forecasts and prediction interval bounds, conventionally named `fit`,
 #' `lwr`, and `upr`, which provide a direct indication of forecast
@@ -228,11 +229,11 @@ NULL
 #' Cross-validation helpers such as `ts_cv_run_fold()` return point forecasts
 #' for accuracy scoring. They are intended for evaluating predictive
 #' performance rather than for representing full forecast uncertainty. Users
-#' who need prediction intervals should call `stats::predict()` on the fitted
-#' `KFAS` model as shown above.
+#' who need prediction intervals should call `predict()` on the fitted
+#' `tempssm` object as shown above.
 #'
 #' Forecast and observed values are kept distinct in package outputs. Direct
-#' calls to `stats::predict()` return forecast values only. In time-series
+#' calls to `predict()` return forecast values only. In time-series
 #' cross-validation results, observed test values are stored in `y_test`, while
 #' forecasts are stored separately in `y_pred`.
 #'

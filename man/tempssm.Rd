@@ -233,8 +233,9 @@ counts of observations, not calendar durations.
 Forecast uncertainty generally increases with forecast horizon because
 future observations depend on accumulated uncertainty in the latent state
 dynamics and observation equation. In \code{tempssm}, forecast intervals are
-obtained from the underlying \code{KFAS} state-space model, for example via
-\code{stats::predict(res$model, n.ahead = h, interval = "prediction")}.
+obtained from the underlying \code{KFAS} state-space model via
+\code{predict(res, n.ahead = h, interval = "prediction")} for models without
+exogenous variables.
 With \code{interval = "prediction"}, the returned object includes point
 forecasts and prediction interval bounds, conventionally named \code{fit},
 \code{lwr}, and \code{upr}, which provide a direct indication of forecast
@@ -248,11 +249,11 @@ forecast horizon for which the prediction interval width, defined as
 Cross-validation helpers such as \code{ts_cv_run_fold()} return point forecasts
 for accuracy scoring. They are intended for evaluating predictive
 performance rather than for representing full forecast uncertainty. Users
-who need prediction intervals should call \code{stats::predict()} on the fitted
-\code{KFAS} model as shown above.
+who need prediction intervals should call \code{predict()} on the fitted
+\code{tempssm} object as shown above.
 
 Forecast and observed values are kept distinct in package outputs. Direct
-calls to \code{stats::predict()} return forecast values only. In time-series
+calls to \code{predict()} return forecast values only. In time-series
 cross-validation results, observed test values are stored in \code{y_test}, while
 forecasts are stored separately in \code{y_pred}.
 }

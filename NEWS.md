@@ -11,6 +11,8 @@
   consistently during KFAS model fitting and likelihood evaluation.
 * Added `compare_tempssm_aic()` for validated AIC comparison across fitted
   models using the same response data and likelihood type.
+* Added `predict.tempssm()` for forecasts beyond the sample period from models
+  without exogenous variables, with a one-step-ahead default.
 
 # tempssm 0.2.3.1
 

@@ -1,3 +1,130 @@
+#' Forecast from a fitted tempssm model
+#'
+#' Produces forecasts after the end of the observed sample from a fitted
+#' `tempssm` model without exogenous variables. By default, the method
+#' returns the forecast for the next single time point.
+#'
+#' @param object A fitted object of class `"tempssm"` returned by
+#'   [tempssm()].
+#' @param n.ahead Positive integer giving the forecast horizon. The default is
+#'   one time point.
+#' @param interval Character scalar specifying the interval type. One of
+#'   `"none"`, `"confidence"`, or `"prediction"`.
+#' @param level Numeric scalar between 0 and 1 specifying the confidence level
+#'   used when `interval` is not `"none"`.
+#' @param ... Additional arguments passed to the KFAS prediction method via
+#'   [stats::predict()].
+#'
+#' @return For `interval = "none"`, a univariate `ts` object of point
+#'   forecasts. When intervals are requested, a multivariate `ts` object with
+#'   columns `fit`, `lwr`, and `upr`.
+#'
+#' @details
+#' Forecasts begin at the first regular time point after the end of
+#' `object$temp_data`. They account for uncertainty in the estimated
+#' state conditional on the fitted model parameters, but not parameter
+#' estimation uncertainty.
+#'
+#' Models fitted with exogenous variables are not yet supported by this
+#' method because future values of those variables must be supplied explicitly.
+#' Such models produce an informative error rather than assuming zero-valued
+#' future covariates.
+#'
+#' This method produces forecasts beyond the end of the sample. It does not
+#' return in-sample one-step-ahead predictions.
+#'
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#' res <- tempssm(niigata_sst)
+#'
+#' # Forecast the next time point
+#' predict(res)
+#'
+#' # Forecast the next 12 time points with prediction intervals
+#' predict(res, n.ahead = 12, interval = "prediction", level = 0.95)
+#' }
+#'
+#' @method predict tempssm
+#' @export
+predict.tempssm <- function(object,
+                            n.ahead = 1L,
+                            interval = c(
+                              "none",
+                              "confidence",
+                              "prediction"
+                            ),
+                            level = 0.95,
+                            ...) {
+  .validate_tempssm_forecast(object, n.ahead, level)
+  interval <- match.arg(interval)
+
+  .predict_no_exo(
+    model = object$model,
+    h = n.ahead,
+    interval = interval,
+    level = level,
+    ...
+  )
+}
+
+
+#' Validate a forecast request for a tempssm model
+#'
+#' @inheritParams predict.tempssm
+#'
+#' @return Invisibly returns `NULL`.
+#'
+#' @keywords internal
+#' @noRd
+.validate_tempssm_forecast <- function(object, n.ahead, level) {
+  if (!inherits(object, "tempssm")) {
+    cli::cli_abort(
+      "{.arg object} must be an object of class {.cls tempssm}."
+    )
+  }
+
+  if (!isTRUE(object$converged) || is.null(object$model)) {
+    cli::cli_abort(
+      "Forecasting requires a converged {.cls tempssm} model."
+    )
+  }
+
+  if (!is.null(object$exogenous_data)) {
+    cli::cli_abort(c(
+      "Forecasting models with exogenous variables is not yet supported.",
+      "i" = "Future exogenous values must be supplied explicitly."
+    ))
+  }
+
+  valid_horizon <- is.numeric(n.ahead) &&
+    length(n.ahead) == 1L &&
+    !is.na(n.ahead) &&
+    is.finite(n.ahead) &&
+    .tempssm_is_integerish(n.ahead) &&
+    n.ahead >= 1
+  if (!valid_horizon) {
+    cli::cli_abort(
+      "{.arg n.ahead} must be a single positive integer."
+    )
+  }
+
+  valid_level <- is.numeric(level) &&
+    length(level) == 1L &&
+    !is.na(level) &&
+    is.finite(level) &&
+    level > 0 &&
+    level < 1
+  if (!valid_level) {
+    cli::cli_abort(
+      "{.arg level} must be a single finite number between 0 and 1."
+    )
+  }
+
+  invisible(NULL)
+}
+
+
 #' Trim forecast intervals by maximum interval width
 #'
 #' Trims forecast or prediction intervals to the longest leading forecast

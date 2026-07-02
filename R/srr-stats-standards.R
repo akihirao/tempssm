@@ -399,8 +399,8 @@ NULL
 #'
 #' @srrstatsNA {TS4.6b} The package does not return forecast standard errors
 #' directly as a separate second-order moment interface. Forecast uncertainty
-#' is instead represented by prediction interval bounds from the `KFAS`
-#' backend.
+#' is instead represented by prediction interval bounds from `predict()` and
+#' the `KFAS` backend.
 #'
 #' @srrstatsNA {TS4.7c} The package does not combine observed and forecast
 #' values into a single returned table for forecasting workflows. It instead
@@ -414,7 +414,7 @@ NULL
 #'
 #' @srrstatsNA {TS5.6} The package does not currently implement a forecast
 #' plotting interface. Direct forecasts are obtained from
-#' `stats::predict(res$model, ..., interval = "prediction")`, which returns
+#' `predict(res, ..., interval = "prediction")`, which returns
 #' point forecasts and lower and upper prediction interval bounds. Component
 #' plots show fitted latent states and their confidence intervals, but they
 #' are not forecast plots.
