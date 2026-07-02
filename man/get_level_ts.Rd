@@ -21,15 +21,14 @@ get_level_ts(
 \item{estimate}{Character scalar specifying the state estimate to return.
 Use \code{"smoothed"} (the default) for estimates conditional on all
 observations, or \code{"filtered"} for estimates conditional on
-observations up to each time point. Filtered confidence intervals are not
-currently supported, so \code{estimate = "filtered"} requires
-\code{ci = FALSE}.}
+observations up to each time point.}
 }
 \value{
 A univariate \code{ts} object of the selected level estimate
 (in degrees Celsius).
 If \code{ci = TRUE}, a multivariate \code{ts} object with columns
-\code{level}, \code{lwr}, and \code{upr} is returned.
+\code{level}, \code{lwr}, and \code{upr} is returned. Filtered output has
+intentional \code{NA} values during the diffuse phase.
 }
 \description{
 Extract the level component as a time series
@@ -39,6 +38,18 @@ Filtered states condition on observations up to each time point, whereas
 smoothed states condition on all observations in the fitted series. In both
 cases, model parameters are those estimated from the complete input series;
 requesting filtered states does not refit the model sequentially.
+
+For filtered estimates, pointwise confidence intervals are calculated from
+the filtered state covariance matrices stored in \code{res$kfs$Ptt}. These
+intervals condition on the fitted model parameters and do not include
+parameter-estimation uncertainty.
+
+During exact diffuse initialization, KFAS reports only the non-diffuse part
+of the filtered state covariance in \code{Ptt}, and individual state
+components may not yet be sufficiently identified. Therefore filtered point
+estimates and confidence bounds through \code{res$kfs$d} are intentionally
+returned as \code{NA}. The first reported filtered result is at time
+\code{res$kfs$d + 1}. Smoothed estimates are not masked.
 }
 \examples{
 \dontrun{
@@ -46,5 +57,10 @@ data(niigata_sst)
 res <- tempssm(niigata_sst)
 level_ts <- get_level_ts(res)
 filtered_level <- get_level_ts(res, estimate = "filtered")
+filtered_level_ci <- get_level_ts(
+  res,
+  ci = TRUE,
+  estimate = "filtered"
+)
 }
 }

@@ -34,15 +34,52 @@ test_that("get_level_ts checks inputs correctly", {
 })
 
 
-test_that("filtered estimates are returned without confidence intervals", {
+test_that("filtered estimates mask the diffuse phase", {
   filtered <- get_level_ts(res_tempssm, estimate = "filtered")
 
   expect_s3_class(filtered, "ts")
   expect_identical(NCOL(filtered), 1L)
-  expect_error(
-    get_level_ts(res_tempssm, ci = TRUE, estimate = "filtered"),
-    "Confidence intervals for filtered estimates.*not currently supported"
+  expect_true(all(is.na(filtered[seq_len(res_tempssm$kfs$d)])))
+})
+
+
+test_that("filtered confidence intervals mask the diffuse phase", {
+  filtered <- get_level_ts(
+    res_tempssm,
+    ci = TRUE,
+    estimate = "filtered"
   )
+  diffuse_idx <- seq_len(res_tempssm$kfs$d)
+
+  expect_s3_class(filtered, "ts")
+  expect_identical(colnames(filtered), c("level", "lwr", "upr"))
+  expect_true(all(is.na(filtered[diffuse_idx, ])))
+})
+
+
+test_that("filtered estimates validate the diffuse phase", {
+  bad_res <- res_tempssm
+  bad_res$kfs$d <- NULL
+
+  expect_error(
+    get_level_ts(bad_res, estimate = "filtered"),
+    "diffuse filtering phase is unavailable or invalid"
+  )
+
+  no_diffuse <- res_tempssm
+  no_diffuse$kfs$d <- 0L
+  filtered <- get_level_ts(no_diffuse, estimate = "filtered")
+  expect_identical(
+    as.numeric(filtered),
+    as.numeric(no_diffuse$kfs$att[, "level"])
+  )
+
+  filtered_ci <- get_level_ts(
+    no_diffuse,
+    ci = TRUE,
+    estimate = "filtered"
+  )
+  expect_false(anyNA(filtered_ci))
 })
 
 
@@ -53,6 +90,65 @@ test_that("get_level_ts validates filtered state availability", {
   expect_error(
     get_level_ts(bad_res, estimate = "filtered"),
     "Level component not found in the filtering results"
+  )
+})
+
+
+test_that("get_level_ts validates filtered covariance results", {
+  missing_covariance <- res_tempssm
+  missing_covariance$kfs$Ptt <- NULL
+  expect_error(
+    get_level_ts(
+      missing_covariance,
+      ci = TRUE,
+      estimate = "filtered"
+    ),
+    "Filtered state covariance results are unavailable or invalid"
+  )
+
+  negative_variance <- res_tempssm
+  state_idx <- match("level", colnames(negative_variance$kfs$att))
+  time_idx <- negative_variance$kfs$d + 1L
+  negative_variance$kfs$Ptt[state_idx, state_idx, time_idx] <- -1
+  expect_error(
+    get_level_ts(
+      negative_variance,
+      ci = TRUE,
+      estimate = "filtered"
+    ),
+    "Filtered state variances must not be negative"
+  )
+
+  nonfinite_variance <- res_tempssm
+  state_idx <- match("level", colnames(nonfinite_variance$kfs$att))
+  time_idx <- nonfinite_variance$kfs$d + 1L
+  nonfinite_variance$kfs$Ptt[state_idx, state_idx, time_idx] <- Inf
+  expect_error(
+    get_level_ts(
+      nonfinite_variance,
+      ci = TRUE,
+      estimate = "filtered"
+    ),
+    "Filtered state variances must be finite"
+  )
+
+  rounding_variance <- res_tempssm
+  state_idx <- match("level", colnames(rounding_variance$kfs$att))
+  time_idx <- rounding_variance$kfs$d + 1L
+  rounding_variance$kfs$Ptt[state_idx, state_idx, time_idx] <-
+    -.Machine$double.eps
+  rounded_ci <- get_level_ts(
+    rounding_variance,
+    ci = TRUE,
+    estimate = "filtered"
+  )
+  expect_identical(
+    unname(rounded_ci[time_idx, "lwr"]),
+    unname(rounded_ci[time_idx, "level"])
+  )
+  expect_identical(
+    unname(rounded_ci[time_idx, "upr"]),
+    unname(rounded_ci[time_idx, "level"])
   )
 })
 

@@ -21,15 +21,14 @@ get_ar1_ts(
 \item{estimate}{Character scalar specifying the state estimate to return.
 Use \code{"smoothed"} (the default) for estimates conditional on all
 observations, or \code{"filtered"} for estimates conditional on
-observations up to each time point. Filtered confidence intervals are not
-currently supported, so \code{estimate = "filtered"} requires
-\code{ci = FALSE}.}
+observations up to each time point.}
 }
 \value{
 A univariate \code{ts} object of the selected AR1 estimate
 (in degrees Celsius).
 If \code{ci = TRUE}, a multivariate \code{ts} object with columns
-\code{ar1}, \code{lwr}, and \code{upr} is returned.
+\code{ar1}, \code{lwr}, and \code{upr} is returned. Filtered output has
+intentional \code{NA} values during the diffuse phase.
 }
 \description{
 Extract the first autoregressive component (AR1) as a time series
@@ -37,6 +36,8 @@ Extract the first autoregressive component (AR1) as a time series
 \details{
 The AR1 component represents short-term autocorrelated deviations
 from the level and seasonal structure.
+See \code{\link{get_level_ts}} for the distinction between smoothed and
+filtered estimates and the handling of the diffuse phase.
 }
 \examples{
 \dontrun{

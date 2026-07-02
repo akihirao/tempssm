@@ -107,6 +107,59 @@
 }
 
 
+#' Validate the end of the diffuse filtering phase
+#'
+#' @inheritParams .tempssm_check_accessor_input
+#' @param n_obs Number of filtered observations.
+#'
+#' @return A non-negative integer giving the final diffuse time index.
+#' @noRd
+.tempssm_diffuse_end <- function(res, n_obs) {
+  diffuse_end <- res$kfs$d
+  valid <- is.numeric(diffuse_end) &&
+    length(diffuse_end) == 1L &&
+    !is.na(diffuse_end) &&
+    is.finite(diffuse_end) &&
+    diffuse_end >= 0 &&
+    diffuse_end <= n_obs &&
+    abs(diffuse_end - round(diffuse_end)) <= sqrt(.Machine$double.eps)
+
+  if (!valid) {
+    stop(
+      "The end of the diffuse filtering phase is unavailable or invalid.",
+      call. = FALSE
+    )
+  }
+
+  as.integer(round(diffuse_end))
+}
+
+
+#' Mask estimates from the diffuse filtering phase
+#'
+#' @inheritParams .tempssm_check_accessor_input
+#' @param values Numeric vector or matrix of filtered estimates.
+#'
+#' @return \code{values} with rows from the diffuse phase replaced by
+#'   \code{NA_real_}.
+#' @noRd
+.tempssm_mask_diffuse <- function(values, res) {
+  diffuse_end <- .tempssm_diffuse_end(res, NROW(values))
+  if (diffuse_end == 0L) {
+    return(values)
+  }
+
+  diffuse_idx <- seq_len(diffuse_end)
+  if (is.matrix(values)) {
+    values[diffuse_idx, ] <- NA_real_
+  } else {
+    values[diffuse_idx] <- NA_real_
+  }
+
+  values
+}
+
+
 #' Check whether a state estimate is available
 #'
 #' @inheritParams .tempssm_check_accessor_input
@@ -136,9 +189,13 @@
 #' @noRd
 .tempssm_state_ts <- function(res, state, estimate, scale = 1) {
   state_matrix <- .tempssm_state_matrix(res, estimate)
+  values <- state_matrix[, state] * scale
+  if (identical(estimate, "filtered")) {
+    values <- .tempssm_mask_diffuse(values, res)
+  }
 
   ts(
-    state_matrix[, state] * scale,
+    values,
     start = start(res$temp_data),
     frequency = frequency(res$temp_data)
   )
@@ -184,6 +241,97 @@
 }
 
 
+#' Extract filtered state variances
+#'
+#' @inheritParams .tempssm_state_ts
+#'
+#' @return A numeric vector of filtered state variances. Values from the
+#'   diffuse phase are returned as \code{NA_real_}.
+#' @noRd
+.tempssm_filtered_state_variance <- function(res, state) {
+  filtered <- res$kfs$att
+  state_idx <- match(state, colnames(filtered))
+  ptt <- res$kfs$Ptt
+  ptt_dim <- dim(ptt)
+  valid_shape <- is.numeric(ptt) &&
+    length(ptt_dim) == 3L &&
+    ptt_dim[1L] == NCOL(filtered) &&
+    ptt_dim[2L] == NCOL(filtered) &&
+    ptt_dim[3L] == NROW(filtered)
+
+  if (!valid_shape || is.na(state_idx)) {
+    stop(
+      "Filtered state covariance results are unavailable or invalid.",
+      call. = FALSE
+    )
+  }
+
+  variances <- as.numeric(ptt[state_idx, state_idx, ])
+  diffuse_end <- .tempssm_diffuse_end(res, length(variances))
+  regular_idx <- if (diffuse_end < length(variances)) {
+    seq.int(diffuse_end + 1L, length(variances))
+  } else {
+    integer(0)
+  }
+
+  if (length(regular_idx) > 0L) {
+    regular_variances <- variances[regular_idx]
+    if (!all(is.finite(regular_variances))) {
+      stop(
+        "Filtered state variances must be finite after the diffuse phase.",
+        call. = FALSE
+      )
+    }
+
+    tolerance <- sqrt(.Machine$double.eps) *
+      max(1, abs(regular_variances))
+    if (any(regular_variances < -tolerance)) {
+      stop(
+        "Filtered state variances must not be negative.",
+        call. = FALSE
+      )
+    }
+    negative_idx <- regular_idx[regular_variances < 0]
+    variances[negative_idx] <- 0
+  }
+
+  .tempssm_mask_diffuse(variances, res)
+}
+
+
+#' Convert filtered state intervals to a multivariate ts object
+#'
+#' @inheritParams .tempssm_state_ci_ts
+#'
+#' @return A multivariate \code{ts} object containing point estimates and
+#'   pointwise confidence bounds.
+#' @noRd
+.tempssm_filtered_state_ci_ts <- function(res, state, output_name, ci_level,
+                                          scale = 1) {
+  point <- .tempssm_state_ts(
+    res,
+    state,
+    estimate = "filtered",
+    scale = scale
+  )
+  variances <- .tempssm_filtered_state_variance(res, state)
+  standard_error <- sqrt(variances) * abs(scale)
+  critical_value <- stats::qnorm(1 - (1 - ci_level) / 2)
+  values <- cbind(
+    point,
+    lwr = point - critical_value * standard_error,
+    upr = point + critical_value * standard_error
+  )
+  colnames(values)[1L] <- output_name
+
+  ts(
+    values,
+    start = start(res$temp_data),
+    frequency = frequency(res$temp_data)
+  )
+}
+
+
 #' Extract a state estimate as a time series
 #'
 #' @inheritParams .tempssm_check_accessor_input
@@ -205,16 +353,6 @@
   estimate <- .tempssm_match_estimate(estimate)
   .tempssm_check_accessor_ci(ci, ci_level, fun)
 
-  if (identical(estimate, "filtered") && ci) {
-    stop(
-      paste0(
-        "Confidence intervals for filtered estimates are not currently ",
-        "supported; use `ci = FALSE`."
-      ),
-      call. = FALSE
-    )
-  }
-
   estimate_missing_msg <- if (identical(estimate, "filtered")) {
     gsub("smoothing", "filtering", missing_msg, fixed = TRUE)
   } else {
@@ -233,6 +371,18 @@
   }
 
   if (ci) {
+    if (identical(estimate, "filtered")) {
+      return(
+        .tempssm_filtered_state_ci_ts(
+          res = res,
+          state = state,
+          output_name = output_name,
+          ci_level = ci_level,
+          scale = scale
+        )
+      )
+    }
+
     return(
       .tempssm_state_ci_ts(
         res = res,
@@ -257,9 +407,7 @@
 #' @param estimate Character scalar specifying the state estimate to return.
 #'   Use \code{"smoothed"} (the default) for estimates conditional on all
 #'   observations, or \code{"filtered"} for estimates conditional on
-#'   observations up to each time point. Filtered confidence intervals are not
-#'   currently supported, so \code{estimate = "filtered"} requires
-#'   \code{ci = FALSE}.
+#'   observations up to each time point.
 #'
 #' @details
 #' Filtered states condition on observations up to each time point, whereas
@@ -267,11 +415,24 @@
 #' cases, model parameters are those estimated from the complete input series;
 #' requesting filtered states does not refit the model sequentially.
 #'
+#' For filtered estimates, pointwise confidence intervals are calculated from
+#' the filtered state covariance matrices stored in \code{res$kfs$Ptt}. These
+#' intervals condition on the fitted model parameters and do not include
+#' parameter-estimation uncertainty.
+#'
+#' During exact diffuse initialization, KFAS reports only the non-diffuse part
+#' of the filtered state covariance in \code{Ptt}, and individual state
+#' components may not yet be sufficiently identified. Therefore filtered point
+#' estimates and confidence bounds through \code{res$kfs$d} are intentionally
+#' returned as \code{NA}. The first reported filtered result is at time
+#' \code{res$kfs$d + 1}. Smoothed estimates are not masked.
+#'
 #' @return
 #' A univariate \code{ts} object of the selected level estimate
 #' (in degrees Celsius).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
-#' \code{level}, \code{lwr}, and \code{upr} is returned.
+#' \code{level}, \code{lwr}, and \code{upr} is returned. Filtered output has
+#' intentional \code{NA} values during the diffuse phase.
 #'
 #' @export
 #'
@@ -281,6 +442,11 @@
 #' res <- tempssm(niigata_sst)
 #' level_ts <- get_level_ts(res)
 #' filtered_level <- get_level_ts(res, estimate = "filtered")
+#' filtered_level_ci <- get_level_ts(
+#'   res,
+#'   ci = TRUE,
+#'   estimate = "filtered"
+#' )
 #' }
 get_level_ts <- function(res, ci = FALSE, ci_level = 0.95,
                          estimate = c("smoothed", "filtered")) {
@@ -305,12 +471,15 @@ get_level_ts <- function(res, ci = FALSE, ci_level = 0.95,
 #' @details
 #' The drift component is scaled to represent change per year.
 #' For example, monthly data (frequency = 12) are multiplied by 12.
+#' See \code{\link{get_level_ts}} for the distinction between smoothed and
+#' filtered estimates and the handling of the diffuse phase.
 #'
 #' @return
 #' A univariate \code{ts} object of the selected drift estimate
 #' (in degrees Celsius per year).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
-#' \code{drift}, \code{lwr}, and \code{upr} is returned.
+#' \code{drift}, \code{lwr}, and \code{upr} is returned. Filtered output has
+#' intentional \code{NA} values during the diffuse phase.
 #'
 #' @export
 #'
@@ -344,12 +513,15 @@ get_drift_ts <- function(res, ci = FALSE, ci_level = 0.95,
 #' @details
 #' The seasonal component represents recurrent intra-year variability
 #' captured by seasonal dummy state components in the state space model.
+#' See \code{\link{get_level_ts}} for the distinction between smoothed and
+#' filtered estimates and the handling of the diffuse phase.
 #'
 #' @return
 #' A univariate \code{ts} object of the selected seasonal estimate
 #' (in degrees Celsius).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
-#' \code{season}, \code{lwr}, and \code{upr} is returned.
+#' \code{season}, \code{lwr}, and \code{upr} is returned. Filtered output has
+#' intentional \code{NA} values during the diffuse phase.
 #'
 #' @export
 #'
@@ -387,12 +559,15 @@ get_season_ts <- function(res, ci = FALSE, ci_level = 0.95,
 #' @details
 #' The AR1 component represents short-term autocorrelated deviations
 #' from the level and seasonal structure.
+#' See \code{\link{get_level_ts}} for the distinction between smoothed and
+#' filtered estimates and the handling of the diffuse phase.
 #'
 #' @return
 #' A univariate \code{ts} object of the selected AR1 estimate
 #' (in degrees Celsius).
 #' If \code{ci = TRUE}, a multivariate \code{ts} object with columns
-#' \code{ar1}, \code{lwr}, and \code{upr} is returned.
+#' \code{ar1}, \code{lwr}, and \code{upr} is returned. Filtered output has
+#' intentional \code{NA} values during the diffuse phase.
 #'
 #' @export
 #'

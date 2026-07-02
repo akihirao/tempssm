@@ -57,17 +57,93 @@ test_that("component accessors match KFAS filtered states", {
   ar1_ts <- get_ar1_ts(res_tempssm, estimate = "filtered")
   kfas_states <- res_tempssm$kfs$att
   freq <- stats::frequency(res_tempssm$temp_data)
+  diffuse_end <- res_tempssm$kfs$d
+  diffuse_idx <- seq_len(diffuse_end)
+  regular_idx <- seq.int(diffuse_end + 1L, NROW(kfas_states))
 
-  expect_identical(as.numeric(level_ts), as.numeric(kfas_states[, "level"]))
+  expect_true(all(is.na(level_ts[diffuse_idx])))
+  expect_true(all(is.na(drift_ts[diffuse_idx])))
+  expect_true(all(is.na(season_ts[diffuse_idx])))
+  expect_true(all(is.na(ar1_ts[diffuse_idx])))
   expect_identical(
-    as.numeric(drift_ts),
-    as.numeric(kfas_states[, "slope"] * freq)
+    as.numeric(level_ts[regular_idx]),
+    as.numeric(kfas_states[regular_idx, "level"])
   )
   expect_identical(
-    as.numeric(season_ts),
-    as.numeric(kfas_states[, "sea_dummy1"])
+    as.numeric(drift_ts[regular_idx]),
+    as.numeric(kfas_states[regular_idx, "slope"] * freq)
   )
-  expect_identical(as.numeric(ar1_ts), as.numeric(kfas_states[, "arima1"]))
+  expect_identical(
+    as.numeric(season_ts[regular_idx]),
+    as.numeric(kfas_states[regular_idx, "sea_dummy1"])
+  )
+  expect_identical(
+    as.numeric(ar1_ts[regular_idx]),
+    as.numeric(kfas_states[regular_idx, "arima1"])
+  )
+})
+
+
+test_that("filtered component intervals match KFAS state covariances", {
+  level_ci <- get_level_ts(
+    res_tempssm,
+    ci = TRUE,
+    estimate = "filtered"
+  )
+  drift_ci <- get_drift_ts(
+    res_tempssm,
+    ci = TRUE,
+    estimate = "filtered"
+  )
+  season_ci <- get_season_ts(
+    res_tempssm,
+    ci = TRUE,
+    estimate = "filtered"
+  )
+  ar1_ci <- get_ar1_ts(
+    res_tempssm,
+    ci = TRUE,
+    estimate = "filtered"
+  )
+
+  filtered <- res_tempssm$kfs$att
+  ptt <- res_tempssm$kfs$Ptt
+  diffuse_end <- res_tempssm$kfs$d
+  diffuse_idx <- seq_len(diffuse_end)
+  regular_idx <- seq.int(diffuse_end + 1L, NROW(filtered))
+  critical_value <- stats::qnorm(0.975)
+
+  expect_true(all(is.na(level_ci[diffuse_idx, ])))
+  expect_true(all(is.na(drift_ci[diffuse_idx, ])))
+  expect_true(all(is.na(season_ci[diffuse_idx, ])))
+  expect_true(all(is.na(ar1_ci[diffuse_idx, ])))
+
+  expected_bounds <- function(state, scale = 1) {
+    state_idx <- match(state, colnames(filtered))
+    point <- filtered[regular_idx, state] * scale
+    standard_error <- sqrt(ptt[state_idx, state_idx, regular_idx]) * scale
+    cbind(
+      lwr = point - critical_value * standard_error,
+      upr = point + critical_value * standard_error
+    )
+  }
+
+  expect_identical(
+    unname(level_ci[regular_idx, c("lwr", "upr")]),
+    unname(expected_bounds("level"))
+  )
+  expect_identical(
+    unname(drift_ci[regular_idx, c("lwr", "upr")]),
+    unname(expected_bounds("slope", stats::frequency(res_tempssm$temp_data)))
+  )
+  expect_identical(
+    unname(season_ci[regular_idx, c("lwr", "upr")]),
+    unname(expected_bounds("sea_dummy1"))
+  )
+  expect_identical(
+    unname(ar1_ci[regular_idx, c("lwr", "upr")]),
+    unname(expected_bounds("arima1"))
+  )
 })
 
 
