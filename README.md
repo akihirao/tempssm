@@ -108,10 +108,17 @@ in SST, with an average annual increase of approximately 0.05 °C.
 The ggplot2-style interface is also available:
 
 ```r
-autoplot(res)
+p <- autoplot(res)
+p
+
+# Select and customize component panels
+p_selected <- autoplot(res, component = c("level", "drift"))
+p_selected + ggplot2::theme_bw()
 ```
 
-By default, `plot(res)` and `autoplot(res)` produce the same component plot.
+By default, `plot(res)` and `autoplot(res)` produce the same four-component
+plot. `autoplot(res)` returns a faceted `ggplot` object that can be modified
+with standard ggplot2 layers.
 
 ### Use Your Own Data
 

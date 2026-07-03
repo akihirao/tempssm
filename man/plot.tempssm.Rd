@@ -12,8 +12,7 @@
 \item{...}{Additional arguments passed to \code{autoplot.tempssm()}.}
 }
 \value{
-Invisibly returns the plotted \code{ggplot} object for a single component,
-or the \code{gtable} object combining all component plots.
+Invisibly returns the plotted \code{ggplot} object.
 }
 \description{
 Default base R plot method for objects fitted by \code{tempssm()}.

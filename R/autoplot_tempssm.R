@@ -51,55 +51,158 @@
 #' @noRd
 NULL
 
-#' Arrange ggplot objects and return a gtable
+#' Re-export the ggplot2 autoplot generic
 #'
-#' @param plots A list of ggplot objects
-#' @param nrow Number of rows
-#' @param ncol Number of columns
+#' @importFrom ggplot2 autoplot
+#' @export
+ggplot2::autoplot
+
+
+#' Validate requested component plots
 #'
-#' @return A gtable object (grob)
-#' @keywords internal
+#' @param component Character vector of requested component names, or `NULL`.
+#' @param choices Character vector of supported component names.
+#'
+#' @return A character vector containing one to four unique component names.
 #' @noRd
-.make_gtable_layout <- function(plots,
-                               nrow = length(plots),
-                               ncol = 1) {
-  if (!is.list(plots)) {
-    stop("`plots` must be a list.", call. = FALSE)
+.tempssm_autoplot_components <- function(component, choices) {
+  if (is.null(component)) {
+    return(choices)
   }
 
-  if (!is.numeric(nrow) ||
-      length(nrow) != 1 ||
-      !is.finite(nrow) ||
-      nrow < 1 ||
-      !.tempssm_is_integerish(nrow)) {
-    stop("`nrow` must be a positive integer.", call. = FALSE)
+  valid <- is.character(component) &&
+    length(component) >= 1L &&
+    length(component) <= length(choices) &&
+    !anyNA(component) &&
+    !anyDuplicated(component) &&
+    all(component %in% choices)
+  if (!valid) {
+    cli::cli_abort(c(
+      "{.arg component} must contain one to four unique component names.",
+      "i" = "Choose from: {toString(choices)}."
+    ))
   }
 
-  if (!is.numeric(ncol) ||
-      length(ncol) != 1 ||
-      !is.finite(ncol) ||
-      ncol < 1 ||
-      !.tempssm_is_integerish(ncol)) {
-    stop("`ncol` must be a positive integer.", call. = FALSE)
+  component
+}
+
+
+#' Resolve and validate a faceted component layout
+#'
+#' @param nrow,ncol Optional positive integers defining the facet layout.
+#' @param n_components Number of selected components.
+#'
+#' @return A list containing `nrow` and `ncol`.
+#' @noRd
+.tempssm_facet_layout <- function(nrow, ncol, n_components) {
+  validate_dimension <- function(x, arg_name) {
+    if (is.null(x)) {
+      return(invisible(NULL))
+    }
+    valid <- is.numeric(x) &&
+      length(x) == 1L &&
+      !is.na(x) &&
+      is.finite(x) &&
+      x >= 1 &&
+      .tempssm_is_integerish(x)
+    if (!valid) {
+      cli::cli_abort("{.arg {arg_name}} must be a positive integer or NULL.")
+    }
   }
 
-  if (nrow * ncol < length(plots)) {
-    stop("`nrow * ncol` must be at least the number of plots.", call. = FALSE)
+  validate_dimension(nrow, "nrow")
+  validate_dimension(ncol, "ncol")
+
+  if (is.null(nrow) && is.null(ncol)) {
+    dimensions <- switch(
+      as.character(n_components),
+      "1" = c(1L, 1L),
+      "2" = c(1L, 2L),
+      c(2L, 2L)
+    )
+    nrow <- dimensions[[1L]]
+    ncol <- dimensions[[2L]]
   }
 
-  grobs <- lapply(plots, ggplot2::ggplotGrob)
+  if (!is.null(nrow) && !is.null(ncol) &&
+      nrow * ncol < n_components) {
+    cli::cli_abort(
+      "{.arg nrow} * {.arg ncol} must accommodate all selected components."
+    )
+  }
 
-  mat <- matrix(grobs,
-                nrow = nrow,
-                ncol = ncol,
-                byrow = TRUE)
-
-  gtable::gtable_matrix(
-    name = "layout",
-    grobs = mat,
-    widths  = grid::unit(rep(1, ncol), "null"),
-    heights = grid::unit(rep(1, nrow), "null")
+  list(
+    nrow = if (is.null(nrow)) NULL else as.integer(nrow),
+    ncol = if (is.null(ncol)) NULL else as.integer(ncol)
   )
+}
+
+
+#' Combine component plots as one faceted ggplot
+#'
+#' @param plots Named list of component `ggplot` objects.
+#' @inheritParams .tempssm_check_accessor_ci
+#' @inheritParams .tempssm_facet_layout
+#'
+#' @return A faceted `ggplot` object.
+#' @noRd
+.tempssm_facet_component_plots <- function(plots, ci, nrow, ncol) {
+  degree <- intToUtf8(176L)
+  units <- c(
+    level = paste0("(", degree, "C)"),
+    drift = paste0("(", degree, "C/year)"),
+    season = paste0("(", degree, "C)"),
+    ar1 = paste0("(", degree, "C)")
+  )
+  titles <- vapply(plots, function(plot) plot$labels$title, character(1L))
+  facet_labels <- paste(titles, units[names(plots)])
+
+  plot_data <- Map(
+    function(plot, component_name, facet_label) {
+      data <- as.data.frame(plot$data)
+      data$component_id <- component_name
+      data$component <- factor(facet_label, levels = facet_labels)
+      data$line_width <- if (component_name %in% c("level", "drift")) {
+        1.2
+      } else {
+        0.5
+      }
+      data
+    },
+    plots,
+    names(plots),
+    facet_labels
+  )
+  combined_data <- do.call(rbind, plot_data)
+  rownames(combined_data) <- NULL
+
+  p <- ggplot2::ggplot(
+    combined_data,
+    ggplot2::aes(x = .data$time, y = .data$value)
+  )
+  if (ci) {
+    p <- p + ggplot2::geom_ribbon(
+      ggplot2::aes(ymin = .data$lwr, ymax = .data$upr),
+      alpha = 0.3
+    )
+  }
+
+  p +
+    ggplot2::geom_line(
+      ggplot2::aes(linewidth = .data$line_width),
+      show.legend = FALSE
+    ) +
+    ggplot2::scale_linewidth_identity() +
+    ggplot2::facet_wrap(
+      ggplot2::vars(.data$component),
+      scales = "free_y",
+      nrow = nrow,
+      ncol = ncol
+    ) +
+    ggplot2::scale_x_continuous(
+      expand = ggplot2::expansion(mult = c(0.02, 0.04))
+    ) +
+    ggplot2::labs(x = "Time (year)", y = "Estimate")
 }
 
 
@@ -113,23 +216,25 @@ NULL
 #' An object returned by \code{tempssm()}.
 #'
 #' @param component
-#' Character string specifying which component to plot.
+#' Character vector specifying one to four components to plot.
 #' One of \code{"level"}, \code{"drift"}, \code{"season"}, or \code{"ar1"}.
-#' If NULL (default), all components are plotted.
+#' Values must be unique and are displayed in the supplied order. If
+#' \code{NULL} (default), all four components are plotted.
 #'
 #' @inheritParams get_level_ts
 #'
-#' @param nrow,ncol Positive integers specifying the layout used when all
-#'   components are plotted. The default is a 2 by 2 layout. These arguments
-#'   are ignored when \code{component} is specified.
+#' @param nrow,ncol Optional positive integers specifying the facet layout when
+#'   multiple components are plotted. When both are \code{NULL}, the layout is
+#'   selected automatically; four components use a 2 by 2 layout. These
+#'   arguments are ignored when one component is selected.
 #'
 #' @param ...
 #' Additional arguments passed to the corresponding
 #' \code{autoplot_*()} function.
 #'
 #' @return
-#' A \code{ggplot} object if a single component is requested,
-#' or a \code{gtable} object combining all component plots.
+#' A \code{ggplot} object. Multiple components are represented as facets with
+#' free y-axis scales and component-specific units in the facet labels.
 #'
 #' @examples
 #' \dontrun{
@@ -145,19 +250,21 @@ NULL
 #' # plot all components in one column
 #' autoplot(res, nrow = 4, ncol = 1)
 #'
-#' # plot each of components
+#' # plot selected components in the supplied order
+#' autoplot(res, component = c("drift", "level"))
+#'
+#' # plot one component
 #' autoplot(res, component = "level", ci = FALSE)
 #' }
 #'
 #' @method autoplot tempssm
-#' @importFrom ggplot2 autoplot
 #' @export
 autoplot.tempssm <- function(object,
                              component = NULL,
                              ci = TRUE,
                              ci_level = 0.95,
-                             nrow = 2,
-                             ncol = 2,
+                             nrow = NULL,
+                             ncol = NULL,
                              ...) {
 
   plotters <- list(
@@ -167,22 +274,13 @@ autoplot.tempssm <- function(object,
     ar1    = autoplot_ar1
   )
 
-  if (!is.null(component)) {
-    if (!is.character(component) || length(component) != 1) {
-      stop("`component` must be a single character string.",
-           call. = FALSE)
-    }
-
-    if (!component %in% names(plotters)) {
-      stop(
-        "`component` must be one of: ",
-        toString(names(plotters)),
-        call. = FALSE
-      )
-    }
-
+  components <- .tempssm_autoplot_components(
+    component,
+    names(plotters)
+  )
+  if (length(components) == 1L) {
     return(
-      plotters[[component]](
+      plotters[[components]](
         object,
         ci = ci,
         ci_level = ci_level,
@@ -191,17 +289,18 @@ autoplot.tempssm <- function(object,
     )
   }
 
+  layout <- .tempssm_facet_layout(nrow, ncol, length(components))
   plots <- lapply(
-    plotters,
+    plotters[components],
     function(f) f(object, ci = ci, ci_level = ci_level, ...)
   )
 
-  g <- .make_gtable_layout(plots, nrow = nrow, ncol = ncol)
-
-  grid::grid.newpage()
-  grid::grid.draw(g)
-
-  invisible(g)
+  .tempssm_facet_component_plots(
+    plots,
+    ci = ci,
+    nrow = layout$nrow,
+    ncol = layout$ncol
+  )
 }
 
 
@@ -216,8 +315,7 @@ autoplot.tempssm <- function(object,
 #' @param ... Additional arguments passed to \code{autoplot.tempssm()}.
 #'
 #' @return
-#' Invisibly returns the plotted \code{ggplot} object for a single component,
-#' or the \code{gtable} object combining all component plots.
+#' Invisibly returns the plotted \code{ggplot} object.
 #'
 #' @method plot tempssm
 #' @export
@@ -231,10 +329,6 @@ autoplot.tempssm <- function(object,
 #' }
 plot.tempssm <- function(x, ...) {
   p <- autoplot.tempssm(x, ...)
-
-  if (inherits(p, "ggplot")) {
-    print(p)
-  }
-
+  print(p)
   invisible(p)
 }

@@ -53,8 +53,9 @@ test_that("combined plot interfaces do not emit scale-selection messages", {
     plotted <- plot(res_tempssm)
   )
 
-  expect_s3_class(combined_plot, "gtable")
-  expect_s3_class(plotted, "gtable")
+  expect_s3_class(combined_plot, "ggplot")
+  expect_s3_class(plotted, "ggplot")
+  expect_no_message(ggplot2::ggplot_build(combined_plot))
 })
 
 

@@ -33,7 +33,6 @@ Imports:
     forecast,
     tseries,
     cli,
-    gtable,
     httr2
 Suggests:
     testthat (>= 3.0.0),

@@ -189,7 +189,7 @@
 #' @srrstats {TS4.2} Exported functions document the type and class of their
 #' return values in roxygen `@return` fields. Structured return values also
 #' document their named list elements or columns, including `tempssm`,
-#' `summary.tempssm`, `logLik`, `ts`, `zoo`, `ggplot`, `gtable`, `tibble`,
+#' `summary.tempssm`, `logLik`, `ts`, `zoo`, `ggplot`, `tibble`,
 #' `data.frame`, and named list outputs used by accessors, diagnostics, and
 #' cross-validation helpers. Package-level documentation summarizes these
 #' return-value conventions.

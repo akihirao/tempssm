@@ -13,7 +13,12 @@ test_that("autoplot.tempssm returns ggplot for each component", {
 })
 
 
-test_that("autoplot.tempssm passes extra arguments to component plotter", {
+test_that("autoplot generic is re-exported", {
+  expect_identical(tempssm::autoplot, ggplot2::autoplot)
+})
+
+
+test_that("autoplot.tempssm passes arguments to a component plotter", {
   p <- autoplot(
     res_tempssm,
     component = "level",
@@ -25,35 +30,93 @@ test_that("autoplot.tempssm passes extra arguments to component plotter", {
 })
 
 
-test_that("autoplot.tempssm returns gtable for all components", {
-  g <- autoplot(res_tempssm, ci = FALSE)
+test_that("autoplot.tempssm returns faceted ggplot for all components", {
+  p <- autoplot(res_tempssm, ci = FALSE)
 
-  expect_s3_class(g, "gtable")
-  expect_length(g$heights, 2L)
-  expect_length(g$widths, 2L)
+  expect_s3_class(p, "ggplot")
+  expect_identical(p$facet$params$nrow, 2L)
+  expect_identical(p$facet$params$ncol, 2L)
+  expect_identical(
+    unique(p$data$component_id),
+    c("level", "drift", "season", "ar1")
+  )
+  expect_identical(length(levels(p$data$component)), 4L)
 })
 
 
-test_that("plot.tempssm delegates to autoplot.tempssm", {
+test_that("autoplot.tempssm selects components in supplied order", {
+  p <- autoplot(
+    res_tempssm,
+    component = c("drift", "level"),
+    ci = FALSE
+  )
+
+  expect_s3_class(p, "ggplot")
+  expect_identical(
+    unique(p$data$component_id),
+    c("drift", "level")
+  )
+  expect_identical(p$facet$params$nrow, 1L)
+  expect_identical(p$facet$params$ncol, 2L)
+})
+
+
+test_that("faceted component labels include component-specific units", {
+  p <- autoplot(res_tempssm, ci = FALSE)
+  labels <- levels(p$data$component)
+
+  expect_true(any(grepl("Level component", labels, fixed = TRUE)))
+  expect_true(any(grepl("Drift component", labels, fixed = TRUE)))
+  expect_true(any(grepl("C/year", labels, fixed = TRUE)))
+})
+
+
+test_that("autoplot.tempssm output accepts ggplot additions", {
+  p <- autoplot(res_tempssm, ci = FALSE)
+  modified <- p + ggplot2::theme_bw()
+
+  expect_s3_class(modified, "ggplot")
+  expect_silent(ggplot2::ggplot_build(modified))
+})
+
+
+test_that("plot.tempssm returns the faceted ggplot invisibly", {
   p <- plot(res_tempssm, component = "level", ci = FALSE)
-  g <- plot(res_tempssm, ci = FALSE)
+  combined <- plot(res_tempssm, ci = FALSE)
 
   expect_s3_class(p, "ggplot")
   expect_identical(p$labels$title, "Level component")
-  expect_s3_class(g, "gtable")
+  expect_s3_class(combined, "ggplot")
+  expect_identical(length(levels(combined$data$component)), 4L)
 })
 
 
-test_that("autoplot.tempssm accepts manual layout for all components", {
-  g <- autoplot(res_tempssm, ci = FALSE, nrow = 4, ncol = 1)
+test_that("autoplot.tempssm accepts a manual facet layout", {
+  p <- autoplot(res_tempssm, ci = FALSE, nrow = 4, ncol = 1)
 
-  expect_s3_class(g, "gtable")
-  expect_length(g$heights, 4L)
-  expect_length(g$widths, 1L)
+  expect_s3_class(p, "ggplot")
+  expect_identical(p$facet$params$nrow, 4L)
+  expect_identical(p$facet$params$ncol, 1L)
 })
 
 
-test_that("autoplot.tempssm propagates component input checks", {
+test_that("autoplot.tempssm validates selected components", {
+  expect_error(
+    autoplot(res_tempssm, component = character()),
+    "one to four unique component names"
+  )
+  expect_error(
+    autoplot(res_tempssm, component = c("level", "level")),
+    "one to four unique component names"
+  )
+  expect_error(
+    autoplot(res_tempssm, component = "unknown"),
+    "one to four unique component names"
+  )
+})
+
+
+test_that("autoplot.tempssm propagates plot input checks", {
   expect_error(
     autoplot(res_tempssm, component = "level", ci = "yes"),
     "`ci` must be a single logical value"
@@ -66,16 +129,16 @@ test_that("autoplot.tempssm propagates component input checks", {
 
   expect_error(
     autoplot(res_tempssm, nrow = 0),
-    "`nrow` must be a positive integer."
+    "nrow.*positive integer or NULL"
   )
 
   expect_error(
     autoplot(res_tempssm, ncol = 1.5),
-    "`ncol` must be a positive integer."
+    "ncol.*positive integer or NULL"
   )
 
   expect_error(
     autoplot(res_tempssm, nrow = 1, ncol = 1),
-    "`nrow \\* ncol` must be at least the number of plots."
+    "accommodate all selected components"
   )
 })
