@@ -60,9 +60,9 @@
                         <h4 data-toc-skip class="author">Akira S. Hirao,
 Shinya Baba, and Momoko Ichinokawa</h4>
             
-            <h4 data-toc-skip class="date">2026-07-02</h4>
+            <h4 data-toc-skip class="date">2026-07-03</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/akihirao/tempssm/blob/v0.2.5/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/akihirao/tempssm/blob/main/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="d-none name"><code>getting-started.Rmd</code></div>
     </div>
 
@@ -389,7 +389,10 @@ state-space framework allows latent states to be estimated for the
 entire time span, including unobserved periods.</p>
 <p>The standard plotting interface is <code>plot(res)</code>. The
 ggplot2-style interface <code>autoplot(res)</code> is also available and
-produces the same component plot by default.</p>
+produces the same component plot by default. It returns a faceted
+<code>ggplot</code> object, so selected components can be stored and
+customized with standard ggplot2 layers, for example,
+<code>autoplot(res, component = c("level", "drift")) + ggplot2::theme_bw()</code>.</p>
 </div>
 <div class="section level4">
 <h4 id="simple-model-diagnostics">Simple Model Diagnostics<a class="anchor" aria-label="anchor" href="#simple-model-diagnostics"></a>

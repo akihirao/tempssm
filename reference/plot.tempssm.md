@@ -28,8 +28,7 @@ plot(x, ...)
 
 ## Value
 
-Invisibly returns the plotted `ggplot` object for a single component, or
-the `gtable` object combining all component plots.
+Invisibly returns the plotted `ggplot` object.
 
 ## Examples
 

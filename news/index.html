@@ -33,7 +33,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/akihirao/tempssm/blob/v0.2.5/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/akihirao/tempssm/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
@@ -45,7 +45,7 @@
 <li>Classified model-fitting messages by verbosity so routine progress details can be controlled with <code>options(tempssm.verbosity = ...)</code> or the <code>TEMPSSM_VERBOSITY</code> environment variable.</li>
 <li>Added a pkgdown site workflow, renamed the introductory vignette to <code>getting-started</code>, and updated package documentation and links.</li>
 <li>Refactored model fitting, cross-validation, forecasting, plotting, and time-series utilities into focused internal helpers, with expanded contract and regression tests.</li>
-<li>Updated the package creator’s displayed name to Akira S. Hirao.</li>
+<li>Changed <code><a href="../reference/autoplot.tempssm.html">autoplot.tempssm()</a></code> to return a reusable faceted <code>ggplot</code> for one to four selected model components, and re-exported the <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> generic.</li>
 </ul></div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.2.4" id="tempssm-024">tempssm 0.2.4<a class="anchor" aria-label="anchor" href="#tempssm-024"></a></h2>

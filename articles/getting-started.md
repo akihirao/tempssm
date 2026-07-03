@@ -315,7 +315,10 @@ entire time span, including unobserved periods.
 
 The standard plotting interface is `plot(res)`. The ggplot2-style
 interface `autoplot(res)` is also available and produces the same
-component plot by default.
+component plot by default. It returns a faceted `ggplot` object, so
+selected components can be stored and customized with standard ggplot2
+layers, for example,
+`autoplot(res, component = c("level", "drift")) + ggplot2::theme_bw()`.
 
 #### Simple Model Diagnostics
 

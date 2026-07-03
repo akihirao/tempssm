@@ -35,7 +35,7 @@ tempssm(). By default, all available components are plotted."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Autoplot method for tempssm objects</h1>
-      <small class="dont-index">Source: <a href="https://github.com/akihirao/tempssm/blob/v0.2.5/R/autoplot_tempssm.R" class="external-link"><code>R/autoplot_tempssm.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/akihirao/tempssm/blob/main/R/autoplot_tempssm.R" class="external-link"><code>R/autoplot_tempssm.R</code></a></small>
       <div class="d-none name"><code>autoplot.tempssm.Rd</code></div>
     </div>
 
@@ -47,13 +47,13 @@ tempssm(). By default, all available components are plotted."></head><body>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'tempssm'</span></span>
-<span><span class="fu">autoplot</span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  component <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  ci <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  ci_level <span class="op">=</span> <span class="fl">0.95</span>,</span>
-<span>  nrow <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>  ncol <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  nrow <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  ncol <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -67,9 +67,10 @@ tempssm(). By default, all available components are plotted."></head><body>
 
 
 <dt id="arg-component">component<a class="anchor" aria-label="anchor" href="#arg-component"></a></dt>
-<dd><p>Character string specifying which component to plot.
+<dd><p>Character vector specifying one to four components to plot.
 One of <code>"level"</code>, <code>"drift"</code>, <code>"season"</code>, or <code>"ar1"</code>.
-If NULL (default), all components are plotted.</p></dd>
+Values must be unique and are displayed in the supplied order. If
+<code>NULL</code> (default), all four components are plotted.</p></dd>
 
 
 <dt id="arg-ci">ci<a class="anchor" aria-label="anchor" href="#arg-ci"></a></dt>
@@ -81,9 +82,10 @@ If NULL (default), all components are plotted.</p></dd>
 
 
 <dt id="arg-nrow-ncol">nrow, ncol<a class="anchor" aria-label="anchor" href="#arg-nrow-ncol"></a></dt>
-<dd><p>Positive integers specifying the layout used when all
-components are plotted. The default is a 2 by 2 layout. These arguments
-are ignored when <code>component</code> is specified.</p></dd>
+<dd><p>Optional positive integers specifying the facet layout when
+multiple components are plotted. When both are <code>NULL</code>, the layout is
+selected automatically; four components use a 2 by 2 layout. These
+arguments are ignored when one component is selected.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -93,8 +95,8 @@ are ignored when <code>component</code> is specified.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>ggplot</code> object if a single component is requested,
-or a <code>gtable</code> object combining all component plots.</p>
+    <p>A <code>ggplot</code> object. Multiple components are represented as facets with
+free y-axis scales and component-specific units in the facet labels.</p>
     </div>
 
     <div class="section level2">
@@ -104,16 +106,19 @@ or a <code>gtable</code> object combining all component plots.</p>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="tempssm.html">tempssm</a></span><span class="op">(</span><span class="va">niigata_sst</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># plot all components with 95% confidence interval</span></span></span>
-<span class="r-in"><span><span class="fu">autoplot</span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># plot all components without 95% confidence interval</span></span></span>
-<span class="r-in"><span><span class="fu">autoplot</span><span class="op">(</span><span class="va">res</span>, ci <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span>, ci <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># plot all components in one column</span></span></span>
-<span class="r-in"><span><span class="fu">autoplot</span><span class="op">(</span><span class="va">res</span>, nrow <span class="op">=</span> <span class="fl">4</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span>, nrow <span class="op">=</span> <span class="fl">4</span>, ncol <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># plot each of components</span></span></span>
-<span class="r-in"><span><span class="fu">autoplot</span><span class="op">(</span><span class="va">res</span>, component <span class="op">=</span> <span class="st">"level"</span>, ci <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># plot selected components in the supplied order</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span>, component <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"drift"</span>, <span class="st">"level"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># plot one component</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span>, component <span class="op">=</span> <span class="st">"level"</span>, ci <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

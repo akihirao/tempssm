@@ -27,7 +27,12 @@
 - Refactored model fitting, cross-validation, forecasting, plotting, and
   time-series utilities into focused internal helpers, with expanded
   contract and regression tests.
-- Updated the package creator’s displayed name to Akira S. Hirao.
+- Changed
+  [`autoplot.tempssm()`](https://akihirao.github.io/tempssm/reference/autoplot.tempssm.md)
+  to return a reusable faceted `ggplot` for one to four selected model
+  components, and re-exported the
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  generic.
 
 ## tempssm 0.2.4
 
