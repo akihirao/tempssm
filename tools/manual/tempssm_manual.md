@@ -246,6 +246,7 @@ summary(res_ar1)
     ## tempssm(temp_data = yamaguchi_sst)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -470.61 
     ##   k              : 5 
     ##   AIC            : 951.21 
@@ -292,6 +293,7 @@ summary(res_ar2)
     ## tempssm(temp_data = yamaguchi_sst, ar_order = 2)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -467.66 
     ##   k              : 6 
     ##   AIC            : 947.33 
@@ -320,6 +322,7 @@ summary(res_ar3)
     ## tempssm(temp_data = yamaguchi_sst, ar_order = 3)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -467.5 
     ##   k              : 7 
     ##   AIC            : 949 
@@ -337,12 +340,26 @@ summary(res_ar3)
     ##   Coefficient of AR2: -0.3334548 
     ##   Coefficient of AR3: -0.06336897
 
-By comparing models with different AR orders, we assess how short- and
-longer-term temporal dependencies are represented within the state-space
-framework. Here, for simplicity, model comparison and selection are
-performed based on AIC.
+By comparing models with different AR orders, we examine how the
+representation of temporal dependence differs among the candidate
+models. Here, AIC is used as a relative measure for comparing these
+models.
 
-### Model Selection Based on AIC
+### Model Comparison Based on the Akaike Information Criterion (AIC)
+
+The AIC of a fitted model can be obtained by applying `AIC()` to a
+`tempssm` object. By default, `tempssm()` fits the model with
+`marginal = FALSE`, using the diffuse likelihood. This setting is stored
+in the fitted object and is carried forward to `logLik()` and `AIC()`.
+To use the marginal likelihood, fit each model with `marginal = TRUE`.
+
+For comparisons among several models, `compare_tempssm_aic()` provides a
+convenient interface. Before returning a table containing AIC values,
+differences in AIC, Akaike weights, and related model information, the
+function checks the response series, observation period, convergence
+status, and likelihood type. All models being compared must use the same
+likelihood type so that their AIC values are calculated on a common
+basis.
 
 ``` r
 # Extract AIC
@@ -364,21 +381,32 @@ AIC(res_ar3)
     ## [1] 949.0037
 
 ``` r
-AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
-                        AIC = c(AIC(res_ar1),AIC(res_ar2),AIC(res_ar3))) %>% 
-  mutate(delta_AIC = AIC - min(AIC))
+AIC_table_res <- compare_tempssm_aic(
+  list(
+    AR1 = res_ar1,
+    AR2 = res_ar2,
+    AR3 = res_ar3
+  )
+)
 
-AIC_table_res %>% knitr::kable()
+knitr::kable(AIC_table_res)
 ```
 
-| model |      AIC | delta_AIC |
-|:------|---------:|----------:|
-| AR1   | 951.2127 |  3.884414 |
-| AR2   | 947.3283 |  0.000000 |
-| AR3   | 949.0037 |  1.675466 |
+| model | logLik | df | nobs | observed_n | start | end | frequency | likelihood | AIC | delta_AIC | weight |
+|:---|---:|---:|---:|---:|:---|:---|---:|:---|---:|---:|---:|
+| AR2 | -467.6641 | 6 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 947.3283 | 0.000000 | 0.6344866 |
+| AR3 | -467.5019 | 7 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 949.0037 | 1.675466 | 0.2745362 |
+| AR1 | -470.6063 | 5 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 951.2127 | 3.884414 | 0.0909772 |
 
-The AR2 model has a lower AIC than the other models and is therefore
-preferred. The following analyses proceed with the AR2 model.
+Among these candidate models, the AR2 model has the smallest AIC and
+therefore receives the strongest relative support according to this
+criterion. The following analyses use the AR2 model as the working
+model.
+
+A smaller AIC does not, however, establish absolute model adequacy or
+guarantee better predictive performance. A more comprehensive assessment
+should also consider residual diagnostics and time-series
+cross-validation.
 
 #### Plotting Long-Term Trend, Drift, Seasonal, and Autoregressive Components
 
@@ -617,6 +645,7 @@ summary(res_without)
     ## tempssm(temp_data = yamaguchi_sst_trim, ar_order = 2)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -466.08 
     ##   k              : 6 
     ##   AIC            : 944.17 
@@ -667,6 +696,7 @@ summary(res_with)
     ##     ar_order = 2)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -427.33 
     ##   k              : 7 
     ##   AIC            : 868.65 

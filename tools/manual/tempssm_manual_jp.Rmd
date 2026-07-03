@@ -252,11 +252,20 @@ summary(res_ar3)
 
 ```
 
-異なる AR 次数のモデルを比較することで、短期的およびより長期的な時間依存性が
-状態空間の枠組みの中でどのように表現されるかを評価します。
-ここでは簡便的にAICに基づいたモデル比較と選択をおこないます。
+異なる AR 次数のモデルを比較し、時間依存性の表現がモデル間でどのように
+異なるかを検討します。ここでは、候補モデルの相対的な比較指標としてAICを
+用います。
 
-### AIC に基づくモデル選択
+### 赤池情報量基準（AIC） に基づくモデル比較
+
+推定モデルのAICは、`AIC()`を`tempssm`オブジェクトに適用することで取得できます。
+`tempssm()`は、デフォルトの`marginal = FALSE`では散漫尤度 (diffuse likelihood) に基づいたモデルを推定します。この設定は推定結果に保存され、`logLik()`および
+`AIC()`でも引き継がれます。周辺尤度 (marginal likelihood) を用いる場合は、
+各モデルを`marginal = TRUE`として推定してください。複数のモデルを比較する
+場合は、`compare_tempssm_aic()`を利用できます。この関数は、応答時系列の
+観測期間や値、モデルの収束状況、尤度タイプなどを確認した上で、AIC、AIC差、
+Akaike weightなどを表形式で返します。比較するモデル間では、尤度タイプを統一し、
+AICの算出基準を揃える必要があります。
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Extract AIC
@@ -264,15 +273,22 @@ AIC(res_ar1)
 AIC(res_ar2)
 AIC(res_ar3)
 
-AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
-                        AIC = c(AIC(res_ar1),AIC(res_ar2),AIC(res_ar3))) %>% 
-  mutate(delta_AIC = AIC - min(AIC))
+AIC_table_res <- compare_tempssm_aic(
+  list(AR1 = res_ar1,
+       AR2 = res_ar2,
+       AR3 = res_ar3
+       )
+)
 
 AIC_table_res %>% knitr::kable()
 ```
 
-AR2 モデルは、他のモデルよりもAICが小さく良好であることが確認できます。
-以下の検討は、AR2 モデルを用いて進めていきます。
+この候補モデル群では、AR2 モデルのAICが最も小さく、AICに基づく相対比較では
+最も支持される結果となりました。以降ではAR2モデルを検討対象として用います。
+
+ただし、AICが小さいことはモデルの絶対的な適合性や予測性能を保証するものでは
+ありません。モデルを総合的に評価する際には、残差診断や時系列交差検証などの
+結果も併せて検討することが重要です。
 
 #### 長期トレンド、ドリフト、季節成分、自己回帰成分のプロット
 

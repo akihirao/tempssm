@@ -234,6 +234,7 @@ summary(res_ar1)
     ## tempssm(temp_data = yamaguchi_sst)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -470.61 
     ##   k              : 5 
     ##   AIC            : 951.21 
@@ -278,6 +279,7 @@ summary(res_ar2)
     ## tempssm(temp_data = yamaguchi_sst, ar_order = 2)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -467.66 
     ##   k              : 6 
     ##   AIC            : 947.33 
@@ -306,6 +308,7 @@ summary(res_ar3)
     ## tempssm(temp_data = yamaguchi_sst, ar_order = 3)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -467.5 
     ##   k              : 7 
     ##   AIC            : 949 
@@ -323,12 +326,24 @@ summary(res_ar3)
     ##   Coefficient of AR2: -0.3334548 
     ##   Coefficient of AR3: -0.06336897
 
-異なる AR
-次数のモデルを比較することで、短期的およびより長期的な時間依存性が
-状態空間の枠組みの中でどのように表現されるかを評価します。
-ここでは簡便的にAICに基づいたモデル比較と選択をおこないます。
+異なる AR 次数のモデルを比較し、時間依存性の表現がモデル間でどのように
+異なるかを検討します。ここでは、候補モデルの相対的な比較指標としてAICを
+用います。
 
-### AIC に基づくモデル選択
+### 赤池情報量基準（AIC） に基づくモデル比較
+
+推定モデルのAICは、`AIC()`を`tempssm`オブジェクトに適用することで取得できます。
+`tempssm()`は、デフォルトの`marginal = FALSE`では散漫尤度 (diffuse
+likelihood)
+に基づいたモデルを推定します。この設定は推定結果に保存され、`logLik()`および
+`AIC()`でも引き継がれます。周辺尤度 (marginal likelihood)
+を用いる場合は、
+各モデルを`marginal = TRUE`として推定してください。複数のモデルを比較する
+場合は、`compare_tempssm_aic()`を利用できます。この関数は、応答時系列の
+観測期間や値、モデルの収束状況、尤度タイプなどを確認した上で、AIC、AIC差、
+Akaike
+weightなどを表形式で返します。比較するモデル間では、尤度タイプを統一し、
+AICの算出基準を揃える必要があります。
 
 ``` r
 # Extract AIC
@@ -350,21 +365,29 @@ AIC(res_ar3)
     ## [1] 949.0037
 
 ``` r
-AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
-                        AIC = c(AIC(res_ar1),AIC(res_ar2),AIC(res_ar3))) %>% 
-  mutate(delta_AIC = AIC - min(AIC))
+AIC_table_res <- compare_tempssm_aic(
+  list(AR1 = res_ar1,
+       AR2 = res_ar2,
+       AR3 = res_ar3
+       )
+)
 
 AIC_table_res %>% knitr::kable()
 ```
 
-| model |      AIC | delta_AIC |
-|:------|---------:|----------:|
-| AR1   | 951.2127 |  3.884414 |
-| AR2   | 947.3283 |  0.000000 |
-| AR3   | 949.0037 |  1.675466 |
+| model | logLik | df | nobs | observed_n | start | end | frequency | likelihood | AIC | delta_AIC | weight |
+|:---|---:|---:|---:|---:|:---|:---|---:|:---|---:|---:|---:|
+| AR2 | -467.6641 | 6 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 947.3283 | 0.000000 | 0.6344866 |
+| AR3 | -467.5019 | 7 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 949.0037 | 1.675466 | 0.2745362 |
+| AR1 | -470.6063 | 5 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 951.2127 | 3.884414 | 0.0909772 |
 
-AR2 モデルは、他のモデルよりもAICが小さく良好であることが確認できます。
-以下の検討は、AR2 モデルを用いて進めていきます。
+この候補モデル群では、AR2
+モデルのAICが最も小さく、AICに基づく相対比較では
+最も支持される結果となりました。以降ではAR2モデルを検討対象として用います。
+
+ただし、AICが小さいことはモデルの絶対的な適合性や予測性能を保証するものでは
+ありません。モデルを総合的に評価する際には、残差診断や時系列交差検証などの
+結果も併せて検討することが重要です。
 
 #### 長期トレンド、ドリフト、季節成分、自己回帰成分のプロット
 
@@ -595,6 +618,7 @@ summary(res_without)
     ## tempssm(temp_data = yamaguchi_sst_trim, ar_order = 2)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -466.08 
     ##   k              : 6 
     ##   AIC            : 944.17 
@@ -643,6 +667,7 @@ summary(res_with)
     ##     ar_order = 2)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -427.33 
     ##   k              : 7 
     ##   AIC            : 868.65 

@@ -252,6 +252,7 @@ summary(res)
     ## tempssm(temp_data = niigata_sst)
     ## 
     ## Model fit:
+    ##   Likelihood type: diffuse 
     ##   Log-likelihood : -277.95 
     ##   k              : 5 
     ##   AIC            : 565.9 
@@ -301,7 +302,10 @@ entire time span, including unobserved periods.
 
 The standard plotting interface is `plot(res)`. The ggplot2-style
 interface `autoplot(res)` is also available and produces the same
-component plot by default.
+component plot by default. It returns a faceted `ggplot` object, so
+selected components can be stored and customized with standard ggplot2
+layers, for example,
+`autoplot(res, component = c("level", "drift")) + ggplot2::theme_bw()`.
 
 ### Simple Model Diagnostics
 
@@ -369,3 +373,10 @@ print(mean_drift_year)
     ## [1] 0.05259212
 
 Average annual increase in SST is approximately 0.05 °C.
+
+This tutorial covered the basic workflow for fitting and diagnosing a
+state-space model with `tempssm`. For more advanced topics, including
+models with exogenous variables and time-series cross-validation, please
+refer to the detailed manual:
+
+<https://github.com/akihirao/tempssm/blob/main/tools/manual/tempssm_manual.pdf>

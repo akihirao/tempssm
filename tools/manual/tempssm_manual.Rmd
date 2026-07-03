@@ -7,9 +7,9 @@ output:
 #  pdf_document:
 #    latex_engine: lualatex
 #    toc: true
-#  rmarkdown::html_vignette: default
-  md_document:
-    variant: gfm+tex_math_dollars
+  rmarkdown::html_vignette: default
+#  md_document:
+#    variant: gfm+tex_math_dollars
 vignette: >
   %\VignetteIndexEntry{tempssm Reference Manual}
   %\VignetteEngine{knitr::rmarkdown}
@@ -264,12 +264,24 @@ summary(res_ar3)
 
 ```
 
-By comparing models with different AR orders, we assess how short- and
-longer-term temporal dependencies are represented within the state-space
-framework. Here, for simplicity, model comparison and selection are performed
-based on AIC.
+By comparing models with different AR orders, we examine how the representation
+of temporal dependence differs among the candidate models. Here, AIC is used as
+a relative measure for comparing these models.
 
-### Model Selection Based on AIC
+### Model Comparison Based on the Akaike Information Criterion (AIC)
+
+The AIC of a fitted model can be obtained by applying `AIC()` to a `tempssm`
+object. By default, `tempssm()` fits the model with `marginal = FALSE`, using
+the diffuse likelihood. This setting is stored in the fitted object and is
+carried forward to `logLik()` and `AIC()`. To use the marginal likelihood, fit
+each model with `marginal = TRUE`.
+
+For comparisons among several models, `compare_tempssm_aic()` provides a
+convenient interface. Before returning a table containing AIC values,
+differences in AIC, Akaike weights, and related model information, the function
+checks the response series, observation period, convergence status, and
+likelihood type. All models being compared must use the same likelihood type so
+that their AIC values are calculated on a common basis.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Extract AIC
@@ -277,15 +289,24 @@ AIC(res_ar1)
 AIC(res_ar2)
 AIC(res_ar3)
 
-AIC_table_res <- tibble(model=c("AR1","AR2","AR3"),
-                        AIC = c(AIC(res_ar1),AIC(res_ar2),AIC(res_ar3))) %>% 
-  mutate(delta_AIC = AIC - min(AIC))
+AIC_table_res <- compare_tempssm_aic(
+  list(
+    AR1 = res_ar1,
+    AR2 = res_ar2,
+    AR3 = res_ar3
+  )
+)
 
-AIC_table_res %>% knitr::kable()
+knitr::kable(AIC_table_res)
 ```
 
-The AR2 model has a lower AIC than the other models and is therefore preferred.
-The following analyses proceed with the AR2 model.
+Among these candidate models, the AR2 model has the smallest AIC and therefore
+receives the strongest relative support according to this criterion. The
+following analyses use the AR2 model as the working model.
+
+A smaller AIC does not, however, establish absolute model adequacy or guarantee
+better predictive performance. A more comprehensive assessment should also
+consider residual diagnostics and time-series cross-validation.
 
 #### Plotting Long-Term Trend, Drift, Seasonal, and Autoregressive Components
 

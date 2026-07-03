@@ -40,7 +40,7 @@ test_that("autoplot.tempssm returns faceted ggplot for all components", {
     unique(p$data$component_id),
     c("level", "drift", "season", "ar1")
   )
-  expect_identical(length(levels(p$data$component)), 4L)
+  expect_identical(nlevels(p$data$component), 4L)
 })
 
 
@@ -87,7 +87,7 @@ test_that("plot.tempssm returns the faceted ggplot invisibly", {
   expect_s3_class(p, "ggplot")
   expect_identical(p$labels$title, "Level component")
   expect_s3_class(combined, "ggplot")
-  expect_identical(length(levels(combined$data$component)), 4L)
+  expect_identical(nlevels(combined$data$component), 4L)
 })
 
 
