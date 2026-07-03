@@ -390,3 +390,10 @@ print(mean_drift_year)
     ## [1] 0.05259212
 
 Average annual increase in SST is approximately 0.05 °C.
+
+This tutorial covered the basic workflow for fitting and diagnosing a
+state-space model with `tempssm`. For more advanced topics, including
+models with exogenous variables and time-series cross-validation, please
+refer to the detailed manual:
+
+<https://github.com/akihirao/tempssm/blob/main/tools/manual/tempssm_manual.pdf>
