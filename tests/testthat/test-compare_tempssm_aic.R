@@ -23,25 +23,13 @@ test_that("compare_tempssm_aic returns a ranked comparison table", {
       "weight"
     )
   )
+  expected <- vapply(models, AIC, numeric(1))
+
   expect_identical(result$AIC, sort(result$AIC))
+  expect_identical(result$AIC, unname(expected[result$model]))
   expect_identical(min(result$delta_AIC), 0)
   expect_lt(abs(sum(result$weight) - 1), sqrt(.Machine$double.eps))
   expect_true(all(result$likelihood == "marginal"))
-})
-
-
-test_that("comparison AIC values match individual model methods", {
-  models <- list(
-    base = res_tempssm,
-    exogenous = res_tempssm_exo
-  )
-  result <- compare_tempssm_aic(models)
-  expected <- vapply(models, AIC, numeric(1))
-
-  expect_identical(
-    result$AIC,
-    unname(expected[result$model])
-  )
   expect_true(all(result$nobs == length(temp_ts_test)))
   expect_true(all(result$observed_n == sum(!is.na(temp_ts_test))))
 })
@@ -138,18 +126,6 @@ test_that("comparison supports legacy diffuse-likelihood objects", {
   result <- compare_tempssm_aic(list(first = first, second = second))
 
   expect_true(all(result$likelihood == "diffuse"))
-})
-
-
-test_that("comparison supports models fitted with marginal likelihood", {
-  first <- res_tempssm
-  second <- res_tempssm_exo
-  first$marginal <- TRUE
-  second$marginal <- TRUE
-
-  result <- compare_tempssm_aic(list(first = first, second = second))
-
-  expect_true(all(result$likelihood == "marginal"))
 })
 
 

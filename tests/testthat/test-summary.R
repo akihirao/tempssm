@@ -42,11 +42,11 @@ test_that("summary uses logLik() and AIC() methods consistently", {
 })
 
 
-test_that("summary can use marginal likelihood", {
-  s <- summary(res_tempssm, marginal = TRUE)
-  ll <- logLik(res_tempssm, marginal = TRUE)
+test_that("summary can use an explicit diffuse likelihood", {
+  s <- summary(res_tempssm, marginal = FALSE)
+  ll <- logLik(res_tempssm, marginal = FALSE)
 
-  expect_true(s$marginal)
+  expect_false(s$marginal)
   expect_identical(s$logLik, as.numeric(ll))
   expect_identical(s$AIC, -2 * as.numeric(ll) + 2 * attr(ll, "df"))
 })

@@ -1,26 +1,18 @@
 # test-AIC_logLik.R
 
-test_that("AIC and logLik are consistent", {
+test_that("AIC methods are consistent with the selected log-likelihood", {
   ll <- logLik(res_tempssm)
-  expect_identical(
-    get_aic(res_tempssm),
-    -2 * as.numeric(ll) + 2 * attr(ll, "df")
-  )
-})
-
-
-test_that("AIC.tempssm returns same value as get_aic", {
-  a1 <- get_aic(res_tempssm)
-  a2 <- AIC(res_tempssm)
-
-  expect_identical(a1, a2)
-})
-
-
-test_that("AIC follows the selected likelihood setting", {
-  ll <- logLik(res_tempssm, marginal = TRUE)
   expected <- -2 * as.numeric(ll) + 2 * attr(ll, "df")
 
-  expect_identical(AIC(res_tempssm, marginal = TRUE), expected)
-  expect_identical(get_aic(res_tempssm, marginal = TRUE), expected)
+  expect_identical(get_aic(res_tempssm), expected)
+  expect_identical(AIC(res_tempssm), expected)
+})
+
+
+test_that("AIC methods support an explicit diffuse likelihood", {
+  ll <- logLik(res_tempssm, marginal = FALSE)
+  expected <- -2 * as.numeric(ll) + 2 * attr(ll, "df")
+
+  expect_identical(AIC(res_tempssm, marginal = FALSE), expected)
+  expect_identical(get_aic(res_tempssm, marginal = FALSE), expected)
 })

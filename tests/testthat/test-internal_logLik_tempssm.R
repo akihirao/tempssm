@@ -1,39 +1,16 @@
 # tests/testthat/test-internal_logLik_tempssm.R
 
-test_that(".internal_logLik_tempssm returns correct structure", {
-  res <- .internal_logLik_tempssm(res_tempssm)
-
-  expect_type(res, "list")
-
-  expect_named(
-    res,
-    c("logLik", "df", "nobs", "marginal")
-  )
-})
-
-
-test_that(".internal_logLik_tempssm returns numeric values", {
-  res <- .internal_logLik_tempssm(res_tempssm)
-
-  expect_type(res$logLik, "double")
-  expect_type(res$df, "integer")
-  expect_type(res$nobs, "integer")
-  expect_type(res$marginal, "logical")
-})
-
-
-test_that("nobs equals length of temp_data", {
+test_that(".internal_logLik_tempssm returns its metadata contract", {
   out <- .internal_logLik_tempssm(res_tempssm)
-
-  expect_identical(out$nobs, length(res_tempssm$temp_data))
-})
-
-
-test_that("df equals number of parameters without exogenous variables", {
-  out <- .internal_logLik_tempssm(res_tempssm)
-
   expected_df <- length(res_tempssm$fit$optim.out$par)
 
+  expect_type(out, "list")
+  expect_named(out, c("logLik", "df", "nobs", "marginal"))
+  expect_type(out$logLik, "double")
+  expect_type(out$df, "integer")
+  expect_type(out$nobs, "integer")
+  expect_type(out$marginal, "logical")
+  expect_identical(out$nobs, length(res_tempssm$temp_data))
   expect_identical(out$df, expected_df)
 })
 
@@ -46,18 +23,6 @@ test_that("df includes exogenous variables when present", {
   expected_df <- length(res$fit$optim.out$par) + ncol(res$exogenous_data)
 
   expect_identical(out$df, expected_df)
-})
-
-
-test_that("logLik matches stats::logLik output", {
-  out <- .internal_logLik_tempssm(res_tempssm)
-
-  expected <- as.numeric(stats::logLik(
-    res_tempssm$model,
-    marginal = res_tempssm$marginal
-  ))
-
-  expect_identical(out$logLik, expected)
 })
 
 

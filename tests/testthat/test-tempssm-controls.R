@@ -1,16 +1,32 @@
 test_that("public model-fitting APIs default to marginal likelihood", {
-  expect_identical(formals(tempssm)$marginal, TRUE)
-  expect_identical(formals(ts_cv_run_fold)$marginal, TRUE)
-  expect_identical(formals(ts_cv_run)$marginal, TRUE)
+  expect_true(formals(tempssm)$marginal)
+  expect_true(formals(ts_cv_run_fold)$marginal)
+  expect_true(formals(ts_cv_run)$marginal)
 })
 
 
-test_that("tempssm retains an explicit diffuse likelihood setting", {
+test_that("marginal and diffuse fits satisfy the same model contract", {
   withr::local_envvar(TEMPSSM_VERBOSITY = "none")
 
-  res <- tempssm(temp_ts_small, marginal = FALSE)
+  marginal_fit <- res_tempssm
+  diffuse_fit <- tempssm(temp_ts_test, marginal = FALSE)
+  fits <- list(marginal = marginal_fit, diffuse = diffuse_fit)
+  log_likelihoods <- vapply(fits, function(x) as.numeric(logLik(x)), numeric(1))
+  aic_values <- vapply(fits, AIC, numeric(1))
+  parameters <- lapply(fits, get_tempssm_params)
 
-  expect_false(res$marginal)
+  expect_true(marginal_fit$marginal)
+  expect_false(diffuse_fit$marginal)
+  expect_true(all(vapply(fits, `[[`, logical(1), "converged")))
+  expect_identical(diffuse_fit$temp_data, marginal_fit$temp_data)
+  expect_identical(diffuse_fit$ar_order, marginal_fit$ar_order)
+  expect_identical(diffuse_fit$use_season, marginal_fit$use_season)
+  expect_identical(names(parameters$diffuse), names(parameters$marginal))
+  expect_true(all(is.finite(unlist(parameters, use.names = FALSE))))
+  expect_true(all(is.finite(log_likelihoods)))
+  expect_true(all(is.finite(aic_values)))
+  expect_true(attr(logLik(marginal_fit), "marginal"))
+  expect_false(attr(logLik(diffuse_fit), "marginal"))
 })
 
 
