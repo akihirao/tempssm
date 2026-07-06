@@ -93,6 +93,9 @@ fits a linear Gaussian state-space model to a temperature time series.
 res <- tempssm(niigata_sst)
 ```
 
+Parameter estimation uses the KFAS marginal likelihood by default. Set
+`marginal = FALSE` explicitly to use the diffuse likelihood instead.
+
 The returned object is an S3 object of class `"tempssm"`. Results can be
 inspected with standard methods.
 

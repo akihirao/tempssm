@@ -11,7 +11,7 @@ cross-validation but does not compute evaluation metrics."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">tempssm</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,7 +56,7 @@ cross-validation but does not compute evaluation metrics.</p>
 <span>  parallel <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  workers <span class="op">=</span> <span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://parallelly.futureverse.org/reference/availableCores.html" class="external-link">availableCores</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  progress <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  marginal <span class="op">=</span> <span class="cn">FALSE</span></span>
+<span>  marginal <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -102,11 +102,13 @@ is shown. Default is <code>FALSE</code>.</p></dd>
 
 <dt id="arg-marginal">marginal<a class="anchor" aria-label="anchor" href="#arg-marginal"></a></dt>
 <dd><p>Logical scalar specifying the likelihood used during
-parameter estimation. If <code>FALSE</code> (the default), KFAS uses the
-diffuse likelihood. If <code>TRUE</code>, KFAS uses the marginal likelihood,
-which adds the diffuse-initialization correction term. The selected
+parameter estimation. If <code>TRUE</code> (the default), KFAS uses the
+marginal likelihood, which adds the diffuse-initialization correction
+term. If <code>FALSE</code>, KFAS uses the diffuse likelihood. The selected
 setting is stored in the fitted object and used by default by
-<code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code>, <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>, and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> methods.</p></dd>
+<code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code>, <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>, and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> methods. Set
+<code>marginal = FALSE</code> to reproduce the likelihood default used by
+versions of <span class="pkg">tempssm</span> prior to this change.</p></dd>
 
 </dl></div>
     <div class="section level2">

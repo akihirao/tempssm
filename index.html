@@ -22,7 +22,7 @@
 
     <a class="navbar-brand me-2" href="index.html">tempssm</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -116,6 +116,7 @@
 <p>The function <code><a href="reference/tempssm.html">tempssm()</a></code> fits a linear Gaussian state-space model to a temperature time series.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/tempssm.html">tempssm</a></span><span class="op">(</span><span class="va">niigata_sst</span><span class="op">)</span></span></code></pre></div>
+<p>Parameter estimation uses the KFAS marginal likelihood by default. Set <code>marginal = FALSE</code> explicitly to use the diffuse likelihood instead.</p>
 <p>The returned object is an S3 object of class <code>"tempssm"</code>. Results can be inspected with standard methods.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>

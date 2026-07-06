@@ -263,10 +263,10 @@ summary(res)
     ## tempssm(temp_data = niigata_sst)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -277.95 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -249.8 
     ##   k              : 5 
-    ##   AIC            : 565.9 
+    ##   AIC            : 509.59 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -284,7 +284,17 @@ summary(res)
 AIC(res)
 ```
 
-    ## [1] 565.8955
+    ## [1] 509.5923
+
+By default,
+[`tempssm()`](https://akihirao.github.io/tempssm/reference/tempssm.md)
+uses the KFAS marginal likelihood for parameter estimation. The selected
+likelihood type is retained for
+[`logLik()`](https://rdrr.io/r/stats/logLik.html),
+[`AIC()`](https://rdrr.io/r/stats/AIC.html), and
+[`summary()`](https://rdrr.io/r/base/summary.html). The diffuse
+likelihood remains available by fitting the model with
+`marginal = FALSE`.
 
 #### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 

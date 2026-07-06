@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">tempssm</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.5</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,7 @@
                         <h4 data-toc-skip class="author">Akira S. Hirao,
 Shinya Baba, and Momoko Ichinokawa</h4>
             
-            <h4 data-toc-skip class="date">2026-07-03</h4>
+            <h4 data-toc-skip class="date">2026-07-06</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/akihirao/tempssm/blob/main/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="d-none name"><code>getting-started.Rmd</code></div>
@@ -347,10 +347,10 @@ information for assessing model adequacy.</p>
 <span><span class="co">## tempssm(temp_data = niigata_sst)</span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Model fit:</span></span>
-<span><span class="co">##   Likelihood type: diffuse </span></span>
-<span><span class="co">##   Log-likelihood : -277.95 </span></span>
+<span><span class="co">##   Likelihood type: marginal </span></span>
+<span><span class="co">##   Log-likelihood : -249.8 </span></span>
 <span><span class="co">##   k              : 5 </span></span>
-<span><span class="co">##   AIC            : 565.9 </span></span>
+<span><span class="co">##   AIC            : 509.59 </span></span>
 <span><span class="co">##   Converged      : TRUE </span></span>
 <span><span class="co">## </span></span>
 <span><span class="co">## Variance parameters:</span></span>
@@ -364,7 +364,12 @@ information for assessing model adequacy.</p>
 <span><span class="co">##   Coefficient of AR1: 0.7442999</span></span></code></pre>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 565.8955</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 509.5923</span></span></code></pre>
+<p>By default, <code><a href="../reference/tempssm.html">tempssm()</a></code> uses the KFAS marginal likelihood
+for parameter estimation. The selected likelihood type is retained for
+<code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code>, <code><a href="https://rdrr.io/r/stats/AIC.html" class="external-link">AIC()</a></code>, and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>.
+The diffuse likelihood remains available by fitting the model with
+<code>marginal = FALSE</code>.</p>
 </div>
 <div class="section level4">
 <h4 id="plotting-level-drift-seasonal-and-auto-regressive-components">Plotting Level, Drift, Seasonal, and Auto-Regressive Components<a class="anchor" aria-label="anchor" href="#plotting-level-drift-seasonal-and-auto-regressive-components"></a>
