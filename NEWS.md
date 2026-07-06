@@ -1,4 +1,4 @@
-# tempssm 0.2.5
+# tempssm 0.3.0
 
 * Added a `marginal` option to select diffuse or marginal likelihood
   consistently during KFAS model fitting, likelihood evaluation, summaries,

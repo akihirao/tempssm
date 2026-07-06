@@ -21,7 +21,7 @@ test_that("marginal and diffuse fits satisfy the same model contract", {
   expect_identical(diffuse_fit$temp_data, marginal_fit$temp_data)
   expect_identical(diffuse_fit$ar_order, marginal_fit$ar_order)
   expect_identical(diffuse_fit$use_season, marginal_fit$use_season)
-  expect_identical(names(parameters$diffuse), names(parameters$marginal))
+  expect_named(parameters$diffuse, names(parameters$marginal))
   expect_true(all(is.finite(unlist(parameters, use.names = FALSE))))
   expect_true(all(is.finite(log_likelihoods)))
   expect_true(all(is.finite(aic_values)))
