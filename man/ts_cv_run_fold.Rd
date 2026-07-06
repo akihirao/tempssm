@@ -4,7 +4,7 @@
 \alias{ts_cv_run_fold}
 \title{Run time series cross-validation for a single fold}
 \usage{
-ts_cv_run_fold(fold, ar_order = 1, use_season = TRUE, marginal = FALSE)
+ts_cv_run_fold(fold, ar_order = 1, use_season = TRUE, marginal = TRUE)
 }
 \arguments{
 \item{fold}{A single fold object returned by \code{ts_train_test_split()}.}
@@ -20,11 +20,13 @@ unstable estimation.}
 considered? Defaults to \code{TRUE}.}
 
 \item{marginal}{Logical scalar specifying the likelihood used during
-parameter estimation. If \code{FALSE} (the default), KFAS uses the
-diffuse likelihood. If \code{TRUE}, KFAS uses the marginal likelihood,
-which adds the diffuse-initialization correction term. The selected
+parameter estimation. If \code{TRUE} (the default), KFAS uses the
+marginal likelihood, which adds the diffuse-initialization correction
+term. If \code{FALSE}, KFAS uses the diffuse likelihood. The selected
 setting is stored in the fitted object and used by default by
-\code{logLik()}, \code{AIC()}, and \code{summary()} methods.}
+\code{logLik()}, \code{AIC()}, and \code{summary()} methods. Set
+\code{marginal = FALSE} to reproduce the likelihood default used by
+versions of \pkg{tempssm} prior to this change.}
 }
 \value{
 A named list with the following components:

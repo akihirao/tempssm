@@ -18,7 +18,7 @@
                               ar_order,
                               use_season,
                               fold_id,
-                              marginal = FALSE) {
+                              marginal) {
   tryCatch(
     tempssm(
       temp_data = y_train,
@@ -203,7 +203,7 @@
 #' @noRd
 .prepare_ts_cv_model_controls <- function(ar_order,
                                           use_season,
-                                          marginal = FALSE) {
+                                          marginal) {
   .validate_ar_order(ar_order)
   .validate_use_season(use_season)
   .validate_marginal(marginal)
@@ -454,7 +454,7 @@
 ts_cv_run_fold <- function(fold,
                            ar_order = 1,
                            use_season = TRUE,
-                           marginal = FALSE) {
+                           marginal = TRUE) {
   controls <- .prepare_ts_cv_model_controls(
     ar_order,
     use_season,
@@ -1152,7 +1152,7 @@ ts_cv_run <- function(
   parallel = TRUE,
   workers = future::availableCores(),
   progress = FALSE,
-  marginal = FALSE
+  marginal = TRUE
 ) {
   model_controls <- .prepare_ts_cv_model_controls(
     ar_order,

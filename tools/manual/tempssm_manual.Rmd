@@ -271,10 +271,10 @@ a relative measure for comparing these models.
 ### Model Comparison Based on the Akaike Information Criterion (AIC)
 
 The AIC of a fitted model can be obtained by applying `AIC()` to a `tempssm`
-object. By default, `tempssm()` fits the model with `marginal = FALSE`, using
-the diffuse likelihood. This setting is stored in the fitted object and is
-carried forward to `logLik()` and `AIC()`. To use the marginal likelihood, fit
-each model with `marginal = TRUE`.
+object. By default, `tempssm()` fits the model with `marginal = TRUE`, using
+the marginal likelihood implemented by KFAS. This setting is stored in the
+fitted object and is carried forward to `logLik()` and `AIC()`. The diffuse
+likelihood remains available by explicitly setting `marginal = FALSE`.
 
 For comparisons among several models, `compare_tempssm_aic()` provides a
 convenient interface. Before returning a table containing AIC values,

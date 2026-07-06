@@ -11,7 +11,7 @@ ts_cv_run(
   parallel = TRUE,
   workers = future::availableCores(),
   progress = FALSE,
-  marginal = FALSE
+  marginal = TRUE
 )
 }
 \arguments{
@@ -40,11 +40,13 @@ using the \pkg{progressr} package. If \code{FALSE}, no progress bar
 is shown. Default is \code{FALSE}.}
 
 \item{marginal}{Logical scalar specifying the likelihood used during
-parameter estimation. If \code{FALSE} (the default), KFAS uses the
-diffuse likelihood. If \code{TRUE}, KFAS uses the marginal likelihood,
-which adds the diffuse-initialization correction term. The selected
+parameter estimation. If \code{TRUE} (the default), KFAS uses the
+marginal likelihood, which adds the diffuse-initialization correction
+term. If \code{FALSE}, KFAS uses the diffuse likelihood. The selected
 setting is stored in the fitted object and used by default by
-\code{logLik()}, \code{AIC()}, and \code{summary()} methods.}
+\code{logLik()}, \code{AIC()}, and \code{summary()} methods. Set
+\code{marginal = FALSE} to reproduce the likelihood default used by
+versions of \pkg{tempssm} prior to this change.}
 }
 \value{
 A list of named lists. Each element corresponds to one fold and contains

@@ -93,7 +93,7 @@ test_that("ts_cv_run_fold dispatches exogenous forecasts", {
 })
 
 
-test_that("ts_cv_run_fold forwards marginal likelihood control", {
+test_that("ts_cv_run_fold forwards default and supplied likelihood controls", {
   fold <- list(
     fold = 6L,
     train_ts = ts(1:24, frequency = 12),
@@ -116,9 +116,13 @@ test_that("ts_cv_run_fold forwards marginal likelihood control", {
     .package = "tempssm"
   )
 
-  ts_cv_run_fold(fold, marginal = TRUE)
+  ts_cv_run_fold(fold)
 
   expect_true(observed$args$marginal)
+
+  ts_cv_run_fold(fold, marginal = FALSE)
+
+  expect_false(observed$args$marginal)
 })
 
 

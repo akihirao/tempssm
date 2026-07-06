@@ -52,7 +52,10 @@ test_that("df includes exogenous variables when present", {
 test_that("logLik matches stats::logLik output", {
   out <- .internal_logLik_tempssm(res_tempssm)
 
-  expected <- as.numeric(stats::logLik(res_tempssm$model))
+  expected <- as.numeric(stats::logLik(
+    res_tempssm$model,
+    marginal = res_tempssm$marginal
+  ))
 
   expect_identical(out$logLik, expected)
 })

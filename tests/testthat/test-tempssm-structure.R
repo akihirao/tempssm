@@ -22,7 +22,7 @@ test_that("tempssm object structure is consistent", {
   expect_s3_class(res_tempssm$model, "SSModel")
   expect_s3_class(res_tempssm$kfs, "KFS")
   expect_s3_class(res_tempssm$temp_data, "ts")
-  expect_false(res_tempssm$marginal)
+  expect_true(res_tempssm$marginal)
 
   alpha <- res_tempssm$kfs$alphahat
   filtered_alpha <- res_tempssm$kfs$att

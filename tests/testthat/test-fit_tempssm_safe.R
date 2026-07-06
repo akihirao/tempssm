@@ -8,7 +8,8 @@ test_that(".fit_tempssm_safe returns tempssm object on success", {
     exo_train = NULL,
     ar_order = 1,
     use_season = TRUE,
-    fold_id = 1
+    fold_id = 1,
+    marginal = TRUE
   )
 
   expect_s3_class(res, "tempssm")
@@ -24,7 +25,8 @@ test_that(".fit_tempssm_safe works with exogenous variables", {
     exo_train = exo_ts_small,
     ar_order = 1,
     use_season = FALSE,
-    fold_id = 1
+    fold_id = 1,
+    marginal = TRUE
   )
 
   expect_true(is.null(res) || inherits(res, "tempssm"))

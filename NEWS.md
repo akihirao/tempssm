@@ -2,7 +2,8 @@
 
 * Added a `marginal` option to select diffuse or marginal likelihood
   consistently during KFAS model fitting, likelihood evaluation, summaries,
-  information criteria, and time-series cross-validation.
+  information criteria, and time-series cross-validation. Marginal likelihood
+  is now the default; set `marginal = FALSE` to use diffuse likelihood.
 * Extended the component accessors to return either smoothed or filtered state
   estimates. Filtered confidence intervals are available, with estimates and
   intervals during the exact diffuse phase reported as `NA`.

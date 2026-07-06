@@ -26,7 +26,7 @@ test_that("compare_tempssm_aic returns a ranked comparison table", {
   expect_identical(result$AIC, sort(result$AIC))
   expect_identical(min(result$delta_AIC), 0)
   expect_lt(abs(sum(result$weight) - 1), sqrt(.Machine$double.eps))
-  expect_true(all(result$likelihood == "diffuse"))
+  expect_true(all(result$likelihood == "marginal"))
 })
 
 
@@ -116,12 +116,13 @@ test_that("comparison requires identical response values and missingness", {
 
 
 test_that("comparison requires a common fitted likelihood type", {
+  diffuse_model <- res_tempssm
+  diffuse_model$marginal <- FALSE
   marginal_model <- res_tempssm_exo
-  marginal_model$marginal <- TRUE
 
   expect_error(
     compare_tempssm_aic(
-      list(diffuse = res_tempssm, marginal = marginal_model)
+      list(diffuse = diffuse_model, marginal = marginal_model)
     ),
     "diffuse and marginal likelihoods cannot be compared"
   )

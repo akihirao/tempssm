@@ -14,7 +14,7 @@ tempssm(
   reltol = NULL,
   use_season = TRUE,
   na_action = c("inform", "warn", "error", "allow"),
-  marginal = FALSE
+  marginal = TRUE
 )
 }
 \arguments{
@@ -62,11 +62,13 @@ silently. The default is \code{"inform"}. Missing values in
 before model fitting.}
 
 \item{marginal}{Logical scalar specifying the likelihood used during
-parameter estimation. If \code{FALSE} (the default), KFAS uses the
-diffuse likelihood. If \code{TRUE}, KFAS uses the marginal likelihood,
-which adds the diffuse-initialization correction term. The selected
+parameter estimation. If \code{TRUE} (the default), KFAS uses the
+marginal likelihood, which adds the diffuse-initialization correction
+term. If \code{FALSE}, KFAS uses the diffuse likelihood. The selected
 setting is stored in the fitted object and used by default by
-\code{logLik()}, \code{AIC()}, and \code{summary()} methods.}
+\code{logLik()}, \code{AIC()}, and \code{summary()} methods. Set
+\code{marginal = FALSE} to reproduce the likelihood default used by
+versions of \pkg{tempssm} prior to this change.}
 }
 \value{
 An object of class \code{"tempssm"}, a named list containing:

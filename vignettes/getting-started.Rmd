@@ -248,6 +248,11 @@ summary(res)
 AIC(res)
 ```
 
+By default, `tempssm()` uses the KFAS marginal likelihood for parameter
+estimation. The selected likelihood type is retained for `logLik()`, `AIC()`,
+and `summary()`. The diffuse likelihood remains available by fitting the model
+with `marginal = FALSE`.
+
 ### Plotting Level, Drift, Seasonal, and Auto-Regressive Components    
 
 We visualize the estimated long-term evolution of temperature levels

@@ -258,14 +258,17 @@ summary(res_ar3)
 
 ### 赤池情報量基準（AIC） に基づくモデル比較
 
-推定モデルのAICは、`AIC()`を`tempssm`オブジェクトに適用することで取得できます。
-`tempssm()`は、デフォルトの`marginal = FALSE`では散漫尤度 (diffuse likelihood) に基づいたモデルを推定します。この設定は推定結果に保存され、`logLik()`および
-`AIC()`でも引き継がれます。周辺尤度 (marginal likelihood) を用いる場合は、
-各モデルを`marginal = TRUE`として推定してください。複数のモデルを比較する
-場合は、`compare_tempssm_aic()`を利用できます。この関数は、応答時系列の
-観測期間や値、モデルの収束状況、尤度タイプなどを確認した上で、AIC、AIC差、
-Akaike weightなどを表形式で返します。比較するモデル間では、尤度タイプを統一し、
-AICの算出基準を揃える必要があります。
+推定モデルのAICは、`AIC()`を`tempssm`オブジェクトに適用することで
+取得できます。`tempssm()`は、デフォルトの`marginal = TRUE`では、KFASが
+実装する周辺尤度 (marginal likelihood) に基づいてモデルを推定します。
+この設定は推定結果に保存され、`logLik()`および`AIC()`でも引き継がれます。
+散漫尤度 (diffuse likelihood) を用いる場合は、`marginal = FALSE`を明示して
+ください。
+
+複数のモデルを比較する場合は、`compare_tempssm_aic()`を利用できます。
+この関数は、応答時系列の観測期間や値、モデルの収束状況、尤度タイプなどを
+確認した上で、AIC、AIC差、Akaike weightなどを表形式で返します。比較する
+モデル間では尤度タイプを統一し、AICの算出基準を揃える必要があります。
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Extract AIC

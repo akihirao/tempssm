@@ -1,3 +1,19 @@
+test_that("public model-fitting APIs default to marginal likelihood", {
+  expect_identical(formals(tempssm)$marginal, TRUE)
+  expect_identical(formals(ts_cv_run_fold)$marginal, TRUE)
+  expect_identical(formals(ts_cv_run)$marginal, TRUE)
+})
+
+
+test_that("tempssm retains an explicit diffuse likelihood setting", {
+  withr::local_envvar(TEMPSSM_VERBOSITY = "none")
+
+  res <- tempssm(temp_ts_small, marginal = FALSE)
+
+  expect_false(res$marginal)
+})
+
+
 test_that(".prepare_tempssm_numeric_control handles defaults and validation", {
   expect_identical(
     .prepare_tempssm_numeric_control(NULL, "maxit", 5000),

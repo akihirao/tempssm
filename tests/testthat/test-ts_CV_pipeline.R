@@ -59,7 +59,7 @@ test_that("ts_cv_run validates input types before execution", {
 })
 
 
-test_that("ts_cv_run preserves fold order and forwards model controls", {
+test_that("ts_cv_run forwards default model controls in fold order", {
   folds <- rev(ts_train_test_split(
     temp_data = temp_ts_small,
     initial = 24,
@@ -83,7 +83,6 @@ test_that("ts_cv_run preserves fold order and forwards model controls", {
     folds,
     ar_order = 2,
     use_season = FALSE,
-    marginal = TRUE,
     parallel = FALSE,
     workers = 1,
     progress = FALSE
@@ -93,6 +92,33 @@ test_that("ts_cv_run preserves fold order and forwards model controls", {
   expect_identical(vapply(res, `[[`, numeric(1), "ar_order"), c(2, 2))
   expect_false(any(vapply(res, `[[`, logical(1), "use_season")))
   expect_true(all(vapply(res, `[[`, logical(1), "marginal")))
+})
+
+
+test_that("ts_cv_run forwards an explicit diffuse likelihood control", {
+  folds <- ts_train_test_split(
+    temp_data = temp_ts_small,
+    initial = 24,
+    horizon = 12,
+    step = 24
+  )
+
+  testthat::local_mocked_bindings(
+    ts_cv_run_fold = function(fold, ar_order, use_season, marginal) {
+      list(fold = fold$fold, marginal = marginal)
+    },
+    .package = "tempssm"
+  )
+
+  res <- ts_cv_run(
+    folds,
+    marginal = FALSE,
+    parallel = FALSE,
+    workers = 1,
+    progress = FALSE
+  )
+
+  expect_false(any(vapply(res, `[[`, logical(1), "marginal")))
 })
 
 
