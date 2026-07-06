@@ -12,7 +12,7 @@
 
 <meta name="author" content="Akira S. Hirao, Shinya Baba, and Momoko Ichinokawa" />
 
-<meta name="date" content="2026-07-03" />
+<meta name="date" content="2026-07-06" />
 
 <title>tempssm: State-space modeling for temperature time series in R</title>
 
@@ -343,7 +343,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 temperature time series in R</h1>
 <h4 class="author">Akira S. Hirao, Shinya Baba, and Momoko
 Ichinokawa</h4>
-<h4 class="date">2026-07-03</h4>
+<h4 class="date">2026-07-06</h4>
 
 
 
@@ -577,10 +577,10 @@ information for assessing model adequacy.</p>
 ## tempssm(temp_data = niigata_sst)
 ## 
 ## Model fit:
-##   Likelihood type: diffuse 
-##   Log-likelihood : -277.95 
+##   Likelihood type: marginal 
+##   Log-likelihood : -249.8 
 ##   k              : 5 
-##   AIC            : 565.9 
+##   AIC            : 509.59 
 ##   Converged      : TRUE 
 ## 
 ## Variance parameters:
@@ -593,7 +593,12 @@ information for assessing model adequacy.</p>
 ##   Order of AR: 1 
 ##   Coefficient of AR1: 0.7442999</code></pre>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">AIC</span>(res)</span></code></pre></div>
-<pre><code>## [1] 565.8955</code></pre>
+<pre><code>## [1] 509.5923</code></pre>
+<p>By default, <code>tempssm()</code> uses the KFAS marginal likelihood
+for parameter estimation. The selected likelihood type is retained for
+<code>logLik()</code>, <code>AIC()</code>, and <code>summary()</code>.
+The diffuse likelihood remains available by fitting the model with
+<code>marginal = FALSE</code>.</p>
 </div>
 <div id="plotting-level-drift-seasonal-and-auto-regressive-components" class="section level3">
 <h3>Plotting Level, Drift, Seasonal, and Auto-Regressive Components</h3>

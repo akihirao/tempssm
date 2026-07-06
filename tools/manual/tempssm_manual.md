@@ -78,13 +78,13 @@ s_t = - \sum_{i=t-f}^{t-1} s_i + \omega_t, \qquad \omega_t \sim \mathcal{N}(0, \
 ```
 where $`\omega_t`$ is the process error of the seasonal component and
 $`f`$ denotes the seasonal frequency (for example, $`f=12`$ for monthly
-data). This formulation makes seasonal effects identifiable and
-comparable across different temporal resolutions. By imposing the
-sum-to-zero constraint over one complete seasonal cycle, the seasonal
-component captures recurring deviations from the underlying long-term
-trend without introducing long-term drift. In models without a seasonal
-component, the seasonal term $`s_t`$ is set to zero and omitted from the
-state equation.
+data). This formulation makes seasonal effects identifiable and enables
+models to be constructed for time series with different temporal
+resolutions. By imposing the sum-to-zero constraint over one complete
+seasonal cycle, the seasonal component captures recurring deviations
+from the underlying long-term trend without introducing long-term drift.
+In models without a seasonal component, the seasonal term $`s_t`$ is set
+to zero and omitted from the state equation.
 
 The autoregressive component follows an $`l`$th-order autoregressive
 (AR) process:
@@ -246,10 +246,10 @@ summary(res_ar1)
     ## tempssm(temp_data = yamaguchi_sst)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -470.61 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -437.2 
     ##   k              : 5 
-    ##   AIC            : 951.21 
+    ##   AIC            : 884.4 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -293,10 +293,10 @@ summary(res_ar2)
     ## tempssm(temp_data = yamaguchi_sst, ar_order = 2)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -467.66 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -434.26 
     ##   k              : 6 
-    ##   AIC            : 947.33 
+    ##   AIC            : 880.51 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -322,10 +322,10 @@ summary(res_ar3)
     ## tempssm(temp_data = yamaguchi_sst, ar_order = 3)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -467.5 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -434.09 
     ##   k              : 7 
-    ##   AIC            : 949 
+    ##   AIC            : 882.19 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -349,9 +349,10 @@ models.
 
 The AIC of a fitted model can be obtained by applying `AIC()` to a
 `tempssm` object. By default, `tempssm()` fits the model with
-`marginal = FALSE`, using the diffuse likelihood. This setting is stored
-in the fitted object and is carried forward to `logLik()` and `AIC()`.
-To use the marginal likelihood, fit each model with `marginal = TRUE`.
+`marginal = TRUE`, using the marginal likelihood implemented by KFAS.
+This setting is stored in the fitted object and is carried forward to
+`logLik()` and `AIC()`. The diffuse likelihood remains available by
+explicitly setting `marginal = FALSE`.
 
 For comparisons among several models, `compare_tempssm_aic()` provides a
 convenient interface. Before returning a table containing AIC values,
@@ -366,19 +367,19 @@ basis.
 AIC(res_ar1)
 ```
 
-    ## [1] 951.2127
+    ## [1] 884.3978
 
 ``` r
 AIC(res_ar2)
 ```
 
-    ## [1] 947.3283
+    ## [1] 880.5134
 
 ``` r
 AIC(res_ar3)
 ```
 
-    ## [1] 949.0037
+    ## [1] 882.1889
 
 ``` r
 AIC_table_res <- compare_tempssm_aic(
@@ -394,9 +395,9 @@ knitr::kable(AIC_table_res)
 
 | model | logLik | df | nobs | observed_n | start | end | frequency | likelihood | AIC | delta_AIC | weight |
 |:---|---:|---:|---:|---:|:---|:---|---:|:---|---:|---:|---:|
-| AR2 | -467.6641 | 6 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 947.3283 | 0.000000 | 0.6344866 |
-| AR3 | -467.5019 | 7 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 949.0037 | 1.675466 | 0.2745362 |
-| AR1 | -470.6063 | 5 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 951.2127 | 3.884414 | 0.0909772 |
+| AR2 | -434.2567 | 6 | 532 | 532 | 1982-1 | 2026-4 | 12 | marginal | 880.5134 | 0.000000 | 0.6344866 |
+| AR3 | -434.0944 | 7 | 532 | 532 | 1982-1 | 2026-4 | 12 | marginal | 882.1889 | 1.675466 | 0.2745362 |
+| AR1 | -437.1989 | 5 | 532 | 532 | 1982-1 | 2026-4 | 12 | marginal | 884.3978 | 3.884414 | 0.0909772 |
 
 Among these candidate models, the AR2 model has the smallest AIC and
 therefore receives the strongest relative support according to this
@@ -645,10 +646,10 @@ summary(res_without)
     ## tempssm(temp_data = yamaguchi_sst_trim, ar_order = 2)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -466.08 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -432.73 
     ##   k              : 6 
-    ##   AIC            : 944.17 
+    ##   AIC            : 877.47 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -696,10 +697,10 @@ summary(res_with)
     ##     ar_order = 2)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -427.33 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -390.91 
     ##   k              : 7 
-    ##   AIC            : 868.65 
+    ##   AIC            : 795.83 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -766,8 +767,8 @@ models_AICs %>% knitr::kable()
 
 | model   |      AIC | delta_AIC |
 |:--------|---------:|----------:|
-| Without | 944.1678 | -75.51744 |
-| With    | 868.6503 |   0.00000 |
+| Without | 877.4658 | -81.63906 |
+| With    | 795.8268 |   0.00000 |
 
 The model including the PDO index as an exogenous variable exhibits a
 substantially lower AIC than the baseline model without exogenous

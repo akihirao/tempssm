@@ -96,12 +96,12 @@ s_t = - \sum_{i=t-f}^{t-1} s_i + \omega_t, \qquad \omega_t \sim \mathcal{N}(0, \
 $$
 where $\omega_t$ is the process error of the seasonal component and $f$
 denotes the seasonal frequency (for example, $f=12$ for monthly data). This
-formulation makes seasonal effects identifiable and comparable across
-different temporal resolutions. By imposing the sum-to-zero constraint over one
-complete seasonal cycle, the seasonal component captures recurring deviations
-from the underlying long-term trend without introducing long-term drift. In
-models without a seasonal component, the seasonal term $s_t$ is set to zero and
-omitted from the state equation.
+formulation makes seasonal effects identifiable and enables models to be
+constructed for time series with different temporal resolutions. By imposing
+the sum-to-zero constraint over one complete seasonal cycle, the seasonal
+component captures recurring deviations from the underlying long-term trend
+without introducing long-term drift. In models without a seasonal component,
+the seasonal term $s_t$ is set to zero and omitted from the state equation.
 
 The autoregressive component follows an $l$th-order autoregressive (AR)
 process:

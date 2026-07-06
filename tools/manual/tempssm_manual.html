@@ -12,7 +12,7 @@
 
 <meta name="author" content="Akira S. Hirao, Shinya Baba, and Momoko Ichinokawa" />
 
-<meta name="date" content="2026-07-03" />
+<meta name="date" content="2026-07-06" />
 
 <title>tempssm Reference Manual</title>
 
@@ -340,10 +340,10 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 <h1 class="title toc-ignore">tempssm Reference Manual</h1>
-<h3 class="subtitle">Version 0.2.5</h3>
+<h3 class="subtitle">Version 0.3.0</h3>
 <h4 class="author">Akira S. Hirao, Shinya Baba, and Momoko
 Ichinokawa</h4>
-<h4 class="date">2026-07-03</h4>
+<h4 class="date">2026-07-06</h4>
 
 
 
@@ -428,13 +428,13 @@ s_t = - \sum_{i=t-f}^{t-1} s_i + \omega_t, \qquad \omega_t \sim
 \]</span> where <span class="math inline">\(\omega_t\)</span> is the
 process error of the seasonal component and <span class="math inline">\(f\)</span> denotes the seasonal frequency (for
 example, <span class="math inline">\(f=12\)</span> for monthly data).
-This formulation makes seasonal effects identifiable and comparable
-across different temporal resolutions. By imposing the sum-to-zero
-constraint over one complete seasonal cycle, the seasonal component
-captures recurring deviations from the underlying long-term trend
-without introducing long-term drift. In models without a seasonal
-component, the seasonal term <span class="math inline">\(s_t\)</span> is
-set to zero and omitted from the state equation.</p>
+This formulation makes seasonal effects identifiable and enables models
+to be constructed for time series with different temporal resolutions.
+By imposing the sum-to-zero constraint over one complete seasonal cycle,
+the seasonal component captures recurring deviations from the underlying
+long-term trend without introducing long-term drift. In models without a
+seasonal component, the seasonal term <span class="math inline">\(s_t\)</span> is set to zero and omitted from the
+state equation.</p>
 <p>The autoregressive component follows an <span class="math inline">\(l\)</span>th-order autoregressive (AR) process:
 <span class="math display">\[
 r_t = \phi_1 r_{t-1} + \phi_2 r_{t-2} + \cdots + \phi_l r_{t-l} +
@@ -577,10 +577,10 @@ estimates, as well as the constructed model and input data. By default,
 ## tempssm(temp_data = yamaguchi_sst)
 ## 
 ## Model fit:
-##   Likelihood type: diffuse 
-##   Log-likelihood : -470.61 
+##   Likelihood type: marginal 
+##   Log-likelihood : -437.2 
 ##   k              : 5 
-##   AIC            : 951.21 
+##   AIC            : 884.4 
 ##   Converged      : TRUE 
 ## 
 ## Variance parameters:
@@ -620,10 +620,10 @@ second- and third-order models.</p>
 ## tempssm(temp_data = yamaguchi_sst, ar_order = 2)
 ## 
 ## Model fit:
-##   Likelihood type: diffuse 
-##   Log-likelihood : -467.66 
+##   Likelihood type: marginal 
+##   Log-likelihood : -434.26 
 ##   k              : 6 
-##   AIC            : 947.33 
+##   AIC            : 880.51 
 ##   Converged      : TRUE 
 ## 
 ## Variance parameters:
@@ -645,10 +645,10 @@ second- and third-order models.</p>
 ## tempssm(temp_data = yamaguchi_sst, ar_order = 3)
 ## 
 ## Model fit:
-##   Likelihood type: diffuse 
-##   Log-likelihood : -467.5 
+##   Likelihood type: marginal 
+##   Log-likelihood : -434.09 
 ##   k              : 7 
-##   AIC            : 949 
+##   AIC            : 882.19 
 ##   Converged      : TRUE 
 ## 
 ## Variance parameters:
@@ -672,11 +672,12 @@ models.</p>
 (AIC)</h3>
 <p>The AIC of a fitted model can be obtained by applying
 <code>AIC()</code> to a <code>tempssm</code> object. By default,
-<code>tempssm()</code> fits the model with
-<code>marginal = FALSE</code>, using the diffuse likelihood. This
-setting is stored in the fitted object and is carried forward to
-<code>logLik()</code> and <code>AIC()</code>. To use the marginal
-likelihood, fit each model with <code>marginal = TRUE</code>.</p>
+<code>tempssm()</code> fits the model with <code>marginal = TRUE</code>,
+using the marginal likelihood implemented by KFAS. This setting is
+stored in the fitted object and is carried forward to
+<code>logLik()</code> and <code>AIC()</code>. The diffuse likelihood
+remains available by explicitly setting
+<code>marginal = FALSE</code>.</p>
 <p>For comparisons among several models,
 <code>compare_tempssm_aic()</code> provides a convenient interface.
 Before returning a table containing AIC values, differences in AIC,
@@ -686,11 +687,11 @@ type. All models being compared must use the same likelihood type so
 that their AIC values are calculated on a common basis.</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Extract AIC</span></span>
 <span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">AIC</span>(res_ar1)</span></code></pre></div>
-<pre><code>## [1] 951.2127</code></pre>
+<pre><code>## [1] 884.3978</code></pre>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">AIC</span>(res_ar2)</span></code></pre></div>
-<pre><code>## [1] 947.3283</code></pre>
+<pre><code>## [1] 880.5134</code></pre>
 <div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">AIC</span>(res_ar3)</span></code></pre></div>
-<pre><code>## [1] 949.0037</code></pre>
+<pre><code>## [1] 882.1889</code></pre>
 <div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>AIC_table_res <span class="ot">&lt;-</span> <span class="fu">compare_tempssm_aic</span>(</span>
 <span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="fu">list</span>(</span>
 <span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>    <span class="at">AR1 =</span> res_ar1,</span>
@@ -734,43 +735,43 @@ that their AIC values are calculated on a common basis.</p>
 <tbody>
 <tr class="odd">
 <td align="left">AR2</td>
-<td align="right">-467.6641</td>
+<td align="right">-434.2567</td>
 <td align="right">6</td>
 <td align="right">532</td>
 <td align="right">532</td>
 <td align="left">1982-1</td>
 <td align="left">2026-4</td>
 <td align="right">12</td>
-<td align="left">diffuse</td>
-<td align="right">947.3283</td>
+<td align="left">marginal</td>
+<td align="right">880.5134</td>
 <td align="right">0.000000</td>
 <td align="right">0.6344866</td>
 </tr>
 <tr class="even">
 <td align="left">AR3</td>
-<td align="right">-467.5019</td>
+<td align="right">-434.0944</td>
 <td align="right">7</td>
 <td align="right">532</td>
 <td align="right">532</td>
 <td align="left">1982-1</td>
 <td align="left">2026-4</td>
 <td align="right">12</td>
-<td align="left">diffuse</td>
-<td align="right">949.0037</td>
+<td align="left">marginal</td>
+<td align="right">882.1889</td>
 <td align="right">1.675466</td>
 <td align="right">0.2745362</td>
 </tr>
 <tr class="odd">
 <td align="left">AR1</td>
-<td align="right">-470.6063</td>
+<td align="right">-437.1989</td>
 <td align="right">5</td>
 <td align="right">532</td>
 <td align="right">532</td>
 <td align="left">1982-1</td>
 <td align="left">2026-4</td>
 <td align="right">12</td>
-<td align="left">diffuse</td>
-<td align="right">951.2127</td>
+<td align="left">marginal</td>
+<td align="right">884.3978</td>
 <td align="right">3.884414</td>
 <td align="right">0.0909772</td>
 </tr>
@@ -975,10 +976,10 @@ dependent-variable argument and store the returned object as
 ## tempssm(temp_data = yamaguchi_sst_trim, ar_order = 2)
 ## 
 ## Model fit:
-##   Likelihood type: diffuse 
-##   Log-likelihood : -466.08 
+##   Likelihood type: marginal 
+##   Log-likelihood : -432.73 
 ##   k              : 6 
-##   AIC            : 944.17 
+##   AIC            : 877.47 
 ##   Converged      : TRUE 
 ## 
 ## Variance parameters:
@@ -1022,10 +1023,10 @@ examples.</p>
 ##     ar_order = 2)
 ## 
 ## Model fit:
-##   Likelihood type: diffuse 
-##   Log-likelihood : -427.33 
+##   Likelihood type: marginal 
+##   Log-likelihood : -390.91 
 ##   k              : 7 
-##   AIC            : 868.65 
+##   AIC            : 795.83 
 ##   Converged      : TRUE 
 ## 
 ## Variance parameters:
@@ -1091,12 +1092,12 @@ support from the data.</p>
 <tbody>
 <tr class="odd">
 <td align="left">Without</td>
-<td align="right">944.1678</td>
-<td align="right">-75.51744</td>
+<td align="right">877.4658</td>
+<td align="right">-81.63906</td>
 </tr>
 <tr class="even">
 <td align="left">With</td>
-<td align="right">868.6503</td>
+<td align="right">795.8268</td>
 <td align="right">0.00000</td>
 </tr>
 </tbody>

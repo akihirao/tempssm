@@ -76,9 +76,9 @@ s_t = - \sum_{i=t-f}^{t-1} s_i + \omega_t, \qquad \omega_t \sim \mathcal{N}(0, \
 ```
 ここで、$`\omega_t`$ は季節成分の過程誤差、$`f`$
 は季節周期を表します（例えば 月別データでは
-$`f=12`$）。この定式化により、季節効果は識別可能となり、異なる
-時間分解能の間でも比較しやすくなります。1つの完全な季節周期にわたって
-総和ゼロ制約を課すことで、季節成分は長期的なドリフトを導入することなく、
+$`f=12`$）。この定式化により季節効果が識別可能となり、異なる
+時間分解能をもつ時系列に対応したモデルを構築できます。1つの完全な季節周期に
+わたって総和ゼロ制約を課すことで、季節成分は長期的なドリフトを導入することなく、
 基礎となる長期トレンドからの反復的な偏差を捉えます。季節成分を含まない
 モデルでは、季節項 $`s_t`$ はゼロとし、状態方程式から省略されます。
 
@@ -234,10 +234,10 @@ summary(res_ar1)
     ## tempssm(temp_data = yamaguchi_sst)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -470.61 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -437.2 
     ##   k              : 5 
-    ##   AIC            : 951.21 
+    ##   AIC            : 884.4 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -279,10 +279,10 @@ summary(res_ar2)
     ## tempssm(temp_data = yamaguchi_sst, ar_order = 2)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -467.66 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -434.26 
     ##   k              : 6 
-    ##   AIC            : 947.33 
+    ##   AIC            : 880.51 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -308,10 +308,10 @@ summary(res_ar3)
     ## tempssm(temp_data = yamaguchi_sst, ar_order = 3)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -467.5 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -434.09 
     ##   k              : 7 
-    ##   AIC            : 949 
+    ##   AIC            : 882.19 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -332,37 +332,36 @@ summary(res_ar3)
 
 ### 赤池情報量基準（AIC） に基づくモデル比較
 
-推定モデルのAICは、`AIC()`を`tempssm`オブジェクトに適用することで取得できます。
-`tempssm()`は、デフォルトの`marginal = FALSE`では散漫尤度 (diffuse
-likelihood)
-に基づいたモデルを推定します。この設定は推定結果に保存され、`logLik()`および
-`AIC()`でも引き継がれます。周辺尤度 (marginal likelihood)
-を用いる場合は、
-各モデルを`marginal = TRUE`として推定してください。複数のモデルを比較する
-場合は、`compare_tempssm_aic()`を利用できます。この関数は、応答時系列の
-観測期間や値、モデルの収束状況、尤度タイプなどを確認した上で、AIC、AIC差、
-Akaike
-weightなどを表形式で返します。比較するモデル間では、尤度タイプを統一し、
-AICの算出基準を揃える必要があります。
+推定モデルのAICは、`AIC()`を`tempssm`オブジェクトに適用することで
+取得できます。`tempssm()`は、デフォルトの`marginal = TRUE`では、KFASが
+実装する周辺尤度 (marginal likelihood) に基づいてモデルを推定します。
+この設定は推定結果に保存され、`logLik()`および`AIC()`でも引き継がれます。
+散漫尤度 (diffuse likelihood)
+を用いる場合は、`marginal = FALSE`を明示して ください。
+
+複数のモデルを比較する場合は、`compare_tempssm_aic()`を利用できます。
+この関数は、応答時系列の観測期間や値、モデルの収束状況、尤度タイプなどを
+確認した上で、AIC、AIC差、Akaike weightなどを表形式で返します。比較する
+モデル間では尤度タイプを統一し、AICの算出基準を揃える必要があります。
 
 ``` r
 # Extract AIC
 AIC(res_ar1)
 ```
 
-    ## [1] 951.2127
+    ## [1] 884.3978
 
 ``` r
 AIC(res_ar2)
 ```
 
-    ## [1] 947.3283
+    ## [1] 880.5134
 
 ``` r
 AIC(res_ar3)
 ```
 
-    ## [1] 949.0037
+    ## [1] 882.1889
 
 ``` r
 AIC_table_res <- compare_tempssm_aic(
@@ -377,9 +376,9 @@ AIC_table_res %>% knitr::kable()
 
 | model | logLik | df | nobs | observed_n | start | end | frequency | likelihood | AIC | delta_AIC | weight |
 |:---|---:|---:|---:|---:|:---|:---|---:|:---|---:|---:|---:|
-| AR2 | -467.6641 | 6 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 947.3283 | 0.000000 | 0.6344866 |
-| AR3 | -467.5019 | 7 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 949.0037 | 1.675466 | 0.2745362 |
-| AR1 | -470.6063 | 5 | 532 | 532 | 1982-1 | 2026-4 | 12 | diffuse | 951.2127 | 3.884414 | 0.0909772 |
+| AR2 | -434.2567 | 6 | 532 | 532 | 1982-1 | 2026-4 | 12 | marginal | 880.5134 | 0.000000 | 0.6344866 |
+| AR3 | -434.0944 | 7 | 532 | 532 | 1982-1 | 2026-4 | 12 | marginal | 882.1889 | 1.675466 | 0.2745362 |
+| AR1 | -437.1989 | 5 | 532 | 532 | 1982-1 | 2026-4 | 12 | marginal | 884.3978 | 3.884414 | 0.0909772 |
 
 この候補モデル群では、AR2
 モデルのAICが最も小さく、AICに基づく相対比較では
@@ -618,10 +617,10 @@ summary(res_without)
     ## tempssm(temp_data = yamaguchi_sst_trim, ar_order = 2)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -466.08 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -432.73 
     ##   k              : 6 
-    ##   AIC            : 944.17 
+    ##   AIC            : 877.47 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -667,10 +666,10 @@ summary(res_with)
     ##     ar_order = 2)
     ## 
     ## Model fit:
-    ##   Likelihood type: diffuse 
-    ##   Log-likelihood : -427.33 
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -390.91 
     ##   k              : 7 
-    ##   AIC            : 868.65 
+    ##   AIC            : 795.83 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -733,8 +732,8 @@ models_AICs %>% knitr::kable()
 
 | model   |      AIC | delta_AIC |
 |:--------|---------:|----------:|
-| Without | 944.1678 | -75.51744 |
-| With    | 868.6503 |   0.00000 |
+| Without | 877.4658 | -81.63906 |
+| With    | 795.8268 |   0.00000 |
 
 PDO
 指数を外生変数として含むモデルは、外生変数を含まないベースラインモデル
