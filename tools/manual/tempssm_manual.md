@@ -625,6 +625,19 @@ plt_yamaguchi_sst_trim + plt_pdo + patchwork::plot_layout(ncol=1)
 
 ![](tempssm_manual_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
 
+The PDO index data used in this exercise contain no missing values. When
+using your own exogenous-variable data, however, make sure that the
+exogenous variables do not contain missing values before fitting the
+model. `tempssm()` does not allow missing values in exogenous variables,
+and model fitting will stop with an error if such data are supplied. If
+necessary, apply appropriate preprocessing, such as imputation, before
+the analysis.
+
+In contrast, missing values in the dependent temperature time series are
+allowed. In the state-space model, these missing values are treated as
+unobserved responses, and model estimation proceeds through Kalman
+filtering and smoothing.
+
 ### Applying a Model Without an Exogenous Variable
 
 We first apply a baseline state-space model that does not include any
@@ -636,7 +649,7 @@ dependent-variable argument and store the returned object as
 `res_without`.
 
 ``` r
-res_without <- tempssm(temp_data = yamaguchi_sst_trim,ar=2) 
+res_without <- tempssm(temp_data = yamaguchi_sst_trim, ar_order = 2) 
 summary(res_without)
 ```
 

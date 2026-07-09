@@ -597,6 +597,15 @@ plt_yamaguchi_sst_trim + plt_pdo + patchwork::plot_layout(ncol=1)
 ```
 
 ![](tempssm_manual_jp_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+演習用の PDO 指数データには欠損値はありません。ただし、ユーザー自身の
+外生変数データを用いる場合には、外生変数に欠損値が含まれていないことを
+事前に確認してください。`tempssm()`では、欠損値を含む外生変数は許容されず、
+そのようなデータを指定するとモデル推定はエラーで停止します。必要に応じて、
+解析前に適切な欠損値補完などの前処理をおこなってください。
+
+一方で、従属変数である温度時系列データの欠損値は許容されます。状態空間モデルでは、
+これらの欠損値は未観測の応答値として扱われ、カルマンフィルタリングおよび
+平滑化の枠組みの中で推定が実行されます。
 
 ### 外生変数を含まないモデルの適用
 
@@ -607,7 +616,7 @@ plt_yamaguchi_sst_trim + plt_pdo + patchwork::plot_layout(ncol=1)
 返り値を`res_without`とします。
 
 ``` r
-res_without <- tempssm(temp_data = yamaguchi_sst_trim,ar=2) 
+res_without <- tempssm(temp_data = yamaguchi_sst_trim,ar_order=2) 
 summary(res_without)
 ```
 
