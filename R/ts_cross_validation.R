@@ -1512,7 +1512,7 @@ ts_cv_collect <- function(cv_results, metrics) {
 
 #' Mean of numeric values with all-missing protection
 #'
-#' @param x Numeric vector.
+#' @inheritParams .check_na_ratio
 #'
 #' @return Numeric scalar.
 #'
@@ -1520,7 +1520,7 @@ ts_cv_collect <- function(cv_results, metrics) {
 #' @noRd
 .mean_or_na <- function(x) {
   x <- as.numeric(x)
-  if (!any(!is.na(x))) {
+  if (all(is.na(x))) {
     return(NA_real_)
   }
 

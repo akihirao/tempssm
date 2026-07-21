@@ -70,7 +70,7 @@
 
 #' Check whether numeric values are integer-like
 #'
-#' @param x Numeric vector.
+#' @inheritParams .check_na_ratio
 #'
 #' @return A logical vector indicating whether each value is integer-like.
 #'

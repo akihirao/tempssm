@@ -194,9 +194,9 @@ AIC.tempssm <- function(object, ..., k = 2, marginal = NULL) {
   cli::cli_abort(
     c(
       "AIC is not computed for {.cls tempssm} objects.",
-      "i" = "Use {.fn logLik} to extract the log-likelihood.",
-      "i" = "Use {.code attr(logLik(x), \"df\")} for the parameter count.",
-      "i" = "If needed, compute AIC explicitly under your own assumptions."
+      "Use {.fn logLik} to extract the log-likelihood.",
+      "Use {.code attr(logLik(x), \"df\")} for the parameter count.",
+      "If needed, compute AIC explicitly under your own assumptions."
     )
   )
 }
@@ -229,8 +229,8 @@ get_aic <- function(res, marginal = NULL) {
   cli::cli_abort(
     c(
       "{.fn get_aic} is deprecated and no longer computes AIC.",
-      "i" = "AIC is no longer computed by tempssm.",
-      "i" = "Use {.fn logLik} and {.code attr(logLik(x), \"df\")} instead."
+      "AIC is no longer computed by tempssm.",
+      "Use {.fn logLik} and {.code attr(logLik(x), \"df\")} instead."
     )
   )
 }
