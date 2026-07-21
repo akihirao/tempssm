@@ -14,14 +14,10 @@ test_that("tempssm logLik method matches the underlying KFAS model", {
 })
 
 
-test_that("tempssm AIC helpers do not compute information criteria", {
+test_that("tempssm AIC method does not compute information criteria", {
   expect_error(
     AIC(res_tempssm),
     "AIC is not computed"
-  )
-  expect_error(
-    get_aic(res_tempssm),
-    "deprecated"
   )
 })
 

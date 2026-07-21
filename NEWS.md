@@ -2,13 +2,17 @@
 
 * Added a `marginal` option to select diffuse or marginal likelihood
   consistently during KFAS model fitting, likelihood evaluation, summaries,
-  information criteria, and time-series cross-validation. Marginal likelihood
-  is now the default; set `marginal = FALSE` to use diffuse likelihood.
+  and time-series cross-validation. Marginal likelihood is now the default;
+  set `marginal = FALSE` to use diffuse likelihood.
+* Stopped computing AIC for `tempssm` objects. `AIC.tempssm()` is retained only
+  to prevent automatic AIC calculation through `logLik()`, and `get_aic()` has
+  been removed. Log-likelihood values and parameter counts remain available
+  through `logLik()`.
 * Extended the component accessors to return either smoothed or filtered state
   estimates. Filtered confidence intervals are available, with estimates and
   intervals during the exact diffuse phase reported as `NA`.
-* Added `compare_tempssm_aic()` for validated AIC comparison across fitted
-  models using the same response data and likelihood type.
+* Added `compare_ts_cv()` for validated comparison of collected time-series
+  cross-validation results across candidate models.
 * Added `predict.tempssm()` for forecasts beyond the sample period, including
   models supplied with explicit future exogenous values. An explicit
   `exo_strategy = "last"` option provides a simplified one-step persistence

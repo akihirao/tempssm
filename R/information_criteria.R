@@ -188,6 +188,20 @@ logLik.tempssm <- function(object, ..., marginal = NULL) {
 #' @return
 #' This function always raises an error.
 #'
+#' @examples
+#' \dontrun{
+#' data(niigata_sst)
+#' res <- tempssm(niigata_sst)
+#'
+#' # AIC is intentionally not computed for tempssm objects.
+#' AIC(res)
+#'
+#' # The log-likelihood and parameter count remain available.
+#' ll <- logLik(res)
+#' as.numeric(ll)
+#' attr(ll, "df")
+#' }
+#'
 #' @method AIC tempssm
 #' @export
 AIC.tempssm <- function(object, ..., k = 2, marginal = NULL) {
@@ -197,40 +211,6 @@ AIC.tempssm <- function(object, ..., k = 2, marginal = NULL) {
       "Use {.fn logLik} to extract the log-likelihood.",
       "Use {.code attr(logLik(x), \"df\")} for the parameter count.",
       "If needed, compute AIC explicitly under your own assumptions."
-    )
-  )
-}
-
-
-#' Deprecated AIC helper for tempssm objects
-#'
-#' @description
-#' This function is retained for backward compatibility but is deprecated.
-#' AIC is intentionally not computed for \code{tempssm} objects.
-#'
-#' @inheritParams get_level_ts
-#'
-#' @param marginal
-#' Logical scalar or \code{NULL} accepted for backward compatibility.
-#' This argument is ignored.
-#'
-#' @return
-#' This function always raises an error.
-#'
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' data(niigata_sst)
-#' res <- tempssm(niigata_sst)
-#' logLik(res)
-#' }
-get_aic <- function(res, marginal = NULL) {
-  cli::cli_abort(
-    c(
-      "{.fn get_aic} is deprecated and no longer computes AIC.",
-      "AIC is no longer computed by tempssm.",
-      "Use {.fn logLik} and {.code attr(logLik(x), \"df\")} instead."
     )
   )
 }
