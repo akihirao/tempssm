@@ -11,10 +11,8 @@
   state estimates. Filtered confidence intervals are available, with
   estimates and intervals during the exact diffuse phase reported as
   `NA`.
-- Added
-  [`compare_tempssm_aic()`](https://akihirao.github.io/tempssm/reference/compare_tempssm_aic.md)
-  for validated AIC comparison across fitted models using the same
-  response data and likelihood type.
+- Added `compare_tempssm_aic()` for validated AIC comparison across
+  fitted models using the same response data and likelihood type.
 - Added
   [`predict.tempssm()`](https://akihirao.github.io/tempssm/reference/predict.tempssm.md)
   for forecasts beyond the sample period, including models supplied with

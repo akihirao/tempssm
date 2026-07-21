@@ -40,7 +40,7 @@
 <h2 class="pkg-version" data-toc-text="0.3.0" id="tempssm-030">tempssm 0.3.0<a class="anchor" aria-label="anchor" href="#tempssm-030"></a></h2>
 <ul><li>Added a <code>marginal</code> option to select diffuse or marginal likelihood consistently during KFAS model fitting, likelihood evaluation, summaries, information criteria, and time-series cross-validation. Marginal likelihood is now the default; set <code>marginal = FALSE</code> to use diffuse likelihood.</li>
 <li>Extended the component accessors to return either smoothed or filtered state estimates. Filtered confidence intervals are available, with estimates and intervals during the exact diffuse phase reported as <code>NA</code>.</li>
-<li>Added <code><a href="../reference/compare_tempssm_aic.html">compare_tempssm_aic()</a></code> for validated AIC comparison across fitted models using the same response data and likelihood type.</li>
+<li>Added <code>compare_tempssm_aic()</code> for validated AIC comparison across fitted models using the same response data and likelihood type.</li>
 <li>Added <code><a href="../reference/predict.tempssm.html">predict.tempssm()</a></code> for forecasts beyond the sample period, including models supplied with explicit future exogenous values. An explicit <code>exo_strategy = "last"</code> option provides a simplified one-step persistence forecast using the final observed exogenous values.</li>
 <li>Classified model-fitting messages by verbosity so routine progress details can be controlled with <code>options(tempssm.verbosity = ...)</code> or the <code>TEMPSSM_VERBOSITY</code> environment variable.</li>
 <li>Added a pkgdown site workflow, renamed the introductory vignette to <code>getting-started</code>, and updated package documentation and links.</li>

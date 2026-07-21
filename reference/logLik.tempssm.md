@@ -42,13 +42,6 @@ fitted `SSModel` object. S3 dispatch then invokes KFAS's registered
 `logLik.SSModel` method; that method is not exported for direct use. The
 `marginal` argument is passed to the KFAS method.
 
-## See also
-
-[`AIC.tempssm`](https://akihirao.github.io/tempssm/reference/AIC.tempssm.md)
-for computing AIC,
-[`get_aic`](https://akihirao.github.io/tempssm/reference/get_aic.md) as
-a convenience wrapper.
-
 ## Examples
 
 ``` r

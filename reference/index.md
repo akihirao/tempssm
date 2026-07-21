@@ -20,8 +20,8 @@
 - [`autoplot_season()`](https://akihirao.github.io/tempssm/reference/autoplot_season.md)
   : Plot the estimated seasonal component from a tempssm model
 
-- [`compare_tempssm_aic()`](https://akihirao.github.io/tempssm/reference/compare_tempssm_aic.md)
-  : Compare AIC across fitted tempssm models
+- [`compare_ts_cv()`](https://akihirao.github.io/tempssm/reference/compare_ts_cv.md)
+  : Compare time-series cross-validation results across models
 
 - [`compute_cv_metrics()`](https://akihirao.github.io/tempssm/reference/compute_cv_metrics.md)
   : Compute forecast accuracy metrics for a CV fold
@@ -50,7 +50,7 @@
   : Monthly mean air temperature at the summit of Mt. Fuji
 
 - [`get_aic()`](https://akihirao.github.io/tempssm/reference/get_aic.md)
-  : Extract the Akaike Information Criterion (AIC)
+  : Deprecated AIC helper for tempssm objects
 
 - [`get_ar1_ts()`](https://akihirao.github.io/tempssm/reference/get_ar1_ts.md)
   : Extract the first autoregressive component (AR1) as a time series

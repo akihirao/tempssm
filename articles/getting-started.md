@@ -266,7 +266,7 @@ summary(res)
     ##   Likelihood type: marginal 
     ##   Log-likelihood : -249.8 
     ##   k              : 5 
-    ##   AIC            : 509.59 
+    ##   Diffuse states : 13 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -281,18 +281,28 @@ summary(res)
 
 ``` r
 
-AIC(res)
+ll <- logLik(res)
+ll
 ```
 
-    ## [1] 509.5923
+    ## 'log Lik.' -249.7962 (df=5)
+
+``` r
+
+attr(ll, "df") # number of parameters
+```
+
+    ## [1] 5
 
 By default,
 [`tempssm()`](https://akihirao.github.io/tempssm/reference/tempssm.md)
 uses the KFAS marginal likelihood for parameter estimation. The selected
 likelihood type is retained for
-[`logLik()`](https://rdrr.io/r/stats/logLik.html),
-[`AIC()`](https://rdrr.io/r/stats/AIC.html), and
-[`summary()`](https://rdrr.io/r/base/summary.html). The diffuse
+[`logLik()`](https://rdrr.io/r/stats/logLik.html) and
+[`summary()`](https://rdrr.io/r/base/summary.html). AIC is intentionally
+not computed by `tempssm`; users who need an information criterion can
+calculate it explicitly from the log-likelihood and the number of
+parameters under their own model-comparison assumptions. The diffuse
 likelihood remains available by fitting the model with
 `marginal = FALSE`.
 

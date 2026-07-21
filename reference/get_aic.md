@@ -1,8 +1,7 @@
-# Extract the Akaike Information Criterion (AIC)
+# Deprecated AIC helper for tempssm objects
 
-Compute the Akaike Information Criterion (AIC) for a fitted `tempssm`
-model using the model log-likelihood and the number of estimated
-parameters.
+This function is retained for backward compatibility but is deprecated.
+AIC is intentionally not computed for `tempssm` objects.
 
 ## Usage
 
@@ -19,20 +18,12 @@ get_aic(res, marginal = NULL)
 
 - marginal:
 
-  Logical scalar or `NULL`. If `NULL`, use the likelihood setting stored
-  when the model was fitted. Set to `TRUE` or `FALSE` to evaluate the
-  fitted parameters with the marginal or diffuse likelihood,
-  respectively. An explicit value does not refit the model.
+  Logical scalar or `NULL` accepted for backward compatibility. This
+  argument is ignored.
 
 ## Value
 
-A numeric scalar representing the AIC of the fitted model.
-
-## Details
-
-The number of parameters is determined from the optimization results
-stored in the fitted model. If exogenous variables are included, their
-coefficients are added to the parameter count.
+This function always raises an error.
 
 ## Examples
 
@@ -40,6 +31,6 @@ coefficients are added to the parameter count.
 if (FALSE) { # \dontrun{
 data(niigata_sst)
 res <- tempssm(niigata_sst)
-aic <- get_aic(res)
+logLik(res)
 } # }
 ```

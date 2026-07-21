@@ -1,9 +1,9 @@
 # AIC method for tempssm objects (S3 method)
 
-Compute the Akaike Information Criterion (AIC) for a model fitted by
+AIC is intentionally not computed for models fitted by
 [`tempssm()`](https://akihirao.github.io/tempssm/reference/tempssm.md).
-This method extends the generic
-[`AIC`](https://rdrr.io/r/stats/AIC.html) function.
+The method is registered to prevent automatic AIC calculation from the
+[`logLik()`](https://rdrr.io/r/stats/logLik.html) method.
 
 ## Usage
 
@@ -27,26 +27,14 @@ AIC(object, ..., k = 2, marginal = NULL)
 
 - k:
 
-  Numeric penalty coefficient for the number of parameters. The default
-  `k = 2` gives the standard AIC definition.
+  Numeric penalty coefficient accepted for compatibility with
+  [`AIC`](https://rdrr.io/r/stats/AIC.html). This argument is ignored.
 
 - marginal:
 
-  Logical scalar or `NULL`. If `NULL`, use the likelihood setting stored
-  when the model was fitted. Set to `TRUE` or `FALSE` to evaluate the
-  fitted parameters with the marginal or diffuse likelihood,
-  respectively. An explicit value does not refit the model.
+  Logical scalar or `NULL` accepted for backward compatibility. This
+  argument is ignored.
 
 ## Value
 
-A numeric scalar giving the AIC of the fitted `tempssm` model.
-
-## Examples
-
-``` r
-if (FALSE) { # \dontrun{
-data(niigata_sst)
-res <- tempssm(niigata_sst)
-aic <- AIC(res)
-} # }
-```
+This function always raises an error.

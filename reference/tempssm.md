@@ -87,8 +87,7 @@ tempssm(
   likelihood, which adds the diffuse-initialization correction term. If
   `FALSE`, KFAS uses the diffuse likelihood. The selected setting is
   stored in the fitted object and used by default by
-  [`logLik()`](https://rdrr.io/r/stats/logLik.html),
-  [`AIC()`](https://rdrr.io/r/stats/AIC.html), and
+  [`logLik()`](https://rdrr.io/r/stats/logLik.html) and
   [`summary()`](https://rdrr.io/r/base/summary.html) methods. Set
   `marginal = FALSE` to reproduce the likelihood default used by
   versions of tempssm prior to this change.

@@ -74,9 +74,8 @@ likelihood, respectively. An explicit value does not refit the model.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object of class <code>"summary.tempssm"</code>, implemented as a named list
 with components <code>call</code>, <code>logLik</code>, <code>marginal</code>, <code>k</code>,
-<code>AIC</code>,
-<code>convergence</code>, <code>variances</code>, <code>coef_ar</code>,
-<code>exogenous</code>, and <code>exogenous_coef</code>.</p>
+<code>diffuse_states</code>, <code>convergence</code>, <code>variances</code>,
+<code>coef_ar</code>, <code>exogenous</code>, and <code>exogenous_coef</code>.</p>
     </div>
 
     <div class="section level2">
@@ -93,7 +92,9 @@ with components <code>call</code>, <code>logLik</code>, <code>marginal</code>, <
 <span class="r-in"><span><span class="va">s</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># access components programmatically</span></span></span>
-<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">AIC</span></span></span>
+<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">logLik</span></span></span>
+<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">k</span></span></span>
+<span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">diffuse_states</span></span></span>
 <span class="r-in"><span><span class="va">s</span><span class="op">$</span><span class="va">variances</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 <span class="r-in"><span></span></span>

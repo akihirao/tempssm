@@ -32,8 +32,9 @@ summary(object, ..., marginal = NULL)
 ## Value
 
 An object of class `"summary.tempssm"`, implemented as a named list with
-components `call`, `logLik`, `marginal`, `k`, `AIC`, `convergence`,
-`variances`, `coef_ar`, `exogenous`, and `exogenous_coef`.
+components `call`, `logLik`, `marginal`, `k`, `diffuse_states`,
+`convergence`, `variances`, `coef_ar`, `exogenous`, and
+`exogenous_coef`.
 
 ## Examples
 
@@ -50,7 +51,9 @@ s <- summary(res)
 s
 
 # access components programmatically
-s$AIC
+s$logLik
+s$k
+s$diffuse_states
 s$variances
 } # }
 ```
