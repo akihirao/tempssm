@@ -49,9 +49,6 @@
 - [`fuji_temp`](https://akihirao.github.io/tempssm/reference/fuji_temp.md)
   : Monthly mean air temperature at the summit of Mt. Fuji
 
-- [`get_aic()`](https://akihirao.github.io/tempssm/reference/get_aic.md)
-  : Deprecated AIC helper for tempssm objects
-
 - [`get_ar1_ts()`](https://akihirao.github.io/tempssm/reference/get_ar1_ts.md)
   : Extract the first autoregressive component (AR1) as a time series
 

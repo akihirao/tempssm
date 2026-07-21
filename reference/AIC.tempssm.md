@@ -38,3 +38,20 @@ AIC(object, ..., k = 2, marginal = NULL)
 ## Value
 
 This function always raises an error.
+
+## Examples
+
+``` r
+if (FALSE) { # \dontrun{
+data(niigata_sst)
+res <- tempssm(niigata_sst)
+
+# AIC is intentionally not computed for tempssm objects.
+AIC(res)
+
+# The log-likelihood and parameter count remain available.
+ll <- logLik(res)
+as.numeric(ll)
+attr(ll, "df")
+} # }
+```
