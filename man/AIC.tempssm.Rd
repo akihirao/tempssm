@@ -13,27 +13,17 @@
 \item{...}{Additional arguments passed to the generic \code{AIC()} function.
 These are currently ignored.}
 
-\item{k}{Numeric penalty coefficient for the number of parameters.
-The default \code{k = 2} gives the standard AIC definition.}
+\item{k}{Numeric penalty coefficient accepted for compatibility with
+\code{\link[stats]{AIC}}. This argument is ignored.}
 
-\item{marginal}{Logical scalar or \code{NULL}. If \code{NULL}, use the
-likelihood setting stored when the model was fitted. Set to \code{TRUE} or
-\code{FALSE} to evaluate the fitted parameters with the marginal or diffuse
-likelihood, respectively. An explicit value does not refit the model.}
+\item{marginal}{Logical scalar or \code{NULL} accepted for backward compatibility.
+This argument is ignored.}
 }
 \value{
-A numeric scalar giving the AIC of the fitted \code{tempssm} model.
+This function always raises an error.
 }
 \description{
-Compute the Akaike Information Criterion (AIC) for a model fitted
-by \code{tempssm()}. This method extends the generic
-\code{\link[stats]{AIC}} function.
-}
-\examples{
-\dontrun{
-data(niigata_sst)
-res <- tempssm(niigata_sst)
-aic <- AIC(res)
-}
-
+AIC is intentionally not computed for models fitted by \code{tempssm()}.
+The method is registered to prevent automatic AIC calculation from the
+\code{logLik()} method.
 }

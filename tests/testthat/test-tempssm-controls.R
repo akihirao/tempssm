@@ -12,7 +12,6 @@ test_that("marginal and diffuse fits satisfy the same model contract", {
   diffuse_fit <- tempssm(temp_ts_test, marginal = FALSE)
   fits <- list(marginal = marginal_fit, diffuse = diffuse_fit)
   log_likelihoods <- vapply(fits, function(x) as.numeric(logLik(x)), numeric(1))
-  aic_values <- vapply(fits, AIC, numeric(1))
   parameters <- lapply(fits, get_tempssm_params)
 
   expect_true(marginal_fit$marginal)
@@ -24,7 +23,6 @@ test_that("marginal and diffuse fits satisfy the same model contract", {
   expect_named(parameters$diffuse, names(parameters$marginal))
   expect_true(all(is.finite(unlist(parameters, use.names = FALSE))))
   expect_true(all(is.finite(log_likelihoods)))
-  expect_true(all(is.finite(aic_values)))
   expect_true(attr(logLik(marginal_fit), "marginal"))
   expect_false(attr(logLik(diffuse_fit), "marginal"))
 })

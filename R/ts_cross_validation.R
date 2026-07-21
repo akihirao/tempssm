@@ -1434,6 +1434,155 @@ ts_cv_collect <- function(cv_results, metrics) {
 }
 
 
+#' Validate a named list of collected tsCV results
+#'
+#' @param cv_tables A named list of \code{ts_cv_collect()} outputs.
+#'
+#' @return The input list, invisibly.
+#'
+#' @keywords internal
+#' @noRd
+.validate_ts_cv_comparison_tables <- function(cv_tables) {
+  if (!is.list(cv_tables) || length(cv_tables) < 2L) {
+    cli::cli_abort(
+      "{.arg cv_tables} must be a named list containing at least two tables."
+    )
+  }
+
+  table_names <- names(cv_tables)
+  valid_names <- !is.null(table_names) &&
+    length(table_names) == length(cv_tables) &&
+    !anyNA(table_names) &&
+    all(nzchar(trimws(table_names)))
+  if (!valid_names) {
+    cli::cli_abort(
+      "Every table in {.arg cv_tables} must have a non-empty name."
+    )
+  }
+
+  if (anyDuplicated(table_names)) {
+    cli::cli_abort("Names in {.arg cv_tables} must be unique.")
+  }
+
+  required_cols <- c(
+    "fold",
+    "converged",
+    "MAE",
+    "MASE_naive",
+    "MASE_seasonal"
+  )
+  reference_folds <- NULL
+
+  for (i in seq_along(cv_tables)) {
+    current <- cv_tables[[i]]
+    current_name <- table_names[[i]]
+
+    if (!is.data.frame(current)) {
+      cli::cli_abort(
+        "Table {.val {current_name}} must be a data frame."
+      )
+    }
+
+    missing_cols <- setdiff(required_cols, names(current))
+    if (length(missing_cols) > 0L) {
+      cli::cli_abort(
+        c(
+          "Table {.val {current_name}} is missing required column{?s}.",
+          "x" = "{.field {missing_cols}}"
+        )
+      )
+    }
+
+    current_folds <- current$fold
+    if (is.null(reference_folds)) {
+      reference_folds <- current_folds
+    } else if (!identical(current_folds, reference_folds)) {
+      cli::cli_abort(
+        c(
+          "Table {.val {current_name}} has incompatible folds.",
+          "i" = "Use the same fold IDs and order as {.val {table_names[[1L]]}}."
+        )
+      )
+    }
+  }
+
+  invisible(cv_tables)
+}
+
+
+#' Mean of numeric values with all-missing protection
+#'
+#' @param x Numeric vector.
+#'
+#' @return Numeric scalar.
+#'
+#' @keywords internal
+#' @noRd
+.mean_or_na <- function(x) {
+  x <- as.numeric(x)
+  if (!any(!is.na(x))) {
+    return(NA_real_)
+  }
+
+  mean(x, na.rm = TRUE)
+}
+
+
+#' Compare time-series cross-validation results across models
+#'
+#' @description
+#' Summarize model-level performance from collected time-series
+#' cross-validation results. The function is intended for comparing multiple
+#' candidate \code{tempssm} model specifications using the same folds.
+#'
+#' @param cv_tables A named list of \code{ts_cv_collect()} outputs. Each table
+#'   must contain the same fold IDs in the same order and columns
+#'   \code{fold}, \code{converged}, \code{MAE}, \code{MASE_naive}, and
+#'   \code{MASE_seasonal}. List names are used as model labels.
+#'
+#' @return
+#' A \code{tibble} with one row per model and columns \code{model},
+#' \code{n_folds}, \code{converged_n}, \code{converged_rate},
+#' \code{mean_MAE}, \code{mean_MASE_naive}, and
+#' \code{mean_MASE_seasonal}.
+#'
+#' @examples
+#' \dontrun{
+#' data(yamaguchi_sst)
+#'
+#' folds <- ts_train_test_split(yamaguchi_sst, initial = 60)
+#' cv_ar1 <- ts_cv_run(folds, ar_order = 1)
+#' cv_ar2 <- ts_cv_run(folds, ar_order = 2)
+#'
+#' tab_ar1 <- ts_cv_collect(cv_ar1, lapply(cv_ar1, compute_cv_metrics))
+#' tab_ar2 <- ts_cv_collect(cv_ar2, lapply(cv_ar2, compute_cv_metrics))
+#'
+#' compare_ts_cv(list(AR1 = tab_ar1, AR2 = tab_ar2))
+#' }
+#'
+#' @export
+compare_ts_cv <- function(cv_tables) {
+  .validate_ts_cv_comparison_tables(cv_tables)
+
+  rows <- lapply(names(cv_tables), function(model_name) {
+    current <- cv_tables[[model_name]]
+    converged <- as.logical(current$converged)
+
+    tibble::tibble(
+      model = model_name,
+      n_folds = nrow(current),
+      converged_n = sum(converged, na.rm = TRUE),
+      converged_rate = mean(converged, na.rm = TRUE),
+      mean_MAE = .mean_or_na(current$MAE),
+      mean_MASE_naive = .mean_or_na(current$MASE_naive),
+      mean_MASE_seasonal = .mean_or_na(current$MASE_seasonal)
+    )
+  })
+
+  tibble::as_tibble(do.call(rbind, rows))
+}
+
+
 #' Compute scale coefficient Q for MASE
 #'
 #' @description

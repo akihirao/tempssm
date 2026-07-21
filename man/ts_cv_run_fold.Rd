@@ -24,9 +24,9 @@ parameter estimation. If \code{TRUE} (the default), KFAS uses the
 marginal likelihood, which adds the diffuse-initialization correction
 term. If \code{FALSE}, KFAS uses the diffuse likelihood. The selected
 setting is stored in the fitted object and used by default by
-\code{logLik()}, \code{AIC()}, and \code{summary()} methods. Set
-\code{marginal = FALSE} to reproduce the likelihood default used by
-versions of \pkg{tempssm} prior to this change.}
+\code{logLik()} and \code{summary()} methods. Set \code{marginal = FALSE}
+to reproduce the likelihood default used by versions of \pkg{tempssm}
+prior to this change.}
 }
 \value{
 A named list with the following components:

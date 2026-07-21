@@ -100,10 +100,9 @@
 #' tests explicitly compare `tempssm` wrappers with the underlying `KFAS`
 #' objects by checking that `logLik.tempssm()` matches the registered `KFAS`
 #' method reached through `stats::logLik(res$model)` for both diffuse and
-#' marginal likelihoods. AIC is computed from the selected `KFAS` likelihood
-#' and the `tempssm` parameter count, component accessors match
-#' `res$kfs$alphahat`, and component confidence intervals match
-#' `stats::confint(res$kfs)`.
+#' marginal likelihoods. The package intentionally does not compute AIC for
+#' `tempssm` objects. Component accessors match `res$kfs$alphahat`, and
+#' component confidence intervals match `stats::confint(res$kfs)`.
 #' 
 #' @srrstats {G5.5} Correctness tests use deterministic inputs or fixed
 #' random seeds. Tests in `test-correctness-fixed-values.R` use hand-specified
@@ -182,9 +181,10 @@
 #' does not exceed a user-specified threshold.
 #' 
 #' @srrstats {TS4.0b} The primary modelling return value is a unique S3 class,
-#' `tempssm`, with methods for printing, summaries, information criteria, and
-#' visualization. The `summary()` method returns a `summary.tempssm` object,
-#' and tests verify the expected S3 classes of these primary return values.
+#' `tempssm`, with methods for printing, summaries, log-likelihood extraction,
+#' and visualization. The `summary()` method returns a `summary.tempssm`
+#' object, and tests verify the expected S3 classes of these primary return
+#' values.
 #' 
 #' @srrstats {TS4.2} Exported functions document the type and class of their
 #' return values in roxygen `@return` fields. Structured return values also

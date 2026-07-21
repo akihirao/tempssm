@@ -2,35 +2,27 @@
 % Please edit documentation in R/information_criteria.R
 \name{get_aic}
 \alias{get_aic}
-\title{Extract the Akaike Information Criterion (AIC)}
+\title{Deprecated AIC helper for tempssm objects}
 \usage{
 get_aic(res, marginal = NULL)
 }
 \arguments{
 \item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
 
-\item{marginal}{Logical scalar or \code{NULL}. If \code{NULL}, use the
-likelihood setting stored when the model was fitted. Set to \code{TRUE} or
-\code{FALSE} to evaluate the fitted parameters with the marginal or diffuse
-likelihood, respectively. An explicit value does not refit the model.}
+\item{marginal}{Logical scalar or \code{NULL} accepted for backward compatibility.
+This argument is ignored.}
 }
 \value{
-A numeric scalar representing the AIC of the fitted model.
+This function always raises an error.
 }
 \description{
-Compute the Akaike Information Criterion (AIC) for a fitted
-\code{tempssm} model using the model log-likelihood and the
-number of estimated parameters.
-}
-\details{
-The number of parameters is determined from the optimization results
-stored in the fitted model. If exogenous variables are included,
-their coefficients are added to the parameter count.
+This function is retained for backward compatibility but is deprecated.
+AIC is intentionally not computed for \code{tempssm} objects.
 }
 \examples{
 \dontrun{
 data(niigata_sst)
 res <- tempssm(niigata_sst)
-aic <- get_aic(res)
+logLik(res)
 }
 }

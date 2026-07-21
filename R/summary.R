@@ -22,6 +22,23 @@
 }
 
 
+#' Count diffuse initial states in a fitted tempssm model
+#'
+#' @inheritParams summary.tempssm
+#'
+#' @return Integer scalar giving the number of diffuse initial states.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_summary_diffuse_states <- function(object) {
+  if (is.null(object$model) || is.null(object$model$P1inf)) {
+    return(NA_integer_)
+  }
+
+  as.integer(sum(diag(object$model$P1inf) > 0))
+}
+
+
 #' Summary method for tempssm objects
 #'
 #' Provides a concise summary of a fitted linear Gaussian
@@ -35,9 +52,8 @@
 #' @return
 #' An object of class \code{"summary.tempssm"}, implemented as a named list
 #' with components \code{call}, \code{logLik}, \code{marginal}, \code{k},
-#' \code{AIC},
-#' \code{convergence}, \code{variances}, \code{coef_ar},
-#' \code{exogenous}, and \code{exogenous_coef}.
+#' \code{diffuse_states}, \code{convergence}, \code{variances},
+#' \code{coef_ar}, \code{exogenous}, and \code{exogenous_coef}.
 #'
 #' @method summary tempssm
 #' @importFrom stats logLik
@@ -55,7 +71,9 @@
 #' s
 #'
 #' # access components programmatically
-#' s$AIC
+#' s$logLik
+#' s$k
+#' s$diffuse_states
 #' s$variances
 #' }
 #'
@@ -74,7 +92,7 @@ summary.tempssm <- function(object, ..., marginal = NULL) {
     logLik = as.numeric(ll),
     marginal = attr(ll, "marginal"),
     k = attr(ll, "df"),
-    AIC = -2 * as.numeric(ll) + 2 * attr(ll, "df"),
+    diffuse_states = .tempssm_summary_diffuse_states(object),
     convergence = opt$convergence == 0,
     variances = params[c("H", "Q_trend", "Q_season", "Q_ar")],
     coef_ar = list(
@@ -137,7 +155,7 @@ print.summary.tempssm <- function(x, ...) {
   cat("  Likelihood type:", likelihood_type, "\n")
   cat("  Log-likelihood :", round(x$logLik, 2), "\n")
   cat("  k              :", x$k, "\n")
-  cat("  AIC            :", round(x$AIC, 2), "\n")
+  cat("  Diffuse states :", x$diffuse_states, "\n")
   cat("  Converged      :", x$convergence, "\n\n")
 
   cat("Variance parameters:\n")

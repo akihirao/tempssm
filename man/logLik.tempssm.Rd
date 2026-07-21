@@ -50,7 +50,3 @@ attr(ll, "nobs") # number of observations
 }
 
 }
-\seealso{
-\code{\link{AIC.tempssm}} for computing AIC,
-\code{\link{get_aic}} as a convenience wrapper.
-}

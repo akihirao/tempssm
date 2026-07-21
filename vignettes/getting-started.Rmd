@@ -245,13 +245,18 @@ information for assessing model adequacy.
 res <- tempssm(niigata_sst) # AR(1), the default model
 summary(res)
 
-AIC(res)
+ll <- logLik(res)
+ll
+attr(ll, "df") # number of parameters
 ```
 
 By default, `tempssm()` uses the KFAS marginal likelihood for parameter
-estimation. The selected likelihood type is retained for `logLik()`, `AIC()`,
-and `summary()`. The diffuse likelihood remains available by fitting the model
-with `marginal = FALSE`.
+estimation. The selected likelihood type is retained for `logLik()` and
+`summary()`. AIC is intentionally not computed by `tempssm`; users who need
+an information criterion can calculate it explicitly from the log-likelihood
+and the number of parameters under their own model-comparison assumptions.
+The diffuse likelihood remains available by fitting the model with
+`marginal = FALSE`.
 
 ### Plotting Level, Drift, Seasonal, and Auto-Regressive Components    
 

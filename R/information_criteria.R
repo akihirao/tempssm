@@ -1,7 +1,7 @@
 ######################################
 #' @keywords internal
 #' @noRd
-.validate_tempssm_for_ic <- function(res) {
+.validate_tempssm_for_logLik <- function(res) {
   ## ---- class check ----------------------------------------------------
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
@@ -12,25 +12,19 @@
   ## ---- convergence check ----------------------------------------------
   if (!isTRUE(res$converged)) {
     cli::cli_abort(
-      paste(
-        "Information criteria are not available",
-        "because the model did not converge."
-      )
+      "Log-likelihood is not available because the model did not converge."
     )
   }
 
   ## ---- component check ------------------------------------------------
   if (is.null(res$model) || is.null(res$fit)) {
     cli::cli_abort(
-      paste(
-        "Information criteria are not available",
-        "because the fitted model is missing."
-      )
+      "Log-likelihood is not available because the fitted model is missing."
     )
   }
 
   ## ---- debug message --------------------------------------------------
-  .tempssm_cli_debug("Validated tempssm object for information criteria")
+  .tempssm_cli_debug("Validated tempssm object for log-likelihood")
 
   return(invisible(res))
 }
@@ -69,7 +63,7 @@
 #' @noRd
 .internal_logLik_tempssm <- function(res, marginal = NULL) {
   ## ---- validation ----------------------------------------------------
-  .validate_tempssm_for_ic(res)
+  .validate_tempssm_for_logLik(res)
   marginal <- .resolve_tempssm_marginal(res, marginal)
 
   ## ---- logLik extraction ---------------------------------------------
@@ -136,10 +130,6 @@
 #' An object of class \code{"logLik"} containing the numeric log-likelihood,
 #' with \code{df} and \code{nobs} attributes.
 #'
-#' @seealso
-#' \code{\link{AIC.tempssm}} for computing AIC,
-#' \code{\link{get_aic}} as a convenience wrapper.
-#'
 #' @examples
 #' \dontrun{
 #' data(niigata_sst)
@@ -175,9 +165,9 @@ logLik.tempssm <- function(object, ..., marginal = NULL) {
 #' AIC method for tempssm objects (S3 method)
 #'
 #' @description
-#' Compute the Akaike Information Criterion (AIC) for a model fitted
-#' by \code{tempssm()}. This method extends the generic
-#' \code{\link[stats]{AIC}} function.
+#' AIC is intentionally not computed for models fitted by \code{tempssm()}.
+#' The method is registered to prevent automatic AIC calculation from the
+#' \code{logLik()} method.
 #'
 #' @param object
 #' An object of class \code{"tempssm"}, typically returned by
@@ -187,47 +177,45 @@ logLik.tempssm <- function(object, ..., marginal = NULL) {
 #' Additional arguments passed to the generic \code{AIC()} function.
 #' These are currently ignored.
 #'
-#' @inheritParams logLik.tempssm
-#'
 #' @param k
-#' Numeric penalty coefficient for the number of parameters.
-#' The default \code{k = 2} gives the standard AIC definition.
+#' Numeric penalty coefficient accepted for compatibility with
+#' \code{\link[stats]{AIC}}. This argument is ignored.
+#'
+#' @param marginal
+#' Logical scalar or \code{NULL} accepted for backward compatibility.
+#' This argument is ignored.
 #'
 #' @return
-#' A numeric scalar giving the AIC of the fitted \code{tempssm} model.
-#'
-#' @examples
-#' \dontrun{
-#' data(niigata_sst)
-#' res <- tempssm(niigata_sst)
-#' aic <- AIC(res)
-#' }
+#' This function always raises an error.
 #'
 #' @method AIC tempssm
 #' @export
 AIC.tempssm <- function(object, ..., k = 2, marginal = NULL) {
-  ll <- logLik.tempssm(object, marginal = marginal)
-  -2 * as.numeric(ll) + k * attr(ll, "df")
+  cli::cli_abort(
+    c(
+      "AIC is not computed for {.cls tempssm} objects.",
+      "i" = "Use {.fn logLik} to extract the log-likelihood.",
+      "i" = "Use {.code attr(logLik(x), \"df\")} for the parameter count.",
+      "i" = "If needed, compute AIC explicitly under your own assumptions."
+    )
+  )
 }
 
 
-#' Extract the Akaike Information Criterion (AIC)
+#' Deprecated AIC helper for tempssm objects
 #'
 #' @description
-#' Compute the Akaike Information Criterion (AIC) for a fitted
-#' \code{tempssm} model using the model log-likelihood and the
-#' number of estimated parameters.
+#' This function is retained for backward compatibility but is deprecated.
+#' AIC is intentionally not computed for \code{tempssm} objects.
 #'
 #' @inheritParams get_level_ts
-#' @inheritParams logLik.tempssm
 #'
-#' @details
-#' The number of parameters is determined from the optimization results
-#' stored in the fitted model. If exogenous variables are included,
-#' their coefficients are added to the parameter count.
+#' @param marginal
+#' Logical scalar or \code{NULL} accepted for backward compatibility.
+#' This argument is ignored.
 #'
 #' @return
-#' A numeric scalar representing the AIC of the fitted model.
+#' This function always raises an error.
 #'
 #' @export
 #'
@@ -235,8 +223,14 @@ AIC.tempssm <- function(object, ..., k = 2, marginal = NULL) {
 #' \dontrun{
 #' data(niigata_sst)
 #' res <- tempssm(niigata_sst)
-#' aic <- get_aic(res)
+#' logLik(res)
 #' }
 get_aic <- function(res, marginal = NULL) {
-  AIC.tempssm(res, marginal = marginal)
+  cli::cli_abort(
+    c(
+      "{.fn get_aic} is deprecated and no longer computes AIC.",
+      "i" = "AIC is no longer computed by tempssm.",
+      "i" = "Use {.fn logLik} and {.code attr(logLik(x), \"df\")} instead."
+    )
+  )
 }

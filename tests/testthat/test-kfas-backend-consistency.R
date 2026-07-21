@@ -14,15 +14,15 @@ test_that("tempssm logLik method matches the underlying KFAS model", {
 })
 
 
-test_that("tempssm AIC uses the KFAS log-likelihood with tempssm df", {
-  kfas_loglik <- as.numeric(stats::logLik(
-    res_tempssm$model,
-    marginal = res_tempssm$marginal
-  ))
-  expected_aic <- -2 * kfas_loglik + 2 * length(res_tempssm$fit$optim.out$par)
-
-  expect_identical(AIC(res_tempssm), expected_aic)
-  expect_identical(get_aic(res_tempssm), expected_aic)
+test_that("tempssm AIC helpers do not compute information criteria", {
+  expect_error(
+    AIC(res_tempssm),
+    "AIC is not computed"
+  )
+  expect_error(
+    get_aic(res_tempssm),
+    "deprecated"
+  )
 })
 
 

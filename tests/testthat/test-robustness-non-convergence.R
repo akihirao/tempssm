@@ -112,13 +112,13 @@ test_that("logLik.tempssm handles non-converged models", {
 })
 
 
-test_that("AIC.tempssm handles non-converged models", {
+test_that("AIC.tempssm remains unavailable for non-converged models", {
   res <- res_tempssm
   res$converged <- FALSE
 
   expect_error(
     AIC(res),
-    "model did not converge"
+    "AIC is not computed"
   )
 })
 

@@ -1,18 +1,16 @@
 # test-AIC_logLik.R
 
-test_that("AIC methods are consistent with the selected log-likelihood", {
-  ll <- logLik(res_tempssm)
-  expected <- -2 * as.numeric(ll) + 2 * attr(ll, "df")
-
-  expect_identical(get_aic(res_tempssm), expected)
-  expect_identical(AIC(res_tempssm), expected)
+test_that("AIC is intentionally unavailable for tempssm objects", {
+  expect_error(
+    AIC(res_tempssm),
+    "AIC is not computed"
+  )
 })
 
 
-test_that("AIC methods support an explicit diffuse likelihood", {
-  ll <- logLik(res_tempssm, marginal = FALSE)
-  expected <- -2 * as.numeric(ll) + 2 * attr(ll, "df")
-
-  expect_identical(AIC(res_tempssm, marginal = FALSE), expected)
-  expect_identical(get_aic(res_tempssm, marginal = FALSE), expected)
+test_that("get_aic is retained as a deprecated stopping wrapper", {
+  expect_error(
+    get_aic(res_tempssm),
+    "deprecated"
+  )
 })

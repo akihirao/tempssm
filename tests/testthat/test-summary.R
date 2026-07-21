@@ -18,7 +18,7 @@ test_that("summary contains expected components", {
     "logLik",
     "marginal",
     "k",
-    "AIC",
+    "diffuse_states",
     "convergence",
     "variances",
     "coef_ar",
@@ -30,15 +30,14 @@ test_that("summary contains expected components", {
 })
 
 
-test_that("summary uses logLik() and AIC() methods consistently", {
+test_that("summary exposes logLik metadata without AIC", {
   s <- summary(res_tempssm)
   ll <- logLik(res_tempssm)
-  aic <- AIC(res_tempssm)
 
   expect_identical(s$logLik, as.numeric(ll))
   expect_identical(s$marginal, attr(ll, "marginal"))
   expect_identical(s$k, attr(ll, "df"))
-  expect_identical(s$AIC, aic)
+  expect_false("AIC" %in% names(s))
 })
 
 
@@ -48,7 +47,18 @@ test_that("summary can use an explicit diffuse likelihood", {
 
   expect_false(s$marginal)
   expect_identical(s$logLik, as.numeric(ll))
-  expect_identical(s$AIC, -2 * as.numeric(ll) + 2 * attr(ll, "df"))
+  expect_identical(s$k, attr(ll, "df"))
+})
+
+
+test_that("summary reports the number of diffuse initial states", {
+  s <- summary(res_tempssm)
+
+  expect_type(s$diffuse_states, "integer")
+  expect_identical(
+    s$diffuse_states,
+    as.integer(sum(diag(res_tempssm$model$P1inf) > 0))
+  )
 })
 
 

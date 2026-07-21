@@ -21,8 +21,8 @@
 #' @srrstats {G2.1} Public entry points assert expected input types, including
 #' `ts` objects for temperature and exogenous time series, `zoo` objects for
 #' daily data aggregation, `tempssm` objects for model summaries, diagnostics,
-#' plotting, and information criteria, numeric scalars or vectors for model
-#' controls and parameter inputs, logical scalars for switches, character
+#' plotting, and log-likelihood extraction, numeric scalars or vectors for
+#' model controls and parameter inputs, logical scalars for switches, character
 #' scalars or vectors for names, file paths, and JMA area identifiers, and
 #' lists for cross-validation folds and results.
 #'
@@ -574,9 +574,9 @@ NULL
 #'   marginal likelihood, which adds the diffuse-initialization correction
 #'   term. If \code{FALSE}, KFAS uses the diffuse likelihood. The selected
 #'   setting is stored in the fitted object and used by default by
-#'   \code{logLik()}, \code{AIC()}, and \code{summary()} methods. Set
-#'   \code{marginal = FALSE} to reproduce the likelihood default used by
-#'   versions of \pkg{tempssm} prior to this change.
+#'   \code{logLik()} and \code{summary()} methods. Set \code{marginal = FALSE}
+#'   to reproduce the likelihood default used by versions of \pkg{tempssm}
+#'   prior to this change.
 #'
 #' @param inits Optional numeric vector of initial parameter values.
 #'  If \code{NULL}, default values are used. When supplied, its length must
