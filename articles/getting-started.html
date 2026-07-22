@@ -371,12 +371,12 @@ information for assessing model adequacy.</p>
 <pre><code><span><span class="co">## [1] 5</span></span></code></pre>
 <p>By default, <code><a href="../reference/tempssm.html">tempssm()</a></code> uses the KFAS marginal likelihood
 for parameter estimation. The selected likelihood type is retained for
-<code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code> and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>. AIC is intentionally
-not computed by <code>tempssm</code>; users who need an information
-criterion can calculate it explicitly from the log-likelihood and the
-number of parameters under their own model-comparison assumptions. The
-diffuse likelihood remains available by fitting the model with
-<code>marginal = FALSE</code>.</p>
+<code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code> and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>. The package
+intentionally does not compute AIC for <code>tempssm</code> objects. The
+log-likelihood and parameter count remain available through
+<code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code> for users who need them for their own
+model-assessment workflows. The diffuse likelihood remains available by
+fitting the model with <code>marginal = FALSE</code>.</p>
 </div>
 <div class="section level4">
 <h4 id="plotting-level-drift-seasonal-and-auto-regressive-components">Plotting Level, Drift, Seasonal, and Auto-Regressive Components<a class="anchor" aria-label="anchor" href="#plotting-level-drift-seasonal-and-auto-regressive-components"></a>
@@ -466,6 +466,35 @@ residual autocorrelation up to lag 12 (P &gt; 0.05).</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">mean_drift_year</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 0.05259212</span></span></code></pre>
 <p>Average annual increase in SST is approximately 0.05 °C.</p>
+</div>
+<div class="section level4">
+<h4 id="short-term-prediction">Short-Term Prediction<a class="anchor" aria-label="anchor" href="#short-term-prediction"></a>
+</h4>
+<p>A fitted <code>tempssm</code> object can also be passed to
+<code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> to obtain short-term predictions. By default,
+<code>predict(res)</code> returns a one-step-ahead prediction beyond the
+end of the observed series. This is useful for visual checks of how the
+fitted model extrapolates the estimated level, seasonal, and
+autoregressive components.</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pred_1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span><span class="va">pred_1</span></span></code></pre></div>
+<pre><code><span><span class="co">##           Jan</span></span>
+<span><span class="co">## 2024 10.61997</span></span></code></pre>
+<p>Predictions for multiple future time points can be requested by
+setting the <code>n.ahead</code> argument.</p>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pred_12</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">res</span>, n.ahead <span class="op">=</span> <span class="fl">12</span><span class="op">)</span></span>
+<span><span class="va">pred_12</span></span></code></pre></div>
+<pre><code><span><span class="co">##            Jan       Feb       Mar       Apr       May       Jun       Jul</span></span>
+<span><span class="co">## 2024 10.619965  9.500226 10.198500 11.757055 15.414159 19.704126 24.218778</span></span>
+<span><span class="co">##            Aug       Sep       Oct       Nov       Dec</span></span>
+<span><span class="co">## 2024 27.331048 25.941035 22.395225 18.262379 14.141777</span></span></code></pre>
+<p>These predictions should be interpreted as model-based extrapolations
+rather than definitive forecasts. Uncertainty generally increases as the
+prediction horizon becomes longer, and long-horizon predictions can be
+sensitive to model assumptions about trend, seasonality, and
+autoregressive dependence.</p>
 <p>This tutorial covered the basic workflow for fitting and diagnosing a
 state-space model with <code>tempssm</code>. For more advanced topics,
 including models with exogenous variables and time-series
