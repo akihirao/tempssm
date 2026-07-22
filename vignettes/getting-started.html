@@ -599,12 +599,12 @@ information for assessing model adequacy.</p>
 <pre><code>## [1] 5</code></pre>
 <p>By default, <code>tempssm()</code> uses the KFAS marginal likelihood
 for parameter estimation. The selected likelihood type is retained for
-<code>logLik()</code> and <code>summary()</code>. AIC is intentionally
-not computed by <code>tempssm</code>; users who need an information
-criterion can calculate it explicitly from the log-likelihood and the
-number of parameters under their own model-comparison assumptions. The
-diffuse likelihood remains available by fitting the model with
-<code>marginal = FALSE</code>.</p>
+<code>logLik()</code> and <code>summary()</code>. The package
+intentionally does not compute AIC for <code>tempssm</code> objects. The
+log-likelihood and parameter count remain available through
+<code>logLik()</code> for users who need them for their own
+model-assessment workflows. The diffuse likelihood remains available by
+fitting the model with <code>marginal = FALSE</code>.</p>
 </div>
 <div id="plotting-level-drift-seasonal-and-auto-regressive-components" class="section level3">
 <h3>Plotting Level, Drift, Seasonal, and Auto-Regressive Components</h3>
@@ -686,6 +686,32 @@ residual autocorrelation up to lag 12 (P &gt; 0.05).</p>
 <span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a><span class="fu">print</span>(mean_drift_year)</span></code></pre></div>
 <pre><code>## [1] 0.05259212</code></pre>
 <p>Average annual increase in SST is approximately 0.05 °C.</p>
+</div>
+<div id="short-term-prediction" class="section level3">
+<h3>Short-Term Prediction</h3>
+<p>A fitted <code>tempssm</code> object can also be passed to
+<code>predict()</code> to obtain short-term predictions. By default,
+<code>predict(res)</code> returns a one-step-ahead prediction beyond the
+end of the observed series. This is useful for visual checks of how the
+fitted model extrapolates the estimated level, seasonal, and
+autoregressive components.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>pred_1 <span class="ot">&lt;-</span> <span class="fu">predict</span>(res)</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>pred_1</span></code></pre></div>
+<pre><code>##           Jan
+## 2024 10.61997</code></pre>
+<p>Predictions for multiple future time points can be requested by
+setting the <code>n.ahead</code> argument.</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a>pred_12 <span class="ot">&lt;-</span> <span class="fu">predict</span>(res, <span class="at">n.ahead =</span> <span class="dv">12</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a>pred_12</span></code></pre></div>
+<pre><code>##            Jan       Feb       Mar       Apr       May       Jun       Jul
+## 2024 10.619966  9.500226 10.198500 11.757055 15.414159 19.704126 24.218777
+##            Aug       Sep       Oct       Nov       Dec
+## 2024 27.331048 25.941035 22.395225 18.262379 14.141777</code></pre>
+<p>These predictions should be interpreted as model-based extrapolations
+rather than definitive forecasts. Uncertainty generally increases as the
+prediction horizon becomes longer, and long-horizon predictions can be
+sensitive to model assumptions about trend, seasonality, and
+autoregressive dependence.</p>
 <p>This tutorial covered the basic workflow for fitting and diagnosing a
 state-space model with <code>tempssm</code>. For more advanced topics,
 including models with exogenous variables and time-series

@@ -283,11 +283,11 @@ attr(ll, "df") # number of parameters
 
 By default, `tempssm()` uses the KFAS marginal likelihood for parameter
 estimation. The selected likelihood type is retained for `logLik()` and
-`summary()`. AIC is intentionally not computed by `tempssm`; users who
-need an information criterion can calculate it explicitly from the
-log-likelihood and the number of parameters under their own
-model-comparison assumptions. The diffuse likelihood remains available
-by fitting the model with `marginal = FALSE`.
+`summary()`. The package intentionally does not compute AIC for
+`tempssm` objects. The log-likelihood and parameter count remain
+available through `logLik()` for users who need them for their own
+model-assessment workflows. The diffuse likelihood remains available by
+fitting the model with `marginal = FALSE`.
 
 ### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
@@ -391,6 +391,41 @@ print(mean_drift_year)
     ## [1] 0.05259212
 
 Average annual increase in SST is approximately 0.05 °C.
+
+### Short-Term Prediction
+
+A fitted `tempssm` object can also be passed to `predict()` to obtain
+short-term predictions. By default, `predict(res)` returns a
+one-step-ahead prediction beyond the end of the observed series. This is
+useful for visual checks of how the fitted model extrapolates the
+estimated level, seasonal, and autoregressive components.
+
+``` r
+pred_1 <- predict(res)
+pred_1
+```
+
+    ##           Jan
+    ## 2024 10.61997
+
+Predictions for multiple future time points can be requested by setting
+the `n.ahead` argument.
+
+``` r
+pred_12 <- predict(res, n.ahead = 12)
+pred_12
+```
+
+    ##            Jan       Feb       Mar       Apr       May       Jun       Jul
+    ## 2024 10.619966  9.500226 10.198500 11.757055 15.414159 19.704126 24.218777
+    ##            Aug       Sep       Oct       Nov       Dec
+    ## 2024 27.331048 25.941035 22.395225 18.262379 14.141777
+
+These predictions should be interpreted as model-based extrapolations
+rather than definitive forecasts. Uncertainty generally increases as the
+prediction horizon becomes longer, and long-horizon predictions can be
+sensitive to model assumptions about trend, seasonality, and
+autoregressive dependence.
 
 This tutorial covered the basic workflow for fitting and diagnosing a
 state-space model with `tempssm`. For more advanced topics, including

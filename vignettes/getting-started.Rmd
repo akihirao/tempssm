@@ -252,9 +252,9 @@ attr(ll, "df") # number of parameters
 
 By default, `tempssm()` uses the KFAS marginal likelihood for parameter
 estimation. The selected likelihood type is retained for `logLik()` and
-`summary()`. AIC is intentionally not computed by `tempssm`; users who need
-an information criterion can calculate it explicitly from the log-likelihood
-and the number of parameters under their own model-comparison assumptions.
+`summary()`. The package intentionally does not compute AIC for `tempssm`
+objects. The log-likelihood and parameter count remain available through
+`logLik()` for users who need them for their own model-assessment workflows.
 The diffuse likelihood remains available by fitting the model with
 `marginal = FALSE`.
 
@@ -323,6 +323,32 @@ print(mean_drift_year)
 ```
  
 Average annual increase in SST is approximately 0.05 °C.
+
+### Short-Term Prediction
+
+A fitted `tempssm` object can also be passed to `predict()` to obtain
+short-term predictions. By default, `predict(res)` returns a one-step-ahead
+prediction beyond the end of the observed series. This is useful for visual
+checks of how the fitted model extrapolates the estimated level, seasonal, and
+autoregressive components.
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+pred_1 <- predict(res)
+pred_1
+```
+
+Predictions for multiple future time points can be requested by setting the
+`n.ahead` argument.
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+pred_12 <- predict(res, n.ahead = 12)
+pred_12
+```
+
+These predictions should be interpreted as model-based extrapolations rather
+than definitive forecasts. Uncertainty generally increases as the prediction
+horizon becomes longer, and long-horizon predictions can be sensitive to model
+assumptions about trend, seasonality, and autoregressive dependence.
 
 This tutorial covered the basic workflow for fitting and diagnosing a
 state-space model with `tempssm`. For more advanced topics, including

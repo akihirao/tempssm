@@ -237,76 +237,22 @@ summary(res_ar1)
 
 From the summary output, confirm that the model has converged
 (`Converged: TRUE`). The output also reports statistics such as the number of
-parameters (`k`), the log-likelihood, and the Akaike Information Criterion
-(AIC). The parameter estimates include the observation error variance (`H`),
-the process error variance of the long-term trend component (`Q trend`), the
-process error variance of the seasonal component (`Q season`), the process
-error variance of the autoregressive component, and the first-order
-autoregressive coefficient (`AR1`).
+parameters (`k`), the log-likelihood, the likelihood type, and the number of
+diffuse initial states. The parameter estimates include the observation error
+variance (`H`), the process error variance of the long-term trend component
+(`Q trend`), the process error variance of the seasonal component
+(`Q season`), the process error variance of the autoregressive component, and
+the first-order autoregressive coefficient (`AR1`).
 
-### Examining the Autoregressive (AR) Order
+By default, `tempssm()` uses the KFAS marginal likelihood for parameter
+estimation. The diffuse likelihood remains available by explicitly setting
+`marginal = FALSE`. The selected likelihood type is stored in the fitted
+`tempssm` object and is used consistently by downstream methods such as
+`logLik()` and `summary()`.
 
-Next, we examine how the autoregressive (AR) order affects model behavior.
-Specifically, we fit three models in which the order of the autoregressive
-component varies from 1 to 3, while all other model components, including the
-explicit seasonal cycle, are kept the same. Because the first-order model has
-already been fitted, we now fit the second- and third-order models.
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-
-# model with second-order autoregressive component
-res_ar2 <- tempssm(yamaguchi_sst,ar_order=2) 
-summary(res_ar2)
-
-# model with third-order autoregressive component
-res_ar3 <- tempssm(yamaguchi_sst,ar_order=3) 
-summary(res_ar3)
-
-```
-
-By comparing models with different AR orders, we examine how the representation
-of temporal dependence differs among the candidate models. Here, AIC is used as
-a relative measure for comparing these models.
-
-### Model Comparison Based on the Akaike Information Criterion (AIC)
-
-The AIC of a fitted model can be obtained by applying `AIC()` to a `tempssm`
-object. By default, `tempssm()` fits the model with `marginal = TRUE`, using
-the marginal likelihood implemented by KFAS. This setting is stored in the
-fitted object and is carried forward to `logLik()` and `AIC()`. The diffuse
-likelihood remains available by explicitly setting `marginal = FALSE`.
-
-For comparisons among several models, `compare_tempssm_aic()` provides a
-convenient interface. Before returning a table containing AIC values,
-differences in AIC, Akaike weights, and related model information, the function
-checks the response series, observation period, convergence status, and
-likelihood type. All models being compared must use the same likelihood type so
-that their AIC values are calculated on a common basis.
-
-```{r message = FALSE, warning = FALSE, echo = TRUE}
-# Extract AIC
-AIC(res_ar1)
-AIC(res_ar2)
-AIC(res_ar3)
-
-AIC_table_res <- compare_tempssm_aic(
-  list(
-    AR1 = res_ar1,
-    AR2 = res_ar2,
-    AR3 = res_ar3
-  )
-)
-
-knitr::kable(AIC_table_res)
-```
-
-Among these candidate models, the AR2 model has the smallest AIC and therefore
-receives the strongest relative support according to this criterion. The
-following analyses use the AR2 model as the working model.
-
-A smaller AIC does not, however, establish absolute model adequacy or guarantee
-better predictive performance. A more comprehensive assessment should also
-consider residual diagnostics and time-series cross-validation.
+The package intentionally does not compute AIC for `tempssm` objects. The
+log-likelihood and parameter count remain available through `logLik()` for
+users who need them for their own model-assessment workflows.
 
 #### Plotting Long-Term Trend, Drift, Seasonal, and Autoregressive Components
 
@@ -317,7 +263,7 @@ dependence as well makes the underlying trend structure easier to examine.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # plot all components at once
-plot(res_ar2)
+plot(res_ar1)
 ```
 
 The long-term trend in the upper-left panel indicates an increasing SST pattern
@@ -338,25 +284,86 @@ default. To obtain a ggplot object for an individual component, specify the
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # plot each of components at once
-plt_level <- autoplot(res_ar2, component = c("level"))
-plt_drift <- autoplot(res_ar2, component = c("drift"))
-plt_season <- autoplot(res_ar2, component = c("season"))
-plt_ar1 <- autoplot(res_ar2, component = c("ar1"))
+plt_level <- autoplot(res_ar1, component = c("level"))
+plt_drift <- autoplot(res_ar1, component = c("drift"))
+plt_season <- autoplot(res_ar1, component = c("season"))
+plt_ar1 <- autoplot(res_ar1, component = c("ar1"))
 ```
 
 ### Model Diagnostics
 
+The package provides diagnostic tools for checking whether the fitted model has
+left notable structure in the residuals. In particular, residual time-series
+plots, residual autocorrelation, residual distributions, and Ljung-Box tests
+can be used to assess remaining temporal dependence and departures from the
+Gaussian error assumption.
+
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-diag <- diagnose_residuals(res_ar2)
+plot_tempssm_residual_diagnostics(res_ar1)
+
+diag <- diagnose_residuals(res_ar1)
 print(diag)
-plot_tempssm_residual_diagnostics(res_ar2)
 ```
 
 In the model diagnostic plot, the upper panel shows the residual time series,
 the lower-left panel shows the residual autocorrelation plot (ACF plot), and
 the lower-right panel shows the residual frequency distribution. These plots
-should be checked for any notable residual patterns. The Ljung-Box test
-indicates no significant residual autocorrelation (P = 0.996).
+should be checked for any notable residual patterns.
+
+The `lb_stat`, `lb_lag`, and `lb_pvalue` columns returned by
+`diagnose_residuals()` correspond to the Ljung-Box test statistic, the lag used
+in the test, and the corresponding P-value. For monthly time series, the
+default Ljung-Box lag is the seasonal frequency, so the default test evaluates
+residual autocorrelation up to lag 12. In this example, the Ljung-Box test does
+not indicate significant residual autocorrelation up to lag 12.
+
+If residual autocorrelation at longer lags is of concern, the lag can be
+specified manually. For example, the following code repeats the Ljung-Box test
+up to lags 24 and 36.
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+diag_lag24 <- diagnose_residuals(res_ar1, lb_lag = 24)
+diag_lag36 <- diagnose_residuals(res_ar1, lb_lag = 36)
+
+diag_lags <- rbind(diag, diag_lag24, diag_lag36)
+diag_lags$check <- c("lag 12", "lag 24", "lag 36")
+diag_lags[, c("check", "lb_stat", "lb_lag", "lb_pvalue", "kurtosis")]
+```
+
+These diagnostics should be interpreted together with the residual ACF plot.
+A small number of isolated ACF spikes can occur by chance when many lags are
+inspected, whereas repeated or periodic spikes may suggest remaining temporal
+structure.
+
+### Examining the Autoregressive (AR) Order
+
+In this manual, the default AR(1) specification is used as the working model.
+The autoregressive component is included to absorb short-term serial
+dependence that is not represented by the latent level, drift, and seasonal
+components. A higher AR order should therefore not be treated as an automatic
+improvement. Instead, the AR order can be adjusted when residual diagnostics
+suggest that notable autocorrelation remains.
+
+For example, if residual autocorrelation remains after fitting the AR(1)
+model, users can fit an AR(2) model and repeat the same diagnostics.
+
+```{r message = FALSE, warning = FALSE, echo = TRUE, eval = FALSE}
+# Optional sensitivity check with a second-order autoregressive component
+res_ar2 <- tempssm(yamaguchi_sst, ar_order = 2)
+diagnose_residuals(res_ar2)
+plot_tempssm_residual_diagnostics(res_ar2)
+```
+
+In a sensitivity check with an AR(2) specification, the short-lag residual
+autocorrelation was also limited, but the residual ACF showed a negative spike
+around lag 24. This pattern suggests that increasing the AR order does not
+necessarily improve all aspects of the residual structure. Therefore, the
+AR(2) model should be treated as a model requiring additional diagnostic
+attention rather than as an automatic improvement over the AR(1) baseline.
+
+In the present example, the residual diagnostics do not provide strong
+evidence that a higher AR order is needed, so we proceed with the AR(1) model
+as the baseline specification.
 
 ### Estimated Parameters and Latent-State Components
 
@@ -365,14 +372,14 @@ as `ts` objects as follows.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Smoothing estimates
-alpha_hat <- res_ar2$kfs$alphahat
+alpha_hat <- res_ar1$kfs$alphahat
 head(alpha_hat)
 
 #　Smoothing estimate of level component
-level_ts <- get_level_ts(res_ar2)
+level_ts <- get_level_ts(res_ar1)
 
 #　Smoothing estimate of drift component
-drift_ts <- get_drift_ts(res_ar2)
+drift_ts <- get_drift_ts(res_ar1)
 
 # Average drift rate per year across the full period
 mean_drift_year <- mean(drift_ts) 
@@ -380,6 +387,32 @@ print(mean_drift_year)
 ```
  
 The average annual rate of SST increase was estimated to be 0.0366 °C.
+
+### Short-Term Prediction
+
+A fitted `tempssm` object can also be passed to `predict()` to obtain
+short-term predictions. By default, `predict(res)` returns a one-step-ahead
+prediction beyond the end of the observed series. This is useful for visual
+checks of how the fitted model extrapolates the estimated level, seasonal, and
+autoregressive components.
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+pred_1 <- predict(res_ar1)
+pred_1
+```
+
+Predictions for multiple future time points can be requested by setting the
+`n.ahead` argument.
+
+```{r message = FALSE, warning = FALSE, echo = TRUE}
+pred_12 <- predict(res_ar1, n.ahead = 12)
+pred_12
+```
+
+These predictions should be interpreted as model-based extrapolations rather
+than definitive forecasts. Uncertainty generally increases as the prediction
+horizon becomes longer, and long-horizon predictions can be sensitive to model
+assumptions about trend, seasonality, and autoregressive dependence.
 
 
 ## Exercise II: Applying a State-Space Model to a Temperature Time Series with an Exogenous Variable
@@ -396,7 +429,7 @@ observed off Yamaguchi Prefecture, Japan.
 - **Data**: Monthly Pacific Decadal Oscillation (PDO) index (JMA)  
 - **Period**: January 1901 to December 2025
 
-he Pacific Decadal Oscillation (PDO) index is defined as the projection of 
+The Pacific Decadal Oscillation (PDO) index is defined as the projection of 
 monthly mean sea surface temperature (SST) anomalies onto the leading empirical 
 orthogonal function (EOF) of SST variability over the North Pacific north of 
 20°N. The EOF is computed using SST anomalies for 1901–2000, defined relative 
@@ -408,7 +441,7 @@ the Japan Meteorological Agency (JMA), available at
 
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-data(pdo) # load a ts object of NAO index
+data(pdo) # load a ts object of PDO index
 head(pdo)
 ```
 
@@ -424,16 +457,13 @@ on a shared timeline and returns time series containing only the common period.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 # Generate an object on a shared timeline
-yamaguchi_sst_trim <- trim_ts_overlap(yamaguchi_sst,
-                                      pdo,
-                                      temp_name = "Temp",
-                                      exo_name="PDO")$temperature
+trimmed_series <- trim_ts_overlap(yamaguchi_sst,
+                                  pdo,
+                                  temp_name = "Temp",
+                                  exo_name = "PDO")
 
-
-pdo_trim <- trim_ts_overlap(yamaguchi_sst,
-                            pdo,
-                            temp_name = "Temp",
-                            exo_name="PDO")$exogenous
+yamaguchi_sst_trim <- trimmed_series$temperature
+pdo_trim <- trimmed_series$exogenous
 
 start(yamaguchi_sst_trim)
 end(yamaguchi_sst_trim)
@@ -486,16 +516,18 @@ Exercise I, here we explicitly specify the dependent-variable argument and
 store the returned object as `res_without`.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-res_without <- tempssm(temp_data = yamaguchi_sst_trim, ar_order = 2) 
+res_without <- tempssm(temp_data = yamaguchi_sst_trim, ar_order = 1) 
 summary(res_without)
+
+plot_tempssm_residual_diagnostics(res_without)
+diag_res_without <- diagnose_residuals(res_without)
+print(diag_res_without)
 ```
 
-The summary output should be the same as `summary(res_ar2)` from Exercise I.
-Prior examination of autoregressive orders from AR(1) to AR(3) indicated that
-AR(2) provided the best model fit not only for the baseline model but also for
-the model including the exogenous PDO index. The details are omitted from this
-manual, but interested users are encouraged to examine alternative AR orders in
-their own analyses.
+The residual diagnostics for this AR(1) baseline model do not indicate
+significant residual autocorrelation up to lag 12. This result suggests that
+the default first-order autoregressive structure is a reasonable starting
+point for the model without the exogenous variable.
 
 This baseline model provides a useful benchmark for evaluating the additional
 explanatory power of the PDO index introduced in the next section.
@@ -511,9 +543,18 @@ to the exogenous-variable argument (`exo_data`). The temperature time series
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
 res_with <- tempssm(temp_data = yamaguchi_sst_trim,
                     exo_data = pdo_trim,
-                    ar_order = 2) 
+                    ar_order = 1) 
 summary(res_with)
+
+plot_tempssm_residual_diagnostics(res_with)
+diag_res_with <- diagnose_residuals(res_with)
+print(diag_res_with)
 ```
+
+The residual diagnostics for the model with the PDO index also do not indicate
+significant residual autocorrelation up to lag 12. Thus, for both models
+considered here, the AR(1) specification provides an adequate working
+autoregressive structure according to these residual checks.
 
 We then examine the model estimates. The estimated coefficient for the
 exogenous PDO index is negative (-0.44), and its 95% confidence interval does
@@ -535,45 +576,17 @@ variables, the statistical significance of the PDO coefficient indicates that
 the PDO acts as an independent large-scale climate driver influencing local
 temperature variation.
 
-Next, we compare the overall goodness of fit between the two models using the
-Akaike Information Criterion (AIC).
-
-### Model Comparison Based on AIC
-
-Model selection criteria such as AIC provide quantitative measures of model
-adequacy that balance goodness of fit against model complexity. Lower AIC
-values indicate a more parsimonious model with stronger support from the data.
+For models with exogenous variables, future values of the exogenous variables
+are needed when calling `predict()`. If such values are available, they can be
+passed through `new_exo_data`. For a simple one-step-ahead visual check,
+`exo_strategy = "last"` carries the final observed exogenous value forward.
+This is a persistence assumption for the exogenous variable, not a separate
+forecast model for the PDO index.
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
-AIC_without <- AIC(res_without)
-AIC_with <- AIC(res_with)
-
-models_AICs <- tibble(
-  model = c("Without","With"),
-  AIC = c(AIC_without,AIC_with),
-  delta_AIC = min(AIC)-AIC
-  )
-
-models_AICs %>% knitr::kable()
+pred_with_last_exo <- predict(res_with, exo_strategy = "last")
+pred_with_last_exo
 ```
-
-The model including the PDO index as an exogenous variable exhibits a
-substantially lower AIC than the baseline model without exogenous variables,
-indicating a clear improvement in overall fit. This result supports the
-conclusion that explicitly accounting for PDO variability improves the
-statistical description of the temperature time series beyond what is achieved
-by internal dynamics alone.
-
-It should be noted that AIC-based comparisons are meaningful only among models
-fitted to the same time series over an identical period. Moreover, in
-state-space models, AIC differences reflect both regression effects and changes
-in the stochastic structure of latent components. Therefore, AIC should be used
-as a complementary diagnostic alongside parameter estimates and their
-uncertainty, rather than as the sole basis for inference.
-
-To further evaluate model robustness and predictive performance, we use
-time-series cross-validation as described below.
-
 
 ### Time-Series Cross-Validation (tsCV)
 
@@ -589,8 +602,8 @@ information leakage from the future to the past and is therefore suitable for
 model validation with temporal data.
 
 Here, by comparing cross-validation metrics for models with and without the
-exogenous PDO variable, we assess whether the improvement suggested by AIC is
-also reflected in out-of-sample predictive performance.
+exogenous PDO variable, we assess whether the statistical signal found in the
+PDO coefficient is also reflected in out-of-sample predictive performance.
 
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
@@ -634,7 +647,7 @@ folds_without <- ts_train_test_split(
   exo_data = NULL,
   initial = 432, # 432 monthly observations from Jan 1982 to Dec 2017
   horizon = 12, # forecast 12 monthly time-series
-  step = 12, # training data is moved by 12 months (1 years) steps
+  step = 12, # training data is moved in one-year steps
   fixed_window = TRUE,
   allow_partial = FALSE
   )
@@ -645,7 +658,7 @@ folds_with <- ts_train_test_split(
   exo_data = pdo_trim,
   initial = 432, # 432 monthly observations from Jan 1982 to Dec 2017
   horizon = 12, # forecast 12 monthly time-series
-  step = 12, # training data is moved by 12 months (10 years) steps
+  step = 12, # training data is moved in one-year steps
   fixed_window = TRUE,
   allow_partial = FALSE
   )
@@ -655,21 +668,21 @@ folds_with <- ts_train_test_split(
 # Executing time-series cross validation
 
 #-------------------------------------------------- 
-# Model without the exogenous variable of PDA index
+# Model without the exogenous variable of PDO index
 
 # Single processing
-# cv_without_results <- ts_cv_run(folds_without, ar_order = 2, use_season = TRUE)
+# cv_without_results <- ts_cv_run(folds_without, ar_order = 1, use_season = TRUE)
 
 # Parallel processing
 cv_without_results <- future.apply::future_lapply(
   folds_without,
   ts_cv_run_fold,
-  ar_order = 2,
-  use_season =TRUE,
+  ar_order = 1,
+  use_season = TRUE,
   future.seed = TRUE
 )
 
-# Couputing assessment indexes
+# Computing assessment indexes
 metrics_without <- lapply(cv_without_results, compute_cv_metrics)
 
 # tidy summary
@@ -678,21 +691,21 @@ cv_without_tbl <- ts_cv_collect(cv_without_results, metrics_without) %>%
 
 
 #-------------------------------------------------- 
-# Model with the exogenous variable of PDA index
+# Model with the exogenous variable of PDO index
 
 # Single processing
-#cv_with_results <- ts_cv_run(folds_with, ar_order = 2, use_season = TRUE)
+# cv_with_results <- ts_cv_run(folds_with, ar_order = 1, use_season = TRUE)
 
 # Parallel processing
 cv_with_results <- future.apply::future_lapply(
   folds_with,
   ts_cv_run_fold,
-  ar_order = 2,
-  use_season =TRUE,
+  ar_order = 1,
+  use_season = TRUE,
   future.seed = TRUE
 )
 
-# Couputing assessment indexes
+# Computing assessment indexes
 metrics_with <- lapply(cv_with_results, compute_cv_metrics)
 
 # tidy summary
@@ -701,6 +714,15 @@ cv_with_tbl <- ts_cv_collect(cv_with_results, metrics_with) %>%
 
 
 cv_tbl <- bind_rows(cv_without_tbl, cv_with_tbl)
+
+cv_comparison <- compare_ts_cv(
+  list(
+    Without = cv_without_tbl,
+    With = cv_with_tbl
+  )
+)
+
+cv_comparison %>% knitr::kable()
 
 
 plt_MAE <- ggplot(data=cv_tbl,
@@ -723,16 +745,18 @@ plot(plt_tsCV)
 ```
 
 The tsCV results show that the model with the exogenous variable performs
-better than the model without it. In this tutorial, the number of tsCV
-iterations is set to eight to reduce execution time. In actual validation,
-please use a sufficient number of iterations.
+better than the model without it. The comparison table produced by
+`compare_ts_cv()` summarizes the number of folds, convergence rates, and mean
+prediction-error metrics for each model, while the boxplots show how the
+fold-level errors vary across validation periods. In this tutorial, the number
+of tsCV iterations is set to eight to reduce execution time. In actual
+validation, please use a sufficient number of iterations.
 
 Taken together, the results consistently support including the PDO index as an
 exogenous variable in the state-space model. The PDO coefficient is
 statistically significant, indicating a clear effect on temperature variation.
-The improvement in AIC also indicates better overall model fit. Furthermore,
-time-series cross-validation confirms that this improvement translates into
-better out-of-sample predictive performance.
+Time-series cross-validation further indicates that this effect is accompanied
+by better out-of-sample predictive performance.
 
 These complementary lines of evidence provide robust and multifaceted support
 for adopting the exogenous-variable model.
@@ -799,8 +823,8 @@ the exogenous variable, the long-term trend and its rate of change show a more
 stable pattern. This suggests that the wavelike pattern reflects the influence
 of the exogenous PDO variable.
 
-The estimated annual rate of SST change over the observation period is 0.0360
-in the model without the exogenous variable and 0.0114 in the model with the
+The estimated annual rate of SST change over the observation period is 0.0339
+in the model without the exogenous variable and 0.0112 in the model with the
 exogenous variable.
 
 In this case, the model incorporating the PDO index is considered preferable
