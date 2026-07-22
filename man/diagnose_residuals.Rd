@@ -4,12 +4,17 @@
 \alias{diagnose_residuals}
 \title{Residual diagnostics for tempssm models}
 \usage{
-diagnose_residuals(res, JB_test = FALSE)
+diagnose_residuals(res, JB_test = FALSE, lb_lag = NULL)
 }
 \arguments{
 \item{res}{An object of class \code{"tempssm"} returned by \code{tempssm()}.}
 
 \item{JB_test}{Logical scalar; if TRUE, the Jarque–Bera test is included.}
+
+\item{lb_lag}{Positive integer scalar or \code{NULL}. Lag used for the
+Ljung--Box test. If \code{NULL}, the seasonal frequency of the fitted
+temperature time series is used, with automatic truncation for very short
+residual series.}
 }
 \value{
 A \code{tibble} with one row containing residual diagnostic statistics,
@@ -32,5 +37,8 @@ res <- tempssm(niigata_sst)
 diag <- diagnose_residuals(res)
 
 diag
+
+# Use a longer Ljung--Box lag if needed.
+diagnose_residuals(res, lb_lag = 24)
 }
 }

@@ -13,6 +13,23 @@ test_that("diagnose_residuals returns a tibble", {
 })
 
 
+test_that("diagnose_residuals uses seasonal frequency as default LB lag", {
+  diag <- diagnose_residuals(res_tempssm)
+
+  expect_identical(
+    diag$lb_df,
+    as.numeric(stats::frequency(res_tempssm$temp_data))
+  )
+})
+
+
+test_that("diagnose_residuals supports explicit Ljung-Box lag", {
+  diag <- diagnose_residuals(res_tempssm, lb_lag = 24)
+
+  expect_identical(diag$lb_df, 24)
+})
+
+
 # JB test is performed
 test_that("diagnose_residuals includes Jarque-Bera results when requested", {
   diag <- diagnose_residuals(res_tempssm, JB_test = TRUE)
@@ -37,6 +54,11 @@ test_that("diagnose_residuals validates scalar argument lengths", {
     diagnose_residuals(res_tempssm, JB_test = c(TRUE, FALSE)),
     "JB_test.*length one"
   )
+
+  expect_error(
+    diagnose_residuals(res_tempssm, lb_lag = c(12, 24)),
+    "lb_lag.*length one"
+  )
 })
 
 
@@ -44,6 +66,24 @@ test_that("diagnose_residuals validates scalar argument types", {
   expect_error(
     diagnose_residuals(res_tempssm, JB_test = 1),
     "JB_test.*logical"
+  )
+
+  expect_error(
+    diagnose_residuals(res_tempssm, lb_lag = "12"),
+    "lb_lag.*numeric"
+  )
+})
+
+
+test_that("diagnose_residuals validates Ljung-Box lag values", {
+  expect_error(
+    diagnose_residuals(res_tempssm, lb_lag = 0),
+    "lb_lag.*positive integer"
+  )
+
+  expect_error(
+    diagnose_residuals(res_tempssm, lb_lag = 1.5),
+    "lb_lag.*positive integer"
   )
 })
 

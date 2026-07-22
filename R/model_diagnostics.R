@@ -43,6 +43,47 @@ get_tempssm_residuals <- function(res) {
 }
 
 
+#' Resolve the Ljung--Box lag for residual diagnostics
+#'
+#' @inheritParams diagnose_residuals
+#' @param n_residuals Integer scalar giving the number of residuals.
+#'
+#' @return Integer scalar giving the lag used by the Ljung--Box test.
+#'
+#' @keywords internal
+#' @noRd
+.resolve_ljung_box_lag <- function(res, lb_lag, n_residuals) {
+  if (n_residuals < 2L) {
+    cli::cli_abort(
+      "At least two finite residuals are required for residual diagnostics."
+    )
+  }
+
+  max_lag <- n_residuals - 1L
+  if (is.null(lb_lag)) {
+    default_lag <- as.integer(stats::frequency(res$temp_data))
+    return(min(default_lag, max_lag))
+  }
+
+  .tempssm_check_length_one(lb_lag, "lb_lag")
+  .tempssm_check_numeric(lb_lag, "lb_lag")
+  .tempssm_check_no_undefined(lb_lag, "lb_lag")
+
+  if (!.tempssm_is_integerish(lb_lag) || lb_lag < 1L) {
+    cli::cli_abort("{.arg lb_lag} must be a positive integer scalar.")
+  }
+
+  lb_lag <- as.integer(round(lb_lag))
+  if (lb_lag > max_lag) {
+    cli::cli_abort(
+      "{.arg lb_lag} must be smaller than the number of finite residuals."
+    )
+  }
+
+  lb_lag
+}
+
+
 #' Residual diagnostics for tempssm models
 #'
 #' @description
@@ -52,6 +93,10 @@ get_tempssm_residuals <- function(res) {
 #'
 #' @inheritParams get_level_ts
 #' @param JB_test Logical scalar; if TRUE, the Jarque–Bera test is included.
+#' @param lb_lag Positive integer scalar or \code{NULL}. Lag used for the
+#'   Ljung--Box test. If \code{NULL}, the seasonal frequency of the fitted
+#'   temperature time series is used, with automatic truncation for very short
+#'   residual series.
 #'
 #' @return
 #' A \code{tibble} with one row containing residual diagnostic statistics,
@@ -69,9 +114,12 @@ get_tempssm_residuals <- function(res) {
 #' diag <- diagnose_residuals(res)
 #'
 #' diag
+#'
+#' # Use a longer Ljung--Box lag if needed.
+#' diagnose_residuals(res, lb_lag = 24)
 #' }
 #' @export
-diagnose_residuals <- function(res, JB_test = FALSE) {
+diagnose_residuals <- function(res, JB_test = FALSE, lb_lag = NULL) {
   if (!inherits(res, "tempssm")) {
     cli::cli_abort(
       "`res` must be an object of class {.cls tempssm}."
@@ -86,13 +134,13 @@ diagnose_residuals <- function(res, JB_test = FALSE) {
 
   r <- get_tempssm_residuals(res)
 
-  freq <- frequency(res$data_temp)
   n_ts <- length(r)
+  lb_lag <- .resolve_ljung_box_lag(res, lb_lag, n_ts)
 
   lb <- stats::Box.test(
     r,
     type = "Ljung-Box",
-    lag = min(2 * freq, n_ts / 5)
+    lag = lb_lag
   )
 
   kurt <- .kurtosis(r)
