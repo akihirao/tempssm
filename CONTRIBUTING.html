@@ -47,7 +47,7 @@
 </ul></div>
 <div class="section level2">
 <h2 id="development">Development<a class="anchor" aria-label="anchor" href="#development"></a></h2>
-<ul><li>Please run <code>devtools::check()</code>
+<ul><li>Please run <code><a href="https://devtools.r-lib.org/reference/check.html" class="external-link">devtools::check()</a></code>
 </li>
 <li>Include tests when possible</li>
 </ul></div>
@@ -55,7 +55,7 @@
 <h2 id="extended-tests">Extended tests<a class="anchor" aria-label="anchor" href="#extended-tests"></a></h2>
 <p>The regular test suite is run with:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu">test</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">devtools</span><span class="fu">::</span><span class="fu"><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">test</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <p>Additional extended tests are available through the same <code>testthat</code> framework. They are skipped by default and can be enabled with:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="va">TEMPSSM_EXTENDED_TESTS</span><span class="op">=</span>true <span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::test()'</span></span></code></pre></div>
 <p>These tests currently run additional parameter-recovery checks across multiple random seeds. They do not require downloads, large external data sets, special platforms, or manual inspection of generated artefacts. On a typical development machine, the current extended test adds only a few seconds to the test run.</p>

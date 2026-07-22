@@ -10,7 +10,8 @@ Thanks for your interest in contributing!
 
 ## Development
 
-- Please run `devtools::check()`
+- Please run
+  [`devtools::check()`](https://devtools.r-lib.org/reference/check.html)
 - Include tests when possible
 
 ## Extended tests

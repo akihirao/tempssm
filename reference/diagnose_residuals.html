@@ -49,7 +49,7 @@ across many fitted models.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">diagnose_residuals</span><span class="op">(</span><span class="va">res</span>, JB_test <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">diagnose_residuals</span><span class="op">(</span><span class="va">res</span>, JB_test <span class="op">=</span> <span class="cn">FALSE</span>, lb_lag <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -63,11 +63,19 @@ across many fitted models.</p>
 <dt id="arg-jb-test">JB_test<a class="anchor" aria-label="anchor" href="#arg-jb-test"></a></dt>
 <dd><p>Logical scalar; if TRUE, the Jarque–Bera test is included.</p></dd>
 
+
+<dt id="arg-lb-lag">lb_lag<a class="anchor" aria-label="anchor" href="#arg-lb-lag"></a></dt>
+<dd><p>Positive integer scalar or <code>NULL</code>. Lag used for the
+Ljung–Box test. If <code>NULL</code>, the seasonal frequency of the fitted
+temperature time series is used, with automatic truncation for very short
+residual series.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>tibble</code> with one row containing residual diagnostic statistics,
-including Ljung–Box test results and kurtosis. If <code>JB_test = TRUE</code>,
+including Ljung–Box test results and kurtosis. The <code>lb_lag</code> column
+gives the lag used in the Ljung–Box test. If <code>JB_test = TRUE</code>,
 Jarque–Bera test statistics are also included.</p>
     </div>
 
@@ -83,6 +91,9 @@ Jarque–Bera test statistics are also included.</p>
 <span class="r-in"><span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu">diagnose_residuals</span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">diag</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Use a longer Ljung--Box lag if needed.</span></span></span>
+<span class="r-in"><span><span class="fu">diagnose_residuals</span><span class="op">(</span><span class="va">res</span>, lb_lag <span class="op">=</span> <span class="fl">24</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
