@@ -23,6 +23,35 @@ test_that("diagnose_residuals uses seasonal frequency as default LB lag", {
 })
 
 
+test_that("diagnose_residuals default LB lag follows non-monthly frequency", {
+  quarterly_res <- res_tempssm
+  quarterly_res$temp_data <- stats::ts(
+    as.numeric(res_tempssm$temp_data),
+    start = c(2000, 1),
+    frequency = 4
+  )
+
+  diag <- diagnose_residuals(quarterly_res)
+
+  expect_identical(diag$lb_lag, 4)
+})
+
+
+test_that("default Ljung-Box lag is truncated for short residual series", {
+  short_res <- res_tempssm
+  short_res$temp_data <- stats::ts(
+    seq_len(6),
+    start = c(2000, 1),
+    frequency = 12
+  )
+
+  expect_identical(
+    .resolve_ljung_box_lag(short_res, lb_lag = NULL, n_residuals = 6L),
+    5L
+  )
+})
+
+
 test_that("diagnose_residuals supports explicit Ljung-Box lag", {
   diag <- diagnose_residuals(res_tempssm, lb_lag = 24)
 
@@ -84,6 +113,14 @@ test_that("diagnose_residuals validates Ljung-Box lag values", {
   expect_error(
     diagnose_residuals(res_tempssm, lb_lag = 1.5),
     "lb_lag.*positive integer"
+  )
+
+  expect_error(
+    diagnose_residuals(
+      res_tempssm,
+      lb_lag = length(get_tempssm_residuals(res_tempssm))
+    ),
+    "lb_lag.*smaller than the number of finite residuals"
   )
 })
 
