@@ -100,7 +100,8 @@ get_tempssm_residuals <- function(res) {
 #'
 #' @return
 #' A \code{tibble} with one row containing residual diagnostic statistics,
-#' including Ljung--Box test results and kurtosis. If \code{JB_test = TRUE},
+#' including Ljung--Box test results and kurtosis. The \code{lb_lag} column
+#' gives the lag used in the Ljung--Box test. If \code{JB_test = TRUE},
 #' Jarque--Bera test statistics are also included.
 #'
 #' @examples
@@ -151,7 +152,7 @@ diagnose_residuals <- function(res, JB_test = FALSE, lb_lag = NULL) {
     return(
       tibble::tibble(
         lb_stat    = unname(lb$statistic),
-        lb_df      = unname(lb$parameter),
+        lb_lag     = unname(lb$parameter),
         lb_pvalue  = lb$p.value,
         kurtosis   = kurt,
         jb_stat    = unname(jb$statistic),
@@ -162,7 +163,7 @@ diagnose_residuals <- function(res, JB_test = FALSE, lb_lag = NULL) {
 
   tibble::tibble(
     lb_stat    = unname(lb$statistic),
-    lb_df      = unname(lb$parameter),
+    lb_lag     = unname(lb$parameter),
     lb_pvalue  = lb$p.value,
     kurtosis   = kurt
   )

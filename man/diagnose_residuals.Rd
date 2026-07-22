@@ -18,7 +18,8 @@ residual series.}
 }
 \value{
 A \code{tibble} with one row containing residual diagnostic statistics,
-including Ljung--Box test results and kurtosis. If \code{JB_test = TRUE},
+including Ljung--Box test results and kurtosis. The \code{lb_lag} column
+gives the lag used in the Ljung--Box test. If \code{JB_test = TRUE},
 Jarque--Bera test statistics are also included.
 }
 \description{

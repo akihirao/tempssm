@@ -8,7 +8,7 @@ test_that("diagnose_residuals returns a tibble", {
   expect_identical(nrow(diag), 1L)
 
   expect_true(
-    all(c("lb_stat", "lb_df", "lb_pvalue", "kurtosis") %in% colnames(diag))
+    all(c("lb_stat", "lb_lag", "lb_pvalue", "kurtosis") %in% colnames(diag))
   )
 })
 
@@ -17,7 +17,7 @@ test_that("diagnose_residuals uses seasonal frequency as default LB lag", {
   diag <- diagnose_residuals(res_tempssm)
 
   expect_identical(
-    diag$lb_df,
+    diag$lb_lag,
     as.numeric(stats::frequency(res_tempssm$temp_data))
   )
 })
@@ -26,7 +26,7 @@ test_that("diagnose_residuals uses seasonal frequency as default LB lag", {
 test_that("diagnose_residuals supports explicit Ljung-Box lag", {
   diag <- diagnose_residuals(res_tempssm, lb_lag = 24)
 
-  expect_identical(diag$lb_df, 24)
+  expect_identical(diag$lb_lag, 24)
 })
 
 
