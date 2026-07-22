@@ -255,7 +255,7 @@ summary(res)
     ##   Likelihood type: marginal 
     ##   Log-likelihood : -249.8 
     ##   k              : 5 
-    ##   AIC            : 509.59 
+    ##   Diffuse states : 13 
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
@@ -269,15 +269,25 @@ summary(res)
     ##   Coefficient of AR1: 0.7442999
 
 ``` r
-AIC(res)
+ll <- logLik(res)
+ll
 ```
 
-    ## [1] 509.5923
+    ## 'log Lik.' -249.7962 (df=5)
+
+``` r
+attr(ll, "df") # number of parameters
+```
+
+    ## [1] 5
 
 By default, `tempssm()` uses the KFAS marginal likelihood for parameter
-estimation. The selected likelihood type is retained for `logLik()`,
-`AIC()`, and `summary()`. The diffuse likelihood remains available by
-fitting the model with `marginal = FALSE`.
+estimation. The selected likelihood type is retained for `logLik()` and
+`summary()`. AIC is intentionally not computed by `tempssm`; users who
+need an information criterion can calculate it explicitly from the
+log-likelihood and the number of parameters under their own
+model-comparison assumptions. The diffuse likelihood remains available
+by fitting the model with `marginal = FALSE`.
 
 ### Plotting Level, Drift, Seasonal, and Auto-Regressive Components
 
@@ -315,23 +325,26 @@ layers, for example,
 ### Simple Model Diagnostics
 
 ``` r
-diag <- diagnose_residuals(res)
-print(diag)
-```
-
-    ## # A tibble: 1 × 4
-    ##   lb_stat lb_df lb_pvalue kurtosis
-    ##     <dbl> <dbl>     <dbl>    <dbl>
-    ## 1 0.00312     2     0.998     3.06
-
-``` r
 plot_tempssm_residual_diagnostics(res)
 ```
 
 ![](getting-started_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
-Autocorrelation of residuals was not significant by Ljung-Box test (P \>
-0.05).
+``` r
+diag <- diagnose_residuals(res)
+print(diag)
+```
+
+    ## # A tibble: 1 × 4
+    ##   lb_stat lb_lag lb_pvalue kurtosis
+    ##     <dbl>  <dbl>     <dbl>    <dbl>
+    ## 1    10.7     12     0.558     3.06
+
+The `lb_stat`, `lb_lag`, and `lb_pvalue` columns correspond to the
+Ljung-Box test statistic, the lag used in the test, and its P-value,
+respectively. For monthly time series, `diagnose_residuals()` uses lag
+12 by default. In this example, the Ljung-Box test indicated no
+significant residual autocorrelation up to lag 12 (P \> 0.05).
 
 ### Estimated Parameters and Components
 

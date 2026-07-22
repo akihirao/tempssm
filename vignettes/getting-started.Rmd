@@ -291,12 +291,17 @@ stored and customized with standard ggplot2 layers, for example,
 ### Simple Model Diagnostics    
 
 ```{r message = FALSE, warning = FALSE, echo = TRUE}
+plot_tempssm_residual_diagnostics(res)
+
 diag <- diagnose_residuals(res)
 print(diag)
-plot_tempssm_residual_diagnostics(res)
 ```
 
-Autocorrelation of residuals was not significant by Ljung-Box test (P > 0.05).
+The `lb_stat`, `lb_lag`, and `lb_pvalue` columns correspond to the Ljung-Box
+test statistic, the lag used in the test, and its P-value, respectively. For
+monthly time series, `diagnose_residuals()` uses lag 12 by default. In this
+example, the Ljung-Box test indicated no significant residual autocorrelation 
+up to lag 12 (P > 0.05).
 
 
 ### Estimated Parameters and Components    
