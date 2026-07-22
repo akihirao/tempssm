@@ -270,14 +270,14 @@ summary(res)
     ##   Converged      : TRUE 
     ## 
     ## Variance parameters:
-    ##   Observation (H): 0.005985633 
-    ##   State (Q trend): 1.268116e-07 
-    ##   State (Q season): 0.001346144 
-    ##   State (Q ar): 0.4097882 
+    ##   Observation (H): 0.005985637 
+    ##   State (Q trend): 1.268117e-07 
+    ##   State (Q season): 0.001346139 
+    ##   State (Q ar): 0.4097883 
     ## 
     ## Components of auto-regression:
     ##   Order of AR: 1 
-    ##   Coefficient of AR1: 0.7443
+    ##   Coefficient of AR1: 0.7442999
 
 ``` r
 
@@ -344,6 +344,13 @@ layers, for example,
 
 ``` r
 
+plot_tempssm_residual_diagnostics(res)
+```
+
+![](getting-started_files/figure-html/unnamed-chunk-6-1.png)
+
+``` r
+
 diag <- diagnose_residuals(res)
 print(diag)
 ```
@@ -353,15 +360,12 @@ print(diag)
     ##     <dbl>  <dbl>     <dbl>    <dbl>
     ## 1    10.7     12     0.558     3.06
 
-``` r
-
-plot_tempssm_residual_diagnostics(res)
-```
-
-![](getting-started_files/figure-html/unnamed-chunk-6-1.png)
-
-Autocorrelation of residuals was not significant by Ljung-Box test (P \>
-0.05).
+The `lb_stat`, `lb_lag`, and `lb_pvalue` columns correspond to the
+Ljung-Box test statistic, the lag used in the test, and its P-value,
+respectively. For monthly time series,
+[`diagnose_residuals()`](https://akihirao.github.io/tempssm/reference/diagnose_residuals.md)
+uses lag 12 by default. In this example, the Ljung-Box test indicated no
+significant residual autocorrelation up to lag 12 (P \> 0.05).
 
 #### Estimated Parameters and Components
 
@@ -373,26 +377,26 @@ head(alpha_hat)
 ```
 
     ##            level       slope sea_dummy1 sea_dummy2 sea_dummy3 sea_dummy4
-    ## Jan 2002 16.3944 0.005600277  -6.624678  -3.337435  0.6067452  4.7593085
-    ## Feb 2002 16.4000 0.005600418  -7.676822  -6.624678 -3.3374347  0.6067452
-    ## Mar 2002 16.4056 0.005600413  -7.346316  -7.676822 -6.6246785 -3.3374347
-    ## Apr 2002 16.4112 0.005600308  -5.476554  -7.346316 -7.6768221 -6.6246785
-    ## May 2002 16.4168 0.005600332  -2.217000  -5.476554 -7.3463159 -7.6768221
-    ## Jun 2002 16.4224 0.005600464   2.468022  -2.217000 -5.4765542 -7.3463159
+    ## Jan 2002 16.3944 0.005600278  -6.624678  -3.337435  0.6067452  4.7593086
+    ## Feb 2002 16.4000 0.005600419  -7.676822  -6.624678 -3.3374348  0.6067452
+    ## Mar 2002 16.4056 0.005600414  -7.346316  -7.676822 -6.6246785 -3.3374348
+    ## Apr 2002 16.4112 0.005600309  -5.476554  -7.346316 -7.6768221 -6.6246785
+    ## May 2002 16.4168 0.005600333  -2.217000  -5.476554 -7.3463157 -7.6768221
+    ## Jun 2002 16.4224 0.005600466   2.468021  -2.217000 -5.4765544 -7.3463157
     ##          sea_dummy5 sea_dummy6 sea_dummy7 sea_dummy8 sea_dummy9 sea_dummy10
-    ## Jan 2002  8.5280154  9.9007962  6.4159187  2.4680217  -2.217000   -5.476554
-    ## Feb 2002  4.7593085  8.5280154  9.9007962  6.4159187   2.468022   -2.217000
-    ## Mar 2002  0.6067452  4.7593085  8.5280154  9.9007962   6.415919    2.468022
-    ## Apr 2002 -3.3374347  0.6067452  4.7593085  8.5280154   9.900796    6.415919
-    ## May 2002 -6.6246785 -3.3374347  0.6067452  4.7593085   8.528015    9.900796
-    ## Jun 2002 -7.6768221 -6.6246785 -3.3374347  0.6067452   4.759308    8.528015
+    ## Jan 2002  8.5280152  9.9007961  6.4159191  2.4680213  -2.217000   -5.476554
+    ## Feb 2002  4.7593086  8.5280152  9.9007961  6.4159191   2.468021   -2.217000
+    ## Mar 2002  0.6067452  4.7593086  8.5280152  9.9007961   6.415919    2.468021
+    ## Apr 2002 -3.3374348  0.6067452  4.7593086  8.5280152   9.900796    6.415919
+    ## May 2002 -6.6246785 -3.3374348  0.6067452  4.7593086   8.528015    9.900796
+    ## Jun 2002 -7.6768221 -6.6246785 -3.3374348  0.6067452   4.759309    8.528015
     ##          sea_dummy11       arima1
-    ## Jan 2002   -7.346316  0.175231565
-    ## Feb 2002   -5.476554 -0.377441338
-    ## Mar 2002   -2.217000  0.286840281
-    ## Apr 2002    2.468022  0.767966035
-    ## May 2002    6.415919  0.330187003
-    ## Jun 2002    9.900796  0.009041978
+    ## Jan 2002   -7.346316  0.175231631
+    ## Feb 2002   -5.476554 -0.377441280
+    ## Mar 2002   -2.217000  0.286840201
+    ## Apr 2002    2.468021  0.767966301
+    ## May 2002    6.415919  0.330186811
+    ## Jun 2002    9.900796  0.009042377
 
 ``` r
 
