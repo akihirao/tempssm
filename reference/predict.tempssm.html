@@ -117,6 +117,12 @@ columns <code>fit</code>, <code>lwr</code>, and <code>upr</code>.</p>
 <code>object$temp_data</code>. They account for uncertainty in the estimated
 state conditional on the fitted model parameters, but not parameter
 estimation uncertainty.</p>
+<p>When <code>interval = "confidence"</code>, the returned lower and upper bounds describe
+uncertainty in the predicted mean response. When
+<code>interval = "prediction"</code>, the bounds describe uncertainty in a future
+observation and therefore also include observation error. Prediction
+intervals are usually wider than confidence intervals. The interval level is
+controlled by <code>level</code> and defaults to 0.95.</p>
 <p>For a model fitted with exogenous variables, <code>new_exo_data</code> must provide
 known or assumed future covariate values. Missing or non-finite future
 values are rejected; the method never assumes zero-valued covariates.
