@@ -180,8 +180,7 @@ package.
 - **Dataset**: Monthly sea surface temperature (SST) off Niigata,
   Japan  
 - **Unit**: Degrees Celsius  
-- **Period**: February 2002 to December 2023  
-  \`\`
+- **Period**: February 2002 to December 2023
 
 This dataset is derived from observations archived at Japan
 Oceanographic Data Center (JODC), Hydrographic and Oceanographic
@@ -237,18 +236,21 @@ plot(plt_niigata_sst)
 
 ![](getting-started_files/figure-html/unnamed-chunk-3-1.png)
 
+The overall mean SST is approximately 17 °C, and a clear seasonal
+pattern is visible. The series contains two missing observations, in
+September 2005 and February 2006. Although SST appears to be higher near
+the end of the series than near the beginning, year-to-year variability
+is also evident, making the long-term trend difficult to assess from the
+raw time series alone.
+
 #### Applying a Linear Gaussian State-Space Model
 
-Here, we fit a linear Gaussian state-space model to the univariate SST
-time series using an AR(1) process for the state dynamics.
-
-Preliminary comparisons among AR(1)–AR(3) models identified AR(1) as the
-preferred model. To keep this vignette concise, only the AR(1) analysis
-is presented. Users interested in evaluating alternative autoregressive
-structures can readily extend the workflow to higher AR orders.
-
-The model summary provides parameter estimates and diagnostic
-information for assessing model adequacy.
+When a ts object containing temperature time-series data (here,
+`niigata_sst`) is passed to the core function tempssm(), model
+construction and parameter estimation are performed together. The
+returned S3 object of class tempssm (here, `res`) stores the filtering
+and smoothing estimates, as well as the constructed model and input
+data. By default, tempssm() fits a first-order autoregressive model.
 
 ``` r
 
@@ -278,6 +280,20 @@ summary(res)
     ## Components of auto-regression:
     ##   Order of AR: 1 
     ##   Coefficient of AR1: 0.7442999
+
+From the summary output, confirm that the model has converged
+(Converged: TRUE). The output also reports statistics such as the number
+of parameters (k), the log-likelihood, the likelihood type, and the
+number of diffuse initial states. The parameter estimates include the
+observation error variance (H), the process error variance of the
+long-term trend component (Q trend), the process error variance of the
+seasonal component (Q season), the process error variance of the
+autoregressive component, and the first-order autoregressive coefficient
+(AR1).
+
+The log-likelihood and the associated number of estimated parameters can
+also be extracted directly from the fitted `tempssm` object using
+[`logLik()`](https://rdrr.io/r/stats/logLik.html).
 
 ``` r
 
@@ -320,7 +336,7 @@ underlying trend behavior to be examined more clearly.
 plot(res)
 ```
 
-![](getting-started_files/figure-html/unnamed-chunk-5-1.png)
+![](getting-started_files/figure-html/unnamed-chunk-6-1.png)
 
 The level component shows a persistent upward trend in sea surface
 temperature over the study period, while the drift component indicates a
@@ -342,12 +358,24 @@ layers, for example,
 
 #### Simple Model Diagnostics
 
+The package provides diagnostic tools for checking whether the fitted
+model has left notable structure in the residuals. In particular,
+residual time-series plots, residual autocorrelation, residual
+distributions, and Ljung-Box tests can be used to assess remaining
+temporal dependence and departures from the Gaussian error assumption.
+
 ``` r
 
 plot_tempssm_residual_diagnostics(res)
 ```
 
-![](getting-started_files/figure-html/unnamed-chunk-6-1.png)
+![](getting-started_files/figure-html/unnamed-chunk-7-1.png)
+
+In the model diagnostic plot, the upper panel shows the residual time
+series, the lower-left panel shows the residual autocorrelation plot
+(ACF plot), and the lower-right panel shows the residual frequency
+distribution. These plots should be checked for any notable residual
+patterns.
 
 ``` r
 
@@ -367,7 +395,10 @@ respectively. For monthly time series,
 uses lag 12 by default. In this example, the Ljung-Box test indicated no
 significant residual autocorrelation up to lag 12 (P \> 0.05).
 
-#### Estimated Parameters and Components
+#### Estimated Parameters and Latent-State Components
+
+The long-term trend component and its rate of change (drift) can be
+extracted as ts objects as follows.
 
 ``` r
 
@@ -453,9 +484,10 @@ prediction horizon becomes longer, and long-horizon predictions can be
 sensitive to model assumptions about trend, seasonality, and
 autoregressive dependence.
 
-This tutorial covered the basic workflow for fitting and diagnosing a
-state-space model with `tempssm`. For more advanced topics, including
-models with exogenous variables and time-series cross-validation, please
-refer to the detailed manual:
+The examples above illustrate the basic univariate workflow for fitting,
+diagnosing, visualizing, and making short-term predictions from a
+`tempssm` model. The detailed manual extends this workflow to exogenous
+variables, additional model diagnostics, and time-series
+cross-validation:
 
 <https://github.com/akihirao/tempssm/blob/main/tools/manual/tempssm_manual.pdf>

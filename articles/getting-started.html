@@ -57,10 +57,11 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>tempssm: State-space modeling for temperature time series in R</h1>
+            <h3 data-toc-skip class="subtitle">Version 0.3.0</h3>
                         <h4 data-toc-skip class="author">Akira S. Hirao,
 Shinya Baba, and Momoko Ichinokawa</h4>
             
-            <h4 data-toc-skip class="date">2026-07-22</h4>
+            <h4 data-toc-skip class="date">2026-07-23</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/akihirao/tempssm/blob/main/vignettes/getting-started.Rmd" class="external-link"><code>vignettes/getting-started.Rmd</code></a></small>
       <div class="d-none name"><code>getting-started.Rmd</code></div>
@@ -280,8 +281,7 @@ Niigata, Japan<br>
 <strong>Unit</strong>: Degrees Celsius<br>
 </li>
 <li>
-<strong>Period</strong>: February 2002 to December 2023<br>
-``</li>
+<strong>Period</strong>: February 2002 to December 2023</li>
 </ul>
 <p>This dataset is derived from observations archived at Japan
 Oceanographic Data Center (JODC), Hydrographic and Oceanographic
@@ -324,19 +324,23 @@ missing observations.</p>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">plt_niigata_sst</span><span class="op">)</span></span></code></pre></div>
 <p><img src="getting-started_files/figure-html/unnamed-chunk-3-1.png" class="r-plt" alt="" width="700"></p>
+<p>The overall mean SST is approximately 17 °C, and a clear seasonal
+pattern is visible. The series contains two missing observations, in
+September 2005 and February 2006. Although SST appears to be higher near
+the end of the series than near the beginning, year-to-year variability
+is also evident, making the long-term trend difficult to assess from the
+raw time series alone.</p>
 </div>
 <div class="section level4">
 <h4 id="applying-a-linear-gaussian-state-space-model">Applying a Linear Gaussian State-Space Model<a class="anchor" aria-label="anchor" href="#applying-a-linear-gaussian-state-space-model"></a>
 </h4>
-<p>Here, we fit a linear Gaussian state-space model to the univariate
-SST time series using an AR(1) process for the state dynamics.</p>
-<p>Preliminary comparisons among AR(1)–AR(3) models identified AR(1) as
-the preferred model. To keep this vignette concise, only the AR(1)
-analysis is presented. Users interested in evaluating alternative
-autoregressive structures can readily extend the workflow to higher AR
-orders.</p>
-<p>The model summary provides parameter estimates and diagnostic
-information for assessing model adequacy.</p>
+<p>When a ts object containing temperature time-series data (here,
+<code>niigata_sst</code>) is passed to the core function tempssm(),
+model construction and parameter estimation are performed together. The
+returned S3 object of class tempssm (here, <code>res</code>) stores the
+filtering and smoothing estimates, as well as the constructed model and
+input data. By default, tempssm() fits a first-order autoregressive
+model.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># model with first-order autoregressive component</span></span>
 <span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tempssm.html">tempssm</a></span><span class="op">(</span><span class="va">niigata_sst</span><span class="op">)</span> <span class="co"># AR(1), the default model</span></span>
@@ -362,6 +366,18 @@ information for assessing model adequacy.</p>
 <span><span class="co">## Components of auto-regression:</span></span>
 <span><span class="co">##   Order of AR: 1 </span></span>
 <span><span class="co">##   Coefficient of AR1: 0.7442999</span></span></code></pre>
+<p>From the summary output, confirm that the model has converged
+(Converged: TRUE). The output also reports statistics such as the number
+of parameters (k), the log-likelihood, the likelihood type, and the
+number of diffuse initial states. The parameter estimates include the
+observation error variance (H), the process error variance of the
+long-term trend component (Q trend), the process error variance of the
+seasonal component (Q season), the process error variance of the
+autoregressive component, and the first-order autoregressive coefficient
+(AR1).</p>
+<p>The log-likelihood and the associated number of estimated parameters
+can also be extracted directly from the fitted <code>tempssm</code>
+object using <code><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik()</a></code>.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ll</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/logLik.html" class="external-link">logLik</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="va">ll</span></span></code></pre></div>
@@ -389,7 +405,7 @@ underlying trend behavior to be examined more clearly.</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># plot all components at once</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
-<p><img src="getting-started_files/figure-html/unnamed-chunk-5-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="getting-started_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
 <p>The level component shows a persistent upward trend in sea surface
 temperature over the study period, while the drift component indicates a
 relatively stable positive rate of change. The shaded gray areas
@@ -409,9 +425,20 @@ customized with standard ggplot2 layers, for example,
 <div class="section level4">
 <h4 id="simple-model-diagnostics">Simple Model Diagnostics<a class="anchor" aria-label="anchor" href="#simple-model-diagnostics"></a>
 </h4>
+<p>The package provides diagnostic tools for checking whether the fitted
+model has left notable structure in the residuals. In particular,
+residual time-series plots, residual autocorrelation, residual
+distributions, and Ljung-Box tests can be used to assess remaining
+temporal dependence and departures from the Gaussian error
+assumption.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/plot_tempssm_residual_diagnostics.html">plot_tempssm_residual_diagnostics</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
-<p><img src="getting-started_files/figure-html/unnamed-chunk-6-1.png" class="r-plt" alt="" width="700"></p>
+<p><img src="getting-started_files/figure-html/unnamed-chunk-7-1.png" class="r-plt" alt="" width="700"></p>
+<p>In the model diagnostic plot, the upper panel shows the residual time
+series, the lower-left panel shows the residual autocorrelation plot
+(ACF plot), and the lower-right panel shows the residual frequency
+distribution. These plots should be checked for any notable residual
+patterns.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">diag</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/diagnose_residuals.html">diagnose_residuals</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">diag</span><span class="op">)</span></span></code></pre></div>
@@ -427,8 +454,10 @@ default. In this example, the Ljung-Box test indicated no significant
 residual autocorrelation up to lag 12 (P &gt; 0.05).</p>
 </div>
 <div class="section level4">
-<h4 id="estimated-parameters-and-components">Estimated Parameters and Components<a class="anchor" aria-label="anchor" href="#estimated-parameters-and-components"></a>
+<h4 id="estimated-parameters-and-latent-state-components">Estimated Parameters and Latent-State Components<a class="anchor" aria-label="anchor" href="#estimated-parameters-and-latent-state-components"></a>
 </h4>
+<p>The long-term trend component and its rate of change (drift) can be
+extracted as ts objects as follows.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Smoothing estimates</span></span>
 <span><span class="va">alpha_hat</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">kfs</span><span class="op">$</span><span class="va">alphahat</span></span>
@@ -495,10 +524,11 @@ rather than definitive forecasts. Uncertainty generally increases as the
 prediction horizon becomes longer, and long-horizon predictions can be
 sensitive to model assumptions about trend, seasonality, and
 autoregressive dependence.</p>
-<p>This tutorial covered the basic workflow for fitting and diagnosing a
-state-space model with <code>tempssm</code>. For more advanced topics,
-including models with exogenous variables and time-series
-cross-validation, please refer to the detailed manual:</p>
+<p>The examples above illustrate the basic univariate workflow for
+fitting, diagnosing, visualizing, and making short-term predictions from
+a <code>tempssm</code> model. The detailed manual extends this workflow
+to exogenous variables, additional model diagnostics, and time-series
+cross-validation:</p>
 <p><a href="https://github.com/akihirao/tempssm/blob/main/tools/manual/tempssm_manual.pdf" class="external-link uri">https://github.com/akihirao/tempssm/blob/main/tools/manual/tempssm_manual.pdf</a></p>
 </div>
 </div>
