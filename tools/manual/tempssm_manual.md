@@ -224,6 +224,12 @@ plot(plt_yamaguchi_sst)
 
 ![](tempssm_manual_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
 
+The overall mean SST is approximately 19.5 °C, and a clear seasonal
+pattern is visible. The series contains no missing observations.
+Although SST appears to increase over the study period, year-to-year
+variability is also evident, making the long-term trend difficult to
+assess from the raw time series alone.
+
 ### Applying a Linear Gaussian State-Space Model
 
 When a `ts` object containing temperature time-series data (here,
@@ -272,6 +278,23 @@ seasonal component (`Q season`), the process error variance of the
 autoregressive component, and the first-order autoregressive coefficient
 (`AR1`).
 
+The log-likelihood and the associated number of estimated parameters can
+also be extracted directly from the fitted `tempssm` object using
+`logLik()`.
+
+``` r
+ll <- logLik(res_ar1)
+ll
+```
+
+    ## 'log Lik.' -437.1989 (df=5)
+
+``` r
+attr(ll, "df") # number of parameters
+```
+
+    ## [1] 5
+
 By default, `tempssm()` uses the KFAS marginal likelihood for parameter
 estimation. The diffuse likelihood remains available by explicitly
 setting `marginal = FALSE`. The selected likelihood type is stored in
@@ -283,7 +306,7 @@ The log-likelihood and parameter count remain available through
 `logLik()` for users who need them for their own model-assessment
 workflows.
 
-#### Plotting Long-Term Trend, Drift, Seasonal, and Autoregressive Components
+### Plotting Long-Term Trend, Drift, Seasonal, and Autoregressive Components
 
 We extract the corresponding latent components from the state-space
 model and visualize the estimated long-term evolution of temperature
@@ -296,7 +319,7 @@ easier to examine.
 plot(res_ar1)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 The long-term trend in the upper-left panel indicates an increasing SST
 pattern over the study period. In this example, the average annual rate
@@ -334,7 +357,20 @@ temporal dependence and departures from the Gaussian error assumption.
 plot_tempssm_residual_diagnostics(res_ar1)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+
+In the model diagnostic plot, the upper panel shows the residual time
+series, the lower-left panel shows the residual autocorrelation plot
+(ACF plot), and the lower-right panel shows the residual frequency
+distribution. These plots should be checked for any notable residual
+patterns.
+
+In this example, the ACF plot shows an isolated spike around lag 5 and
+lag 27, but there is no clear sequence of successive significant lags or
+repeated seasonal pattern. Such isolated spikes can occur when many lags
+are inspected, so they should be interpreted together with the Ljung-Box
+test and the residual time-series plot rather than used as the sole
+basis for changing the model.　
 
 ``` r
 diag <- diagnose_residuals(res_ar1)
@@ -345,12 +381,6 @@ print(diag)
     ##   lb_stat lb_lag lb_pvalue kurtosis
     ##     <dbl>  <dbl>     <dbl>    <dbl>
     ## 1    18.1     12     0.111     3.70
-
-In the model diagnostic plot, the upper panel shows the residual time
-series, the lower-left panel shows the residual autocorrelation plot
-(ACF plot), and the lower-right panel shows the residual frequency
-distribution. These plots should be checked for any notable residual
-patterns.
 
 The `lb_stat`, `lb_lag`, and `lb_pvalue` columns returned by
 `diagnose_residuals()` correspond to the Ljung-Box test statistic, the
@@ -401,17 +431,61 @@ model, users can fit an AR(2) model and repeat the same diagnostics.
 ``` r
 # Optional sensitivity check with a second-order autoregressive component
 res_ar2 <- tempssm(yamaguchi_sst, ar_order = 2)
-diagnose_residuals(res_ar2)
+summary(res_ar2)
+```
+
+    ## tempssm summary
+    ## -----------------
+    ## Call:
+    ## tempssm(temp_data = yamaguchi_sst, ar_order = 2)
+    ## 
+    ## Model fit:
+    ##   Likelihood type: marginal 
+    ##   Log-likelihood : -434.26 
+    ##   k              : 6 
+    ##   Diffuse states : 13 
+    ##   Converged      : TRUE 
+    ## 
+    ## Variance parameters:
+    ##   Observation (H): 0.120908 
+    ##   State (Q trend): 2.206262e-07 
+    ##   State (Q season): 5.525557e-16 
+    ##   State (Q ar): 0.1044204 
+    ## 
+    ## Components of auto-regression:
+    ##   Order of AR: 2 
+    ##   Coefficient of AR1: 1.185818 
+    ##   Coefficient of AR2: -0.4790522
+
+``` r
 plot_tempssm_residual_diagnostics(res_ar2)
 ```
 
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-11-1.png)<!-- -->
+
+``` r
+diag_lag12_ar2 <- diagnose_residuals(res_ar2, lb_lag = 12)
+diag_lag24_ar2 <- diagnose_residuals(res_ar2, lb_lag = 24)
+diag_lag36_ar2 <- diagnose_residuals(res_ar2, lb_lag = 36)
+diag_lags_ar2 <- rbind(diag_lag12_ar2, diag_lag24_ar2, diag_lag36_ar2)
+diag_lags_ar2$check <- c("lag 12", "lag 24", "lag 36")
+diag_lags_ar2[, c("check", "lb_stat", "lb_lag", "lb_pvalue", "kurtosis")]
+```
+
+    ## # A tibble: 3 × 5
+    ##   check  lb_stat lb_lag lb_pvalue kurtosis
+    ##   <chr>    <dbl>  <dbl>     <dbl>    <dbl>
+    ## 1 lag 12    9.93     12     0.623     3.66
+    ## 2 lag 24   24.0      24     0.461     3.66
+    ## 3 lag 36   43.9      36     0.170     3.66
+
 In a sensitivity check with an AR(2) specification, the short-lag
 residual autocorrelation was also limited, but the residual ACF showed a
-negative spike around lag 24. This pattern suggests that increasing the
-AR order does not necessarily improve all aspects of the residual
-structure. Therefore, the AR(2) model should be treated as a model
-requiring additional diagnostic attention rather than as an automatic
-improvement over the AR(1) baseline.
+negative spike around lag 24, 26, 27. This pattern suggests that
+increasing the AR order does not necessarily improve all aspects of the
+residual structure. Therefore, the AR(2) model should be treated as a
+model requiring additional diagnostic attention rather than as an
+automatic improvement over the AR(1) baseline.
 
 In the present example, the residual diagnostics do not provide strong
 evidence that a higher AR order is needed, so we proceed with the AR(1)
@@ -420,7 +494,7 @@ model as the baseline specification.
 ### Estimated Parameters and Latent-State Components
 
 The long-term trend component and its rate of change (drift) can be
-extracted as `ts` objects as follows.
+extracted as `ts` objects as follows. r
 
 ``` r
 # Smoothing estimates
@@ -496,6 +570,39 @@ pred_12
     ##           Sep      Oct      Nov      Dec
     ## 2026 26.65593 23.82915 21.34670 18.51594
     ## 2027
+
+Prediction uncertainty can also be returned by setting the `interval`
+argument. With `interval = "confidence"`, the returned lower and upper
+bounds describe uncertainty in the predicted mean response. With
+`interval = "prediction"`, the bounds describe uncertainty in a future
+observation and therefore also include observation error; prediction
+intervals are usually wider than confidence intervals. The confidence
+level is controlled by the `level` argument and defaults to 0.95.
+
+``` r
+pred_12_pi <- predict(
+  res_ar1,
+  n.ahead = 12,
+  interval = "prediction",
+  level = 0.95
+)
+
+pred_12_pi
+```
+
+    ##               fit      lwr      upr
+    ## May 2026 18.71037 17.58819 19.83255
+    ## Jun 2026 22.01798 20.68625 23.34972
+    ## Jul 2026 25.65128 24.24035 27.06221
+    ## Aug 2026 28.17714 26.73244 29.62184
+    ## Sep 2026 26.65593 25.19542 28.11643
+    ## Oct 2026 23.82915 22.36046 25.29783
+    ## Nov 2026 21.34670 19.87329 22.82011
+    ## Dec 2026 18.51594 17.03948 19.99240
+    ## Jan 2027 16.12028 14.64169 17.59886
+    ## Feb 2027 14.72978 13.24938 16.21017
+    ## Mar 2027 14.61284 13.13087 16.09480
+    ## Apr 2027 15.92978 14.44637 17.41319
 
 These predictions should be interpreted as model-based extrapolations
 rather than definitive forecasts. Uncertainty generally increases as the
@@ -601,7 +708,7 @@ plt_pdo <- forecast::autoplot(pdo_trim) +
 plt_yamaguchi_sst_trim + plt_pdo + patchwork::plot_layout(ncol=1)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-18-1.png)<!-- -->
 
 The PDO index data used in this exercise contain no missing values. When
 using your own exogenous-variable data, however, make sure that the
@@ -657,7 +764,7 @@ summary(res_without)
 plot_tempssm_residual_diagnostics(res_without)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
 
 ``` r
 diag_res_without <- diagnose_residuals(res_without)
@@ -725,7 +832,7 @@ summary(res_with)
 plot_tempssm_residual_diagnostics(res_with)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
 
 ``` r
 diag_res_with <- diagnose_residuals(res_with)
@@ -744,18 +851,15 @@ adequate working autoregressive structure according to these residual
 checks.
 
 We then examine the model estimates. The estimated coefficient for the
-exogenous PDO index is negative (-0.44), and its 95% confidence interval
-does not include zero
-``` math
--0.53, -0.35
-```
-. This indicates a statistically significant negative relationship
-between local SST off Yamaguchi Prefecture and PDO variability.
+exogenous PDO index is negative (-0.45), and its 95% confidence interval
+does not include zero, ranging from -0.54 to -0.36. This indicates a
+statistically significant negative relationship between local SST off
+Yamaguchi Prefecture and PDO variability.
 
 Specifically, after accounting for the underlying long-term trend,
 seasonal cycle, and autoregressive dependence, the model suggests that a
 one-unit increase in the PDO index is associated with an average
-decrease of approximately 0.44 °C in monthly SST. This result implies
+decrease of approximately 0.45 °C in monthly SST. This result implies
 that positive phases of the PDO systematically contribute to cooler
 conditions at the study site.
 
@@ -942,7 +1046,7 @@ plt_tsCV <- plt_MAE + plt_MASE_naive + plt_MASE_seasonal + patchwork::plot_layou
 plot(plt_tsCV)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-19-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-22-1.png)<!-- -->
 
 The tsCV results show that the model with the exogenous variable
 performs better than the model without it. The comparison table produced
@@ -961,6 +1065,14 @@ effect is accompanied by better out-of-sample predictive performance.
 
 These complementary lines of evidence provide robust and multifaceted
 support for adopting the exogenous-variable model.
+
+Although this exercise used a single exogenous variable, `tempssm()`
+also supports models with multiple exogenous variables supplied as
+multivariate time-series data. Users interested in broader applications
+can extend the same workflow to other environmental, climatic, or
+ecological covariates. In doing so, model structure should be considered
+carefully for the target data, while checking model diagnostics and
+out-of-sample predictive performance.
 
 ### Comparing Estimation Patterns Between Models With and Without the Exogenous Variable
 
@@ -988,7 +1100,7 @@ plt_level_drift_without_ts <- plt_level_without_ts +
 plot(plt_level_drift_without_ts)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-20-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-23-1.png)<!-- -->
 
 ``` r
 plt_level_with_ts <- autoplot(res_with,
@@ -1010,7 +1122,7 @@ plt_level_drift_with_ts <- plt_level_with_ts +
 plot(plt_level_drift_with_ts)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-20-2.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-23-2.png)<!-- -->
 
 ``` r
 #　Smoothing estimate of drift component
@@ -1268,7 +1380,7 @@ plt_niigata_sst_anomaly <- forecast::autoplot(niigata_sst_anomaly) +
 plot(plt_niigata_sst_anomaly) 
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-26-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-29-1.png)<!-- -->
 
 ## 5. `compute_monthly_climatology()`
 
@@ -1315,4 +1427,4 @@ plt_monthly_seasonal_cycle_niigata_sst <- ggplot(
 plot(plt_monthly_seasonal_cycle_niigata_sst)
 ```
 
-![](tempssm_manual_files/figure-gfm/unnamed-chunk-27-1.png)<!-- -->
+![](tempssm_manual_files/figure-gfm/unnamed-chunk-30-1.png)<!-- -->

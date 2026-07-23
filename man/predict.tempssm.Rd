@@ -57,6 +57,13 @@ Forecasts begin at the first regular time point after the end of
 state conditional on the fitted model parameters, but not parameter
 estimation uncertainty.
 
+When \code{interval = "confidence"}, the returned lower and upper bounds describe
+uncertainty in the predicted mean response. When
+\code{interval = "prediction"}, the bounds describe uncertainty in a future
+observation and therefore also include observation error. Prediction
+intervals are usually wider than confidence intervals. The interval level is
+controlled by \code{level} and defaults to 0.95.
+
 For a model fitted with exogenous variables, \code{new_exo_data} must provide
 known or assumed future covariate values. Missing or non-finite future
 values are rejected; the method never assumes zero-valued covariates.
