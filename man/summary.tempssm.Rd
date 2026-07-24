@@ -22,7 +22,8 @@ An object of class \code{"summary.tempssm"}, implemented as a named list
 with components \code{call}, \code{logLik}, \code{marginal}, \code{k},
 \code{diffuse_states}, \code{convergence}, \code{variances},
 \code{coef_ar}, \code{exogenous}, and \code{exogenous_coef}. If the model
-did not converge, \code{logLik} is reported as \code{NA}.
+did not converge or fitted parameters are unavailable, \code{logLik} and
+unavailable parameter estimates are reported as \code{NA}.
 }
 \description{
 Provides a concise summary of a fitted linear Gaussian

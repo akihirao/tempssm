@@ -60,6 +60,14 @@
 #' @keywords internal
 #' @noRd
 .tempssm_logLik_metadata <- function(res) {
+  if (is.null(res$fit) || is.null(res$fit$optim.out) ||
+      is.null(res$fit$optim.out$par)) {
+    return(list(
+      df = NA_integer_,
+      nobs = length(res$temp_data)
+    ))
+  }
+
   df <- length(res$fit$optim.out$par)
 
   if (!is.null(res$exogenous_data)) {
@@ -87,7 +95,9 @@
   marginal <- .resolve_tempssm_marginal(res, marginal)
   metadata <- .tempssm_logLik_metadata(res)
 
-  if (!isTRUE(res$converged)) {
+  if (!isTRUE(res$converged) || is.null(res$model) ||
+      is.null(res$fit) || is.null(res$fit$optim.out) ||
+      is.null(res$fit$optim.out$par)) {
     return(list(
       logLik = NA_real_,
       df = metadata$df,

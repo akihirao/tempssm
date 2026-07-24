@@ -37,10 +37,14 @@ test_that("summary.tempssm handles non-converged models", {
   res$converged <- FALSE
   res$fit <- NULL
 
-  expect_error(
-    summary(res),
-    "fitted model results are missing"
-  )
+  s <- summary(res)
+
+  expect_s3_class(s, "summary.tempssm")
+  expect_false(s$convergence)
+  expect_identical(s$logLik, NA_real_)
+  expect_identical(s$k, NA_integer_)
+  expect_true(all(is.na(unlist(s$variances, use.names = FALSE))))
+  expect_true(all(is.na(s$coef_ar$AR_coef)))
 })
 
 
@@ -48,10 +52,12 @@ test_that("summary.tempssm handles missing fit results", {
   res <- res_tempssm
   res$fit <- NULL
 
-  expect_error(
-    summary(res),
-    "fitted model results are missing"
-  )
+  s <- summary(res)
+
+  expect_s3_class(s, "summary.tempssm")
+  expect_false(s$convergence)
+  expect_identical(s$logLik, NA_real_)
+  expect_identical(s$k, NA_integer_)
 })
 
 
@@ -59,10 +65,12 @@ test_that("summary.tempssm handles missing optim.out gracefully", {
   res <- res_tempssm
   res$fit$optim.out <- NULL
 
-  expect_error(
-    summary(res),
-    "fitted model results are missing"
-  )
+  s <- summary(res)
+
+  expect_s3_class(s, "summary.tempssm")
+  expect_false(s$convergence)
+  expect_identical(s$logLik, NA_real_)
+  expect_identical(s$k, NA_integer_)
 })
 
 

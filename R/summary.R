@@ -11,13 +11,6 @@
     cli::cli_abort("`object` must be an object of class {.cls tempssm}.")
   }
 
-  if (is.null(object$fit) || is.null(object$fit$optim.out) ||
-      is.null(object$fit$optim.out$par)) {
-    cli::cli_abort(
-      "Summary is not available because the fitted model results are missing."
-    )
-  }
-
   invisible(object)
 }
 
@@ -39,6 +32,79 @@
 }
 
 
+#' Check whether fitted parameter estimates are available
+#'
+#' @inheritParams summary.tempssm
+#'
+#' @return Logical scalar.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_summary_has_params <- function(object) {
+  !is.null(object$fit) &&
+    !is.null(object$fit$optim.out) &&
+    !is.null(object$fit$optim.out$par)
+}
+
+
+#' Extract convergence status for summary output
+#'
+#' @inheritParams summary.tempssm
+#'
+#' @return Logical scalar.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_summary_convergence <- function(object) {
+  if (!isTRUE(object$converged)) {
+    return(FALSE)
+  }
+
+  if (is.null(object$fit) || is.null(object$fit$optim.out) ||
+      is.null(object$fit$optim.out$convergence)) {
+    return(FALSE)
+  }
+
+  object$fit$optim.out$convergence == 0
+}
+
+
+#' Build unavailable parameter estimates for summary output
+#'
+#' @inheritParams summary.tempssm
+#'
+#' @return A named list with the same shape as \code{.extract_tempssm_params()}.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_summary_na_params <- function(object) {
+  list(
+    H = NA_real_,
+    Q_trend = NA_real_,
+    Q_season = NA_real_,
+    Q_ar = NA_real_,
+    ARs = rep(NA_real_, object$ar_order)
+  )
+}
+
+
+#' Extract parameter estimates for summary output
+#'
+#' @inheritParams summary.tempssm
+#'
+#' @return A named list containing fitted or unavailable parameter estimates.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_summary_params <- function(object) {
+  if (!.tempssm_summary_has_params(object)) {
+    return(.tempssm_summary_na_params(object))
+  }
+
+  .extract_tempssm_params(object)
+}
+
+
 #' Summary method for tempssm objects
 #'
 #' Provides a concise summary of a fitted linear Gaussian
@@ -54,7 +120,8 @@
 #' with components \code{call}, \code{logLik}, \code{marginal}, \code{k},
 #' \code{diffuse_states}, \code{convergence}, \code{variances},
 #' \code{coef_ar}, \code{exogenous}, and \code{exogenous_coef}. If the model
-#' did not converge, \code{logLik} is reported as \code{NA}.
+#' did not converge or fitted parameters are unavailable, \code{logLik} and
+#' unavailable parameter estimates are reported as \code{NA}.
 #'
 #' @method summary tempssm
 #' @importFrom stats logLik
@@ -82,8 +149,7 @@
 summary.tempssm <- function(object, ..., marginal = NULL) {
   .validate_tempssm_summary_input(object)
 
-  opt <- object$fit$optim.out
-  params <- .extract_tempssm_params(object)
+  params <- .tempssm_summary_params(object)
   ll <- .tempssm_logLik_display_info(object, marginal = marginal)
   exo_data <- object$exogenous_data
   exogenous_variable <- if (is.null(exo_data)) NULL else colnames(exo_data)
@@ -94,7 +160,7 @@ summary.tempssm <- function(object, ..., marginal = NULL) {
     marginal = ll$marginal,
     k = ll$df,
     diffuse_states = .tempssm_summary_diffuse_states(object),
-    convergence = opt$convergence == 0,
+    convergence = .tempssm_summary_convergence(object),
     variances = params[c("H", "Q_trend", "Q_season", "Q_ar")],
     coef_ar = list(
       AR_order = object$ar_order,
