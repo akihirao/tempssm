@@ -34,7 +34,8 @@ summary(object, ..., marginal = NULL)
 An object of class `"summary.tempssm"`, implemented as a named list with
 components `call`, `logLik`, `marginal`, `k`, `diffuse_states`,
 `convergence`, `variances`, `coef_ar`, `exogenous`, and
-`exogenous_coef`.
+`exogenous_coef`. If the model did not converge, `logLik` is reported as
+`NA`.
 
 ## Examples
 
