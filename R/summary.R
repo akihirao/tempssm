@@ -53,7 +53,8 @@
 #' An object of class \code{"summary.tempssm"}, implemented as a named list
 #' with components \code{call}, \code{logLik}, \code{marginal}, \code{k},
 #' \code{diffuse_states}, \code{convergence}, \code{variances},
-#' \code{coef_ar}, \code{exogenous}, and \code{exogenous_coef}.
+#' \code{coef_ar}, \code{exogenous}, and \code{exogenous_coef}. If the model
+#' did not converge, \code{logLik} is reported as \code{NA}.
 #'
 #' @method summary tempssm
 #' @importFrom stats logLik
@@ -83,15 +84,15 @@ summary.tempssm <- function(object, ..., marginal = NULL) {
 
   opt <- object$fit$optim.out
   params <- .extract_tempssm_params(object)
-  ll <- logLik.tempssm(object, marginal = marginal)
+  ll <- .tempssm_logLik_display_info(object, marginal = marginal)
   exo_data <- object$exogenous_data
   exogenous_variable <- if (is.null(exo_data)) NULL else colnames(exo_data)
 
   res <- list(
     call = object$call,
-    logLik = as.numeric(ll),
-    marginal = attr(ll, "marginal"),
-    k = attr(ll, "df"),
+    logLik = ll$logLik,
+    marginal = ll$marginal,
+    k = ll$df,
     diffuse_states = .tempssm_summary_diffuse_states(object),
     convergence = opt$convergence == 0,
     variances = params[c("H", "Q_trend", "Q_season", "Q_ar")],

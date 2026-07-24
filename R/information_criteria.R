@@ -50,6 +50,56 @@
 }
 
 
+#' Extract log-likelihood metadata from a fitted tempssm object
+#'
+#' @inheritParams get_level_ts
+#'
+#' @return A named list containing degrees of freedom and number of
+#'   observations.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_logLik_metadata <- function(res) {
+  df <- length(res$fit$optim.out$par)
+
+  if (!is.null(res$exogenous_data)) {
+    df <- df + ncol(res$exogenous_data)
+  }
+
+  list(
+    df = df,
+    nobs = length(res$temp_data)
+  )
+}
+
+
+#' Extract log-likelihood information for display methods
+#'
+#' @inheritParams get_level_ts
+#' @inheritParams logLik.tempssm
+#'
+#' @return A named list containing the log-likelihood, degrees of freedom,
+#'   number of observations, and resolved likelihood setting.
+#'
+#' @keywords internal
+#' @noRd
+.tempssm_logLik_display_info <- function(res, marginal = NULL) {
+  marginal <- .resolve_tempssm_marginal(res, marginal)
+  metadata <- .tempssm_logLik_metadata(res)
+
+  if (!isTRUE(res$converged)) {
+    return(list(
+      logLik = NA_real_,
+      df = metadata$df,
+      nobs = metadata$nobs,
+      marginal = marginal
+    ))
+  }
+
+  .internal_logLik_tempssm(res, marginal = marginal)
+}
+
+
 ######################################
 #' Extract log-likelihood components from a fitted model
 #'
@@ -79,24 +129,23 @@
   )
 
   ## ---- degrees of freedom --------------------------------------------
-  df <- length(res$fit$optim.out$par)
-
-  if (!is.null(res$exogenous_data)) {
-    df <- df + ncol(res$exogenous_data)
-  }
+  metadata <- .tempssm_logLik_metadata(res)
 
   ## ---- number of observations ----------------------------------------
-  nobs <- length(res$temp_data)
+  nobs <- metadata$nobs
 
   ## ---- debug message --------------------------------------------------
   .tempssm_cli_debug(
-    "Computed logLik components: logLik={round(ll, 3)}, df={df}, nobs={nobs}"
+    paste0(
+      "Computed logLik components: logLik={round(ll, 3)}, ",
+      "df={metadata$df}, nobs={nobs}"
+    )
   )
 
   ## ---- return --------------------------------------------------------
   return(list(
     logLik = ll,
-    df     = df,
+    df     = metadata$df,
     nobs   = nobs,
     marginal = marginal
   ))

@@ -41,6 +41,19 @@ test_that("summary exposes logLik metadata without AIC", {
 })
 
 
+test_that("summary reports NA logLik for non-converged models", {
+  res <- res_tempssm
+  res$converged <- FALSE
+  res$fit$optim.out$convergence <- 1
+
+  s <- summary(res)
+
+  expect_identical(s$logLik, NA_real_)
+  expect_identical(s$k, length(res$fit$optim.out$par))
+  expect_false(s$convergence)
+})
+
+
 test_that("summary can use an explicit diffuse likelihood", {
   s <- summary(res_tempssm, marginal = FALSE)
   ll <- logLik(res_tempssm, marginal = FALSE)

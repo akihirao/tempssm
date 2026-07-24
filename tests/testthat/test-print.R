@@ -44,11 +44,13 @@ test_that("print.tempssm shows NULL exogenous correctly", {
 
 test_that("print.tempssm reflects convergence status", {
   res <- res_tempssm
+  res$converged <- FALSE
   res$fit$optim.out$convergence <- 1
 
   output <- capture.output(print(res))
 
   expect_true(any(grepl("FALSE", output, fixed = TRUE)))
+  expect_true(any(grepl("LogLik      : NA", output, fixed = TRUE)))
 })
 
 
