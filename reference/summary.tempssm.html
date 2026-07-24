@@ -76,7 +76,8 @@ likelihood, respectively. An explicit value does not refit the model.</p></dd>
 with components <code>call</code>, <code>logLik</code>, <code>marginal</code>, <code>k</code>,
 <code>diffuse_states</code>, <code>convergence</code>, <code>variances</code>,
 <code>coef_ar</code>, <code>exogenous</code>, and <code>exogenous_coef</code>. If the model
-did not converge, <code>logLik</code> is reported as <code>NA</code>.</p>
+did not converge or fitted parameters are unavailable, <code>logLik</code> and
+unavailable parameter estimates are reported as <code>NA</code>.</p>
     </div>
 
     <div class="section level2">
